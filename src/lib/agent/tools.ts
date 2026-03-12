@@ -181,16 +181,36 @@ export function createTools(ctx: ToolContext) {
           });
         }
         createScreenStreamState.delete(toolCallId);
+        const frameRecord = frames.find((f) => f.id === toolCallId);
         const result = {
           success: true,
           id: toolCallId,
           message: `Created screen "${name}"`,
+          frame: frameRecord
+            ? {
+                id: frameRecord.id,
+                label: frameRecord.label,
+                left: frameRecord.left,
+                top: frameRecord.top,
+                html: frameRecord.html,
+              }
+            : undefined,
         };
         writer?.write({
           type: "tool-output-available",
           toolCallId,
           output: result,
         });
+        if (result.frame) {
+          writer?.write({
+            type: "data-tool-call-end",
+            data: {
+              toolCallId,
+              toolName: "create_screen",
+              frame: result.frame,
+            },
+          });
+        }
         return result;
       },
     }),
@@ -236,12 +256,25 @@ export function createTools(ctx: ToolContext) {
         if (frame) {
           frame.html = wrapScreenBody(screen_html, theme);
         }
-        const result = { success: true };
+        const result = {
+          success: true,
+          frame: frame ? { id: frame.id, html: frame.html } : undefined,
+        };
         writer?.write({
           type: "tool-output-available",
           toolCallId,
           output: result,
         });
+        if (result.frame) {
+          writer?.write({
+            type: "data-tool-call-end",
+            data: {
+              toolCallId,
+              toolName: "update_screen",
+              frame: result.frame,
+            },
+          });
+        }
         return result;
       },
     }),
@@ -298,11 +331,22 @@ export function createTools(ctx: ToolContext) {
         }
         const newHtml = frame.html.replace(find, replace);
         frame.html = newHtml;
-        const result = { success: true };
+        const result = {
+          success: true,
+          frame: { id: frame.id, html: frame.html },
+        };
         writer?.write({
           type: "tool-output-available",
           toolCallId,
           output: result,
+        });
+        writer?.write({
+          type: "data-tool-call-end",
+          data: {
+            toolCallId,
+            toolName: "edit_screen",
+            frame: result.frame,
+          },
         });
         return result;
       },
@@ -331,11 +375,19 @@ export function createTools(ctx: ToolContext) {
           const v = updates[k];
           if (v !== undefined) theme[k] = String(v);
         }
-        const result = { success: true };
+        const result = { success: true, themeUpdates: { ...updates } };
         writer?.write({
           type: "tool-output-available",
           toolCallId,
           output: result,
+        });
+        writer?.write({
+          type: "data-tool-call-end",
+          data: {
+            toolCallId,
+            toolName: "update_theme",
+            themeUpdates: result.themeUpdates,
+          },
         });
         return result;
       },
@@ -382,11 +434,23 @@ export function createTools(ctx: ToolContext) {
         for (const [k, v] of Object.entries(normalized)) {
           theme[k] = v;
         }
-        const result = { success: true, message: "Theme built" };
+        const result = {
+          success: true,
+          message: "Theme built",
+          theme: { ...theme },
+        };
         writer?.write({
           type: "tool-output-available",
           toolCallId,
           output: result,
+        });
+        writer?.write({
+          type: "data-tool-call-end",
+          data: {
+            toolCallId,
+            toolName: "build_theme",
+            theme: result.theme,
+          },
         });
         return result;
       },

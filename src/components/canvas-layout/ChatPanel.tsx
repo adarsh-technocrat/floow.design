@@ -474,6 +474,7 @@ export function ChatPanel({
         toolCallId?: string;
         toolName?: string;
         input?: Record<string, JsonValue>;
+        output?: unknown;
         data?: {
           toolCallId: string;
           toolName: string;
@@ -500,11 +501,81 @@ export function ChatPanel({
         return;
       }
       if (ev.type === "tool-output-available" && toolCallId) {
+        const output = ev.output as
+          | {
+              frame?: {
+                id: string;
+                label?: string;
+                left?: number;
+                top?: number;
+                html?: string;
+              };
+              theme?: Record<string, string>;
+              themeUpdates?: Record<string, string>;
+            }
+          | undefined;
         setToolSteps((prev) =>
           prev.map((s) =>
             s.toolCallId === toolCallId ? { ...s, state: "done" as const } : s,
           ),
         );
+        if (output?.frame) {
+          const f = output.frame;
+          const isCreate =
+            f.id &&
+            (f.left !== undefined || f.top !== undefined) &&
+            f.html !== undefined;
+          if (isCreate) {
+            dispatch(
+              addFrameWithId({
+                id: f.id,
+                label: f.label ?? "",
+                left: f.left ?? 0,
+                top: f.top ?? 0,
+                html: f.html ?? "",
+              }),
+            );
+            dispatch(
+              updateFrame({
+                id: f.id,
+                changes: { label: f.label, html: f.html },
+              }),
+            );
+            if (f.html && f.html.length > 0) {
+              fetch("/api/frames", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  frameId: f.id,
+                  html: f.html,
+                  label: f.label,
+                  left: f.left,
+                  top: f.top,
+                }),
+              }).catch(() => {});
+            }
+          } else if (f.id && f.html !== undefined) {
+            dispatch(updateFrameHtml({ id: f.id, html: f.html }));
+            const frame = stateRef.current.frames.find((x) => x.id === f.id);
+            fetch("/api/frames", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                frameId: f.id,
+                html: f.html,
+                label: frame?.label,
+                left: frame?.left,
+                top: frame?.top,
+              }),
+            }).catch(() => {});
+          }
+        }
+        if (output?.themeUpdates) {
+          dispatch(setTheme(output.themeUpdates));
+        }
+        if (output?.theme) {
+          dispatch(replaceTheme(output.theme));
+        }
         return;
       }
       if (ev.type === "tool-input-available" && ev.toolCallId && ev.input) {
