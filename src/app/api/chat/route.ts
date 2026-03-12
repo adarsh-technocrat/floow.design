@@ -29,11 +29,25 @@ const vertex = createVertex({
     }),
 });
 
-function hasParts(msg: {
-  parts?: unknown;
-  content?: unknown;
-}): msg is { role: string; parts: Array<{ type: string }> } {
-  return Array.isArray((msg as { parts?: unknown }).parts);
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function hasParts(
+  msg: any,
+): msg is { role: string; parts: Array<{ type: string }> } {
+  return Array.isArray(msg?.parts);
+}
+
+/**
+ * Strip base64 data URIs from message content to prevent bloating the
+ * Gemini API request. Works by serializing/deserializing the entire
+ * messages array to catch base64 data nested at any depth.
+ */
+function stripBase64FromMessages(messages: ModelMessage[]): ModelMessage[] {
+  const BASE64_RE = /data:image\/[^;]+;base64,[A-Za-z0-9+/=]{100,}/g;
+  const serialized = JSON.stringify(messages);
+  if (!BASE64_RE.test(serialized)) return messages;
+  return JSON.parse(
+    serialized.replace(BASE64_RE, "(base64 image data omitted)"),
+  ) as ModelMessage[];
 }
 
 export async function POST(req: Request) {
@@ -123,11 +137,14 @@ export async function POST(req: Request) {
               ]
             : validMessages;
 
-        // 5. Run agentic streamText
+        // 5. Strip base64 images from history to avoid Gemini payload limits
+        const sanitizedMessages = stripBase64FromMessages(messagesToSend);
+
+        // 6. Run agentic streamText
         const result = streamText({
           model: vertex("gemini-3-pro-preview"),
           system,
-          messages: messagesToSend,
+          messages: sanitizedMessages,
           tools,
           stopWhen: stepCountIs(10),
           experimental_repairToolCall: async ({
@@ -150,7 +167,6 @@ export async function POST(req: Request) {
               ].join("\n"),
             });
             try {
-              // Validate the repaired text is valid JSON
               JSON.parse(repaired.text);
               return {
                 type: "tool-call" as const,
@@ -164,7 +180,7 @@ export async function POST(req: Request) {
           },
         });
 
-        // 6. Merge into UIMessageStream
+        // 7. Merge into UIMessageStream
         writer.merge(result.toUIMessageStream());
       },
     });
