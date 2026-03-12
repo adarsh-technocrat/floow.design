@@ -102,26 +102,54 @@ const PLANNING_STEP_LABELS: Record<string, string> = {
   planStyle: "Defining visual style",
 };
 
-function StepStatusIcon({ status }: { status: PlanningStep["status"] }) {
-  if (status === "success") {
-    return (
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        width="1em"
-        height="1em"
-        fill="currentColor"
-        viewBox="0 0 256 256"
-        className="size-3 shrink-0 text-emerald-400"
-      >
-        <path d="M229.66,77.66l-128,128a8,8,0,0,1-11.32,0l-56-56a8,8,0,0,1,11.32-11.32L96,188.69,218.34,66.34a8,8,0,0,1,11.32,11.32Z" />
-      </svg>
-    );
-  }
-  if (status === "error") {
-    return <CircleX className="size-3 shrink-0 text-red-400" strokeWidth={2} />;
-  }
+function PlanningStepChip({ step }: { step: PlanningStep }) {
+  const isSuccess = step.status === "success";
+  const isError = step.status === "error";
+  const isPending = step.status === "pending";
+
   return (
-    <span className="inline-block size-3 shrink-0 animate-pulse rounded-full bg-[#8A87F8]/70" />
+    <div
+      className={`not-prose flex w-fit items-center gap-2 rounded-md border px-2 py-1 transition-all ${
+        isError
+          ? "border-red-500/40 bg-red-500/10"
+          : isSuccess
+            ? "border-emerald-500/40 bg-emerald-500/10"
+            : "border-[#8A87F8]/40 bg-[#8A87F8]/10"
+      }`}
+    >
+      {isError ? (
+        <CircleX className="size-3.5 shrink-0 text-red-400" strokeWidth={2} />
+      ) : isSuccess ? (
+        CheckIcon
+      ) : isPending ? (
+        <span className="inline-block size-3.5 shrink-0 animate-pulse rounded-full bg-[#8A87F8]/80" />
+      ) : (
+        <span className="inline-block size-3.5 shrink-0 rounded-full bg-white/40" />
+      )}
+      <span
+        className={`font-mono text-[11px] uppercase tracking-wider ${
+          isError
+            ? "text-red-300"
+            : isSuccess
+              ? "text-emerald-300"
+              : "text-white/90"
+        }`}
+      >
+        {step.label}
+      </span>
+    </div>
+  );
+}
+
+function PlanningStepsBlock({ steps }: { steps: PlanningStep[] }) {
+  return (
+    <div className="flex w-full justify-start">
+      <div className="flex flex-col gap-1.5">
+        {steps.map((step) => (
+          <PlanningStepChip key={step.stepId} step={step} />
+        ))}
+      </div>
+    </div>
   );
 }
 
@@ -134,29 +162,14 @@ function StreamingActivityIndicator({
   toolParts: MessagePart[];
   frames: { id: string; label: string }[];
 }) {
-  const hasEvents = steps.length > 0 || toolParts.length > 0;
+  const hasToolParts = toolParts.length > 0;
+  const hasStepsOnly = steps.length > 0 && !hasToolParts;
 
   return (
     <div className="flex w-full justify-start">
       <div className="w-fit max-w-[85%] rounded-lg bg-muted/50 px-3 py-2.5 text-sm">
-        {hasEvents && (
+        {hasToolParts && (
           <div className="flex flex-col gap-1.5 mb-2">
-            {steps.map((step) => (
-              <div key={step.stepId} className="flex items-center gap-2">
-                <StepStatusIcon status={step.status} />
-                <span
-                  className={`font-mono text-[11px] tracking-wider ${
-                    step.status === "success"
-                      ? "text-emerald-300/80"
-                      : step.status === "error"
-                        ? "text-red-300/80"
-                        : "text-white/60"
-                  }`}
-                >
-                  {step.label}
-                </span>
-              </div>
-            ))}
             {toolParts.map((tool, ti) => (
               <ToolCallChip
                 key={tool.toolCallId ?? ti}
@@ -166,8 +179,15 @@ function StreamingActivityIndicator({
             ))}
           </div>
         )}
+        {hasStepsOnly && (
+          <div className="flex flex-col gap-1.5 mb-2">
+            {steps.map((step) => (
+              <PlanningStepChip key={step.stepId} step={step} />
+            ))}
+          </div>
+        )}
         <span className="inline-block animate-pulse bg-gradient-to-r from-stone-400 via-stone-200 to-stone-400 bg-[length:200%_100%] bg-clip-text text-transparent [animation-duration:1.5s] font-medium">
-          Planning next move…
+          {hasStepsOnly ? "Planning…" : "Working…"}
         </span>
       </div>
     </div>
@@ -925,6 +945,9 @@ export function ChatPanel({
               );
             },
           )}
+        {planningSteps.length > 0 && (
+          <PlanningStepsBlock steps={planningSteps} />
+        )}
         {(status === "submitted" || status === "streaming") &&
           (() => {
             const lastMsg = messages[messages.length - 1];
@@ -936,7 +959,7 @@ export function ChatPanel({
                 : [];
             return (
               <StreamingActivityIndicator
-                steps={planningSteps}
+                steps={[]}
                 toolParts={lastToolParts as MessagePart[]}
                 frames={frames}
               />
