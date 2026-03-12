@@ -153,41 +153,12 @@ function PlanningStepsBlock({ steps }: { steps: PlanningStep[] }) {
   );
 }
 
-function StreamingActivityIndicator({
-  steps,
-  toolParts,
-  frames,
-}: {
-  steps: PlanningStep[];
-  toolParts: MessagePart[];
-  frames: { id: string; label: string }[];
-}) {
-  const hasToolParts = toolParts.length > 0;
-  const hasStepsOnly = steps.length > 0 && !hasToolParts;
-
+function StreamingActivityIndicator() {
   return (
     <div className="flex w-full justify-start">
       <div className="w-fit max-w-[85%] rounded-lg bg-muted/50 px-3 py-2.5 text-sm">
-        {hasToolParts && (
-          <div className="flex flex-col gap-1.5 mb-2">
-            {toolParts.map((tool, ti) => (
-              <ToolCallChip
-                key={tool.toolCallId ?? ti}
-                tool={tool}
-                frames={frames}
-              />
-            ))}
-          </div>
-        )}
-        {hasStepsOnly && (
-          <div className="flex flex-col gap-1.5 mb-2">
-            {steps.map((step) => (
-              <PlanningStepChip key={step.stepId} step={step} />
-            ))}
-          </div>
-        )}
         <span className="inline-block animate-pulse bg-gradient-to-r from-stone-400 via-stone-200 to-stone-400 bg-[length:200%_100%] bg-clip-text text-transparent [animation-duration:1.5s] font-medium">
-          {hasStepsOnly ? "Planning…" : "Working…"}
+          Working…
         </span>
       </div>
     </div>
@@ -319,12 +290,10 @@ function AssistantMessageContent({
   parts,
   frames,
   isStreaming,
-  isLastStreamingMessage,
 }: {
   parts: MessagePart[];
   frames: { id: string; label: string }[];
   isStreaming?: boolean;
-  isLastStreamingMessage?: boolean;
 }) {
   const blocks: Array<
     | { kind: "text"; text: string }
@@ -342,10 +311,6 @@ function AssistantMessageContent({
       blocks.push({ kind: "reasoning", text: part.text ?? "" });
       i++;
     } else if (isToolPartType(part.type)) {
-      if (isLastStreamingMessage) {
-        i++;
-        continue;
-      }
       const toolGroup: MessagePart[] = [];
       while (i < parts.length && isToolPartType(parts[i].type)) {
         toolGroup.push(parts[i]);
@@ -887,17 +852,14 @@ export function ChatPanel({
               },
               msgIndex: number,
             ) => {
-              const isChatActive =
-                status === "submitted" || status === "streaming";
               const isLastMessage = msgIndex === messages.length - 1;
-              const isLastStreaming = isChatActive && isLastMessage;
               const hasVisibleContent =
                 msg.role !== "assistant" ||
                 (msg.parts ?? []).some(
                   (p) =>
                     p.type === "text" ||
                     p.type === "reasoning" ||
-                    (!isLastStreaming && isToolPartType(p.type)),
+                    isToolPartType(p.type),
                 ) ||
                 typeof msg.content === "string";
               if (!hasVisibleContent) return null;
@@ -928,7 +890,6 @@ export function ChatPanel({
                           parts={msg.parts as MessagePart[]}
                           frames={frames}
                           isStreaming={status === "streaming" && isLastMessage}
-                          isLastStreamingMessage={isLastStreaming}
                         />
                       ) : typeof msg.content === "string" ? (
                         <div className="chat-markdown">
@@ -948,23 +909,9 @@ export function ChatPanel({
         {planningSteps.length > 0 && (
           <PlanningStepsBlock steps={planningSteps} />
         )}
-        {(status === "submitted" || status === "streaming") &&
-          (() => {
-            const lastMsg = messages[messages.length - 1];
-            const lastToolParts =
-              lastMsg?.role === "assistant"
-                ? (lastMsg.parts ?? []).filter((p: { type: string }) =>
-                    isToolPartType(p.type),
-                  )
-                : [];
-            return (
-              <StreamingActivityIndicator
-                steps={[]}
-                toolParts={lastToolParts as MessagePart[]}
-                frames={frames}
-              />
-            );
-          })()}
+        {(status === "submitted" || status === "streaming") && (
+          <StreamingActivityIndicator />
+        )}
       </div>
 
       <div className="w-full p-4">
