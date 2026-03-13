@@ -376,8 +376,104 @@
     }
   });
 
+  function startCursorTracker() {
+    try {
+      var fid = "";
+      try {
+        fid =
+          (window.frameElement &&
+            window.frameElement.getAttribute("data-frame-id")) ||
+          "";
+      } catch (_) {}
+      if (!fid) return;
+      function report() {
+        try {
+          var b = document.body;
+          if (!b) return;
+          var ch = b.children;
+          var t = null;
+          for (var i = ch.length - 1; i >= 0; i--) {
+            var tag = (ch[i] && ch[i].tagName) || "";
+            if (tag !== "SCRIPT" && tag !== "STYLE") {
+              t = ch[i];
+              break;
+            }
+          }
+          if (!t) return;
+          var el = t;
+          var d = 0;
+          while (el.lastElementChild && d < 6) {
+            var lt = el.lastElementChild.tagName;
+            if (lt === "SCRIPT" || lt === "STYLE") {
+              var prev = el.lastElementChild.previousElementSibling;
+              if (prev) {
+                el = prev;
+              } else break;
+            } else {
+              el = el.lastElementChild;
+            }
+            d++;
+          }
+          if (el === b || el === document.documentElement) return;
+          var r = el.getBoundingClientRect();
+          if (r.width < 1 && r.height < 1) return;
+          window.parent.postMessage(
+            {
+              type: "cursor-element-track",
+              frameId: fid,
+              rect: {
+                left: r.left,
+                top: r.top,
+                width: r.width,
+                height: r.height,
+              },
+            },
+            "*",
+          );
+        } catch (_) {}
+      }
+      report();
+      if (typeof MutationObserver !== "undefined") {
+        var mo = new MutationObserver(report);
+        mo.observe(document.body, { childList: true, subtree: true });
+      }
+      var iv = setInterval(report, 120);
+      setTimeout(function () {
+        clearInterval(iv);
+      }, 8000);
+    } catch (_) {}
+  }
+
+  function startCanvasZoom() {
+    try {
+      document.addEventListener(
+        "wheel",
+        function (e) {
+          if (e.ctrlKey || e.metaKey) {
+            e.preventDefault();
+            e.stopPropagation();
+            try {
+              window.parent.postMessage(
+                {
+                  type: "canvas-zoom",
+                  deltaY: e.deltaY,
+                  clientX: e.clientX,
+                  clientY: e.clientY,
+                },
+                "*",
+              );
+            } catch (_) {}
+          }
+        },
+        { passive: false, capture: true },
+      );
+    } catch (_) {}
+  }
+
   function init() {
     ensureElementIds(document);
+    startCursorTracker();
+    startCanvasZoom();
     if (document.readyState === "complete") {
       window.parent.postMessage(
         { type: "IFRAME_READY", source: "element-inspector" },
