@@ -1,10 +1,13 @@
 /**
  * Tool definitions for the Sleek design agent.
  * Factory function creates tools with closures over mutable state.
+ * When designModel is set, create_screen, edit_screen, build_theme, and update_theme
+ * delegate content generation to that model (e.g. gemini-3-pro-preview).
  */
 
-import { tool } from "ai";
+import { tool, generateText, generateObject, streamText } from "ai";
 import type { UIMessageStreamWriter } from "ai";
+import type { GoogleVertexProvider } from "@ai-sdk/google-vertex";
 import { z } from "zod";
 import {
   wrapScreenBody,
@@ -13,9 +16,7 @@ import {
   type ThemeVariables,
 } from "@/lib/screen-utils";
 import {
-  extractPartialScreenHtml,
   parseCreateScreenPartial,
-  parseUpdateScreenPartial,
   type CreateScreenStreamState,
   type UpdateScreenStreamState,
 } from "./stream-helpers";
@@ -32,16 +33,97 @@ export interface ToolContext {
   frames: FrameState[];
   theme: ThemeVariables;
   writer?: UIMessageStreamWriter;
+  /** When set, create_screen / edit_screen / build_theme / update_theme use this model for content generation. */
+  designModel?: {
+    vertex: GoogleVertexProvider;
+    modelId: string;
+  };
+}
+
+function stripHtmlMarkdown(raw: string): string {
+  const trimmed = raw.trim();
+  return trimmed
+    .replace(/^```(?:html)?\s*/i, "")
+    .replace(/\s*```$/i, "")
+    .trim();
+}
+
+/** Generate inner body HTML using the design model. Returns null on failure. */
+async function generateScreenHtmlWithDesignModel(
+  vertex: GoogleVertexProvider,
+  modelId: string,
+  prompt: string,
+  options?: { maxOutputTokens?: number },
+): Promise<string | null> {
+  try {
+    const { text } = await generateText({
+      model: vertex(modelId),
+      prompt,
+      maxOutputTokens: options?.maxOutputTokens ?? 16384,
+    });
+    const out = stripHtmlMarkdown(text);
+    return out || null;
+  } catch {
+    return null;
+  }
+}
+
+async function streamScreenHtmlWithDesignModel(
+  vertex: GoogleVertexProvider,
+  modelId: string,
+  prompt: string,
+  onChunk: (accumulated: string) => void,
+  options?: { maxOutputTokens?: number },
+): Promise<string | null> {
+  try {
+    const result = streamText({
+      model: vertex(modelId),
+      prompt,
+      maxOutputTokens: options?.maxOutputTokens ?? 16384,
+    });
+    let accumulated = "";
+    for await (const part of result.textStream) {
+      accumulated += part;
+      onChunk(accumulated);
+    }
+    if (accumulated) onChunk(accumulated);
+    const out = stripHtmlMarkdown(accumulated);
+    return out || null;
+  } catch {
+    return null;
+  }
+}
+
+/** Generate theme variables (flat --key -> value) using the design model. */
+const THEME_KEYS =
+  "--background, --foreground, --primary, --primary-foreground, --secondary, --secondary-foreground, --muted, --muted-foreground, --card, --card-foreground, --border, --radius, --font-sans, --font-heading";
+
+async function generateThemeWithDesignModel(
+  vertex: GoogleVertexProvider,
+  modelId: string,
+  prompt: string,
+): Promise<Record<string, string> | null> {
+  try {
+    const { object } = await generateObject({
+      model: vertex(modelId),
+      schema: z.record(z.string(), z.string()),
+      prompt: `${prompt}\n\nOutput a JSON object with CSS variable keys (e.g. ${THEME_KEYS}). Keys must start with --.`,
+    });
+    return object && typeof object === "object" ? object : null;
+  } catch {
+    return null;
+  }
 }
 
 const FRAME_SPACING = 420;
 const STREAM_THROTTLE_MS = 120;
 
 export function createTools(ctx: ToolContext) {
-  const { frames, theme, writer } = ctx;
+  const { frames, theme, writer, designModel } = ctx;
 
   const createScreenStreamState = new Map<string, CreateScreenStreamState>();
   const updateScreenStreamState = new Map<string, UpdateScreenStreamState>();
+  const editScreenStreamBuffer = new Map<string, string>();
 
   return {
     read_screen: tool({
@@ -55,15 +137,10 @@ export function createTools(ctx: ToolContext) {
           toolName: "read_screen",
         });
       },
-      execute: async ({ id }: { id: string }, { toolCallId }) => {
+      execute: async ({ id }: { id: string }) => {
         const frame = frames.find((f) => f.id === id);
         const html = frame?.html ? extractBodyContent(frame.html) : "";
         const result = html || "(empty screen)";
-        writer?.write({
-          type: "tool-output-available",
-          toolCallId,
-          output: result,
-        });
         return result;
       },
     }),
@@ -79,23 +156,22 @@ export function createTools(ctx: ToolContext) {
           toolName: "read_theme",
         });
       },
-      execute: async (_, { toolCallId }) => {
+      execute: async () => {
         const result = JSON.stringify(theme, null, 2);
-        writer?.write({
-          type: "tool-output-available",
-          toolCallId,
-          output: result,
-        });
         return result;
       },
     }),
 
     create_screen: tool({
       description:
-        "Creates a new screen. screen_html is inner body content only (no html, head, or body tags).",
+        "Creates a new screen. The design model generates the HTML from the screen name and description (e.g. from the plan).",
       inputSchema: z.object({
         name: z.string().describe("Screen label/name"),
-        screen_html: z.string().describe("HTML for body content only"),
+        description: z
+          .string()
+          .describe(
+            "Description of the screen content and layout (e.g. from the plan).",
+          ),
       }),
       onInputStart: ({ toolCallId }) => {
         writer?.write({
@@ -106,7 +182,6 @@ export function createTools(ctx: ToolContext) {
         createScreenStreamState.set(toolCallId, {
           buffer: "",
           lastEmit: 0,
-          lastHtmlLen: 0,
         });
         const lastFrame = frames[frames.length - 1];
         const left = lastFrame ? lastFrame.left + FRAME_SPACING : 0;
@@ -128,42 +203,54 @@ export function createTools(ctx: ToolContext) {
         if (now - state.lastEmit < STREAM_THROTTLE_MS) return;
         const frame = frames.find((f) => f.id === toolCallId);
         if (!frame) return;
-        let changed = false;
         const parsed = parseCreateScreenPartial(state.buffer);
-        if (parsed) {
-          if (typeof parsed.name === "string" && parsed.name !== frame.label) {
-            frame.label = parsed.name;
-            changed = true;
-          }
-          if (
-            typeof parsed.screen_html === "string" &&
-            parsed.screen_html.length > 0
-          ) {
-            frame.html = wrapScreenBody(parsed.screen_html, theme);
-            state.lastHtmlLen = parsed.screen_html.length;
-            changed = true;
-          }
-        }
-        if (!changed) {
-          const partialHtml = extractPartialScreenHtml(state.buffer);
-          if (
-            typeof partialHtml === "string" &&
-            partialHtml.length > state.lastHtmlLen
-          ) {
-            frame.html = wrapScreenBody(partialHtml, theme);
-            state.lastHtmlLen = partialHtml.length;
-            changed = true;
-          }
-        }
-        if (changed) {
+        if (parsed?.name && parsed.name !== frame.label) {
+          frame.label = parsed.name;
           state.lastEmit = now;
         }
       },
       execute: async (
-        { name, screen_html }: { name: string; screen_html: string },
+        { name, description }: { name: string; description: string },
         { toolCallId },
       ) => {
-        const wrappedHtml = wrapScreenBody(screen_html, theme);
+        if (!designModel?.vertex || !designModel?.modelId) {
+          return {
+            success: false,
+            error: "Design model is required for create_screen.",
+          };
+        }
+        const designPrompt = `You are a mobile UI designer. Generate the inner body HTML (no html/head/body tags) for a screen named "${name}".\n\nDescription: ${description}\n\nUse Tailwind classes and iconify-icon where needed. Output only the complete inner body HTML, no markdown or explanation.`;
+        const generated = await streamScreenHtmlWithDesignModel(
+          designModel.vertex,
+          designModel.modelId,
+          designPrompt,
+          (accumulated) => {
+            const wrapped = wrapScreenBody(accumulated, theme);
+            writer?.write({
+              type: "data-tool-call-delta",
+              data: {
+                toolCallId,
+                toolName: "create_screen",
+                frame: {
+                  id: toolCallId,
+                  label: name,
+                  left: frames.find((f) => f.id === toolCallId)?.left ?? 0,
+                  top: frames.find((f) => f.id === toolCallId)?.top ?? 0,
+                  html: wrapped,
+                },
+              },
+            });
+          },
+          { maxOutputTokens: 16384 },
+        );
+        const finalHtml = generated?.trim() ?? "";
+        if (!finalHtml) {
+          return {
+            success: false,
+            error: "Design model did not return HTML. Try again.",
+          };
+        }
+        const wrappedHtml = wrapScreenBody(finalHtml, theme);
         const frame = frames.find((f) => f.id === toolCallId);
         if (frame) {
           frame.label = name;
@@ -196,11 +283,6 @@ export function createTools(ctx: ToolContext) {
               }
             : undefined,
         };
-        writer?.write({
-          type: "tool-output-available",
-          toolCallId,
-          output: result,
-        });
         if (result.frame) {
           writer?.write({
             type: "data-tool-call-end",
@@ -217,10 +299,14 @@ export function createTools(ctx: ToolContext) {
 
     update_screen: tool({
       description:
-        "Replaces the ENTIRE screen body. Use only for broad layout redesigns. Do NOT use for small targeted edits.",
+        "Replaces the ENTIRE screen body based on a description of the changes. Use only for broad layout redesigns. Do NOT use for small targeted edits (use edit_screen instead). The design model generates the new HTML from the current screen and your description.",
       inputSchema: z.object({
         id: z.string().describe("Frame id"),
-        screen_html: z.string().describe("HTML for body content only"),
+        description: z
+          .string()
+          .describe(
+            "Description of how the screen should be updated (layout, sections, style).",
+          ),
       }),
       onInputStart: ({ toolCallId }) => {
         writer?.write({
@@ -228,53 +314,63 @@ export function createTools(ctx: ToolContext) {
           toolCallId,
           toolName: "update_screen",
         });
-        updateScreenStreamState.set(toolCallId, {
-          buffer: "",
-          lastEmit: 0,
-        });
+        updateScreenStreamState.set(toolCallId, { buffer: "", lastEmit: 0 });
       },
-      onInputDelta: ({ toolCallId, inputTextDelta }) => {
-        const state = updateScreenStreamState.get(toolCallId);
-        if (!state) return;
-        state.buffer += inputTextDelta;
-        const now = Date.now();
-        if (now - state.lastEmit < STREAM_THROTTLE_MS) return;
-        const parsed = parseUpdateScreenPartial(state.buffer);
-        if (!parsed?.id || !parsed.screen_html) return;
-        const frame = frames.find((f) => f.id === parsed.id);
-        if (!frame) return;
-        const wrappedHtml = wrapScreenBody(parsed.screen_html, theme);
-        frame.html = wrappedHtml;
-        state.lastEmit = now;
-      },
+      onInputDelta: () => {},
       execute: async (
-        { id, screen_html }: { id: string; screen_html: string },
+        { id, description }: { id: string; description: string },
         { toolCallId },
       ) => {
         updateScreenStreamState.delete(toolCallId);
         const frame = frames.find((f) => f.id === id);
-        if (frame) {
-          frame.html = wrapScreenBody(screen_html, theme);
+        if (!frame?.html) {
+          return { success: false, error: "Screen not found" };
         }
+        if (!designModel?.vertex || !designModel?.modelId) {
+          return {
+            success: false,
+            error: "Design model is required for update_screen.",
+          };
+        }
+        const currentBody = extractBodyContent(frame.html);
+        const designPrompt = `You are a mobile UI designer. Update this screen's inner body HTML according to the description below. Output the complete updated inner body HTML only, no markdown or explanation.\n\nDescription of changes: ${description}\n\nCurrent inner body HTML:\n${currentBody}`;
+        const generated = await streamScreenHtmlWithDesignModel(
+          designModel.vertex,
+          designModel.modelId,
+          designPrompt,
+          (accumulated) => {
+            const wrapped = wrapScreenBody(accumulated, theme);
+            writer?.write({
+              type: "data-tool-call-delta",
+              data: {
+                toolCallId,
+                toolName: "update_screen",
+                frame: { id: frame.id, html: wrapped },
+              },
+            });
+          },
+          { maxOutputTokens: 16384 },
+        );
+        const finalHtml = generated?.trim() ?? "";
+        if (!finalHtml) {
+          return {
+            success: false,
+            error: "Design model did not return HTML. Try again.",
+          };
+        }
+        frame.html = wrapScreenBody(finalHtml, theme);
         const result = {
           success: true,
-          frame: frame ? { id: frame.id, html: frame.html } : undefined,
+          frame: { id: frame.id, html: frame.html },
         };
         writer?.write({
-          type: "tool-output-available",
-          toolCallId,
-          output: result,
+          type: "data-tool-call-end",
+          data: {
+            toolCallId,
+            toolName: "update_screen",
+            frame: result.frame,
+          },
         });
-        if (result.frame) {
-          writer?.write({
-            type: "data-tool-call-end",
-            data: {
-              toolCallId,
-              toolName: "update_screen",
-              frame: result.frame,
-            },
-          });
-        }
         return result;
       },
     }),
@@ -293,6 +389,13 @@ export function createTools(ctx: ToolContext) {
           toolCallId,
           toolName: "edit_screen",
         });
+        editScreenStreamBuffer.set(toolCallId, "");
+      },
+      onInputDelta: ({ toolCallId, inputTextDelta }) => {
+        const prev = editScreenStreamBuffer.get(toolCallId) ?? "";
+        const buffer = prev + inputTextDelta;
+        editScreenStreamBuffer.set(toolCallId, buffer);
+        process.stdout.write(inputTextDelta);
       },
       execute: async (
         {
@@ -306,40 +409,40 @@ export function createTools(ctx: ToolContext) {
         },
         { toolCallId },
       ) => {
+        editScreenStreamBuffer.delete(toolCallId);
+        process.stdout.write("\n"); // end the screen-delta stream line in console
         const frame = frames.find((f) => f.id === id);
         if (!frame?.html) {
-          const err = { success: false, error: "Screen not found" };
-          writer?.write({
-            type: "tool-output-available",
-            toolCallId,
-            output: err,
-          });
-          return err;
+          return { success: false, error: "Screen not found" };
         }
         if (!frame.html.includes(find)) {
-          const err = {
+          return {
             success: false,
             error:
               "Find string not found - ensure exact match from read_screen",
           };
-          writer?.write({
-            type: "tool-output-available",
-            toolCallId,
-            output: err,
-          });
-          return err;
         }
-        const newHtml = frame.html.replace(find, replace);
+        let newHtml: string;
+        if (designModel?.vertex && designModel?.modelId) {
+          const currentBody = extractBodyContent(frame.html);
+          const designPrompt = `You must perform exactly one replacement in the HTML below. Find the exact substring given under "Find" and replace it with the text under "Replace". Do not change any other part of the HTML. Do not add or remove sections. Output the complete inner body HTML with only that one replacement applied.\n\nFind (exact string to replace):\n${find}\n\nReplace with:\n${replace}\n\nCurrent inner body HTML:\n${currentBody}`;
+          const generated = await generateScreenHtmlWithDesignModel(
+            designModel.vertex,
+            designModel.modelId,
+            designPrompt,
+            { maxOutputTokens: 16384 },
+          );
+          newHtml = generated
+            ? wrapScreenBody(generated, theme)
+            : frame.html.replace(find, replace);
+        } else {
+          newHtml = frame.html.replace(find, replace);
+        }
         frame.html = newHtml;
         const result = {
           success: true,
           frame: { id: frame.id, html: frame.html },
         };
-        writer?.write({
-          type: "tool-output-available",
-          toolCallId,
-          output: result,
-        });
         writer?.write({
           type: "data-tool-call-end",
           data: {
@@ -373,16 +476,36 @@ export function createTools(ctx: ToolContext) {
         { updates }: { updates: Record<string, string> },
         { toolCallId },
       ) => {
-        for (const k of Object.keys(updates)) {
-          const v = updates[k];
-          if (v !== undefined) theme[k] = String(v);
+        let toApply = updates;
+        if (
+          designModel?.vertex &&
+          designModel?.modelId &&
+          Object.keys(updates).length > 0
+        ) {
+          const designPrompt = `Given current theme and requested updates, output a full coherent CSS theme as a flat object. Required keys: ${THEME_KEYS}. Current theme: ${JSON.stringify(theme)}. Requested updates: ${JSON.stringify(updates)}. Return the complete merged theme.`;
+          const generated = await generateThemeWithDesignModel(
+            designModel.vertex,
+            designModel.modelId,
+            designPrompt,
+          );
+          if (generated) {
+            const normalized = normalizeThemeVars(generated);
+            for (const k of Object.keys(theme)) delete theme[k];
+            for (const [k, v] of Object.entries(normalized)) theme[k] = v;
+            toApply = normalized;
+          } else {
+            for (const k of Object.keys(updates)) {
+              const v = updates[k];
+              if (v !== undefined) theme[k] = String(v);
+            }
+          }
+        } else {
+          for (const k of Object.keys(updates)) {
+            const v = updates[k];
+            if (v !== undefined) theme[k] = String(v);
+          }
         }
-        const result = { success: true, themeUpdates: { ...updates } };
-        writer?.write({
-          type: "tool-output-available",
-          toolCallId,
-          output: result,
-        });
+        const result = { success: true, themeUpdates: { ...toApply } };
         writer?.write({
           type: "data-tool-call-end",
           data: {
@@ -415,6 +538,7 @@ export function createTools(ctx: ToolContext) {
       },
       execute: async (
         {
+          description,
           variables = {},
         }: {
           description?: string;
@@ -422,20 +546,35 @@ export function createTools(ctx: ToolContext) {
         },
         { toolCallId },
       ) => {
-        if (!variables || typeof variables !== "object") {
-          const err = {
+        const agentVars: Record<string, string> =
+          variables && typeof variables === "object" ? variables : {};
+        let varsToApply = { ...agentVars };
+        if (designModel?.vertex && designModel?.modelId) {
+          const contextParts: string[] = [];
+          if (description?.trim())
+            contextParts.push(`Guidelines: ${description}`);
+          if (Object.keys(agentVars).length > 0)
+            contextParts.push(
+              `Draft variables from agent (refine or keep): ${JSON.stringify(agentVars)}`,
+            );
+          const designPrompt = `Generate a complete CSS theme as a flat object. Required keys: ${THEME_KEYS}. Values: hex colors, rem for --radius, font family strings for --font-sans and --font-heading.\n\n${contextParts.join("\n\n")}`;
+          const generated = await generateThemeWithDesignModel(
+            designModel.vertex,
+            designModel.modelId,
+            designPrompt,
+          );
+          if (generated && Object.keys(generated).length > 0) {
+            varsToApply = generated;
+          }
+        }
+        if (!varsToApply || Object.keys(varsToApply).length === 0) {
+          return {
             success: false,
             error:
               'variables is required. Pass an object like {"--primary":"#2563eb","--background":"#0f172a"}',
           };
-          writer?.write({
-            type: "tool-output-available",
-            toolCallId,
-            output: err,
-          });
-          return err;
         }
-        const normalized = normalizeThemeVars(variables);
+        const normalized = normalizeThemeVars(varsToApply);
         for (const k of Object.keys(theme)) delete theme[k];
         for (const [k, v] of Object.entries(normalized)) {
           theme[k] = v;
@@ -445,11 +584,6 @@ export function createTools(ctx: ToolContext) {
           message: "Theme built",
           theme: { ...theme },
         };
-        writer?.write({
-          type: "tool-output-available",
-          toolCallId,
-          output: result,
-        });
         writer?.write({
           type: "data-tool-call-end",
           data: {
