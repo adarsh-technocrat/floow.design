@@ -154,6 +154,7 @@ export async function POST(req: Request) {
         const uiStream = result.toUIMessageStream();
         let skippedFirstStart = false;
         let skippedFirstStep = false;
+        let stepCount = 0;
         const filteredStream = uiStream.pipeThrough(
           new TransformStream({
             transform(chunk, controller) {
@@ -163,8 +164,20 @@ export async function POST(req: Request) {
                 skippedFirstStart = true;
                 return;
               }
-              if (type === "start-step" && !skippedFirstStep) {
-                skippedFirstStep = true;
+              if (type === "start-step") {
+                if (!skippedFirstStep) {
+                  skippedFirstStep = true;
+                  return;
+                }
+                stepCount++;
+              }
+              // Only allow reasoning on the first step (step 0)
+              if (
+                stepCount > 0 &&
+                (type === "reasoning-start" ||
+                  type === "reasoning-delta" ||
+                  type === "reasoning-end")
+              ) {
                 return;
               }
               controller.enqueue(chunk);
