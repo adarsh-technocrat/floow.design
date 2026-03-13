@@ -52,6 +52,19 @@ export const FramePreview = React.forwardRef<
     onMessage: onMessageFromFrame,
   });
 
+  const writeWithTransition = useCallback(() => {
+    const el = internalRef.current;
+    const html = latestHtmlRef.current;
+    if (!html) return;
+    el?.classList.add("frame-updating");
+    requestAnimationFrame(() => {
+      writeContent(html);
+      requestAnimationFrame(() => {
+        el?.classList.remove("frame-updating");
+      });
+    });
+  }, [writeContent]);
+
   const preparedHtml = useMemo(
     () => (html ? injectFrameScripts(html) : ""),
     [html],
@@ -79,21 +92,19 @@ export const FramePreview = React.forwardRef<
     if (!preparedHtml) return;
     latestHtmlRef.current = preparedHtml;
 
-    const doWrite = () => writeContent(latestHtmlRef.current);
-
     if (!isStreaming) {
       if (writeTimeoutRef.current) {
         clearTimeout(writeTimeoutRef.current);
         writeTimeoutRef.current = null;
       }
-      doWrite();
+      writeWithTransition();
       return;
     }
 
     if (writeTimeoutRef.current) return;
     writeTimeoutRef.current = setTimeout(() => {
       writeTimeoutRef.current = null;
-      doWrite();
+      writeWithTransition();
     }, WRITE_THROTTLE_MS);
 
     return () => {
@@ -102,7 +113,7 @@ export const FramePreview = React.forwardRef<
         writeTimeoutRef.current = null;
       }
     };
-  }, [preparedHtml, isStreaming, writeContent]);
+  }, [preparedHtml, isStreaming, writeWithTransition]);
 
   const setRef = useCallback(
     (el: HTMLIFrameElement | null) => {
@@ -117,8 +128,8 @@ export const FramePreview = React.forwardRef<
   );
 
   const handleIframeLoad = useCallback(() => {
-    if (latestHtmlRef.current) writeContent(latestHtmlRef.current);
-  }, [writeContent]);
+    if (latestHtmlRef.current) writeWithTransition();
+  }, [writeWithTransition]);
 
   if (!html || html.length === 0) {
     return (
@@ -135,7 +146,7 @@ export const FramePreview = React.forwardRef<
   }
 
   const iframeClassName = [
-    "size-full border-0 bg-white scrollbar-hide",
+    "frame-preview-iframe size-full border-0 bg-white scrollbar-hide",
     !isStreaming && "frame-fade-in",
     allowInteraction ? "pointer-events-auto" : "pointer-events-none",
   ]

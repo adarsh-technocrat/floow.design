@@ -1,5 +1,8 @@
-{"location":"planner.ts:build_theme","message":"theme built","data":{"rawKeys":0,"normalizedKeys":0,"sampleKeys":[]},"timestamp":1773393774421,"hypothesisId":"H3"}
-{"location":"route.ts:transform","message":"tool-input-start","data":{"toolCallId":"SwzATGpLWQfmjicE","skip":false,"setSize":0},"timestamp":1773393789917,"hypothesisId":"H1"}
-{"location":"route.ts:transform","message":"tool-output-available","data":{"toolCallId":"SwzATGpLWQfmjicE","skip":false,"setSize":0},"timestamp":1773393850589,"hypothesisId":"H2"}
-{"location":"route.ts:transform","message":"tool-input-start","data":{"toolCallId":"LisqQNYoetD6DbDM","skip":false,"setSize":1},"timestamp":1773393861375,"hypothesisId":"H1"}
-{"location":"route.ts:transform","message":"tool-output-available","data":{"toolCallId":"LisqQNYoetD6DbDM","skip":false,"setSize":1},"timestamp":1773393908302,"hypothesisId":"H2"}
+{"location":"tools.ts:streamScreenHtmlWithDesignModel:entry","message":"Design model stream start","data":{"modelId":"gemini-3-pro-preview","promptLen":700},"timestamp":1773405423141,"hypothesisId":"H1-H4"}
+{"location":"tools.ts:streamScreenHtmlWithDesignModel:afterStream","message":"Design model stream finished","data":{"accumulatedLen":0,"accumulatedPreview":"","strippedLen":0,"strippedPreview":""},"timestamp":1773405424278,"hypothesisId":"H2-H3"}
+{"location":"tools.ts:streamScreenHtmlWithDesignModel:entry","message":"Design model stream start","data":{"modelId":"gemini-3-pro-preview","promptLen":700},"timestamp":1773405427563,"hypothesisId":"H1-H4"}
+{"location":"tools.ts:streamScreenHtmlWithDesignModel:afterStream","message":"Design model stream finished","data":{"accumulatedLen":0,"accumulatedPreview":"","strippedLen":0,"strippedPreview":""},"timestamp":1773405428224,"hypothesisId":"H2-H3"}
+{"location":"tools.ts:streamScreenHtmlWithDesignModel:entry","message":"Design model stream start","data":{"modelId":"gemini-3-pro-preview","promptLen":611},"timestamp":1773405436734,"hypothesisId":"H1-H4"}
+{"location":"tools.ts:streamScreenHtmlWithDesignModel:afterStream","message":"Design model stream finished","data":{"accumulatedLen":0,"accumulatedPreview":"","strippedLen":0,"strippedPreview":""},"timestamp":1773405438516,"hypothesisId":"H2-H3"}
+{"location":"tools.ts:streamScreenHtmlWithDesignModel:entry","message":"Design model stream start","data":{"modelId":"gemini-3-pro-preview","promptLen":386},"timestamp":1773405444544,"hypothesisId":"H1-H4"}
+{"location":"tools.ts:streamScreenHtmlWithDesignModel:afterStream","message":"Design model stream finished","data":{"accumulatedLen":0,"accumulatedPreview":"","strippedLen":0,"strippedPreview":""},"timestamp":1773405446404,"hypothesisId":"H2-H3"}

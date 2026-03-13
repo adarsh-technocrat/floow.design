@@ -112,6 +112,13 @@ body {
   animation: frame-fade-in 0.3s ease-out;
 }
 
+.frame-preview-iframe {
+  transition: opacity 0.15s ease-out;
+}
+.frame-preview-iframe.frame-updating {
+  opacity: 0.96;
+}
+
 .frame-preview-gradient {
   background: linear-gradient(
     135deg,
@@ -135,7 +142,6 @@ body {
     background-color: transparent !important;
   }
 }
-
 
 .code-dialog-shiki.shiki,
 .code-dialog-shiki .shiki,
