@@ -358,7 +358,9 @@ export function createTools(ctx: ToolContext) {
       inputSchema: z.object({
         updates: z
           .record(z.string(), z.string())
-          .describe("CSS variable names to values"),
+          .describe(
+            'Object: CSS variable name -> value, e.g. {"--primary":"#2563eb"}',
+          ),
       }),
       onInputStart: ({ toolCallId }) => {
         writer?.write({
@@ -398,7 +400,11 @@ export function createTools(ctx: ToolContext) {
         "Creates or replaces the global theme. Pass theme_vars as an object: CSS variable names (with --) to values. Use for initial theme creation.",
       inputSchema: z.object({
         description: z.string().optional(),
-        theme_vars: z.record(z.string(), z.string()),
+        theme_vars: z
+          .record(z.string(), z.string())
+          .describe(
+            'Object: CSS variable name -> value, e.g. {"--primary":"#2563eb","--background":"#0f172a"}',
+          ),
       }),
       onInputStart: ({ toolCallId }) => {
         writer?.write({

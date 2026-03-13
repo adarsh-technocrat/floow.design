@@ -243,6 +243,11 @@ function ReasoningBlock({
   );
 }
 
+type StreamOrderItem =
+  | { kind: "tool"; toolCallId: string }
+  | { kind: "reasoning"; text: string }
+  | { kind: "text"; text: string };
+
 function AssistantMessageContent({
   parts,
   frames,
@@ -254,45 +259,64 @@ function AssistantMessageContent({
   isStreaming?: boolean;
   toolSteps?: ToolStep[];
 }) {
-  const blocks: Array<
-    { kind: "text"; text: string } | { kind: "reasoning"; text: string }
-  > = [];
+  const stepByCallId = new Map(
+    (toolSteps ?? []).map((s) => [s.toolCallId, s] as const),
+  );
+  const seenToolIds = new Set<string>();
+  const ordered: StreamOrderItem[] = [];
 
   for (const part of parts) {
+    if (part.type === "step-start" || part.type?.startsWith("data-")) continue;
     if (part.type === "text") {
-      blocks.push({ kind: "text", text: part.text ?? "" });
+      ordered.push({ kind: "text", text: part.text ?? "" });
     } else if (part.type === "reasoning") {
-      blocks.push({ kind: "reasoning", text: part.text ?? "" });
+      ordered.push({ kind: "reasoning", text: part.text ?? "" });
+    } else if (
+      (part.type?.startsWith("tool-") || part.type === "dynamic-tool") &&
+      part.toolCallId &&
+      !seenToolIds.has(part.toolCallId)
+    ) {
+      seenToolIds.add(part.toolCallId);
+      ordered.push({ kind: "tool", toolCallId: part.toolCallId });
     }
   }
 
   return (
     <div className="space-y-3">
-      {toolSteps.length > 0 && (
-        <div className="flex flex-col gap-2 shrink-0">
-          {toolSteps.map((step) => (
-            <ToolStepChip key={step.toolCallId} step={step} frames={frames} />
-          ))}
-        </div>
-      )}
-      {blocks.map((block, bi) =>
-        block.kind === "text" ? (
-          block.text ? (
-            <div key={bi} className="chat-markdown">
-              <ReactMarkdown components={markdownComponents}>
-                {block.text}
-              </ReactMarkdown>
+      {ordered.map((item, i) => {
+        if (item.kind === "tool") {
+          const step = stepByCallId.get(item.toolCallId);
+          if (!step) return null;
+          return (
+            <div
+              key={`${item.toolCallId}-${i}`}
+              className="flex flex-col gap-2 shrink-0"
+            >
+              <ToolStepChip step={step} frames={frames} />
             </div>
-          ) : null
-        ) : (
-          <ReasoningBlock
-            key={bi}
-            text={block.text}
-            isStreaming={isStreaming}
-            isComplete={!isStreaming || bi < blocks.length - 1}
-          />
-        ),
-      )}
+          );
+        }
+        if (item.kind === "reasoning") {
+          return (
+            <ReasoningBlock
+              key={`reasoning-${i}`}
+              text={item.text}
+              isStreaming={isStreaming}
+              isComplete={
+                !isStreaming ||
+                ordered.slice(i + 1).some((x) => x.kind === "reasoning")
+              }
+            />
+          );
+        }
+        return item.text ? (
+          <div key={`text-${i}`} className="chat-markdown">
+            <ReactMarkdown components={markdownComponents}>
+              {item.text}
+            </ReactMarkdown>
+          </div>
+        ) : null;
+      })}
     </div>
   );
 }

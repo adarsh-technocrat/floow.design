@@ -3,7 +3,6 @@ import {
   createUIMessageStream,
   createUIMessageStreamResponse,
   streamText,
-  generateText,
   stepCountIs,
   convertToModelMessages,
   type ModelMessage,
@@ -14,7 +13,7 @@ import type { ThemeVariables } from "@/lib/screen-utils";
 import { createTools, type FrameState } from "@/lib/agent/tools";
 import { runPlanningPipeline } from "@/lib/agent/planner";
 
-export const maxDuration = 120;
+export const runtime = "nodejs";
 
 const vertex = createVertex({
   ...(process.env.GOOGLE_CLIENT_EMAIL &&
@@ -139,41 +138,13 @@ export async function POST(req: Request) {
           messages: sanitizedMessages,
           tools,
           stopWhen: stepCountIs(10),
-          includeRawChunks: true,
-          maxRetries: 3,
-          experimental_repairToolCall: async ({
-            toolCall,
-            inputSchema,
-            error,
-          }) => {
-            const schema = await inputSchema({
-              toolName: toolCall.toolName,
-            });
-            if (!schema) return null;
-            const repaired = await generateText({
-              model: vertex("gemini-2.0-flash"),
-              prompt: [
-                `The following tool call arguments are invalid and caused this error: ${error.message}`,
-                `Tool: ${toolCall.toolName}`,
-                `Arguments: ${toolCall.input}`,
-                `Expected JSON schema: ${JSON.stringify(schema)}`,
-                `Return ONLY the corrected JSON arguments object, nothing else.`,
-              ].join("\n"),
-            });
-            try {
-              JSON.parse(repaired.text);
-              return {
-                type: "tool-call" as const,
-                toolCallId: toolCall.toolCallId,
-                toolName: toolCall.toolName,
-                input: repaired.text,
-              };
-            } catch {
-              return null;
-            }
+          maxRetries: 1,
+          providerOptions: {
+            google: {
+              thinkingConfig: { thinkingLevel: "low", includeThoughts: true },
+            },
           },
         });
-
         // 7. Forward streamText UI stream, skipping 'start' (already emitted above)
         const uiStream = result.toUIMessageStream();
         let skippedFirstStart = false;
