@@ -1,7 +1,9 @@
 "use client";
 
-import { useRef } from "react";
+import React, { useMemo, useRef } from "react";
 import { FrameToolbar } from "@/components/FrameToolbar";
+import FrameElementInspectionOverlay from "@/components/frame/element-inspection/FrameElementInspectionOverlay";
+import { useAppSelector } from "@/store/hooks";
 import {
   useFrameInteraction,
   type ResizeHandle,
@@ -119,7 +121,7 @@ export interface FrameProps {
   children?: React.ReactNode;
 }
 
-export function Frame({
+export const Frame = React.memo(function Frame({
   id,
   label,
   html = "",
@@ -140,7 +142,36 @@ export function Frame({
   const width = widthProp ?? FRAME_WIDTH;
   const height = heightProp ?? FRAME_HEIGHT;
   const frameRef = useRef<HTMLDivElement>(null);
+  const iframeRef = useRef<HTMLIFrameElement>(null);
+  const overlayRef = useRef<HTMLDivElement>(null);
   const showToolbar = showToolbarProp ?? selected;
+  const agents = useAppSelector((s) => s.agent.agents);
+  const mainChatActiveFrameId = useAppSelector(
+    (s) => s.agent.mainChatActiveFrameId,
+  );
+  const mainChatStatus = useAppSelector((s) => s.agent.mainChatStatus);
+  const isActiveAgentFrame =
+    agents.some((a) => a.status === "working" && a.activeFrameId === id) ||
+    (agents.length === 0 &&
+      mainChatStatus === "working" &&
+      mainChatActiveFrameId === id);
+  const enableElementInspection = (showToolbar ?? false) || isActiveAgentFrame;
+
+  const childrenWithInspection = useMemo(() => {
+    if (children == null) return children;
+    const child = React.Children.only(children);
+    if (!React.isValidElement(child)) return children;
+    return React.cloneElement(
+      child as React.ReactElement<{
+        iframeRef?: React.RefObject<HTMLIFrameElement | null>;
+        enableElementInspection?: boolean;
+      }>,
+      {
+        iframeRef,
+        enableElementInspection,
+      },
+    );
+  }, [children, enableElementInspection]);
 
   const {
     isDragging,
@@ -213,7 +244,17 @@ export function Frame({
           {...(onWheelForZoom && { "data-frame-zoom": "true" })}
           onPointerDown={handleContentPointerDown}
         >
-          {children ?? <div className="size-full" title="Canvas Frame" />}
+          {childrenWithInspection ?? (
+            <div className="size-full" title="Canvas Frame" />
+          )}
+          {showToolbar && (
+            <FrameElementInspectionOverlay
+              iframeRef={iframeRef}
+              overlayRef={overlayRef}
+              enabled={true}
+              zoom={canvasScale}
+            />
+          )}
           {onWheelForZoom && (
             <div
               ref={wheelOverlayRef}
@@ -294,4 +335,4 @@ export function Frame({
       </div>
     </div>
   );
-}
+});

@@ -1,19 +1,24 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useCallback, useMemo } from "react";
 import { useAppSelector } from "@/store/hooks";
 import { FRAME_WIDTH, FRAME_HEIGHT } from "@/lib/canvas-utils";
+import type { AgentInstance } from "@/store/slices/agentSlice";
+import { AGENT_PERSONAS } from "@/constants/agent-personas";
 
-// ─── Cursor position store ────────────────────────────────────────────────
-// Module-level map: frameId → last element rect (in iframe viewport coords)
-const cursorPositions = new Map<
-  string,
-  { left: number; top: number; width: number; height: number }
->();
+export interface CursorElementInfo {
+  left: number;
+  top: number;
+  width: number;
+  height: number;
+  elementId: string;
+}
+
+export const cursorPositions = new Map<string, CursorElementInfo>();
 
 let positionListeners: Array<() => void> = [];
 
-function subscribeToCursorPositions(cb: () => void) {
+export function subscribeToCursorPositions(cb: () => void) {
   positionListeners.push(cb);
   return () => {
     positionListeners = positionListeners.filter((l) => l !== cb);
@@ -31,158 +36,252 @@ function installGlobalListener() {
   listenerInstalled = true;
   window.addEventListener("message", (e: MessageEvent) => {
     if (e.data?.type !== "cursor-element-track") return;
-    const { frameId, rect } = e.data;
+    const { frameId, rect, elementId } = e.data;
     if (!frameId || !rect) return;
-    cursorPositions.set(frameId, rect);
+    cursorPositions.set(frameId, { ...rect, elementId: elementId || "" });
     notifyListeners();
   });
 }
 
-// ─── Cursor SVG ───────────────────────────────────────────────────────────
+// ─── Lerp helper for smooth human-like movement ──────────────────────────
 
-function CursorSvg({ color }: { color: string }) {
+function lerp(a: number, b: number, t: number): number {
+  return a + (b - a) * t;
+}
+
+// ─── Single cursor component (pure DOM) ──────────────────────────────────
+
+function AgentCursor({
+  agent,
+  frames,
+}: {
+  agent: AgentInstance;
+  frames: Array<{
+    id: string;
+    label: string;
+    left: number;
+    top: number;
+    width?: number;
+    height?: number;
+  }>;
+}) {
+  const elRef = useRef<HTMLDivElement>(null);
+  // Current animated position
+  const currentPos = useRef({ x: 0, y: 0 });
+  // Target position to animate towards
+  const targetPos = useRef({ x: 0, y: 0 });
+  // Whether we've set an initial position yet
+  const hasInitialized = useRef(false);
+  // rAF handle
+  const rafRef = useRef<number>(0);
+  // Last valid position (so cursor doesn't jump to 0,0)
+  const lastValidPos = useRef<{ x: number; y: number } | null>(null);
+
+  // Compute target position from frame + element rect
+  const computeTarget = useCallback(() => {
+    const frame = frames.find((f) => f.id === agent.activeFrameId);
+    if (!frame) return lastValidPos.current;
+
+    const frameW = frame.width ?? FRAME_WIDTH;
+    const frameH = frame.height ?? FRAME_HEIGHT;
+    const elemRect = cursorPositions.get(frame.id);
+    const isValid = elemRect && (elemRect.width >= 1 || elemRect.height >= 1);
+
+    if (isValid) {
+      let x = frame.left + elemRect.left + elemRect.width;
+      let y = frame.top + elemRect.top + elemRect.height * 0.5;
+      x = Math.max(frame.left, Math.min(x, frame.left + frameW + 12));
+      y = Math.max(frame.top + 20, Math.min(y, frame.top + frameH - 20));
+      const pos = { x, y };
+      lastValidPos.current = pos;
+      return pos;
+    }
+
+    if (lastValidPos.current) return lastValidPos.current;
+
+    // Fallback: center-top of frame
+    const fallback = { x: frame.left + frameW * 0.5, y: frame.top + 80 };
+    lastValidPos.current = fallback;
+    return fallback;
+  }, [agent.activeFrameId, frames]);
+
+  // Animation loop — lerp towards target for smooth organic movement
+  useEffect(() => {
+    let running = true;
+    let lastTime = 0;
+
+    const tick = (time: number) => {
+      if (!running) return;
+
+      const dt = lastTime ? Math.min((time - lastTime) / 1000, 0.05) : 0.016;
+      lastTime = time;
+
+      const el = elRef.current;
+      if (!el) {
+        rafRef.current = requestAnimationFrame(tick);
+        return;
+      }
+
+      // Smooth factor: higher = snappier. ~4-6 feels human-like.
+      const speed = 4.5;
+      const t = 1 - Math.exp(-speed * dt);
+
+      const tx = targetPos.current.x;
+      const ty = targetPos.current.y;
+      const cx = currentPos.current.x;
+      const cy = currentPos.current.y;
+
+      const dx = Math.abs(tx - cx);
+      const dy = Math.abs(ty - cy);
+
+      // Skip lerp if close enough (< 0.5px)
+      if (dx < 0.5 && dy < 0.5) {
+        currentPos.current.x = tx;
+        currentPos.current.y = ty;
+      } else {
+        currentPos.current.x = lerp(cx, tx, t);
+        currentPos.current.y = lerp(cy, ty, t);
+      }
+
+      el.style.transform = `translate3d(${currentPos.current.x}px, ${currentPos.current.y}px, 0)`;
+
+      rafRef.current = requestAnimationFrame(tick);
+    };
+
+    rafRef.current = requestAnimationFrame(tick);
+
+    return () => {
+      running = false;
+      cancelAnimationFrame(rafRef.current);
+    };
+  }, []);
+
+  // Listen to cursor position updates and recompute target (pure DOM, no state)
+  useEffect(() => {
+    const update = () => {
+      const pos = computeTarget();
+      if (!pos) return;
+
+      if (!hasInitialized.current) {
+        // Snap to initial position (no animation on first placement)
+        hasInitialized.current = true;
+        currentPos.current = { ...pos };
+        targetPos.current = { ...pos };
+        const el = elRef.current;
+        if (el) {
+          el.style.transform = `translate3d(${pos.x}px, ${pos.y}px, 0)`;
+        }
+      } else {
+        targetPos.current = { ...pos };
+      }
+    };
+
+    // Compute immediately
+    update();
+
+    // Subscribe to iframe position updates
+    return subscribeToCursorPositions(update);
+  }, [computeTarget]);
+
+  // Also recompute when activeFrameId changes (agent moved to new frame)
+  useEffect(() => {
+    const pos = computeTarget();
+    if (pos) {
+      targetPos.current = { ...pos };
+    }
+  }, [agent.activeFrameId, computeTarget]);
+
   return (
-    <svg
-      width="16"
-      height="20"
-      viewBox="0 0 16 20"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-      className="drop-shadow-md"
+    <div
+      ref={elRef}
+      className="pointer-events-none absolute left-0 top-0 z-[60]"
+      style={{
+        willChange: "transform",
+      }}
     >
-      <path
-        d="M1.5 1L5.5 18L8.5 11L15 9.5L1.5 1Z"
-        fill={color}
-        stroke="white"
-        strokeWidth="1.2"
-        strokeLinejoin="round"
-      />
-    </svg>
+      {/* Cursor arrow */}
+      <svg
+        width="24"
+        height="30"
+        viewBox="0 0 16 20"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+        className="drop-shadow-lg"
+      >
+        <path
+          d="M1.5 1L5.5 18L8.5 11L15 9.5L1.5 1Z"
+          fill={agent.color}
+          stroke="white"
+          strokeWidth="1.5"
+          strokeLinejoin="round"
+        />
+      </svg>
+
+      {/* Name label */}
+      <div
+        className="ml-4 -mt-0.5 flex items-center gap-1 whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-semibold text-white shadow-lg"
+        style={{ backgroundColor: agent.color }}
+      >
+        {agent.name}
+      </div>
+    </div>
   );
 }
 
-// ─── Component ────────────────────────────────────────────────────────────
+// ─── Main component ──────────────────────────────────────────────────────
+
+const SINGLE_AGENT_VIRTUAL_ID = "main";
 
 export function AgentCursors() {
   const agents = useAppSelector((s) => s.agent.agents);
   const frames = useAppSelector((s) => s.canvas.frames);
-  const [cursorUpdateTick, setCursorUpdateTick] = useState(0);
-  const [lastValidPositions, setLastValidPositions] = useState(
-    () => new Map<string, { x: number; y: number }>(),
+  const mainChatActiveFrameId = useAppSelector(
+    (s) => s.agent.mainChatActiveFrameId,
   );
-  const lastValidPositionsRef = useRef(
-    new Map<string, { x: number; y: number }>(),
-  );
+  const mainChatStatus = useAppSelector((s) => s.agent.mainChatStatus);
 
-  // Install the global postMessage listener
+  // Install the global postMessage listener once
   useEffect(() => {
     installGlobalListener();
   }, []);
 
-  // Subscribe to position updates from iframes
-  useEffect(() => {
-    return subscribeToCursorPositions(() => {
-      setCursorUpdateTick((n) => n + 1);
-    });
-  }, []);
-
-  // Persist last valid cursor positions when we have valid rects (no ref read during render)
-  useEffect(() => {
-    const prev = lastValidPositionsRef.current;
-    const next = new Map(prev);
-    agents
-      .filter((a) => a.status === "working" && a.activeFrameId)
-      .forEach((agent) => {
-        const frame = frames.find((f) => f.id === agent.activeFrameId);
-        if (!frame) return;
-        const rect = cursorPositions.get(frame.id);
-        if (rect && (rect.width >= 1 || rect.height >= 1)) {
-          const frameW = frame.width ?? FRAME_WIDTH;
-          const frameH = frame.height ?? FRAME_HEIGHT;
-          let x = frame.left + rect.left + rect.width;
-          let y = frame.top + rect.top + rect.height * 0.5;
-          x = Math.min(x, frame.left + frameW + 12);
-          x = Math.max(x, frame.left);
-          y = Math.min(y, frame.top + frameH - 20);
-          y = Math.max(y, frame.top + 20);
-          next.set(agent.id, { x, y });
-        }
-      });
-    lastValidPositionsRef.current = next;
-    setLastValidPositions(next);
-  }, [agents, frames, cursorUpdateTick]);
-
-  const visibleAgents = agents.filter(
-    (a) => a.status === "working" && a.activeFrameId,
-  );
+  const visibleAgents = useMemo(() => {
+    const fromStore = agents.filter(
+      (a) => a.status === "working" && a.activeFrameId,
+    );
+    if (fromStore.length > 0) return fromStore;
+    if (
+      agents.length === 0 &&
+      mainChatStatus === "working" &&
+      mainChatActiveFrameId
+    ) {
+      const persona = AGENT_PERSONAS[0];
+      return [
+        {
+          id: SINGLE_AGENT_VIRTUAL_ID,
+          name: persona.name,
+          emoji: persona.emoji,
+          color: persona.color,
+          subTask: "",
+          assignedScreens: [],
+          screenPositions: [],
+          status: "working" as const,
+          chatId: "main",
+          activeFrameId: mainChatActiveFrameId,
+          cursorProgress: 0,
+        } as AgentInstance,
+      ];
+    }
+    return [];
+  }, [agents, mainChatStatus, mainChatActiveFrameId]);
 
   if (visibleAgents.length === 0) return null;
 
   return (
     <>
-      {visibleAgents.map((agent) => {
-        const frame = frames.find((f) => f.id === agent.activeFrameId);
-        if (!frame) return null;
-
-        const frameW = frame.width ?? FRAME_WIDTH;
-        const frameH = frame.height ?? FRAME_HEIGHT;
-
-        // Get the tracked element position from the iframe
-        const elemRect = cursorPositions.get(frame.id);
-        const lastValid = lastValidPositions.get(agent.id);
-
-        let cursorX: number;
-        let cursorY: number;
-
-        const isValidRect =
-          elemRect && (elemRect.width >= 1 || elemRect.height >= 1);
-
-        if (isValidRect) {
-          // elemRect is in iframe viewport coords (0,0 = top-left of iframe)
-          // Map to canvas content coords (frame.left + elemRect position)
-          cursorX = frame.left + elemRect.left + elemRect.width;
-          cursorY = frame.top + elemRect.top + elemRect.height * 0.5;
-
-          // Clamp within frame bounds
-          cursorX = Math.min(cursorX, frame.left + frameW + 12);
-          cursorX = Math.max(cursorX, frame.left);
-          cursorY = Math.min(cursorY, frame.top + frameH - 20);
-          cursorY = Math.max(cursorY, frame.top + 20);
-        } else if (lastValid) {
-          // Keep cursor at last valid position instead of jumping to (0,0) or frame center
-          cursorX = lastValid.x;
-          cursorY = lastValid.y;
-        } else {
-          // Fallback: position at frame center-top while waiting for first report
-          cursorX = frame.left + frameW * 0.5;
-          cursorY = frame.top + 80;
-        }
-
-        return (
-          <div
-            key={agent.id}
-            className="pointer-events-none absolute z-[60]"
-            style={{
-              left: cursorX,
-              top: cursorY,
-              transition:
-                "left 0.45s cubic-bezier(0.22, 1, 0.36, 1), top 0.4s cubic-bezier(0.22, 1, 0.36, 1)",
-              willChange: "left, top",
-            }}
-          >
-            {/* Cursor arrow */}
-            <CursorSvg color={agent.color} />
-
-            {/* Name label */}
-            <div
-              className="ml-3.5 -mt-0.5 flex items-center gap-1 whitespace-nowrap rounded-full px-2 py-0.5 text-[11px] font-semibold text-white shadow-lg"
-              style={{ backgroundColor: agent.color }}
-            >
-              {agent.name}
-            </div>
-          </div>
-        );
-      })}
+      {visibleAgents.map((agent) => (
+        <AgentCursor key={agent.id} agent={agent} frames={frames} />
+      ))}
     </>
   );
 }

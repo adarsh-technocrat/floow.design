@@ -415,12 +415,18 @@
             d++;
           }
           if (el === b || el === document.documentElement) return;
+          // Ensure element has an id for change detection
+          if (!el.getAttribute(ELEMENT_ID_ATTR)) {
+            counter += 1;
+            el.setAttribute(ELEMENT_ID_ATTR, ID_PREFIX + counter);
+          }
           var r = el.getBoundingClientRect();
           if (r.width < 1 && r.height < 1) return;
           window.parent.postMessage(
             {
               type: "cursor-element-track",
               frameId: fid,
+              elementId: el.getAttribute(ELEMENT_ID_ATTR) || "",
               rect: {
                 left: r.left,
                 top: r.top,
@@ -437,10 +443,7 @@
         var mo = new MutationObserver(report);
         mo.observe(document.body, { childList: true, subtree: true });
       }
-      var iv = setInterval(report, 120);
-      setTimeout(function () {
-        clearInterval(iv);
-      }, 8000);
+      setInterval(report, 150);
     } catch (_) {}
   }
 

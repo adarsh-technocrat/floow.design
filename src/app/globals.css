@@ -142,3 +142,14 @@ body {
   color: var(--shiki-dark) !important;
   background-color: transparent !important;
 }
+
+/* ===== SHUTTER SCAN EFFECT ===== */
+@keyframes shutter-grow {
+  0%   { height: 0%; }
+  100% { height: 100%; }
+}
+
+@keyframes shutter-line {
+  0%   { top: 0%; }
+  100% { top: 100%; }
+}

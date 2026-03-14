@@ -2,21 +2,29 @@ import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
 import { AGENT_PERSONAS } from "@/constants/agent-personas";
 
 export interface AgentInstance {
-  id: string; // "pixel", "neon", etc.
-  name: string; // "Pixel", "Neon", etc.
+  id: string;
+  name: string;
   emoji: string;
   color: string;
   subTask: string;
   assignedScreens: string[];
+  screenPositions: Array<{ left: number; top: number }>;
   status: "idle" | "working" | "done" | "error";
-  chatId: string; // "orch-{orchestrationId}-{name}"
+  chatId: string;
+  activeFrameId: string | null;
+  cursorProgress: number;
 }
+
+/** Single-agent (main chat) frame context for shutter + cursor when no orchestration. */
+export type MainChatAgentStatus = "idle" | "working";
 
 interface AgentState {
   orchestrationId: string | null;
   agents: AgentInstance[];
   activeAgentId: string | null;
   agentCount: number;
+  mainChatActiveFrameId: string | null;
+  mainChatStatus: MainChatAgentStatus;
 }
 
 const initialState: AgentState = {
@@ -24,6 +32,8 @@ const initialState: AgentState = {
   agents: [],
   activeAgentId: null,
   agentCount: 1,
+  mainChatActiveFrameId: null,
+  mainChatStatus: "idle",
 };
 
 const agentSlice = createSlice({
@@ -41,11 +51,16 @@ const agentSlice = createSlice({
           id: string;
           subTask: string;
           assignedScreens: string[];
+          screenPositions?: Array<{ left: number; top: number }>;
         }>;
+        keepOrchestratorActive?: boolean;
       }>,
     ) {
-      const { orchestrationId, assignments } = action.payload;
+      const { orchestrationId, assignments, keepOrchestratorActive } =
+        action.payload;
       state.orchestrationId = orchestrationId;
+      state.mainChatActiveFrameId = null;
+      state.mainChatStatus = "idle";
       state.agents = assignments.map((a, i) => {
         const persona = AGENT_PERSONAS[i % AGENT_PERSONAS.length];
         return {
@@ -55,13 +70,18 @@ const agentSlice = createSlice({
           color: persona.color,
           subTask: a.subTask,
           assignedScreens: a.assignedScreens,
+          screenPositions: a.screenPositions ?? [],
           status: "idle" as const,
           chatId: `orch-${orchestrationId}-${persona.name.toLowerCase()}`,
+          activeFrameId: null,
+          cursorProgress: 0,
         };
       });
-      state.activeAgentId = state.agents[0]?.id ?? null;
+      state.activeAgentId = keepOrchestratorActive
+        ? null
+        : (state.agents[0]?.id ?? null);
     },
-    setActiveAgent(state, action: PayloadAction<string>) {
+    setActiveAgent(state, action: PayloadAction<string | null>) {
       state.activeAgentId = action.payload;
     },
     updateAgentStatus(
@@ -74,10 +94,42 @@ const agentSlice = createSlice({
       const agent = state.agents.find((a) => a.id === action.payload.id);
       if (agent) agent.status = action.payload.status;
     },
+    updateAgentActiveFrame(
+      state,
+      action: PayloadAction<{ id: string; frameId: string | null }>,
+    ) {
+      const agent = state.agents.find((a) => a.id === action.payload.id);
+      if (agent) {
+        agent.activeFrameId = action.payload.frameId;
+        agent.cursorProgress = 0;
+      }
+    },
+    updateAgentCursorProgress(
+      state,
+      action: PayloadAction<{ id: string; progress: number }>,
+    ) {
+      const agent = state.agents.find((a) => a.id === action.payload.id);
+      if (agent) {
+        agent.cursorProgress = Math.min(1, action.payload.progress);
+      }
+    },
     resetOrchestration(state) {
       state.orchestrationId = null;
       state.agents = [];
       state.activeAgentId = null;
+      state.mainChatActiveFrameId = null;
+      state.mainChatStatus = "idle";
+    },
+    setMainChatAgentFrame(
+      state,
+      action: PayloadAction<{
+        frameId: string | null;
+        status?: MainChatAgentStatus;
+      }>,
+    ) {
+      const { frameId, status } = action.payload;
+      if (frameId !== undefined) state.mainChatActiveFrameId = frameId;
+      if (status !== undefined) state.mainChatStatus = status;
     },
   },
 });
@@ -87,7 +139,10 @@ export const {
   initializeAgents,
   setActiveAgent,
   updateAgentStatus,
+  updateAgentActiveFrame,
+  updateAgentCursorProgress,
   resetOrchestration,
+  setMainChatAgentFrame,
 } = agentSlice.actions;
 
 export default agentSlice.reducer;

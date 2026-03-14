@@ -8,11 +8,16 @@ import React, {
   useState,
 } from "react";
 import { useIframeBridge } from "@/hooks/useIframeBridge";
-import { injectFrameScripts, injectStreamingFadeIn } from "@/lib/screen-utils";
+import {
+  injectFrameScripts,
+  injectElementInspectorScript,
+  truncatePartialHtml,
+  looksLikeMalformedFrameContent,
+} from "@/lib/screen-utils";
 
 const LOADING_THRESHOLD = 50;
 const POST_DEBOUNCE_MS = 2000;
-const WRITE_THROTTLE_MS = 120;
+const WRITE_THROTTLE_MS = 250;
 
 const IFRAME_STYLE = { overflow: "auto" } as const;
 
@@ -23,6 +28,8 @@ export interface FramePreviewProps {
   left?: number;
   top?: number;
   allowInteraction?: boolean;
+  enableElementInspection?: boolean;
+  iframeRef?: React.MutableRefObject<HTMLIFrameElement | null>;
   onMessageFromFrame?: (event: MessageEvent) => void;
 }
 
@@ -37,12 +44,15 @@ export const FramePreview = React.forwardRef<
     left,
     top,
     allowInteraction = false,
+    enableElementInspection = false,
+    iframeRef: iframeRefProp,
     onMessageFromFrame,
   },
   ref,
 ) {
   const isStreaming = html.length < LOADING_THRESHOLD;
   const [_loadKey, setLoadKey] = useState(0);
+  const [inspectorScript, setInspectorScript] = useState("");
   const internalRef = useRef<HTMLIFrameElement>(null);
   const postTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const writeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -52,10 +62,26 @@ export const FramePreview = React.forwardRef<
     onMessage: onMessageFromFrame,
   });
 
-  const preparedHtml = useMemo(
-    () => (html ? injectFrameScripts(html) : ""),
-    [html],
-  );
+  useEffect(() => {
+    if (!enableElementInspection) return;
+    fetch("/api/scripts/element-inspector")
+      .then((r) => r.text())
+      .then(setInspectorScript)
+      .catch(() => {});
+  }, [enableElementInspection]);
+
+  const preparedHtml = useMemo(() => {
+    if (!html) return "";
+    if (looksLikeMalformedFrameContent(html)) return "";
+    // Strip any trailing incomplete tag so the browser never renders raw source
+    const safeHtml = truncatePartialHtml(html);
+    if (!safeHtml) return "";
+    let out = injectFrameScripts(safeHtml);
+    if (enableElementInspection && inspectorScript) {
+      out = injectElementInspectorScript(out, inspectorScript);
+    }
+    return out;
+  }, [html, enableElementInspection, inspectorScript]);
 
   useEffect(() => {
     if (!html || isStreaming) return;
@@ -75,31 +101,54 @@ export const FramePreview = React.forwardRef<
     };
   }, [frameId, html, label, left, top, isStreaming]);
 
+  // When the inspector script arrives after content is already written,
+  // force a full doc.write so the script executes (innerHTML won't run scripts).
+  const forceFullWriteRef = useRef(false);
+  useEffect(() => {
+    if (inspectorScript && latestHtmlRef.current) {
+      forceFullWriteRef.current = true;
+    }
+  }, [inspectorScript]);
+
+  // Track previous html length to detect streaming (rapid successive updates)
+  const prevHtmlLenRef = useRef(0);
+  const lastWriteTimeRef = useRef(0);
+
   useEffect(() => {
     if (!preparedHtml) return;
     latestHtmlRef.current = preparedHtml;
 
-    const doWrite = () => {
-      const htmlToWrite = isStreaming
-        ? injectStreamingFadeIn(latestHtmlRef.current)
-        : latestHtmlRef.current;
-      writeContent(htmlToWrite);
+    const doWrite = (incremental: boolean) => {
+      // Force full write when inspector script just became available
+      if (forceFullWriteRef.current) {
+        forceFullWriteRef.current = false;
+        incremental = false;
+      }
+      lastWriteTimeRef.current = Date.now();
+      const htmlToWrite = latestHtmlRef.current;
+      writeContent(htmlToWrite, incremental);
     };
 
-    if (!isStreaming) {
+    const now = Date.now();
+    const timeSinceLastWrite = now - lastWriteTimeRef.current;
+    const htmlGrew = preparedHtml.length > prevHtmlLenRef.current;
+    prevHtmlLenRef.current = preparedHtml.length;
+
+    // If HTML is growing rapidly (streaming), throttle writes and use incremental body patching
+    if (htmlGrew && timeSinceLastWrite < WRITE_THROTTLE_MS * 2) {
+      if (writeTimeoutRef.current) return; // already scheduled
+      writeTimeoutRef.current = setTimeout(() => {
+        writeTimeoutRef.current = null;
+        doWrite(true); // incremental — patch body only, no bounce
+      }, WRITE_THROTTLE_MS);
+    } else {
+      // Not streaming or enough time has passed — full write so scripts execute
       if (writeTimeoutRef.current) {
         clearTimeout(writeTimeoutRef.current);
         writeTimeoutRef.current = null;
       }
-      doWrite();
-      return;
+      doWrite(false); // full doc.write
     }
-
-    if (writeTimeoutRef.current) return;
-    writeTimeoutRef.current = setTimeout(() => {
-      writeTimeoutRef.current = null;
-      doWrite();
-    }, WRITE_THROTTLE_MS);
 
     return () => {
       if (writeTimeoutRef.current) {
@@ -107,29 +156,30 @@ export const FramePreview = React.forwardRef<
         writeTimeoutRef.current = null;
       }
     };
-  }, [preparedHtml, isStreaming, writeContent]);
+  }, [preparedHtml, writeContent]);
 
   const setRef = useCallback(
     (el: HTMLIFrameElement | null) => {
       (
         internalRef as React.MutableRefObject<HTMLIFrameElement | null>
       ).current = el;
+      if (iframeRefProp) iframeRefProp.current = el;
       if (typeof ref === "function") ref(el);
       else if (ref)
         (ref as React.MutableRefObject<HTMLIFrameElement | null>).current = el;
     },
-    [ref],
+    [ref, iframeRefProp],
   );
 
   const handleIframeLoad = useCallback(() => {
     if (!latestHtmlRef.current) return;
-    const htmlToWrite = isStreaming
-      ? injectStreamingFadeIn(latestHtmlRef.current)
-      : latestHtmlRef.current;
+    const htmlToWrite = latestHtmlRef.current;
     writeContent(htmlToWrite);
   }, [writeContent, isStreaming]);
 
-  if (!html || html.length === 0) {
+  const isMalformed = looksLikeMalformedFrameContent(html);
+
+  if (!html || html.length === 0 || isMalformed) {
     return (
       <div
         className="frame-preview-loading relative size-full overflow-hidden"
@@ -137,7 +187,9 @@ export const FramePreview = React.forwardRef<
       >
         <div className="absolute inset-0 frame-preview-gradient" />
         <div className="absolute inset-0 flex items-center justify-center">
-          <span className="text-sm text-white/50">Generating…</span>
+          <span className="text-sm text-white/50">
+            {isMalformed ? "Regenerating…" : "Generating…"}
+          </span>
         </div>
       </div>
     );

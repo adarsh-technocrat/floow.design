@@ -11,7 +11,49 @@ import {
   setTheme,
   replaceTheme,
 } from "@/store/slices/canvasSlice";
-import { updateAgentStatus } from "@/store/slices/agentSlice";
+import {
+  updateAgentStatus,
+  updateAgentActiveFrame,
+} from "@/store/slices/agentSlice";
+
+const FRAME_HTML_THROTTLE_MS = 300;
+
+type PendingHtml = Map<string, string>;
+
+let pendingHtmlUpdates: PendingHtml = new Map();
+let flushTimer: ReturnType<typeof setTimeout> | null = null;
+let dispatchRef: ReturnType<typeof useAppDispatch> | null = null;
+
+function scheduleHtmlFlush() {
+  if (flushTimer) return;
+  flushTimer = setTimeout(() => {
+    flushTimer = null;
+    const batch = pendingHtmlUpdates;
+    pendingHtmlUpdates = new Map();
+    if (!dispatchRef) return;
+    for (const [id, html] of batch) {
+      dispatchRef(updateFrameHtml({ id, html }));
+    }
+  }, FRAME_HTML_THROTTLE_MS);
+}
+
+function enqueueHtmlUpdate(id: string, html: string) {
+  pendingHtmlUpdates.set(id, html);
+  scheduleHtmlFlush();
+}
+
+function flushHtmlUpdatesNow() {
+  if (flushTimer) {
+    clearTimeout(flushTimer);
+    flushTimer = null;
+  }
+  const batch = pendingHtmlUpdates;
+  pendingHtmlUpdates = new Map();
+  if (!dispatchRef) return;
+  for (const [id, html] of batch) {
+    dispatchRef(updateFrameHtml({ id, html }));
+  }
+}
 import type { AgentInstance } from "@/store/slices/agentSlice";
 import ReactMarkdown from "react-markdown";
 import { Brain, ChevronDown } from "lucide-react";
@@ -373,6 +415,9 @@ export function AgentChatInstance({
   const dispatch = useAppDispatch();
   const frames = useAppSelector((s) => s.canvas.frames);
   const theme = useAppSelector((s) => s.canvas.theme);
+  // Keep dispatchRef in sync for the throttled HTML updater
+  dispatchRef = dispatch;
+
   const stateRef = useRef({ frames, theme });
   const toolStepsRef = useRef<ToolStep[]>([]);
 
@@ -380,6 +425,7 @@ export function AgentChatInstance({
   const [lastMessageToolSteps, setLastMessageToolSteps] = useState<ToolStep[]>(
     [],
   );
+  const cleanupTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const setToolSteps = useCallback(
     (updater: ToolStep[] | ((prev: ToolStep[]) => ToolStep[])) => {
@@ -416,6 +462,7 @@ export function AgentChatInstance({
             agentName: agent.name,
             subTask: agent.subTask,
             assignedScreens: agent.assignedScreens,
+            screenPositions: agent.screenPositions,
             isFirstAgent,
             planContext,
           },
@@ -458,6 +505,7 @@ export function AgentChatInstance({
         return;
       }
       if (ev.type === "tool-output-available" && toolCallId) {
+        flushHtmlUpdatesNow();
         const output = ev.output as
           | {
               frame?: {
@@ -568,21 +616,31 @@ export function AgentChatInstance({
               html: data.frame.html ?? "",
             }),
           );
+          // Move cursor to this frame
+          dispatch(
+            updateAgentActiveFrame({
+              id: agent.id,
+              frameId: data.frame.id,
+            }),
+          );
         }
         return;
       }
 
       if (ev.type === "data-tool-call-delta") {
         if (data.toolName === "create_screen" && data.frame) {
-          // Only update html/label during deltas — never overwrite left/top
-          // so the user can freely drag the frame while it streams.
-          const changes: { label?: string; html?: string } = {};
-          if (data.frame.label !== undefined) changes.label = data.frame.label;
-          if (data.frame.html !== undefined) changes.html = data.frame.html;
-          if (Object.keys(changes).length > 0) {
-            dispatch(updateFrame({ id: data.frame.id, changes }));
+          // Throttle HTML updates during streaming deltas
+          if (data.frame.html !== undefined) {
+            enqueueHtmlUpdate(data.frame.id, data.frame.html);
           }
-          if (data.frame.label) {
+          // Label updates are infrequent, dispatch immediately
+          if (data.frame.label !== undefined) {
+            dispatch(
+              updateFrame({
+                id: data.frame.id,
+                changes: { label: data.frame.label },
+              }),
+            );
             setToolSteps((prev) =>
               prev.map((s) =>
                 s.toolCallId === data.toolCallId
@@ -595,14 +653,14 @@ export function AgentChatInstance({
           data.toolName === "update_screen" &&
           data.frame?.html !== undefined
         ) {
-          dispatch(
-            updateFrameHtml({ id: data.frame.id, html: data.frame.html }),
-          );
+          enqueueHtmlUpdate(data.frame.id, data.frame.html);
         }
         return;
       }
 
       if (ev.type === "data-tool-call-end") {
+        // Flush any throttled HTML updates before applying final state
+        flushHtmlUpdatesNow();
         const endInput: { id?: string; name?: string } = {};
         if (data.frame?.id) endInput.id = data.frame.id;
         if (data.frame?.label) endInput.name = data.frame.label;
@@ -714,7 +772,7 @@ export function AgentChatInstance({
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               messages: updated,
-              agentId: agent.name.toLowerCase(),
+              agentId: agent.chatId,
             }),
           }).catch(() => {});
         }
@@ -727,7 +785,7 @@ export function AgentChatInstance({
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               messages: finishedMessages,
-              agentId: agent.name.toLowerCase(),
+              agentId: agent.chatId,
             }),
           }).catch(() => {});
         }
@@ -738,25 +796,73 @@ export function AgentChatInstance({
           status: isError ? "error" : "done",
         }),
       );
+      // Clear cursor when agent finishes
+      dispatch(updateAgentActiveFrame({ id: agent.id, frameId: null }));
     },
   });
 
-  // Auto-send sub-task on mount (staggered by agent index).
-  // Uses a ref for sendMessage to avoid stale closures without adding it
-  // to deps (which would re-trigger on every render). The empty dep array
-  // ensures this fires exactly once even in React strict mode (strict mode
-  // clears the first timer via cleanup, then the second timer fires).
+  // Hydrate persisted messages from DB on mount, then auto-send sub-task.
   const sendMessageRef = useRef(sendMessage);
   sendMessageRef.current = sendMessage;
+  const hasHydrated = useRef(false);
 
   useEffect(() => {
-    const delay = parseInt(agent.id) * 500;
-    const timer = setTimeout(() => {
-      dispatch(updateAgentStatus({ id: agent.id, status: "working" }));
-      sendMessageRef.current({ text: agent.subTask });
-    }, delay);
+    if (hasHydrated.current) return;
+    hasHydrated.current = true;
 
-    return () => clearTimeout(timer);
+    console.log(`[Agent ${agent.name}] mount — chatId=${agent.chatId}, subTask="${agent.subTask.slice(0, 60)}…"`);
+
+    const agentKey = agent.chatId;
+    fetch(`/api/chat/sessions?agentId=${encodeURIComponent(agentKey)}`)
+      .then((res) => res.json())
+      .then((data: { messages?: typeof messages }) => {
+        console.log(`[Agent ${agent.name}] session fetch result:`, data?.messages?.length ?? 0, "messages");
+        if (data?.messages && data.messages.length > 0) {
+          // Agent already has persisted history — restore it, skip auto-send
+          console.log(`[Agent ${agent.name}] restoring persisted history, marking done`);
+          setMessages(data.messages);
+          // Restore tool steps from the last assistant message parts
+          const lastAssistant = [...data.messages]
+            .reverse()
+            .find((m) => m.role === "assistant");
+          if (lastAssistant) {
+            const restored = toolStepsFromParts(
+              (lastAssistant as { parts?: MessagePart[] }).parts,
+            );
+            if (restored?.length) setLastMessageToolSteps(restored);
+          }
+          // Mark agent as done since it has completed history
+          if (agent.status === "idle") {
+            dispatch(updateAgentStatus({ id: agent.id, status: "done" }));
+          }
+        } else {
+          // No persisted history — auto-send the sub-task (staggered)
+          const delay = parseInt(agent.id) * 500;
+          console.log(`[Agent ${agent.name}] no history — will auto-send in ${delay}ms`);
+          const timer = setTimeout(() => {
+            console.log(`[Agent ${agent.name}] AUTO-SENDING sub-task now`);
+            dispatch(updateAgentStatus({ id: agent.id, status: "working" }));
+            sendMessageRef.current({ text: agent.subTask });
+          }, delay);
+          return () => clearTimeout(timer);
+        }
+      })
+      .catch((err) => {
+        // On fetch error, fall back to auto-send
+        console.warn(`[Agent ${agent.name}] session fetch error, falling back to auto-send`, err);
+        const delay = parseInt(agent.id) * 500;
+        const timer = setTimeout(() => {
+          console.log(`[Agent ${agent.name}] AUTO-SENDING (fallback) sub-task now`);
+          dispatch(updateAgentStatus({ id: agent.id, status: "working" }));
+          sendMessageRef.current({ text: agent.subTask });
+        }, delay);
+        // Can't return cleanup from .catch, so store timer ref
+        cleanupTimerRef.current = timer;
+      });
+
+    return () => {
+      if (cleanupTimerRef.current) clearTimeout(cleanupTimerRef.current);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -772,7 +878,7 @@ export function AgentChatInstance({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           messages,
-          agentId: agent.name.toLowerCase(),
+          agentId: agent.chatId,
         }),
       }).catch(() => {});
     }, 1500);
@@ -824,30 +930,6 @@ export function AgentChatInstance({
       className="flex h-full flex-col"
       style={{ display: isActive ? "flex" : "none" }}
     >
-      {/* Agent header badge */}
-      <div className="flex items-center gap-2 px-3 py-1.5 border-b border-white/5">
-        <span
-          className="inline-flex size-5 shrink-0 items-center justify-center rounded-full text-xs"
-          style={{ backgroundColor: agent.color }}
-        >
-          {agent.emoji}
-        </span>
-        <span className="text-xs font-medium text-white/80">{agent.name}</span>
-        <span
-          className={`ml-auto text-[10px] font-mono uppercase tracking-wider ${
-            agent.status === "working"
-              ? "text-amber-400"
-              : agent.status === "done"
-                ? "text-emerald-400"
-                : agent.status === "error"
-                  ? "text-red-400"
-                  : "text-white/30"
-          }`}
-        >
-          {agent.status}
-        </span>
-      </div>
-
       <div
         ref={chatThreadRef}
         className="min-h-0 flex-1 space-y-4 overflow-y-auto scrollbar-hide p-2"

@@ -1,4 +1,6 @@
-export const SCREEN_HTML_HEAD = `<!DOCTYPE html>
+export type ThemeVariables = Record<string, string>;
+
+const SCREEN_HTML_HEAD = `<!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -35,33 +37,14 @@ export const SCREEN_HTML_HEAD = `<!DOCTYPE html>
   </head>
   <body>`;
 
-export const SCREEN_HTML_TAIL = `</body></html>`;
+const SCREEN_HTML_TAIL = `</body></html>`;
 
-export type ThemeVariables = Record<string, string>;
-
+/** Short/typo aliases only; other keys get normalized to --key */
 const THEME_KEY_ALIASES: Record<string, string> = {
   r: "--primary",
   y: "--secondary",
   t: "--accent",
   boarder: "--border",
-  primary: "--primary",
-  secondary: "--secondary",
-  background: "--background",
-  foreground: "--foreground",
-  card: "--card",
-  "card-foreground": "--card-foreground",
-  border: "--border",
-  radius: "--radius",
-  muted: "--muted",
-  "muted-foreground": "--muted-foreground",
-  "primary-foreground": "--primary-foreground",
-  "secondary-foreground": "--secondary-foreground",
-  input: "--input",
-  ring: "--ring",
-  accent: "--accent",
-  destructive: "--destructive",
-  "font-sans": "--font-sans",
-  "font-heading": "--font-heading",
 };
 
 export function normalizeThemeVars(
@@ -99,55 +82,92 @@ const EMPTY_THEME_FALLBACK: ThemeVariables = {
   "--font-heading": "system-ui,sans-serif",
 };
 
-function themeVarsToCSS(vars: ThemeVariables): string {
-  return Object.entries(vars)
-    .filter(([k]) => k.startsWith("--"))
-    .map(([k, v]) => `        ${k}: ${v};`)
-    .join("\n");
-}
-
-const THEME_PLACEHOLDER = "/* THEME_VARS */";
-
 export function wrapScreenBody(
   bodyContent: string,
   theme: ThemeVariables = {},
 ): string {
   const activeTheme =
     Object.keys(theme).length > 0 ? theme : EMPTY_THEME_FALLBACK;
-  const themeCSS = themeVarsToCSS(activeTheme);
-  const headWithTheme = SCREEN_HTML_HEAD.replace(THEME_PLACEHOLDER, themeCSS);
+  const themeCSS = Object.entries(activeTheme)
+    .filter(([k]) => k.startsWith("--"))
+    .map(([k, v]) => `        ${k}: ${v};`)
+    .join("\n");
+  const headWithTheme = SCREEN_HTML_HEAD.replace("/* THEME_VARS */", themeCSS);
   return `${headWithTheme}\n${bodyContent}\n${SCREEN_HTML_TAIL}`;
 }
 
 export function extractBodyContent(fullHtml: string): string {
   if (!fullHtml) return "";
-  const bodyMatch = fullHtml.match(/<body[^>]*>([\s\S]*?)<\/body>/i);
-  if (bodyMatch) return bodyMatch[1].trim();
-  return fullHtml;
+  const match = fullHtml.match(/<body[^>]*>([\s\S]*?)<\/body>/i);
+  return match ? match[1].trim() : fullHtml;
 }
+
+export function looksLikeMalformedFrameContent(html: string): boolean {
+  if (!html || typeof html !== "string") return true;
+  const trimmed = html.trim();
+  if (trimmed.length < 20) return false;
+  const lower = trimmed.toLowerCase();
+  const hasScriptTokens =
+    lower.includes("payload.elementid") ||
+    lower.includes("getboundingclientrect") ||
+    (lower.includes("update_text") && lower.includes("elementid")) ||
+    (lower.includes("computed font") && lower.includes("computed "));
+  if (!hasScriptTokens) return false;
+  const looksLikeHtml =
+    trimmed.startsWith("<") ||
+    trimmed.includes("<!doctype") ||
+    (trimmed.match(/</g)?.length ?? 0) > 3;
+  return !looksLikeHtml;
+}
+
+export function injectElementInspectorScript(
+  html: string,
+  scriptContent: string,
+): string {
+  if (!scriptContent.trim()) return html;
+  // Escape </script> so the HTML parser doesn't close the script tag early
+  const escaped = scriptContent.replace(/<\/script\s*>/gi, "<\\/script>");
+  const script = `<script>${escaped}</script>`;
+  return html.includes("</body>")
+    ? html.replace("</body>", `${script}</body>`)
+    : html + script;
+}
+
+/**
+ * Truncate partial/streaming HTML so the browser never sees a half-open tag.
+ *
+ * During streaming the HTML grows incrementally and may be cut mid-tag:
+ *   `<div class="flex ite`          – attribute cut mid-word
+ *   `<div class="flex"><sp`         – new tag just started
+ *   `<div class="flex">Hello</d`   – closing tag cut
+ *
+ * This function strips the trailing incomplete tag (if any) so that
+ * `doc.write()` only ever receives well-formed-enough HTML that the
+ * browser won't render raw source text.
+ */
+export function truncatePartialHtml(html: string): string {
+  if (!html) return html;
+
+  // Find the last `<` that isn't part of a fully closed tag
+  const lastOpen = html.lastIndexOf("<");
+  if (lastOpen === -1) return html; // no tags at all
+
+  const afterOpen = html.substring(lastOpen);
+
+  // If the tag is fully closed (has a matching '>'), the HTML is fine
+  if (afterOpen.includes(">")) return html;
+
+  // Otherwise, chop off the incomplete tag
+  return html.substring(0, lastOpen);
+}
+
+const SCROLLBAR_HIDE =
+  "<style>html,body{-ms-overflow-style:none;scrollbar-width:none}html::-webkit-scrollbar,body::-webkit-scrollbar{display:none}</style>";
 
 export function injectFrameScripts(html: string): string {
-  const scrollbarHideStyle =
-    "<style>html,body{-ms-overflow-style:none;scrollbar-width:none}html::-webkit-scrollbar,body::-webkit-scrollbar{display:none}</style>";
-  const zoomScript = `<script>(function(){document.addEventListener("wheel",function(e){if(e.ctrlKey||e.metaKey){e.preventDefault();e.stopPropagation();try{window.parent.postMessage({type:"canvas-zoom",deltaY:e.deltaY,clientX:e.clientX,clientY:e.clientY},"*")}catch(_){}}},{passive:false,capture:true})})();</script>`;
-  const inject = scrollbarHideStyle + zoomScript;
-  if (html.includes("</head>")) {
-    return html.replace("</head>", `${inject}</head>`);
-  }
-  if (/<body[\s>]/i.test(html)) {
-    return html.replace(/<body(\s[^>]*)?>/i, (m) => m + inject);
-  }
-  return html + inject;
-}
-
-export function injectStreamingFadeIn(html: string): string {
-  const style =
-    '<style id="streaming-fade">body{transition:opacity .12s ease-out;opacity:.96}</style>';
-  const script =
-    "<script>(function(){requestAnimationFrame(function(){var b=document.body;if(b)b.style.opacity='1';});})();</script>";
-  const inject = style + script;
-  if (html.includes("</body>")) {
-    return html.replace("</body>", inject + "</body>");
-  }
-  return html + inject;
+  if (html.includes("</head>"))
+    return html.replace("</head>", SCROLLBAR_HIDE + "</head>");
+  if (/<body[\s>]/i.test(html))
+    return html.replace(/<body(\s[^>]*)?>/i, (m) => m + SCROLLBAR_HIDE);
+  return SCROLLBAR_HIDE + html;
 }

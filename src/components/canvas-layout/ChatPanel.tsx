@@ -17,6 +17,7 @@ import {
   initializeAgents,
   setActiveAgent,
   resetOrchestration,
+  setMainChatAgentFrame,
 } from "@/store/slices/agentSlice";
 import { AGENT_PERSONAS } from "@/constants/agent-personas";
 import { AgentChatInstance } from "./AgentChatInstance";
@@ -24,6 +25,39 @@ import { Brain, ChevronDown, X, Zap } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { ImageIcon } from "@/lib/svg-icons";
 import { PageMentionInput } from "./PageMentionInput";
+
+// ─── Throttled frame HTML updater for single-agent streaming ──────────────
+const CP_THROTTLE_MS = 300;
+let cpPendingHtml = new Map<string, string>();
+let cpFlushTimer: ReturnType<typeof setTimeout> | null = null;
+let cpDispatchRef: ReturnType<typeof useAppDispatch> | null = null;
+
+function cpEnqueueHtml(id: string, html: string) {
+  cpPendingHtml.set(id, html);
+  if (cpFlushTimer) return;
+  cpFlushTimer = setTimeout(() => {
+    cpFlushTimer = null;
+    const batch = cpPendingHtml;
+    cpPendingHtml = new Map();
+    if (!cpDispatchRef) return;
+    for (const [fid, fhtml] of batch) {
+      cpDispatchRef(updateFrameHtml({ id: fid, html: fhtml }));
+    }
+  }, CP_THROTTLE_MS);
+}
+
+function cpFlushHtmlNow() {
+  if (cpFlushTimer) {
+    clearTimeout(cpFlushTimer);
+    cpFlushTimer = null;
+  }
+  const batch = cpPendingHtml;
+  cpPendingHtml = new Map();
+  if (!cpDispatchRef) return;
+  for (const [fid, fhtml] of batch) {
+    cpDispatchRef(updateFrameHtml({ id: fid, html: fhtml }));
+  }
+}
 
 interface ToolStep {
   toolCallId: string;
@@ -442,6 +476,7 @@ export function ChatPanel({
   frameName = "Screen",
 }: ChatPanelProps) {
   const dispatch = useAppDispatch();
+  cpDispatchRef = dispatch;
   const [panelWidth, setPanelWidth] = useState(DEFAULT_PANEL_WIDTH);
   const [isResizing, setIsResizing] = useState(false);
   const [inputValue, setInputValue] = useState("");
@@ -456,7 +491,6 @@ export function ChatPanel({
   const agentDropdownRef = useRef<HTMLDivElement>(null);
   const headerDropdownRef = useRef<HTMLDivElement>(null);
   const [isLoadingHistory, setIsLoadingHistory] = useState(true);
-  const [isOrchestrating, setIsOrchestrating] = useState(false);
   const [toolSteps, _setToolSteps] = useState<ToolStep[]>([]);
   const chatThreadRef = useRef<HTMLDivElement>(null);
   const selectedFrameIds = useAppSelector((s) => s.canvas.selectedFrameIds);
@@ -492,6 +526,11 @@ export function ChatPanel({
 
   const hasHydratedFromProject = useRef(false);
 
+  const agentCountRef = useRef(agentCount);
+  useEffect(() => {
+    agentCountRef.current = agentCount;
+  }, [agentCount]);
+
   const [transport] = useState(
     () =>
       new DefaultChatTransport({
@@ -505,6 +544,7 @@ export function ChatPanel({
             messageId: options.messageId,
             frames: latestCanvasState.frames,
             theme: latestCanvasState.theme,
+            agentCount: agentCountRef.current,
           },
         }),
       }),
@@ -535,6 +575,49 @@ export function ChatPanel({
       }
       const ev = dataPart as DataPartEvent;
 
+      // ─── Spawn-agents event (multi-agent orchestration from chat API) ───
+      if (ev.type === "data-spawn-agents" && ev.data) {
+        const spawnData = ev.data as unknown as {
+          orchestrationId?: string;
+          agents?: Array<{
+            id: string;
+            subTask: string;
+            assignedScreens: string[];
+            screenPositions?: Array<{ left: number; top: number }>;
+          }>;
+          planContext?: string;
+          theme?: Record<string, string>;
+        };
+        if (spawnData.orchestrationId && spawnData.agents) {
+          setMultiAgentPlanContext(spawnData.planContext ?? "");
+          if (spawnData.theme && Object.keys(spawnData.theme).length > 0) {
+            dispatch(replaceTheme(spawnData.theme));
+          }
+          dispatch(
+            initializeAgents({
+              orchestrationId: spawnData.orchestrationId,
+              assignments: spawnData.agents,
+            }),
+          );
+          // Persist orchestration state for page reload recovery
+          fetch("/api/chat/sessions", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              agentId: "__orchestration__",
+              messages: [
+                {
+                  orchestrationId: spawnData.orchestrationId,
+                  assignments: spawnData.agents,
+                  planContext: spawnData.planContext ?? "",
+                },
+              ],
+            }),
+          }).catch(() => {});
+          return;
+        }
+      }
+
       const toolCallId = ev.toolCallId ?? ev.data?.toolCallId;
       const toolName = ev.toolName ?? ev.data?.toolName;
 
@@ -542,9 +625,17 @@ export function ChatPanel({
         setToolSteps((prev) =>
           addStepIfNew(prev, { toolCallId, toolName, state: "running" }),
         );
+        if (agents.length === 0) {
+          if (toolName === "create_screen") {
+            dispatch(
+              setMainChatAgentFrame({ frameId: toolCallId, status: "working" }),
+            );
+          }
+        }
         return;
       }
       if (ev.type === "tool-output-available" && toolCallId) {
+        cpFlushHtmlNow();
         const output = ev.output as
           | {
               frame?: {
@@ -556,6 +647,14 @@ export function ChatPanel({
               };
               theme?: Record<string, string>;
               themeUpdates?: Record<string, string>;
+              orchestrationId?: string;
+              agents?: Array<{
+                id: string;
+                subTask: string;
+                assignedScreens: string[];
+                screenPositions?: Array<{ left: number; top: number }>;
+              }>;
+              planContext?: string;
             }
           | undefined;
         setToolSteps((prev) =>
@@ -563,6 +662,34 @@ export function ChatPanel({
             s.toolCallId === toolCallId ? { ...s, state: "done" as const } : s,
           ),
         );
+        if (output?.orchestrationId && Array.isArray(output?.agents)) {
+          setMultiAgentPlanContext(output.planContext ?? "");
+          if (output.theme && Object.keys(output.theme).length > 0) {
+            dispatch(replaceTheme(output.theme));
+          }
+          dispatch(
+            initializeAgents({
+              orchestrationId: output.orchestrationId,
+              assignments: output.agents,
+              keepOrchestratorActive: true,
+            }),
+          );
+          fetch("/api/chat/sessions", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              agentId: "__orchestration__",
+              messages: [
+                {
+                  orchestrationId: output.orchestrationId,
+                  assignments: output.agents,
+                  planContext: output.planContext ?? "",
+                },
+              ],
+            }),
+          }).catch(() => {});
+          return;
+        }
         if (output?.frame) {
           const f = output.frame;
           const isCreate =
@@ -620,21 +747,33 @@ export function ChatPanel({
         if (output?.theme) {
           dispatch(replaceTheme(output.theme));
         }
+        if (agents.length === 0) {
+          dispatch(setMainChatAgentFrame({ frameId: null, status: "idle" }));
+        }
         return;
       }
       if (ev.type === "tool-input-available" && ev.toolCallId && ev.input) {
         const input = ev.input as { id?: string; name?: string };
-        setToolSteps((prev) =>
-          prev.map((s) =>
+        setToolSteps((prev) => {
+          const step = prev.find((s) => s.toolCallId === ev.toolCallId);
+          if (
+            agents.length === 0 &&
+            input.id &&
+            step?.toolName === "edit_screen"
+          ) {
+            dispatch(
+              setMainChatAgentFrame({ frameId: input.id, status: "working" }),
+            );
+          }
+          return prev.map((s) =>
             s.toolCallId === ev.toolCallId
               ? { ...s, input: { id: input.id, name: input.name } }
               : s,
-          ),
-        );
+          );
+        });
         return;
       }
 
-      // ─── Custom data events ──────────────────────────────────────────────
       if (!ev.data) return;
       const { data } = ev;
 
@@ -646,6 +785,18 @@ export function ChatPanel({
             state: "running",
           }),
         );
+        if (
+          agents.length === 0 &&
+          data.toolName === "create_screen" &&
+          data.frame?.id
+        ) {
+          dispatch(
+            setMainChatAgentFrame({
+              frameId: data.frame.id,
+              status: "working",
+            }),
+          );
+        }
         if (data.toolName === "create_screen" && data.frame) {
           dispatch(
             addFrameWithId({
@@ -662,15 +813,18 @@ export function ChatPanel({
 
       if (ev.type === "data-tool-call-delta") {
         if (data.toolName === "create_screen" && data.frame) {
-          // Only update html/label during deltas — never overwrite left/top
-          // so the user can freely drag the frame while it streams.
-          const changes: { label?: string; html?: string } = {};
-          if (data.frame.label !== undefined) changes.label = data.frame.label;
-          if (data.frame.html !== undefined) changes.html = data.frame.html;
-          if (Object.keys(changes).length > 0) {
-            dispatch(updateFrame({ id: data.frame.id, changes }));
+          // Throttle HTML updates during streaming deltas
+          if (data.frame.html !== undefined) {
+            cpEnqueueHtml(data.frame.id, data.frame.html);
           }
-          if (data.frame.label) {
+          // Label updates are infrequent, dispatch immediately
+          if (data.frame.label !== undefined) {
+            dispatch(
+              updateFrame({
+                id: data.frame.id,
+                changes: { label: data.frame.label },
+              }),
+            );
             setToolSteps((prev) =>
               prev.map((s) =>
                 s.toolCallId === data.toolCallId
@@ -683,14 +837,13 @@ export function ChatPanel({
           data.toolName === "update_screen" &&
           data.frame?.html !== undefined
         ) {
-          dispatch(
-            updateFrameHtml({ id: data.frame.id, html: data.frame.html }),
-          );
+          cpEnqueueHtml(data.frame.id, data.frame.html);
         }
         return;
       }
 
       if (ev.type === "data-tool-call-end") {
+        cpFlushHtmlNow();
         const endInput: { id?: string; name?: string } = {};
         if (data.frame?.id) endInput.id = data.frame.id;
         if (data.frame?.label) endInput.name = data.frame.label;
@@ -766,6 +919,10 @@ export function ChatPanel({
         } else if (data.toolName === "build_theme" && data.theme) {
           dispatch(replaceTheme(data.theme));
         }
+        // Reset single-agent cursor when tool finishes
+        if (agents.length === 0) {
+          dispatch(setMainChatAgentFrame({ frameId: null, status: "idle" }));
+        }
         return;
       }
     },
@@ -821,6 +978,8 @@ export function ChatPanel({
   useEffect(() => {
     if (hasHydratedFromProject.current) return;
     hasHydratedFromProject.current = true;
+
+    // Hydrate single-agent messages
     fetch("/api/chat/sessions")
       .then((res) => res.json())
       .then((data: { messages?: UIMessage[] }) => {
@@ -830,7 +989,38 @@ export function ChatPanel({
       })
       .catch(() => {})
       .finally(() => setIsLoadingHistory(false));
-  }, [setMessages]);
+
+    // Restore multi-agent orchestration state if it exists
+    if (!orchestrationId) {
+      fetch("/api/chat/sessions?agentId=__orchestration__")
+        .then((res) => res.json())
+        .then(
+          (data: {
+            messages?: Array<{
+              orchestrationId: string;
+              assignments: Array<{
+                id: string;
+                subTask: string;
+                assignedScreens: string[];
+              }>;
+              planContext?: string;
+            }>;
+          }) => {
+            const meta = data?.messages?.[0];
+            if (meta?.orchestrationId && meta?.assignments?.length) {
+              setMultiAgentPlanContext(meta.planContext ?? "");
+              dispatch(
+                initializeAgents({
+                  orchestrationId: meta.orchestrationId,
+                  assignments: meta.assignments,
+                }),
+              );
+            }
+          },
+        )
+        .catch(() => {});
+    }
+  }, [setMessages, orchestrationId, dispatch]);
 
   const persistTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
@@ -885,47 +1075,6 @@ export function ChatPanel({
     };
   }, [isResizing, handleMouseMove, handleMouseUp]);
 
-  const handleOrchestrate = useCallback(
-    async (prompt: string) => {
-      setIsOrchestrating(true);
-      try {
-        const res = await fetch("/api/chat/orchestrate", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            prompt,
-            agentCount,
-            frames: latestCanvasState.frames,
-            theme: latestCanvasState.theme,
-          }),
-        });
-        if (!res.ok) throw new Error("Orchestration failed");
-        const data = await res.json();
-        setMultiAgentPlanContext(data.sharedContext?.planContext ?? "");
-        // Apply the theme built during orchestration planning
-        if (
-          data.sharedContext?.theme &&
-          Object.keys(data.sharedContext.theme).length > 0
-        ) {
-          dispatch(replaceTheme(data.sharedContext.theme));
-        }
-        dispatch(
-          initializeAgents({
-            orchestrationId: data.orchestrationId,
-            assignments: data.agents,
-          }),
-        );
-      } catch (err) {
-        console.error("Orchestration error:", err);
-        // Fallback to single agent
-        sendMessage({ text: prompt });
-      } finally {
-        setIsOrchestrating(false);
-      }
-    },
-    [agentCount, dispatch, sendMessage],
-  );
-
   const handleSend = useCallback(
     (e?: React.FormEvent) => {
       e?.preventDefault();
@@ -933,25 +1082,11 @@ export function ChatPanel({
       const prompt = inputValue.trim();
       setInputValue("");
 
-      if (agentCount > 1 && !isMultiAgent) {
-        // Trigger multi-agent orchestration
-        handleOrchestrate(prompt);
-        return;
-      }
-
-      // Single agent or already in multi-agent mode
       setToolSteps([]);
       setLastMessageToolSteps([]);
       sendMessage({ text: prompt });
     },
-    [
-      inputValue,
-      sendMessage,
-      setToolSteps,
-      agentCount,
-      isMultiAgent,
-      handleOrchestrate,
-    ],
+    [inputValue, sendMessage, setToolSteps],
   );
 
   useEffect(() => {
@@ -1039,24 +1174,31 @@ export function ChatPanel({
             >
               {isMultiAgent ? (
                 <>
-                  {(() => {
-                    const active = agents.find((a) => a.id === activeAgentId);
-                    const persona = active
-                      ? {
-                          emoji: active.emoji,
-                          color: active.color,
-                          name: active.name,
-                        }
-                      : AGENT_PERSONAS[0];
-                    return (
-                      <>
-                        <span className="text-sm">{persona.emoji}</span>
-                        <span style={{ color: persona.color }}>
-                          {persona.name}
-                        </span>
-                      </>
-                    );
-                  })()}
+                  {activeAgentId === null ? (
+                    <>
+                      <Zap className="size-3.5 text-[#8A87F8]" fill="#8A87F8" />
+                      <span className="text-[#8A87F8]">Plan</span>
+                    </>
+                  ) : (
+                    (() => {
+                      const active = agents.find((a) => a.id === activeAgentId);
+                      const persona = active
+                        ? {
+                            emoji: active.emoji,
+                            color: active.color,
+                            name: active.name,
+                          }
+                        : AGENT_PERSONAS[0];
+                      return (
+                        <>
+                          <span className="text-sm">{persona.emoji}</span>
+                          <span style={{ color: persona.color }}>
+                            {persona.name}
+                          </span>
+                        </>
+                      );
+                    })()
+                  )}
                 </>
               ) : (
                 <>
@@ -1078,53 +1220,81 @@ export function ChatPanel({
                   Active Agents
                 </div>
                 {isMultiAgent
-                  ? agents.map((ag) => (
+                  ? [
                       <button
-                        key={ag.id}
+                        key="orchestrator"
                         type="button"
                         onClick={() => {
-                          dispatch(setActiveAgent(ag.id));
+                          dispatch(setActiveAgent(null));
                           setShowHeaderDropdown(false);
                         }}
                         className={`flex w-full items-center gap-2.5 px-3 py-2 text-left text-xs transition-colors hover:bg-white/[0.06] hover:text-white ${
-                          ag.id === activeAgentId
+                          activeAgentId === null
                             ? "bg-white/[0.04] text-white"
                             : "text-white/85"
                         }`}
                       >
-                        <span
-                          className="inline-flex size-5 shrink-0 items-center justify-center rounded-full text-xs"
-                          style={{ backgroundColor: ag.color }}
-                        >
-                          {ag.emoji}
-                        </span>
+                        <Zap
+                          className="size-3.5 text-[#8A87F8]"
+                          fill="#8A87F8"
+                        />
                         <div className="flex flex-col">
                           <span className="font-medium text-white/90">
-                            {ag.name}
+                            Plan
                           </span>
                           <span className="text-[10px] text-white/40">
-                            {ag.assignedScreens.join(", ") || "No screens"}
+                            Orchestrator chat
                           </span>
                         </div>
-                        <span
-                          className={`ml-auto text-[9px] font-mono uppercase ${
-                            ag.status === "working"
-                              ? "text-amber-400"
-                              : ag.status === "done"
-                                ? "text-emerald-400"
-                                : ag.status === "error"
-                                  ? "text-red-400"
-                                  : "text-white/30"
+                      </button>,
+                      ...agents.map((ag) => (
+                        <button
+                          key={ag.id}
+                          type="button"
+                          onClick={() => {
+                            dispatch(setActiveAgent(ag.id));
+                            setShowHeaderDropdown(false);
+                          }}
+                          className={`flex w-full items-center gap-2.5 px-3 py-2 text-left text-xs transition-colors hover:bg-white/[0.06] hover:text-white ${
+                            ag.id === activeAgentId
+                              ? "bg-white/[0.04] text-white"
+                              : "text-white/85"
                           }`}
                         >
-                          {ag.status === "working"
-                            ? "●"
-                            : ag.status === "done"
-                              ? "✓"
-                              : ""}
-                        </span>
-                      </button>
-                    ))
+                          <span
+                            className="inline-flex size-5 shrink-0 items-center justify-center rounded-full text-xs"
+                            style={{ backgroundColor: ag.color }}
+                          >
+                            {ag.emoji}
+                          </span>
+                          <div className="flex flex-col">
+                            <span className="font-medium text-white/90">
+                              {ag.name}
+                            </span>
+                            <span className="text-[10px] text-white/40">
+                              {ag.assignedScreens.join(", ") || "No screens"}
+                            </span>
+                          </div>
+                          <span
+                            className={`ml-auto text-[9px] font-mono uppercase ${
+                              ag.status === "working"
+                                ? "text-amber-400"
+                                : ag.status === "done"
+                                  ? "text-emerald-400"
+                                  : ag.status === "error"
+                                    ? "text-red-400"
+                                    : "text-white/30"
+                            }`}
+                          >
+                            {ag.status === "working"
+                              ? "●"
+                              : ag.status === "done"
+                                ? "✓"
+                                : ""}
+                          </span>
+                        </button>
+                      )),
+                    ]
                   : Array.from({ length: agentCount }, (_, i) => {
                       const persona = AGENT_PERSONAS[i];
                       const assignedFrame = frames[i];
@@ -1173,9 +1343,8 @@ export function ChatPanel({
         id="chat-thread-area"
         className="min-h-0 flex-1 space-y-4 overflow-y-auto scrollbar-hide p-2"
       >
-        {/* ─── Multi-agent mode ─────────────────────────────────────── */}
         {isMultiAgent && (
-          <div className="flex h-full flex-col">
+          <div className="flex h-full flex-col" style={{ display: activeAgentId !== null ? "flex" : "none" }}>
             {agents.map((ag) => (
               <AgentChatInstance
                 key={ag.chatId}
@@ -1187,21 +1356,12 @@ export function ChatPanel({
           </div>
         )}
 
-        {/* ─── Orchestrating indicator ──────────────────────────────── */}
-        {isOrchestrating && !isMultiAgent && (
-          <div className="flex w-full justify-start">
-            <div className="w-fit max-w-[85%] rounded-lg bg-muted/50 px-3 py-2.5 text-sm">
-              <span className="inline-block animate-pulse bg-gradient-to-r from-stone-400 via-stone-200 to-stone-400 bg-[length:200%_100%] bg-clip-text text-transparent [animation-duration:1.5s] font-medium">
-                Orchestrating {agentCount} agents…
-              </span>
-            </div>
-          </div>
+        {/* ─── Orchestrator / single-agent: show main chat ─────────────────────────── */}
+        {(!isMultiAgent || activeAgentId === null) && isLoadingHistory && (
+          <ChatHistoryShimmer />
         )}
 
-        {/* ─── Single-agent mode (original) ─────────────────────────── */}
-        {!isMultiAgent && isLoadingHistory && <ChatHistoryShimmer />}
-
-        {!isMultiAgent &&
+        {(!isMultiAgent || activeAgentId === null) &&
           !isLoadingHistory &&
           messages.map(
             (
@@ -1320,15 +1480,7 @@ export function ChatPanel({
             },
           )}
 
-        {/*
-         * ─── FIX: Pending assistant bubble ────────────────────────────────────
-         * Rendered when tool steps are live but the AI SDK hasn't yet added an
-         * assistant message to the `messages` array (this happens during the
-         * planning phase: classifyIntent → planScreens → planStyle → build_theme
-         * before any text streams in). Without this bubble the chips are
-         * calculated but have nowhere to render, so nothing shows until refresh.
-         */}
-        {!isMultiAgent && showPendingBubble && (
+        {(!isMultiAgent || activeAgentId === null) && showPendingBubble && (
           <div className="flex w-full justify-start">
             <div className="w-full rounded-lg bg-muted/50 px-3 py-2.5 text-sm text-stone-300">
               <AssistantMessageContent
@@ -1342,9 +1494,8 @@ export function ChatPanel({
         )}
 
         {/* "Working…" spinner — only when no steps and no content yet */}
-        {!isMultiAgent && showStreamingIndicator && (
-          <StreamingActivityIndicator />
-        )}
+        {(!isMultiAgent || activeAgentId === null) &&
+          showStreamingIndicator && <StreamingActivityIndicator />}
       </div>
 
       <div className="w-full p-4">

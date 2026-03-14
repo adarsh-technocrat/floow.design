@@ -13,6 +13,7 @@ import {
   wrapScreenBody,
   extractBodyContent,
   normalizeThemeVars,
+  truncatePartialHtml,
   type ThemeVariables,
 } from "@/lib/screen-utils";
 import {
@@ -38,6 +39,10 @@ export interface ToolContext {
     vertex: GoogleVertexProvider;
     modelId: string;
   };
+  /** Pre-assigned screen positions from orchestration (one per screen, in order). */
+  screenPositions?: Array<{ left: number; top: number }>;
+  /** When true, the orchestrator can spawn multiple agents via spawn_agents tool (main chat only). */
+  allowSpawnAgents?: boolean;
 }
 
 function stripHtmlMarkdown(raw: string): string {
@@ -69,6 +74,11 @@ async function generateScreenHtmlWithDesignModel(
   }
 }
 
+/** Strip leading markdown code fence (```html) that models sometimes emit. */
+function stripLeadingMarkdownFence(raw: string): string {
+  return raw.replace(/^```(?:html)?\s*/i, "");
+}
+
 async function streamScreenHtmlWithDesignModel(
   vertex: GoogleVertexProvider,
   modelId: string,
@@ -85,9 +95,12 @@ async function streamScreenHtmlWithDesignModel(
     let accumulated = "";
     for await (const part of result.textStream) {
       accumulated += part;
-      onChunk(accumulated);
+      const cleaned = truncatePartialHtml(
+        stripLeadingMarkdownFence(accumulated),
+      );
+      if (cleaned) onChunk(cleaned);
     }
-    if (accumulated) onChunk(accumulated);
+    if (accumulated) onChunk(stripLeadingMarkdownFence(accumulated));
     const out = stripHtmlMarkdown(accumulated);
     return out || null;
   } catch {
@@ -129,8 +142,21 @@ const DESIGN_MODEL_PROVIDER_OPTIONS = {
   },
 } as const;
 
+const FRAME_W = 393;
+const FRAME_GAP = 40;
+const FRAME_STEP = FRAME_W + FRAME_GAP;
+
 export function createTools(ctx: ToolContext) {
-  const { frames, theme, writer, designModel } = ctx;
+  const {
+    frames,
+    theme,
+    writer,
+    designModel,
+    screenPositions,
+    allowSpawnAgents,
+  } = ctx;
+
+  let nextScreenPositionIndex = 0;
 
   const createScreenStreamState = new Map<string, CreateScreenStreamState>();
   const updateScreenStreamState = new Map<string, UpdateScreenStreamState>();
@@ -206,9 +232,22 @@ export function createTools(ctx: ToolContext) {
           buffer: "",
           lastEmit: 0,
         });
+        // Use pre-assigned position if available, otherwise fall back to sequential placement
+        const preAssigned =
+          screenPositions && nextScreenPositionIndex < screenPositions.length
+            ? screenPositions[nextScreenPositionIndex++]
+            : null;
         const lastFrame = frames[frames.length - 1];
-        const left = lastFrame ? lastFrame.left + FRAME_SPACING : 0;
-        const top = lastFrame ? lastFrame.top : 0;
+        const left = preAssigned
+          ? preAssigned.left
+          : lastFrame
+            ? lastFrame.left + FRAME_SPACING
+            : 0;
+        const top = preAssigned
+          ? preAssigned.top
+          : lastFrame
+            ? lastFrame.top
+            : 0;
         const frameId = toolCallId;
         frames.push({
           id: frameId,
@@ -675,5 +714,93 @@ export function createTools(ctx: ToolContext) {
         return result;
       },
     }),
+
+    ...(allowSpawnAgents
+      ? {
+          spawn_agents: tool({
+            description:
+              "Start multiple agents to work in parallel on different screens or sub-tasks. Call this when you have a plan and want to delegate work to specialist agents (e.g. one per screen or per feature). Pass the list of agents with each agent's subTask and assignedScreens. The agents will run in parallel; the current chat stays open so you can spawn more or monitor. Use after you have created screens and have a clear task breakdown.",
+            inputSchema: z.object({
+              agents: z
+                .array(
+                  z.object({
+                    subTask: z
+                      .string()
+                      .describe(
+                        "Clear task for this agent (e.g. build Home Search screen)",
+                      ),
+                    assignedScreens: z
+                      .array(z.string())
+                      .describe(
+                        "Screen labels or ids this agent owns (e.g. ['Home Search', 'Train Listing'])",
+                      ),
+                  }),
+                )
+                .min(1)
+                .max(6)
+                .describe(
+                  "List of agents to spawn with their tasks and screen assignments",
+                ),
+              planContext: z
+                .string()
+                .optional()
+                .describe(
+                  "Optional shared context or plan summary for all agents",
+                ),
+            }),
+            onInputStart: ({ toolCallId }) => {
+              writer?.write({
+                type: "tool-input-start",
+                toolCallId,
+                toolName: "spawn_agents",
+              });
+            },
+            execute: async (
+              {
+                agents: agentInputs,
+                planContext = "",
+              }: {
+                agents: Array<{ subTask: string; assignedScreens: string[] }>;
+                planContext?: string;
+              },
+              { toolCallId: _toolCallId },
+            ) => {
+              const orchestrationId = crypto
+                .randomUUID()
+                .replace(/-/g, "")
+                .slice(0, 12);
+              let globalScreenIndex = 0;
+              const agentsWithPositions = agentInputs.map((a, i) => {
+                const positions = (a.assignedScreens || []).map((_, si) => ({
+                  left: (globalScreenIndex + si) * FRAME_STEP,
+                  top: 0,
+                }));
+                globalScreenIndex += a.assignedScreens?.length ?? 0;
+                return {
+                  id: String(i),
+                  subTask: a.subTask,
+                  assignedScreens: a.assignedScreens ?? [],
+                  screenPositions: positions,
+                };
+              });
+              const result = {
+                success: true,
+                orchestrationId,
+                agents: agentsWithPositions,
+                planContext,
+                theme: { ...theme },
+              };
+              // Emit as data-* event so the client's onData callback receives it.
+              // AI SDK v6 only forwards data-* prefixed events to onData;
+              // standard tool-output-available is consumed internally by the SDK.
+              writer?.write({
+                type: "data-spawn-agents",
+                data: result,
+              } as Parameters<typeof writer.write>[0]);
+              return result;
+            },
+          }),
+        }
+      : {}),
   };
 }

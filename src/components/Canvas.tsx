@@ -1,10 +1,12 @@
 "use client";
 
-import { useRef, useEffect, useCallback } from "react";
+import { useRef, useEffect, useCallback, useMemo } from "react";
 import { toast } from "sonner";
 import { SelectionToast } from "@/components/custom-toast/selection-toast";
 import { Frame } from "@/components/Frame";
 import { FramePreview } from "@/components/FramePreview";
+import { AgentCursors } from "@/components/AgentCursors";
+import { AgentShutterOverlays } from "@/components/AgentShutterOverlay";
 import { useCanvas } from "@/hooks/useCanvas";
 import { useCanvasInteraction } from "@/hooks/useCanvasInteraction";
 import { useAppSelector } from "@/store/hooks";
@@ -150,6 +152,47 @@ export function Canvas() {
     }
   }, [selectedFrameIds, duplicateFrameById, removeFrameFromCanvas]);
 
+  // Stable per-frame callbacks so Frame memo isn't broken by new arrow fns
+  const positionChangeHandlers = useRef(new Map<string, (l: number, t: number) => void>());
+  const sizeChangeHandlers = useRef(new Map<string, (c: { left?: number; top?: number; width?: number; height?: number }) => void>());
+
+  // Keep handlers in sync with latest frame ids
+  useMemo(() => {
+    const ids = new Set(frames.map((f) => f.id));
+    // Clean up stale entries
+    for (const k of positionChangeHandlers.current.keys()) {
+      if (!ids.has(k)) {
+        positionChangeHandlers.current.delete(k);
+        sizeChangeHandlers.current.delete(k);
+      }
+    }
+  }, [frames]);
+
+  const getPositionChangeHandler = useCallback(
+    (id: string) => {
+      let fn = positionChangeHandlers.current.get(id);
+      if (!fn) {
+        fn = (newLeft: number, newTop: number) => handlePositionChange(id, newLeft, newTop);
+        positionChangeHandlers.current.set(id, fn);
+      }
+      return fn;
+    },
+    [handlePositionChange],
+  );
+
+  const getSizeChangeHandler = useCallback(
+    (id: string) => {
+      let fn = sizeChangeHandlers.current.get(id);
+      if (!fn) {
+        fn = (changes: { left?: number; top?: number; width?: number; height?: number }) =>
+          updateFrameProperties(id, changes);
+        sizeChangeHandlers.current.set(id, fn);
+      }
+      return fn;
+    },
+    [updateFrameProperties],
+  );
+
   const { x, y, scale } = transform;
 
   return (
@@ -213,10 +256,8 @@ export function Canvas() {
               selectedFrameIds.length === 1
             }
             canvasScale={scale}
-            onPositionChange={(newLeft, newTop) =>
-              handlePositionChange(frame.id, newLeft, newTop)
-            }
-            onSizeChange={(changes) => updateFrameProperties(frame.id, changes)}
+            onPositionChange={getPositionChangeHandler(frame.id)}
+            onSizeChange={getSizeChangeHandler(frame.id)}
             spaceHeld={spaceHeld}
             onWheelForZoom={
               selectedFrameIds.includes(frame.id) &&
@@ -238,6 +279,8 @@ export function Canvas() {
             />
           </Frame>
         ))}
+        <AgentShutterOverlays />
+        <AgentCursors />
       </div>
     </div>
   );

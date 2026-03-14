@@ -1,5 +1,9 @@
 import { createSlice } from "@reduxjs/toolkit";
-import { wrapScreenBody, extractBodyContent } from "@/lib/screen-utils";
+import {
+  wrapScreenBody,
+  extractBodyContent,
+  looksLikeMalformedFrameContent,
+} from "@/lib/screen-utils";
 
 export interface CanvasTransform {
   x: number;
@@ -104,6 +108,7 @@ const canvasSlice = createSlice({
       state,
       action: { payload: { id: string; html: string } },
     ) => {
+      if (looksLikeMalformedFrameContent(action.payload.html)) return;
       const frame = state.frames.find((f) => f.id === action.payload.id);
       if (frame) frame.html = action.payload.html;
     },

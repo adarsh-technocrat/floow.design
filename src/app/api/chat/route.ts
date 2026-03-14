@@ -80,8 +80,13 @@ export async function POST(req: Request) {
     const agentName = body?.agentName as string | undefined;
     const subTask = body?.subTask as string | undefined;
     const assignedScreens = (body?.assignedScreens ?? []) as string[];
+    const screenPositions = (body?.screenPositions ?? []) as Array<{
+      left: number;
+      top: number;
+    }>;
     const isFirstAgent = body?.isFirstAgent as boolean | undefined;
     const agentPlanContext = body?.planContext as string | undefined;
+    const agentCount = typeof body?.agentCount === "number" ? body.agentCount : 1;
 
     const lastMsg = rawMessages[rawMessages.length - 1];
     const userPrompt =
@@ -122,12 +127,16 @@ export async function POST(req: Request) {
           planContext = planning.planContext;
         }
 
-        // 2. Create tools: agent uses CHAT_MODEL; design model (3-pro-preview) used only inside create_screen, edit_screen, build_theme, update_theme
+        // When !agentId (main/orchestrator chat), include spawn_agents tool so the model
+        // can start multiple agents via tool call; the current chat stays visible.
+        // 2. Create tools: agent uses CHAT_MODEL; design model used inside create_screen, etc.
         const tools = createTools({
           frames,
           theme,
           writer,
           designModel: { vertex, modelId: DESIGN_MODEL_ID },
+          screenPositions: screenPositions.length > 0 ? screenPositions : undefined,
+          allowSpawnAgents: !agentId,
         });
 
         // 3. Build system prompt (with optional agent scope for multi-agent)
@@ -137,10 +146,11 @@ export async function POST(req: Request) {
             name: agentName,
             subTask,
             assignedScreens,
+            screenPositions,
             isFirstAgent: isFirstAgent ?? false,
           });
         }
-        const system = getSystemPrompt(frames, theme, planContext, agentScope);
+        const system = getSystemPrompt(frames, theme, planContext, agentScope, agentCount);
 
         // 4. Prepare messages
         const modelMessages =

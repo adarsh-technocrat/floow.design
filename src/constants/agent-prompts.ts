@@ -236,6 +236,7 @@ export function buildAgentScope(agent: {
   name: string;
   subTask: string;
   assignedScreens: string[];
+  screenPositions?: Array<{ left: number; top: number }>;
   isFirstAgent: boolean;
 }): string {
   const screenList = agent.assignedScreens.join(", ");
@@ -243,11 +244,23 @@ export function buildAgentScope(agent: {
     ? ""
     : "\n    Do NOT call build_theme or update_theme — another agent handles the theme.";
 
+  let positionGuidance = "";
+  if (agent.screenPositions && agent.screenPositions.length > 0) {
+    const positions = agent.assignedScreens
+      .map((name, i) => {
+        const pos = agent.screenPositions![i];
+        return pos ? `${name}: left=${pos.left}, top=${pos.top}` : null;
+      })
+      .filter(Boolean)
+      .join("\n    ");
+    positionGuidance = `\n    IMPORTANT: Use these exact canvas positions when calling create_screen:\n    ${positions}`;
+  }
+
   return `\
 <agent_scope>
     You are ${agent.name}. Your task: ${agent.subTask}
     You are responsible ONLY for screens: ${screenList}.
-    Do NOT modify screens outside your assignment.${themeRestriction}
+    Do NOT modify screens outside your assignment.${themeRestriction}${positionGuidance}
 </agent_scope>`;
 }
 
@@ -284,6 +297,7 @@ export function getSystemPrompt(
   > | null = null,
   planContext = "",
   agentScope = "",
+  agentCount = 1,
 ): string {
   const planSection = planContext
     ? `\n<planning_context>\n${planContext}\n</planning_context>\n`
@@ -293,10 +307,32 @@ export function getSystemPrompt(
     ? INITIAL_INSTRUCTIONS
     : STANDARD_INSTRUCTIONS;
 
+  // When the user selected multiple agents, instruct the model to use spawn_agents
+  const orchestrationInstruction =
+    agentCount > 1
+      ? `\n<orchestration>
+  The user has selected ${agentCount} parallel agents. You MUST call spawn_agents to delegate
+  the remaining work to other agents so they can work in parallel.
+
+  Steps:
+    1. Analyze the user's request and plan ${agentCount} non-overlapping sub-tasks.
+    2. Keep one sub-task for yourself and delegate the other ${agentCount - 1} to spawned agents.
+    3. You (the orchestrator) are responsible for theme creation (build_theme). No spawned agent should touch the theme.
+    4. Divide the remaining screens equally among the ${agentCount - 1} spawned agents.
+    5. Include visual style context in each sub-task so agents maintain consistency.
+    6. Call spawn_agents with the ${agentCount - 1} delegated agents and a shared planContext.
+    7. After calling spawn_agents, CONTINUE working on YOUR OWN assigned screens.
+       Your task is NOT done after spawning — keep creating screens for your own sub-task.
+
+  Workflow: build_theme first → call spawn_agents → then create your own screens.
+</orchestration>\n`
+      : "";
+
   return [
     ROLE,
     buildBackground(frames),
     agentScope,
+    orchestrationInstruction,
     planSection,
     instructions,
     TOOL_GUIDANCE,
