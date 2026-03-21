@@ -122,7 +122,7 @@ export function CanvasBottomLeft() {
         if (data?.messages?.length) setMessages(data.messages);
       })
       .catch(() => {});
-  }, [loaded]);
+  }, []);
 
   // Auto-scroll
   useEffect(() => {
