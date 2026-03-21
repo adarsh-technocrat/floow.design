@@ -1,30 +1,35 @@
 "use client";
 
-import { Canvas } from "@/components/Canvas";
-import {
-  CanvasBottomLeft,
-  CanvasBottomRight,
-  CanvasTopLeft,
-  CanvasTopRight,
-  EditingModeDisplay,
-} from "@/components/canvas-layout";
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 
 export default function AppPage() {
-  return (
-    <div className="flex h-screen w-full flex-col bg-[#0a0a0a]">
-      {/* Top bar background */}
-      <div
-        className="pointer-events-none absolute left-0 right-0 top-0 z-[5] h-12 bg-gradient-to-b from-black/60 to-transparent"
-        aria-hidden
-      />
+  const router = useRouter();
 
-      <div className="relative w-full flex-1 overflow-hidden">
-        <Canvas />
-        <CanvasTopLeft />
-        <CanvasTopRight />
-        <CanvasBottomLeft />
-        <CanvasBottomRight />
-        <EditingModeDisplay />
+  useEffect(() => {
+    // Create a new project and redirect to it
+    fetch("/api/projects", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name: "Untitled Project" }),
+    })
+      .then((r) => r.json())
+      .then((data: { id?: string }) => {
+        if (data.id) {
+          router.replace(`/app/${data.id}`);
+        }
+      })
+      .catch(() => {
+        // Fallback: go to dashboard
+        router.replace("/dashboard");
+      });
+  }, [router]);
+
+  return (
+    <div className="flex h-screen w-full items-center justify-center bg-[#0a0a0a] text-white">
+      <div className="flex items-center gap-2 text-sm text-white/40">
+        <div className="size-2 rounded-full bg-white/30 animate-pulse" />
+        Creating project...
       </div>
     </div>
   );

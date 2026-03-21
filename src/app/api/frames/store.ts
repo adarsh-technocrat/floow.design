@@ -1,4 +1,4 @@
-import { prisma, ensureDefaultProject } from "@/lib/db";
+import { prisma, ensureProject } from "@/lib/db";
 import { DEFAULT_PROJECT_ID } from "@/constants/project";
 
 export interface FramePayload {
@@ -12,10 +12,10 @@ export interface FramePayload {
 export async function setFrame(
   frameId: string,
   html: string,
-  meta?: { label?: string; left?: number; top?: number },
+  meta?: { label?: string; left?: number; top?: number; projectId?: string },
 ) {
-  await ensureDefaultProject();
-  const projectId = DEFAULT_PROJECT_ID;
+  const projectId = meta?.projectId ?? DEFAULT_PROJECT_ID;
+  await ensureProject(projectId);
   await prisma.frame.upsert({
     where: { id: frameId },
     create: {

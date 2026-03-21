@@ -1,15 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma, ensureDefaultProject } from "@/lib/db";
+import { prisma, ensureProject } from "@/lib/db";
 import { DEFAULT_PROJECT_ID } from "@/constants/project";
 
 export async function GET(req: NextRequest) {
   try {
     const agentId = req.nextUrl.searchParams.get("agentId") ?? "default";
+    const projectId = req.nextUrl.searchParams.get("projectId") ?? DEFAULT_PROJECT_ID;
 
     const session = await prisma.chatSession.findUnique({
       where: {
         projectId_agentId: {
-          projectId: DEFAULT_PROJECT_ID,
+          projectId,
           agentId,
         },
       },
@@ -26,19 +27,21 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
-    await ensureDefaultProject();
     const body = await req.json();
     const messages = Array.isArray(body?.messages) ? body.messages : [];
     const agentId = body?.agentId ?? "default";
+    const projectId = body?.projectId ?? DEFAULT_PROJECT_ID;
+
+    await ensureProject(projectId);
 
     await prisma.chatSession.upsert({
       where: {
         projectId_agentId: {
-          projectId: DEFAULT_PROJECT_ID,
+          projectId,
           agentId,
         },
       },
-      create: { projectId: DEFAULT_PROJECT_ID, agentId, messages },
+      create: { projectId, agentId, messages },
       update: { messages },
     });
     return NextResponse.json({ ok: true });

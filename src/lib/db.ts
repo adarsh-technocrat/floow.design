@@ -7,10 +7,12 @@ export const prisma = globalForPrisma.prisma ?? new PrismaClient();
 
 if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma;
 
-export async function ensureDefaultProject() {
+export async function ensureProject(projectId: string = DEFAULT_PROJECT_ID) {
   await prisma.project.upsert({
-    where: { id: DEFAULT_PROJECT_ID },
-    create: { id: DEFAULT_PROJECT_ID },
+    where: { id: projectId },
+    create: { id: projectId },
     update: {},
   });
 }
+
+export const ensureDefaultProject = () => ensureProject(DEFAULT_PROJECT_ID);

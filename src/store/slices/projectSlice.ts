@@ -1,21 +1,22 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import { loadFrames } from "./canvasSlice";
-import { DEFAULT_PROJECT_ID } from "@/constants/project";
 
 export interface ProjectState {
+  projectId: string | null;
   messages: unknown[];
   loaded: boolean;
 }
 
 const initialState: ProjectState = {
+  projectId: null,
   messages: [],
   loaded: false,
 };
 
 export const fetchProject = createAsyncThunk(
   "project/fetch",
-  async (_, { dispatch }) => {
-    const res = await fetch(`/api/project?id=${DEFAULT_PROJECT_ID}`).then((r) =>
+  async (projectId: string, { dispatch }) => {
+    const res = await fetch(`/api/project?id=${projectId}`).then((r) =>
       r.json(),
     );
     const frames = Array.isArray(res?.frames) ? res.frames : [];
@@ -23,7 +24,7 @@ export const fetchProject = createAsyncThunk(
     if (frames.length > 0) {
       dispatch(loadFrames(frames));
     }
-    return { messages };
+    return { projectId, messages };
   },
 );
 
@@ -34,6 +35,7 @@ const projectSlice = createSlice({
   extraReducers: (builder) => {
     builder
       .addCase(fetchProject.fulfilled, (state, action) => {
+        state.projectId = action.payload.projectId;
         state.messages = action.payload.messages;
         state.loaded = true;
       })
