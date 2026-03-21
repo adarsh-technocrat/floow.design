@@ -125,10 +125,9 @@ interface OverlayEntry {
   fadingOut: boolean;
 }
 
-const SINGLE_AGENT_COLOR = "#8A87F8";
+const SINGLE_AGENT_COLOR = "rgba(255,255,255,0.5)";
 
 export function AgentShutterOverlays() {
-  const agents = useAppSelector((s) => s.agent.agents);
   const frames = useAppSelector((s) => s.canvas.frames);
   const mainChatActiveFrameId = useAppSelector(
     (s) => s.agent.mainChatActiveFrameId,
@@ -144,19 +143,6 @@ export function AgentShutterOverlays() {
 
   useEffect(() => {
     const active = new Map<string, { color: string; type: FrameOverlayType }>();
-
-    for (const agent of agents) {
-      if (
-        agent.status === "working" &&
-        agent.activeFrameId &&
-        agent.activeOverlay
-      ) {
-        active.set(agent.activeFrameId, {
-          color: agent.color,
-          type: agent.activeOverlay,
-        });
-      }
-    }
 
     if (
       mainChatStatus === "working" &&
@@ -208,7 +194,6 @@ export function AgentShutterOverlays() {
       return changed ? next : prev;
     });
   }, [
-    agents,
     frames,
     mainChatActiveFrameId,
     mainChatActiveOverlay,

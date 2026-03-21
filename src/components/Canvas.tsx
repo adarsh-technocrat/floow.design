@@ -221,9 +221,9 @@ export function Canvas() {
       ref={containerRef}
       className="relative size-full contain-layout contain-paint overflow-hidden"
       style={{
-        backgroundColor: "#1d1716",
+        backgroundColor: "#0a0a0a",
         backgroundImage:
-          "radial-gradient(circle, #48403f 1px, transparent 1px)",
+          "radial-gradient(circle, rgba(255,255,255,0.12) 1px, transparent 1px)",
         backgroundSize: "20px 20px",
         cursor: isPanning
           ? "grabbing"
@@ -251,7 +251,7 @@ export function Canvas() {
       >
         {marqueeStartRef.current && marqueeEnd && (
           <div
-            className="pointer-events-none absolute z-50 border-4 border-[#8A87F8] bg-[#8A87F8]/10"
+            className="pointer-events-none absolute z-50 border-4 border-[rgba(255,255,255,0.5)] bg-[rgba(255,255,255,0.5)]/10"
             style={{
               left: Math.min(marqueeStartRef.current.contentX, marqueeEnd.x),
               top: Math.min(marqueeStartRef.current.contentY, marqueeEnd.y),

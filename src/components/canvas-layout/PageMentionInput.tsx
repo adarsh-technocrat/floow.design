@@ -51,7 +51,7 @@ function createChipElement(label: string, id: string): HTMLSpanElement {
   span.dataset.pageId = id;
   span.dataset.pageLabel = label;
   span.className =
-    "mention-chip inline-flex items-center rounded-md bg-[#8A87F8]/30 px-1.5 py-0.5 text-xs text-[#8A87F8] font-medium mx-0.5 align-middle";
+    "mention-chip inline-flex items-center rounded-md bg-[rgba(255,255,255,0.7)]/30 px-1.5 py-0.5 text-xs text-[rgba(255,255,255,0.7)] font-medium mx-0.5 align-middle";
   span.textContent = label;
   return span;
 }
@@ -277,7 +277,7 @@ export function PageMentionInput({
         }
       />
       {showSuggestions && (
-        <div className="absolute bottom-full left-0 right-0 z-50 mb-2 max-h-52 overflow-hidden rounded-xl border border-white/10 bg-[#161414]/95 py-1.5 shadow-2xl shadow-black/40 backdrop-blur-xl">
+        <div className="absolute bottom-full left-0 right-0 z-50 mb-2 max-h-52 overflow-hidden rounded-xl border border-white/10 bg-[#111111]/95 py-1.5 shadow-2xl shadow-black/40 backdrop-blur-xl">
           <div className="max-h-48 overflow-y-auto overscroll-contain px-1">
             <div className="sticky top-0 z-10 flex items-center gap-1.5 px-3 py-2 pb-1.5">
               <div className="h-px flex-1 bg-linear-to-r from-transparent via-white/10 to-transparent" />
@@ -294,7 +294,7 @@ export function PageMentionInput({
                     type="button"
                     className={`group flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left transition-all duration-150 ${
                       i === selectedIndex
-                        ? "bg-[#8A87F8]/25 text-white shadow-[inset_0_1px_0_rgba(138,135,248,0.15)]"
+                        ? "bg-[rgba(255,255,255,0.7)]/25 text-white shadow-[inset_0_1px_0_rgba(138,135,248,0.15)]"
                         : "text-white/85 hover:bg-white/6 hover:text-white"
                     }`}
                     onMouseDown={(e) => {

@@ -145,16 +145,12 @@ export const Frame = React.memo(function Frame({
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const overlayRef = useRef<HTMLDivElement>(null);
   const showToolbar = showToolbarProp ?? selected;
-  const agents = useAppSelector((s) => s.agent.agents);
   const mainChatActiveFrameId = useAppSelector(
     (s) => s.agent.mainChatActiveFrameId,
   );
   const mainChatStatus = useAppSelector((s) => s.agent.mainChatStatus);
   const isActiveAgentFrame =
-    agents.some((a) => a.status === "working" && a.activeFrameId === id) ||
-    (agents.length === 0 &&
-      mainChatStatus === "working" &&
-      mainChatActiveFrameId === id);
+    mainChatStatus === "working" && mainChatActiveFrameId === id;
   const enableElementInspection = (showToolbar ?? false) || isActiveAgentFrame;
 
   const childrenWithInspection = useMemo(() => {
@@ -236,7 +232,7 @@ export const Frame = React.memo(function Frame({
         <div
           className="absolute inset-0 overflow-hidden will-change-transform"
           style={{
-            backgroundColor: "#0d0807",
+            backgroundColor: "#0a0a0a",
             transform: "translateZ(0px)",
             backfaceVisibility: "hidden",
             clipPath: `url(#frame-phone-clip-${id})`,

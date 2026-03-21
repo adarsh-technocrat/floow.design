@@ -1,7 +1,6 @@
 import type { AppDispatch } from "@/store";
 import {
   setMainChatAgentFrame,
-  updateAgentActiveFrame,
   type FrameOverlayType,
 } from "@/store/slices/agentSlice";
 
@@ -18,45 +17,35 @@ function getDispatch(): AppDispatch {
   return _dispatch;
 }
 
-function isMainAgent(agentId: string) {
-  return agentId === MAIN_AGENT_ID;
-}
-
 function dispatchFrame(
-  agentId: string,
   frameId: string | null,
   status: "working" | "idle",
   overlay?: FrameOverlayType,
 ) {
-  const d = getDispatch();
-  if (isMainAgent(agentId)) {
-    d(setMainChatAgentFrame({ frameId, status, overlay }));
-  } else {
-    d(updateAgentActiveFrame({ id: agentId, frameId, overlay }));
-  }
+  getDispatch()(setMainChatAgentFrame({ frameId, status, overlay }));
 }
 
 export const cursor = {
   MAIN: MAIN_AGENT_ID,
 
-  working(agentId = MAIN_AGENT_ID) {
-    dispatchFrame(agentId, null, "working");
+  working(_agentId = MAIN_AGENT_ID) {
+    dispatchFrame(null, "working");
   },
 
-  show(agentId: string, frameId: string) {
-    dispatchFrame(agentId, frameId, "working");
+  show(_agentId: string, frameId: string) {
+    dispatchFrame(frameId, "working");
   },
 
-  scan(agentId: string, frameId: string) {
-    dispatchFrame(agentId, frameId, "working", "scan");
+  scan(_agentId: string, frameId: string) {
+    dispatchFrame(frameId, "working", "scan");
   },
 
-  design(agentId: string, frameId: string) {
-    dispatchFrame(agentId, frameId, "working", "design");
+  design(_agentId: string, frameId: string) {
+    dispatchFrame(frameId, "working", "design");
   },
 
-  hide(agentId = MAIN_AGENT_ID) {
-    dispatchFrame(agentId, null, "idle");
+  hide(_agentId = MAIN_AGENT_ID) {
+    dispatchFrame(null, "idle");
   },
 };
 

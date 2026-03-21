@@ -13,8 +13,8 @@
   --accent-foreground: #18181b;
   --muted-foreground: #71717a;
   --foreground-muted: #71717a;
-  --frame-border: #a78bfa;
-  --frame-hover-border: #6366f1;
+  --frame-border: rgba(255, 255, 255, 0.15);
+  --frame-hover-border: rgba(255, 255, 255, 0.3);
   --panel-glass-bg: rgba(255, 255, 255, 0.88);
   --panel-glass-border: rgba(228, 228, 231, 0.6);
   --panel-glass-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
@@ -35,8 +35,8 @@
     --accent-foreground: #fafafa;
     --muted-foreground: #a1a1aa;
     --foreground-muted: #a1a1aa;
-    --frame-border: #c4b5fd;
-    --frame-hover-border: #818cf8;
+    --frame-border: rgba(255, 255, 255, 0.15);
+    --frame-hover-border: rgba(255, 255, 255, 0.3);
     --primary: #18181b;
     --primary-foreground: #fafafa;
     --secondary: #27272a;
@@ -89,13 +89,67 @@ body {
 }
 
 .reference-mode-button {
-  background: #48413f;
+  background: rgba(255, 255, 255, 0.1);
   color: #fafafa;
 }
 
 .bg-canvas-panel {
-  background-color: #0d0807;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background-color: #0a0a0a;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+/* ─── Stitch-style canvas layout tokens ───────────────────────────────────── */
+
+.canvas-layout-stitch {
+  --surface-container: rgba(10, 10, 10, 0.85);
+  --surface-container-solid: #0a0a0a;
+  --border-secondary: rgba(255, 255, 255, 0.12);
+  --text-primary: #e5e5e5;
+  --text-wash: rgba(255, 255, 255, 0.5);
+  --state-hover: rgba(255, 255, 255, 0.06);
+  --state-pressed: rgba(255, 255, 255, 0.1);
+  --backdrop-blur-glass: blur(12px);
+  --canvas-dot-color: rgba(255, 255, 255, 0.12);
+  --shadow-glass: 0 4px 24px rgba(0, 0, 0, 0.4);
+}
+
+.backdrop-blur-glass {
+  backdrop-filter: var(--backdrop-blur-glass, blur(12px));
+  -webkit-backdrop-filter: var(--backdrop-blur-glass, blur(12px));
+}
+
+.shadow-glass {
+  box-shadow: var(--shadow-glass, 0 4px 24px rgba(0, 0, 0, 0.25));
+}
+
+/* Dot grid pattern for canvas (Stitch-style) */
+.canvas-dot-background {
+  background-image: radial-gradient(
+    circle,
+    var(--canvas-dot-color, #666) 1px,
+    transparent 1px
+  );
+  background-size: 15px 15px;
+}
+
+/* Top bar height for Stitch-style header */
+.h-18 {
+  height: 4.5rem; /* 72px */
+}
+
+.text-subtitle-sm {
+  font-size: 0.8125rem;
+  line-height: 1.25;
+}
+
+.text-subtitle-md {
+  font-size: 0.875rem;
+  line-height: 1.25;
+}
+
+.focus-ring:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 2px;
 }
 
 /* ─── Scrollbar ───────────────────────────────────────────────────────────── */
@@ -107,6 +161,29 @@ body {
 
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
+}
+
+.thin-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+}
+
+.thin-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.thin-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.thin-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 3px;
+}
+
+.thin-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
 }
 
 /* ─── Frame Preview ───────────────────────────────────────────────────────── */
@@ -121,7 +198,7 @@ body {
 }
 
 .frame-preview-gradient {
-  background: linear-gradient(135deg, #1a1615 0%, #2a2524 25%, #1d1716 50%, #2a2524 75%, #1a1615 100%);
+  background: linear-gradient(135deg, #0a0a0a 0%, #141414 25%, #0e0e0e 50%, #141414 75%, #0a0a0a 100%);
   background-size: 200% 200%;
   animation: frame-preview-shimmer 2s ease infinite;
 }
@@ -142,11 +219,11 @@ body {
   position: absolute;
   inset: 0;
   overflow: hidden;
-  background: linear-gradient(160deg, rgba(26, 34, 96, 0.45) 0%, rgba(15, 21, 64, 0.5) 40%, rgba(19, 26, 80, 0.45) 70%, rgba(26, 34, 96, 0.45) 100%);
-  border: 1px solid rgba(107, 127, 255, 0.35);
+  background: linear-gradient(160deg, rgba(20, 20, 20, 0.6) 0%, rgba(10, 10, 10, 0.7) 40%, rgba(15, 15, 15, 0.6) 70%, rgba(20, 20, 20, 0.6) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.15);
   box-shadow:
-    0 0 0 1px rgba(107, 127, 255, 0.12),
-    0 0 24px 2px rgba(107, 127, 255, 0.08);
+    0 0 0 1px rgba(255, 255, 255, 0.06),
+    0 0 24px 2px rgba(255, 255, 255, 0.03);
   backdrop-filter: blur(1px);
 }
 
@@ -177,7 +254,7 @@ body {
   width: 100%;
   height: 100%;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(107, 127, 255, 0.25) 0%, rgba(107, 127, 255, 0) 70%);
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0) 70%);
   filter: blur(80px);
 }
 
@@ -186,7 +263,7 @@ body {
   inset: 0;
   pointer-events: none;
   z-index: 10;
-  box-shadow: inset 0 0 32px 0 rgba(107, 127, 255, 0.08);
+  box-shadow: inset 0 0 32px 0 rgba(255, 255, 255, 0.03);
 }
 
 .overlay-sheet-tint {
@@ -194,7 +271,7 @@ body {
   inset: 0;
   z-index: 30;
   pointer-events: none;
-  background: linear-gradient(160deg, rgba(26, 34, 96, 0.2) 0%, rgba(15, 21, 64, 0.25) 40%, rgba(19, 26, 80, 0.22) 70%, rgba(26, 34, 96, 0.2) 100%);
+  background: linear-gradient(160deg, rgba(20, 20, 20, 0.2) 0%, rgba(10, 10, 10, 0.25) 40%, rgba(15, 15, 15, 0.22) 70%, rgba(20, 20, 20, 0.2) 100%);
 }
 
 .overlay-sheet-content {
@@ -211,7 +288,7 @@ body {
   font-size: 13px;
   font-weight: 500;
   letter-spacing: 0.025em;
-  color: #6b7fff;
+  color: rgba(255, 255, 255, 0.5);
 }
 
 /* ─── Shutter Scan Effect ─────────────────────────────────────────────────── */
@@ -244,4 +321,43 @@ body {
 .code-dialog-shiki .shiki span {
   color: var(--shiki-dark) !important;
   background-color: transparent !important;
+}
+
+/* ─── Landing Page ───────────────────────────────────────────────────────── */
+
+html.dark {
+  color-scheme: dark;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
 }
