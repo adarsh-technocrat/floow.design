@@ -56,24 +56,24 @@ function ToolChip({ part }: { part: MessagePart }) {
     done,
   );
   return (
-    <div className={`flex items-center gap-1.5 rounded-md border px-2 py-1 ${done ? "border-white/[0.08] bg-white/[0.03]" : "border-white/[0.12] bg-white/[0.05]"}`}>
+    <div className={`flex items-center gap-1.5 rounded-md border px-2 py-1 ${done ? "border-b-secondary bg-input-bg" : "border-b-primary bg-input-bg"}`}>
       {done ? (
-        <svg width="10" height="10" viewBox="0 0 256 256" fill="currentColor" className="text-white/40 shrink-0">
+        <svg width="10" height="10" viewBox="0 0 256 256" fill="currentColor" className="text-t-secondary shrink-0">
           <path d="M229.66,77.66l-128,128a8,8,0,0,1-11.32,0l-56-56a8,8,0,0,1,11.32-11.32L96,188.69,218.34,66.34a8,8,0,0,1,11.32,11.32Z" />
         </svg>
       ) : (
         <span className="size-2.5 shrink-0 animate-pulse rounded-full bg-white/40" />
       )}
-      <span className={`font-mono text-[9px] uppercase tracking-wider ${done ? "text-white/40" : "text-white/60"}`}>{label}</span>
+      <span className={`font-mono text-[9px] uppercase tracking-wider ${done ? "text-t-secondary" : "text-t-secondary"}`}>{label}</span>
     </div>
   );
 }
 
 const mdComponents = {
-  p: ({ children }: { children?: React.ReactNode }) => <p className="mb-1 last:mb-0 text-[11px] leading-relaxed text-white/40">{children}</p>,
-  strong: ({ children }: { children?: React.ReactNode }) => <strong className="font-semibold text-white/50">{children}</strong>,
+  p: ({ children }: { children?: React.ReactNode }) => <p className="mb-1 last:mb-0 text-[11px] leading-relaxed text-t-secondary">{children}</p>,
+  strong: ({ children }: { children?: React.ReactNode }) => <strong className="font-semibold text-t-secondary">{children}</strong>,
   ul: ({ children }: { children?: React.ReactNode }) => <ul className="mb-1 list-disc pl-3 space-y-0.5">{children}</ul>,
-  li: ({ children }: { children?: React.ReactNode }) => <li className="text-[11px] leading-relaxed text-white/40">{children}</li>,
+  li: ({ children }: { children?: React.ReactNode }) => <li className="text-[11px] leading-relaxed text-t-secondary">{children}</li>,
 };
 
 function AssistantBubble({ msg }: { msg: ChatMessage }) {
@@ -137,14 +137,14 @@ export function CanvasBottomLeft() {
     <div className="absolute bottom-4 left-4 z-10 flex flex-col items-start gap-2">
       {/* Log panel */}
       {logVisible && (
-        <div className="w-[260px] max-h-[560px] flex flex-col rounded-xl border border-white/[0.12] bg-[#0e0e10]/90 backdrop-blur-xl shadow-[0_4px_24px_rgba(0,0,0,0.4)] overflow-hidden">
+        <div className="w-[260px] max-h-[560px] flex flex-col rounded-xl border border-b-primary bg-surface-elevated/90 backdrop-blur-xl shadow-[0_4px_24px_rgba(0,0,0,0.4)] overflow-hidden">
           {/* Header */}
-          <div className="flex items-center justify-between px-3 py-2 border-b border-white/[0.08] flex-shrink-0">
+          <div className="flex items-center justify-between px-3 py-2 border-b border-b-secondary flex-shrink-0">
             <span className="text-[10px] font-mono font-medium uppercase tracking-wider text-white/35">Activity</span>
             <button
               type="button"
               onClick={() => dispatch(toggleAgentLogVisible())}
-              className="size-5 flex items-center justify-center rounded text-white/25 hover:text-white/50 transition-colors"
+              className="size-5 flex items-center justify-center rounded text-t-tertiary hover:text-t-secondary transition-colors"
             >
               <X className="size-3" />
             </button>
@@ -153,7 +153,7 @@ export function CanvasBottomLeft() {
           {/* Messages */}
           {visibleMessages.length === 0 ? (
             <div className="flex items-center justify-center py-10 px-4">
-              <p className="text-[11px] text-white/20 text-center">No activity yet</p>
+              <p className="text-[11px] text-t-tertiary text-center">No activity yet</p>
             </div>
           ) : (
             <div className="flex-1 min-h-0 relative">
@@ -165,8 +165,8 @@ export function CanvasBottomLeft() {
                     <Fragment key={msg.id}>
                       {msg.role === "user" ? (
                         <div className="flex justify-end">
-                          <div className="rounded-lg px-2.5 py-1.5 bg-white/[0.06] max-w-[90%]">
-                            <p className="text-[11px] text-white/60">{getUserText(msg)}</p>
+                          <div className="rounded-lg px-2.5 py-1.5 bg-input-bg max-w-[90%]">
+                            <p className="text-[11px] text-t-secondary">{getUserText(msg)}</p>
                           </div>
                         </div>
                       ) : msg.role === "assistant" ? (
@@ -193,15 +193,15 @@ export function CanvasBottomLeft() {
         onClick={() => dispatch(toggleAgentLogVisible())}
         className={`flex items-center gap-2 rounded-xl border backdrop-blur-sm px-4 py-2.5 text-xs font-medium transition-colors ${
           logVisible
-            ? "border-white/[0.2] bg-white/[0.1] text-white/70"
-            : "border-white/[0.15] bg-[#111113]/80 text-white/40 hover:text-white/70 hover:border-white/[0.25]"
+            ? "border-b-strong bg-input-bg text-t-primary"
+            : "border-b-strong bg-surface-elevated/80 text-t-secondary hover:text-t-primary hover:border-b-strong"
         }`}
         title="Toggle Agent Log"
       >
         <MessageSquareText className="size-4" />
         Agent Log
         {visibleMessages.length > 0 && !logVisible && (
-          <span className="text-[10px] font-mono text-white/30 bg-white/[0.06] rounded-full px-1.5 py-0.5 min-w-[20px] text-center">{visibleMessages.length}</span>
+          <span className="text-[10px] font-mono text-t-tertiary bg-input-bg rounded-full px-1.5 py-0.5 min-w-[20px] text-center">{visibleMessages.length}</span>
         )}
       </button>
     </div>

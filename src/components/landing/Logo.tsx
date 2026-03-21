@@ -6,10 +6,10 @@ export function Logo({ size = "md" }: { size?: "sm" | "md" | "lg" }) {
   return (
     <Link href="/" className="select-none no-underline flex items-center gap-2">
       <span
-        className={`${textSize} font-bold tracking-tight text-white`}
+        className={`${textSize} font-bold tracking-tight text-t-primary`}
         style={{ fontFamily: "var(--font-logo), 'Space Grotesk', sans-serif" }}
       >
-        launchpad<span className="text-white/40">.ai</span>
+        launchpad<span className="text-t-secondary">.ai</span>
       </span>
     </Link>
   );

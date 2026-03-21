@@ -26,8 +26,8 @@ export default function AppPage() {
   }, [router]);
 
   return (
-    <div className="flex h-screen w-full items-center justify-center bg-[#0a0a0a] text-white">
-      <div className="flex items-center gap-2 text-sm text-white/40">
+    <div className="flex h-screen w-full items-center justify-center bg-canvas-bg text-t-primary">
+      <div className="flex items-center gap-2 text-sm text-t-secondary">
         <div className="size-2 rounded-full bg-white/30 animate-pulse" />
         Creating project...
       </div>

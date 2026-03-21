@@ -17,15 +17,15 @@ export function TemplatesCarousel() {
   };
 
   return (
-    <section id="templates" className="border-b border-white/[0.12]">
+    <section id="templates" className="border-b border-b-primary">
       {/* Header row with border */}
-      <div className="flex items-center justify-between border-b border-white/[0.12] px-5 py-4">
-        <span className="text-[11px] font-mono font-semibold uppercase tracking-wider text-white/30">Templates</span>
+      <div className="flex items-center justify-between border-b border-b-primary px-5 py-4">
+        <span className="text-[11px] font-mono font-semibold uppercase tracking-wider text-t-tertiary">Templates</span>
         <div className="flex gap-1">
-          <button onClick={() => scroll('left')} className="h-7 w-7 flex items-center justify-center rounded border border-white/[0.08] text-white/30 hover:text-white hover:border-white/20 transition-colors">
+          <button onClick={() => scroll('left')} className="h-7 w-7 flex items-center justify-center rounded border border-b-secondary text-t-tertiary hover:text-t-primary hover:border-white/20 transition-colors">
             <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M10 12L6 8l4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
           </button>
-          <button onClick={() => scroll('right')} className="h-7 w-7 flex items-center justify-center rounded border border-white/[0.08] text-white/30 hover:text-white hover:border-white/20 transition-colors">
+          <button onClick={() => scroll('right')} className="h-7 w-7 flex items-center justify-center rounded border border-b-secondary text-t-tertiary hover:text-t-primary hover:border-white/20 transition-colors">
             <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M6 4l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
           </button>
         </div>
@@ -33,23 +33,23 @@ export function TemplatesCarousel() {
 
       {/* Cards */}
       <div className="px-5 py-8">
-        <h2 className="text-2xl md:text-3xl font-semibold tracking-tight text-white mb-2" style={{ fontFamily: "var(--font-logo), 'Space Grotesk', sans-serif" }}>
+        <h2 className="text-2xl md:text-3xl font-semibold tracking-tight text-t-primary mb-2" style={{ fontFamily: "var(--font-logo), 'Space Grotesk', sans-serif" }}>
           Start from a template
         </h2>
-        <p className="text-sm text-white/35 mb-8 max-w-md">Every template exports production-ready Flutter code.</p>
+        <p className="text-sm text-t-secondary mb-8 max-w-md">Every template exports production-ready Flutter code.</p>
 
         <div ref={scrollRef} className="flex gap-4 overflow-x-auto pb-2 scroll-smooth scrollbar-hide">
           {templates.map((t) => (
             <a key={t.id} href="/app" className="group relative flex-shrink-0 w-[220px] no-underline">
-              <div className="relative aspect-[9/16] w-full overflow-hidden rounded-lg border border-white/[0.12] bg-[#111]">
+              <div className="relative aspect-[9/16] w-full overflow-hidden rounded-lg border border-b-primary bg-[#111]">
                 <img alt={t.name} src={t.image} className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]" />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
                 <div className="absolute bottom-0 left-0 right-0 p-3">
                   <div className="flex items-center gap-2 mb-1">
-                    <span className="text-[9px] font-mono uppercase tracking-wider text-white/40 border border-white/[0.1] rounded px-1.5 py-0.5">{t.tag}</span>
-                    <span className="text-[9px] font-mono text-white/25">{t.screens}</span>
+                    <span className="text-[9px] font-mono uppercase tracking-wider text-t-secondary border border-b-primary rounded px-1.5 py-0.5">{t.tag}</span>
+                    <span className="text-[9px] font-mono text-t-tertiary">{t.screens}</span>
                   </div>
-                  <p className="text-xs font-medium text-white">{t.name}</p>
+                  <p className="text-xs font-medium text-t-primary">{t.name}</p>
                 </div>
               </div>
             </a>

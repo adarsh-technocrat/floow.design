@@ -15,13 +15,13 @@ export function Hero() {
   const [promptText, setPromptText] = useState('');
 
   return (
-    <section id="hero" className="relative border-b border-white/[0.12] bg-black px-5 py-20 md:py-28 overflow-hidden">
+    <section id="hero" className="relative border-b border-b-primary bg-surface px-5 py-20 md:py-28 overflow-hidden">
       {/* Dotted canvas background */}
       <div
         aria-hidden="true"
         className="pointer-events-none absolute inset-0 z-0"
         style={{
-          backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.15) 1px, transparent 1px)',
+          backgroundImage: 'radial-gradient(circle, var(--canvas-dot) 1px, transparent 1px)',
           backgroundSize: '20px 20px',
         }}
       />
@@ -55,7 +55,7 @@ export function Hero() {
               <path d="M1 1L1 15.5L5.5 11.5L9.5 19L12.5 17.5L8.5 10L14 9L1 1Z" fill={cursor.color} fillOpacity="0.9" stroke="rgba(0,0,0,0.5)" strokeWidth="1" strokeLinejoin="round" />
             </svg>
             <motion.div
-              className="ml-3 -mt-0.5 rounded-md px-2 py-0.5 text-[10px] font-medium shadow-md whitespace-nowrap border border-white/[0.08]"
+              className="ml-3 -mt-0.5 rounded-md px-2 py-0.5 text-[10px] font-medium shadow-md whitespace-nowrap border border-b-secondary"
               style={{ backgroundColor: 'rgba(24,24,27,0.9)', color: cursor.color }}
               initial={{ opacity: 0, x: -6 }}
               animate={{ opacity: 1, x: 0 }}
@@ -70,7 +70,7 @@ export function Hero() {
       <div className="relative z-[3] mx-auto flex max-w-2xl flex-col items-center text-center">
         {/* Badge */}
         <motion.div
-          className="mb-6 inline-flex items-center gap-2 rounded-full border border-white/[0.08] bg-white/[0.03] px-3.5 py-1.5 text-xs text-white/50"
+          className="mb-6 inline-flex items-center gap-2 rounded-full border border-b-secondary bg-input-bg px-3.5 py-1.5 text-xs text-t-secondary"
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
@@ -84,7 +84,7 @@ export function Hero() {
 
         {/* Heading */}
         <motion.h1
-          className="text-[32px] md:text-[56px] font-semibold leading-[1.1] tracking-tight text-white"
+          className="text-[32px] md:text-[56px] font-semibold leading-[1.1] tracking-tight text-t-primary"
           style={{ fontFamily: "var(--font-logo), 'Space Grotesk', sans-serif" }}
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -92,11 +92,11 @@ export function Hero() {
         >
           Idea to Flutter app,
           <br />
-          <span className="text-white/35">in seconds</span>
+          <span className="text-t-secondary">in seconds</span>
         </motion.h1>
 
         <motion.p
-          className="mt-5 text-base md:text-lg text-white/40 max-w-md text-balance leading-relaxed"
+          className="mt-5 text-base md:text-lg text-t-secondary max-w-md text-balance leading-relaxed"
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2, duration: 0.6 }}
@@ -111,28 +111,28 @@ export function Hero() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.35, duration: 0.7 }}
         >
-          <div className="flex w-full flex-col rounded-2xl border border-white/[0.12] bg-[#111113] p-5 shadow-[0_8px_40px_rgba(0,0,0,0.5)]">
+          <div className="flex w-full flex-col rounded-2xl border border-b-primary bg-surface-elevated p-5 shadow-[0_8px_40px_rgba(0,0,0,0.5)]">
             <textarea
               value={promptText}
               onChange={(e) => setPromptText(e.target.value)}
               placeholder="Describe your app idea... e.g. A fitness tracker with dark theme, weekly progress charts, and bottom nav"
-              className="w-full bg-transparent text-white placeholder-white/25 resize-none focus:outline-none text-[15px] leading-relaxed min-h-[140px]"
+              className="w-full bg-transparent text-t-primary placeholder-white/25 resize-none focus:outline-none text-[15px] leading-relaxed min-h-[140px]"
               rows={5}
             />
-            <div className="flex items-center justify-between pt-3 mt-2 border-t border-white/[0.08]">
+            <div className="flex items-center justify-between pt-3 mt-2 border-t border-b-secondary">
               <div className="flex items-center gap-2">
                 <button
                   type="button"
-                  className="flex items-center justify-center rounded-lg p-2 text-white/30 hover:text-white/60 hover:bg-white/[0.06] transition-colors"
+                  className="flex items-center justify-center rounded-lg p-2 text-t-tertiary hover:text-t-secondary hover:bg-input-bg transition-colors"
                   title="Attach"
                 >
                   <svg width="16" height="16" viewBox="0 0 256 256" fill="currentColor">
                     <path d="M224,128a8,8,0,0,1-8,8H136v80a8,8,0,0,1-16,0V136H40a8,8,0,0,1,0-16h80V40a8,8,0,0,1,16,0v80h80A8,8,0,0,1,224,128Z" />
                   </svg>
                 </button>
-                <span className="text-[10px] font-mono uppercase tracking-wider text-white/20 border border-white/[0.08] rounded px-2 py-1">Flutter · Dart</span>
+                <span className="text-[10px] font-mono uppercase tracking-wider text-t-tertiary border border-b-secondary rounded px-2 py-1">Flutter · Dart</span>
               </div>
-              <button className="inline-flex h-9 items-center gap-2 px-5 rounded-lg bg-white text-sm font-semibold text-black hover:bg-white/90 transition-colors">
+              <button className="inline-flex h-9 items-center gap-2 px-5 rounded-lg bg-btn-primary-bg text-sm font-semibold text-btn-primary-text hover:opacity-90 transition-colors">
                 Generate
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M5 12h14M12 5l7 7-7 7" />
@@ -151,13 +151,13 @@ export function Hero() {
         >
           <div className="flex -space-x-2">
             {['A', 'M', 'S', 'P'].map((l) => (
-              <div key={l} className="flex h-7 w-7 items-center justify-center rounded-full border-2 border-black bg-white/[0.1] text-[10px] font-semibold text-white/50">
+              <div key={l} className="flex h-7 w-7 items-center justify-center rounded-full border-2 border-black bg-input-bg text-[10px] font-semibold text-t-secondary">
                 {l}
               </div>
             ))}
           </div>
-          <p className="text-xs text-white/30">
-            <span className="font-semibold text-white/60">1,000+</span> developers ship with Launchpad AI
+          <p className="text-xs text-t-tertiary">
+            <span className="font-semibold text-t-secondary">1,000+</span> developers ship with Launchpad AI
           </p>
         </motion.div>
       </div>

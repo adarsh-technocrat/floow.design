@@ -72,24 +72,24 @@ const posts = [
 
 export default function BlogPage() {
   return (
-    <div className="w-full bg-black text-white">
-      <div className="mx-auto max-w-6xl border-x border-white/[0.12]">
+    <div className="w-full bg-surface text-t-primary">
+      <div className="mx-auto max-w-6xl border-x border-b-primary">
         <Header />
 
         {/* Hero */}
-        <div className="border-b border-white/[0.12] px-6 md:px-12 py-12 md:py-20">
+        <div className="border-b border-b-primary px-6 md:px-12 py-12 md:py-20">
           <div className="flex flex-col gap-4 items-center text-center max-w-2xl mx-auto">
-            <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-white/[0.03] border border-white/[0.12]">
+            <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-input-bg border border-b-primary">
               <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-              <span className="text-xs font-mono text-white/50">Latest Insights</span>
+              <span className="text-xs font-mono text-t-secondary">Latest Insights</span>
             </div>
             <h1
-              className="text-[32px] md:text-[48px] font-semibold leading-tight tracking-tight text-white"
+              className="text-[32px] md:text-[48px] font-semibold leading-tight tracking-tight text-t-primary"
               style={{ fontFamily: "var(--font-logo), 'Space Grotesk', sans-serif" }}
             >
               Blog
             </h1>
-            <p className="text-white/40 text-base md:text-lg leading-relaxed max-w-xl">
+            <p className="text-t-secondary text-base md:text-lg leading-relaxed max-w-xl">
               Updates, tutorials, and insights on building Flutter apps with AI.
             </p>
           </div>
@@ -101,33 +101,33 @@ export default function BlogPage() {
             <Link
               key={post.slug}
               href={`/blog/${post.slug}`}
-              className="group flex flex-col gap-4 p-6 bg-black hover:bg-white/[0.02] transition-all no-underline"
+              className="group flex flex-col gap-4 p-6 bg-surface hover:bg-input-bg transition-all no-underline"
             >
               {/* Category + read time */}
               <div className="flex items-center gap-3">
-                <span className="px-2 py-0.5 rounded text-[10px] font-mono uppercase tracking-wider text-white/50 bg-white/[0.05] border border-white/[0.1]">
+                <span className="px-2 py-0.5 rounded text-[10px] font-mono uppercase tracking-wider text-t-secondary bg-input-bg border border-b-primary">
                   {post.category}
                 </span>
-                <span className="text-[10px] text-white/25 font-mono">{post.readTime}</span>
+                <span className="text-[10px] text-t-tertiary font-mono">{post.readTime}</span>
               </div>
 
               {/* Title */}
               <h2
-                className="text-lg md:text-xl font-semibold text-white group-hover:text-white/80 transition-colors leading-snug"
+                className="text-lg md:text-xl font-semibold text-t-primary group-hover:text-t-primary transition-colors leading-snug"
                 style={{ fontFamily: "var(--font-logo), 'Space Grotesk', sans-serif" }}
               >
                 {post.title}
               </h2>
 
               {/* Excerpt */}
-              <p className="text-sm text-white/35 leading-relaxed">{post.excerpt}</p>
+              <p className="text-sm text-t-secondary leading-relaxed">{post.excerpt}</p>
 
               {/* Footer divider */}
-              <div className="flex items-center justify-between mt-auto pt-4 border-t border-white/[0.08]">
+              <div className="flex items-center justify-between mt-auto pt-4 border-t border-b-secondary">
                 <div className="flex items-center gap-2">
-                  <span className="text-xs font-medium text-white/50">{post.author}</span>
-                  <span className="text-white/15">·</span>
-                  <span className="text-[11px] text-white/25 font-mono">{post.date}</span>
+                  <span className="text-xs font-medium text-t-secondary">{post.author}</span>
+                  <span className="text-t-tertiary">·</span>
+                  <span className="text-[11px] text-t-tertiary font-mono">{post.date}</span>
                 </div>
                 <svg
                   width="16"
@@ -137,7 +137,7 @@ export default function BlogPage() {
                   stroke="currentColor"
                   strokeWidth="1.5"
                   strokeLinecap="round"
-                  className="text-white/20 group-hover:text-white/50 transition-colors"
+                  className="text-t-tertiary group-hover:text-t-secondary transition-colors"
                 >
                   <path d="M5 12h14M12 5l7 7-7 7" />
                 </svg>

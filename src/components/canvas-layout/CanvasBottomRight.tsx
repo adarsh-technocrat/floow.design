@@ -63,7 +63,7 @@ function ToolbarButton({
         "inline-flex size-8 shrink-0 items-center justify-center rounded-md text-sm font-medium outline-none transition-all active:scale-95 disabled:pointer-events-none disabled:opacity-40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg]:size-4 " +
         (selected
           ? "bg-white/[0.12] text-white"
-          : "text-white/50 hover:bg-white/[0.06] hover:text-white")
+          : "text-t-secondary hover:bg-input-bg hover:text-white")
       }
     >
       {children}
@@ -83,8 +83,8 @@ export function CanvasBottomRight() {
   return (
     <div className="absolute bottom-4 right-4 z-10 flex items-center gap-3">
       {/* Save indicator */}
-      <span className="flex items-center gap-1.5 text-white/25 text-[11px]">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-white/30">
+      <span className="flex items-center gap-1.5 text-t-tertiary text-[11px]">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-t-tertiary">
           <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z" />
           <path d="M8 12l3 3 5-5" />
         </svg>
@@ -92,7 +92,7 @@ export function CanvasBottomRight() {
       </span>
 
       {/* Toolbar */}
-      <div className="flex items-center gap-1 rounded-lg border border-white/[0.12] bg-black/60 backdrop-blur-sm px-1.5 py-1">
+      <div className="flex items-center gap-1 rounded-lg border border-b-primary bg-canvas-panel-bg backdrop-blur-sm px-1.5 py-1">
       <ToolbarButton
         title="Select (V)"
         selected={canvasToolMode === "select"}
@@ -132,7 +132,7 @@ export function CanvasBottomRight() {
           <path d="M224,128a8,8,0,0,1-8,8H40a8,8,0,0,1,0-16H216A8,8,0,0,1,224,128Z" />
         </svg>
       </ToolbarButton>
-      <div className="min-w-9 text-center text-[11px] font-mono text-white/50">
+      <div className="min-w-9 text-center text-[11px] font-mono text-t-secondary">
         {displayPercent}%
       </div>
       <ToolbarButton title="Zoom in" onClick={increaseCanvasZoom}>

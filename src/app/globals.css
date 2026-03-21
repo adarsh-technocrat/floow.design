@@ -2,29 +2,59 @@
 
 /* ─── Theme Variables ─────────────────────────────────────────────────────── */
 
+/* ─── Light Theme (warm beige) ────────────────────────────────────────────── */
 :root {
   --container-5xl: 64rem;
-  --background: #ffffff;
-  --foreground: #171717;
-  --background-secondary: #f4f4f5;
-  --border: #e4e4e7;
-  --ring: #18181b;
-  --accent: #f4f4f5;
-  --accent-foreground: #18181b;
-  --muted-foreground: #71717a;
-  --foreground-muted: #71717a;
-  --frame-border: rgba(255, 255, 255, 0.15);
-  --frame-hover-border: rgba(255, 255, 255, 0.3);
-  --panel-glass-bg: rgba(255, 255, 255, 0.88);
-  --panel-glass-border: rgba(228, 228, 231, 0.6);
+  --background: #faf8f5;
+  --foreground: #1c1917;
+  --background-secondary: #f5f0eb;
+  --border: #e7e0d8;
+  --ring: #1c1917;
+  --accent: #f0ebe5;
+  --accent-foreground: #1c1917;
+  --muted-foreground: #78716c;
+  --foreground-muted: #78716c;
+  --frame-border: rgba(0, 0, 0, 0.12);
+  --frame-hover-border: rgba(0, 0, 0, 0.25);
+  --panel-glass-bg: rgba(250, 248, 245, 0.92);
+  --panel-glass-border: rgba(231, 224, 216, 0.7);
   --panel-glass-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
-  --primary: #18181b;
-  --primary-foreground: #fafafa;
-  --secondary: #f4f4f5;
-  --secondary-foreground: #18181b;
-  --input: #f4f4f5;
+  --primary: #1c1917;
+  --primary-foreground: #faf8f5;
+  --secondary: #f0ebe5;
+  --secondary-foreground: #1c1917;
+  --input: #f0ebe5;
+
+  /* Semantic tokens for components */
+  --surface: #faf8f5;
+  --surface-elevated: #ffffff;
+  --surface-sunken: #f0ebe5;
+  --surface-overlay: rgba(255, 255, 255, 0.95);
+  --text-primary: #1c1917;
+  --text-secondary: #57534e;
+  --text-tertiary: #a8a29e;
+  --text-inverted: #faf8f5;
+  --border-primary: #e7e0d8;
+  --border-secondary: rgba(0, 0, 0, 0.06);
+  --border-strong: rgba(0, 0, 0, 0.12);
+  --canvas-bg: #f0ebe5;
+  --canvas-dot: rgba(0, 0, 0, 0.08);
+  --canvas-panel-bg: rgba(255, 255, 255, 0.92);
+  --canvas-panel-border: rgba(0, 0, 0, 0.08);
+  --input-bg: rgba(0, 0, 0, 0.03);
+  --input-border: rgba(0, 0, 0, 0.1);
+  --input-placeholder: rgba(0, 0, 0, 0.3);
+  --btn-primary-bg: #1c1917;
+  --btn-primary-text: #faf8f5;
+  --btn-secondary-bg: transparent;
+  --btn-secondary-border: rgba(0, 0, 0, 0.12);
+  --btn-secondary-text: #57534e;
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 8px 40px rgba(0, 0, 0, 0.1);
 }
 
+/* ─── Dark Theme (current — unchanged) ───────────────────────────────────── */
 @media (prefers-color-scheme: dark) {
   :root {
     --background: #0a0a0a;
@@ -45,6 +75,33 @@
     --panel-glass-bg: rgba(24, 24, 27, 0.88);
     --panel-glass-border: rgba(39, 39, 42, 0.8);
     --panel-glass-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+
+    --surface: #0a0a0a;
+    --surface-elevated: #111113;
+    --surface-sunken: #050505;
+    --surface-overlay: rgba(10, 10, 10, 0.95);
+    --text-primary: #ededed;
+    --text-secondary: rgba(255, 255, 255, 0.5);
+    --text-tertiary: rgba(255, 255, 255, 0.25);
+    --text-inverted: #0a0a0a;
+    --border-primary: rgba(255, 255, 255, 0.12);
+    --border-secondary: rgba(255, 255, 255, 0.06);
+    --border-strong: rgba(255, 255, 255, 0.18);
+    --canvas-bg: #0a0a0a;
+    --canvas-dot: rgba(255, 255, 255, 0.12);
+    --canvas-panel-bg: rgba(10, 10, 10, 0.9);
+    --canvas-panel-border: rgba(255, 255, 255, 0.12);
+    --input-bg: rgba(255, 255, 255, 0.03);
+    --input-border: rgba(255, 255, 255, 0.12);
+    --input-placeholder: rgba(255, 255, 255, 0.25);
+    --btn-primary-bg: #ffffff;
+    --btn-primary-text: #000000;
+    --btn-secondary-bg: transparent;
+    --btn-secondary-border: rgba(255, 255, 255, 0.15);
+    --btn-secondary-text: rgba(255, 255, 255, 0.5);
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
+    --shadow-md: 0 4px 24px rgba(0, 0, 0, 0.4);
+    --shadow-lg: 0 8px_60px rgba(0, 0, 0, 0.6);
   }
 }
 
@@ -61,6 +118,26 @@
   --color-accent-foreground: var(--accent-foreground);
   --color-muted-foreground: var(--muted-foreground);
   --color-input: var(--input);
+  --color-surface: var(--surface);
+  --color-surface-elevated: var(--surface-elevated);
+  --color-surface-sunken: var(--surface-sunken);
+  --color-surface-overlay: var(--surface-overlay);
+  --color-t-primary: var(--text-primary);
+  --color-t-secondary: var(--text-secondary);
+  --color-t-tertiary: var(--text-tertiary);
+  --color-t-inverted: var(--text-inverted);
+  --color-b-primary: var(--border-primary);
+  --color-b-secondary: var(--border-secondary);
+  --color-b-strong: var(--border-strong);
+  --color-canvas-bg: var(--canvas-bg);
+  --color-canvas-panel-bg: var(--canvas-panel-bg);
+  --color-canvas-panel-border: var(--canvas-panel-border);
+  --color-input-bg: var(--input-bg);
+  --color-input-border: var(--input-border);
+  --color-btn-primary-bg: var(--btn-primary-bg);
+  --color-btn-primary-text: var(--btn-primary-text);
+  --color-btn-secondary-border: var(--btn-secondary-border);
+  --color-btn-secondary-text: var(--btn-secondary-text);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
   --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.05);
@@ -89,13 +166,13 @@ body {
 }
 
 .reference-mode-button {
-  background: rgba(255, 255, 255, 0.1);
-  color: #fafafa;
+  background: var(--input-bg);
+  color: var(--text-primary);
 }
 
 .bg-canvas-panel {
-  background-color: #0a0a0a;
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  background-color: var(--canvas-panel-bg);
+  border: 1px solid var(--canvas-panel-border);
 }
 
 /* ─── Stitch-style canvas layout tokens ───────────────────────────────────── */
@@ -325,8 +402,11 @@ body {
 
 /* ─── Landing Page ───────────────────────────────────────────────────────── */
 
-html.dark {
-  color-scheme: dark;
+@media (prefers-color-scheme: dark) {
+  html { color-scheme: dark; }
+}
+@media (prefers-color-scheme: light) {
+  html { color-scheme: light; }
 }
 
 html {

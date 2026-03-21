@@ -221,9 +221,9 @@ export function Canvas() {
       ref={containerRef}
       className="relative size-full contain-layout contain-paint overflow-hidden"
       style={{
-        backgroundColor: "#0a0a0a",
+        backgroundColor: "var(--canvas-bg)",
         backgroundImage:
-          "radial-gradient(circle, rgba(255,255,255,0.12) 1px, transparent 1px)",
+          `radial-gradient(circle, var(--canvas-dot) 1px, transparent 1px)`,
         backgroundSize: "20px 20px",
         cursor: isPanning
           ? "grabbing"

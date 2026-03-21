@@ -3,7 +3,7 @@
 import { Crown, Eye, Share2, User } from "lucide-react";
 
 const btnClass =
-  "inline-flex items-center justify-center gap-1.5 rounded-md px-2.5 py-1.5 text-[11px] font-mono font-medium uppercase tracking-wider text-white/50 transition-colors hover:bg-white/[0.06] hover:text-white disabled:pointer-events-none disabled:opacity-40";
+  "inline-flex items-center justify-center gap-1.5 rounded-md px-2.5 py-1.5 text-[11px] font-mono font-medium uppercase tracking-wider text-t-secondary transition-colors hover:bg-input-bg hover:text-white disabled:pointer-events-none disabled:opacity-40";
 
 export function CanvasTopRight() {
   return (
@@ -22,7 +22,7 @@ export function CanvasTopRight() {
 
       <button
         type="button"
-        className="inline-flex items-center gap-1.5 rounded-md border border-white/[0.12] px-3 py-1.5 text-[11px] font-mono font-semibold uppercase tracking-wider text-white/70 hover:bg-white/[0.06] hover:text-white transition-colors"
+        className="inline-flex items-center gap-1.5 rounded-md border border-b-primary px-3 py-1.5 text-[11px] font-mono font-semibold uppercase tracking-wider text-t-primary hover:bg-input-bg hover:text-white transition-colors"
         title="Upgrade"
       >
         <Crown className="size-3.5" />
@@ -33,7 +33,7 @@ export function CanvasTopRight() {
 
       <button
         type="button"
-        className="inline-flex size-8 items-center justify-center rounded-full border border-white/[0.12] text-white/50 transition-colors hover:bg-white/[0.06] hover:text-white"
+        className="inline-flex size-8 items-center justify-center rounded-full border border-b-primary text-t-secondary transition-colors hover:bg-input-bg hover:text-white"
         aria-label="User profile"
       >
         <User className="size-4" />

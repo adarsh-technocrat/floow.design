@@ -16,10 +16,10 @@ export function CanvasTopLeft() {
         title="Back to dashboard"
       >
         <span
-          className="text-sm font-bold tracking-tight text-white"
+          className="text-sm font-bold tracking-tight text-t-primary"
           style={{ fontFamily: "var(--font-logo), 'Space Grotesk', sans-serif" }}
         >
-          launchpad<span className="text-white/40">.ai</span>
+          launchpad<span className="text-t-secondary">.ai</span>
         </span>
       </Link>
 
@@ -27,10 +27,10 @@ export function CanvasTopLeft() {
 
       <button
         type="button"
-        className="flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-white/60 hover:text-white hover:bg-white/[0.06] transition-colors"
+        className="flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-t-secondary hover:text-t-primary hover:bg-input-bg transition-colors"
       >
         <span>{projectId ? `Project ${projectId.slice(0, 6)}…` : "Untitled Project"}</span>
-        <ChevronDown className="size-3 text-white/30" />
+        <ChevronDown className="size-3 text-t-tertiary" />
       </button>
     </div>
   );
