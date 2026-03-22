@@ -202,7 +202,7 @@ export function PricingDialog({ open, onClose, reason }: PricingDialogProps) {
               }`}
             >
               Yearly
-              <span className="text-[9px] text-green-500 font-semibold">
+              <span className="text-[11px] text-green-500 font-semibold">
                 2 mo free
               </span>
             </button>
@@ -223,7 +223,7 @@ export function PricingDialog({ open, onClose, reason }: PricingDialogProps) {
                 }`}
               >
                 {plan.popular && (
-                  <span className="absolute -top-2.5 left-4 rounded bg-btn-primary-bg px-2.5 py-0.5 text-[9px] font-mono font-semibold uppercase tracking-wider text-btn-primary-text">
+                  <span className="absolute -top-2.5 left-4 rounded bg-btn-primary-bg px-2.5 py-0.5 text-[11px] font-mono font-semibold uppercase tracking-wider text-btn-primary-text">
                     Most Popular
                   </span>
                 )}
@@ -240,7 +240,7 @@ export function PricingDialog({ open, onClose, reason }: PricingDialogProps) {
                     {plan.name}
                   </p>
                 </div>
-                <span className="text-[9px] font-mono uppercase tracking-wider text-t-tertiary">
+                <span className="text-[11px] font-mono uppercase tracking-wider text-t-tertiary">
                   {plan.badge}
                 </span>
                 <p className="text-xs text-t-secondary mt-1 mb-4">
@@ -261,7 +261,7 @@ export function PricingDialog({ open, onClose, reason }: PricingDialogProps) {
                     ${tier.original.toFixed(2)}/mo
                   </span>
                 )}
-                <p className="text-[10px] text-t-tertiary font-mono mt-1 mb-4">
+                <p className="text-[11px] text-t-tertiary font-mono mt-1 mb-4">
                   billed {billing}
                 </p>
 
@@ -286,13 +286,13 @@ export function PricingDialog({ open, onClose, reason }: PricingDialogProps) {
                 <p className="text-sm font-medium text-t-primary">
                   {plan.credits[billing].toLocaleString()} AI credits
                 </p>
-                <p className="text-[10px] text-t-tertiary mb-4">
+                <p className="text-[11px] text-t-tertiary mb-4">
                   {plan.screens[billing]} /{" "}
                   {billing === "monthly" ? "month" : "year"}
                 </p>
 
                 {/* Features */}
-                <span className="text-[9px] font-mono uppercase tracking-widest text-t-tertiary mb-2">
+                <span className="text-[11px] font-mono uppercase tracking-widest text-t-tertiary mb-2">
                   Includes
                 </span>
                 <div className="flex flex-col gap-2">

@@ -94,7 +94,7 @@ export default function CreditLogsPage() {
             </svg>
             Back to Billing
           </Link>
-          <span className="text-[10px] font-mono text-t-tertiary uppercase tracking-wider">
+          <span className="text-[11px] font-mono text-t-tertiary uppercase tracking-wider">
             Credit Usage
           </span>
         </header>
@@ -125,16 +125,16 @@ export default function CreditLogsPage() {
                   <table className="w-full">
                     <thead>
                       <tr className="border-b border-b-secondary bg-input-bg/50">
-                        <th className="text-left px-4 py-2.5 text-[10px] font-mono font-medium uppercase tracking-wider text-t-tertiary">
+                        <th className="text-left px-4 py-2.5 text-[11px] font-mono font-medium uppercase tracking-wider text-t-tertiary">
                           Date
                         </th>
-                        <th className="text-left px-4 py-2.5 text-[10px] font-mono font-medium uppercase tracking-wider text-t-tertiary">
+                        <th className="text-left px-4 py-2.5 text-[11px] font-mono font-medium uppercase tracking-wider text-t-tertiary">
                           Action
                         </th>
-                        <th className="text-right px-4 py-2.5 text-[10px] font-mono font-medium uppercase tracking-wider text-t-tertiary">
+                        <th className="text-right px-4 py-2.5 text-[11px] font-mono font-medium uppercase tracking-wider text-t-tertiary">
                           Credits
                         </th>
-                        <th className="text-right px-4 py-2.5 text-[10px] font-mono font-medium uppercase tracking-wider text-t-tertiary">
+                        <th className="text-right px-4 py-2.5 text-[11px] font-mono font-medium uppercase tracking-wider text-t-tertiary">
                           Balance
                         </th>
                       </tr>
@@ -153,7 +153,7 @@ export default function CreditLogsPage() {
                               {actionLabels[log.action] || log.action}
                             </span>
                             {log.meta && (
-                              <p className="text-[10px] text-t-tertiary mt-0.5">
+                              <p className="text-[11px] text-t-tertiary mt-0.5">
                                 {log.meta}
                               </p>
                             )}
@@ -182,7 +182,7 @@ export default function CreditLogsPage() {
                 {/* Pagination */}
                 {total > limit && (
                   <div className="flex items-center justify-between mt-4">
-                    <p className="text-[10px] font-mono text-t-tertiary">
+                    <p className="text-[11px] font-mono text-t-tertiary">
                       Showing {offset + 1}–{Math.min(offset + limit, total)} of{" "}
                       {total}
                     </p>
@@ -190,14 +190,14 @@ export default function CreditLogsPage() {
                       <button
                         onClick={() => fetchLogs(Math.max(0, offset - limit))}
                         disabled={offset === 0}
-                        className="rounded-md border border-b-secondary px-3 py-1.5 text-[10px] font-mono uppercase tracking-wider text-t-secondary transition-colors hover:bg-input-bg disabled:opacity-30"
+                        className="rounded-md border border-b-secondary px-3 py-1.5 text-[11px] font-mono uppercase tracking-wider text-t-secondary transition-colors hover:bg-input-bg disabled:opacity-30"
                       >
                         Prev
                       </button>
                       <button
                         onClick={() => fetchLogs(offset + limit)}
                         disabled={offset + limit >= total}
-                        className="rounded-md border border-b-secondary px-3 py-1.5 text-[10px] font-mono uppercase tracking-wider text-t-secondary transition-colors hover:bg-input-bg disabled:opacity-30"
+                        className="rounded-md border border-b-secondary px-3 py-1.5 text-[11px] font-mono uppercase tracking-wider text-t-secondary transition-colors hover:bg-input-bg disabled:opacity-30"
                       >
                         Next
                       </button>

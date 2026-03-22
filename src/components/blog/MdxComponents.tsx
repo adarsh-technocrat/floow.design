@@ -162,7 +162,7 @@ export function Callout({
 
   return (
     <div className={`my-6 rounded-xl border p-5 ${styles[type]}`}>
-      <span className="text-[10px] font-mono font-semibold uppercase tracking-widest text-t-tertiary mb-2 block">
+      <span className="text-[11px] font-mono font-semibold uppercase tracking-widest text-t-tertiary mb-2 block">
         {labels[type]}
       </span>
       <div className="text-sm text-t-secondary leading-relaxed [&>p]:mb-0">
@@ -176,7 +176,7 @@ export function KeyTakeaways({ items }: { items?: string[] }) {
   if (!items || !Array.isArray(items)) return null;
   return (
     <div className="my-8 rounded-xl border border-b-secondary bg-input-bg p-5">
-      <span className="text-[10px] font-mono font-semibold uppercase tracking-widest text-t-tertiary mb-3 block">
+      <span className="text-[11px] font-mono font-semibold uppercase tracking-widest text-t-tertiary mb-3 block">
         Key Takeaways
       </span>
       <ul className="flex flex-col gap-2">

@@ -46,7 +46,7 @@ function ElementHighlightOverlay({
         style={{ top, left, width, height }}
       />
       <div
-        className="absolute pointer-events-none flex items-center gap-1 px-1.5 py-0.5 bg-blue-500 text-white text-[10px] font-mono font-medium rounded-sm whitespace-nowrap"
+        className="absolute pointer-events-none flex items-center gap-1 px-1.5 py-0.5 bg-blue-500 text-white text-[11px] font-mono font-medium rounded-sm whitespace-nowrap"
         style={{
           top: Math.max(0, top - 18),
           left: Math.max(0, left),
@@ -308,7 +308,7 @@ export default function FrameElementInspectionOverlay({
           )}
           {isEditing && selectedElement.isTextElement && (
             <div
-              className="absolute pointer-events-none flex items-center gap-1 px-1.5 py-0.5 bg-blue-500 text-white text-[10px] font-mono font-medium rounded-sm whitespace-nowrap"
+              className="absolute pointer-events-none flex items-center gap-1 px-1.5 py-0.5 bg-blue-500 text-white text-[11px] font-mono font-medium rounded-sm whitespace-nowrap"
               style={{
                 top: Math.max(0, selectedElement.top - 18),
                 left: Math.max(0, selectedElement.left),

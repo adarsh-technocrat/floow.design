@@ -16,16 +16,18 @@ import { pushAgentLog } from "@/store/slices/uiSlice";
 import {
   emitActivityHistoryLoading,
   emitChatMessagesSnapshot,
+  emitChatStatus,
+  addGeneratingFrame,
+  clearGeneratingFrames,
   registerChatSend,
   unregisterChatSend,
 } from "@/lib/chat-bridge";
 import { cursor, initCursor } from "@/lib/cursor";
 import { Brain, ChevronDown, X, Zap } from "lucide-react";
+import { toast } from "sonner";
 import ReactMarkdown from "react-markdown";
 import { ImageIcon } from "@/lib/svg-icons";
 import { PageMentionInput } from "./PageMentionInput";
-import { DEFAULT_PROJECT_ID } from "@/constants/project";
-import { ANONYMOUS_USER_ID } from "@/constants/user";
 import { useAuth } from "@/contexts/AuthContext";
 import { CANVAS_CHAT_FRAME_ID } from "@/lib/chat-session";
 
@@ -495,10 +497,9 @@ export function ChatPanel({
   const [toolSteps, _setToolSteps] = useState<ToolStep[]>([]);
   const chatThreadRef = useRef<HTMLDivElement>(null);
   const { user } = useAuth();
-  const chatUserId = user?.uid ?? ANONYMOUS_USER_ID;
+  const chatUserId = user?.uid ?? "";
   const selectedFrameIds = useAppSelector((s) => s.canvas.selectedFrameIds);
-  const projectIdFromStore = useAppSelector((s) => s.project.projectId);
-  const projectId = projectIdFromStore ?? DEFAULT_PROJECT_ID;
+  const projectId = useAppSelector((s) => s.project.projectId) ?? "";
   const frameSessionId =
     selectedFrameIds.length === 1 ? selectedFrameIds[0] : CANVAS_CHAT_FRAME_ID;
   const frames = useAppSelector((s) => s.canvas.frames);
@@ -694,6 +695,7 @@ export function ChatPanel({
             (f.left !== undefined || f.top !== undefined) &&
             f.html !== undefined;
           if (isCreate) {
+            addGeneratingFrame(f.id);
             dispatch(
               addFrameWithId({
                 id: f.id,
@@ -1010,6 +1012,19 @@ export function ChatPanel({
         void postChatSession(finishedMessages).catch(() => {});
       }
     },
+    onError: (error) => {
+      const msg = error?.message || "";
+      if (msg.includes("402") || msg.includes("no_plan") || msg.includes("insufficient_credits")) {
+        toast.error("You need an active plan with credits to use AI features.", {
+          action: {
+            label: "View Plans",
+            onClick: () => window.location.assign("/pricing"),
+          },
+        });
+      } else {
+        toast.error("Something went wrong. Please try again.");
+      }
+    },
   });
 
   useEffect(() => {
@@ -1042,6 +1057,13 @@ export function ChatPanel({
     if (isLoadingHistory) return;
     emitChatMessagesSnapshot(messages);
   }, [messages, isLoadingHistory]);
+
+  // Emit chat status to bridge so Activity panel can show thinking indicator
+  useEffect(() => {
+    const s = status === "streaming" ? "streaming" : status === "submitted" ? "submitted" : "ready";
+    emitChatStatus(s);
+    if (s === "ready") clearGeneratingFrames();
+  }, [status]);
 
   useEffect(() => {
     emitActivityHistoryLoading(isLoadingHistory);
@@ -1222,7 +1244,7 @@ export function ChatPanel({
             </button>
             {showHeaderDropdown && (
               <div className="absolute left-0 top-full z-50 mt-1 min-w-[200px] overflow-hidden rounded-xl border border-b-secondary bg-surface-elevated/95 py-1 shadow-lg backdrop-blur-xl">
-                <div className="sticky top-0 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-t-tertiary">
+                <div className="sticky top-0 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-t-tertiary">
                   Active Agents
                 </div>
                 {isMultiAgent
@@ -1265,7 +1287,7 @@ export function ChatPanel({
                             <span className="font-medium text-t-primary">
                               {persona.name}
                             </span>
-                            <span className="text-[10px] text-t-tertiary">
+                            <span className="text-[11px] text-t-tertiary">
                               {assignedFrame
                                 ? assignedFrame.label
                                 : "Unassigned"}
@@ -1497,7 +1519,7 @@ export function ChatPanel({
                 </button>
                 {showAgentDropdown && (
                   <div className="absolute bottom-full left-0 z-50 mb-1 min-w-[130px] overflow-hidden rounded-xl border border-b-secondary bg-surface-elevated/95 py-1 shadow-lg backdrop-blur-xl">
-                    <div className="sticky top-0 px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-t-tertiary">
+                    <div className="sticky top-0 px-3 py-1 text-[11px] font-semibold uppercase tracking-wider text-t-tertiary">
                       Agents
                     </div>
                     {[1, 2, 3, 4, 5, 6].map((n) => {

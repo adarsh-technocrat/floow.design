@@ -76,7 +76,7 @@ export function EditingModeDisplay() {
             </div>
 
             <div className="flex items-center gap-2">
-              <span className="text-[10px] font-mono text-t-tertiary border border-b-secondary rounded px-1.5 py-0.5 hidden sm:inline bg-input-bg">
+              <span className="text-[11px] font-mono text-t-tertiary border border-b-secondary rounded px-1.5 py-0.5 hidden sm:inline bg-input-bg">
                 ⌘ Enter
               </span>
               <button

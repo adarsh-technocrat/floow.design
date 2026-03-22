@@ -189,7 +189,7 @@ export default function PricingPage() {
               }`}
             >
               Yearly
-              <span className="text-[9px] text-green-400 font-semibold">
+              <span className="text-[11px] text-green-400 font-semibold">
                 2 mo free
               </span>
             </button>
@@ -216,12 +216,12 @@ export default function PricingPage() {
                     {plan.name}
                   </span>
                   {plan.popular && (
-                    <span className="text-[9px] font-mono uppercase tracking-wider text-btn-primary-text bg-btn-primary-bg rounded px-1.5 py-0.5 font-semibold">
+                    <span className="text-[11px] font-mono uppercase tracking-wider text-btn-primary-text bg-btn-primary-bg rounded px-1.5 py-0.5 font-semibold">
                       Most Popular
                     </span>
                   )}
                 </div>
-                <span className="text-[10px] font-mono uppercase tracking-wider text-t-tertiary">
+                <span className="text-[11px] font-mono uppercase tracking-wider text-t-tertiary">
                   {plan.badge}
                 </span>
                 <p className="text-xs text-t-secondary mt-1 mb-4">
@@ -280,7 +280,7 @@ export default function PricingPage() {
                   {plan.screens[billing]}
                 </p>
 
-                <span className="text-[10px] font-mono uppercase tracking-widest text-t-tertiary mb-2 block">
+                <span className="text-[11px] font-mono uppercase tracking-widest text-t-tertiary mb-2 block">
                   Includes
                 </span>
                 <div className="flex flex-col gap-2">
@@ -334,12 +334,12 @@ export default function PricingPage() {
                       {plan.name}
                     </span>
                     {plan.popular && (
-                      <span className="text-[9px] font-mono uppercase tracking-wider text-btn-primary-text bg-btn-primary-bg rounded px-1.5 py-0.5 font-semibold">
+                      <span className="text-[11px] font-mono uppercase tracking-wider text-btn-primary-text bg-btn-primary-bg rounded px-1.5 py-0.5 font-semibold">
                         Most Popular
                       </span>
                     )}
                   </div>
-                  <span className="text-[10px] font-mono uppercase tracking-wider text-t-tertiary block mb-1">
+                  <span className="text-[11px] font-mono uppercase tracking-wider text-t-tertiary block mb-1">
                     {plan.badge}
                   </span>
                   <p className="text-xs text-t-secondary">{plan.description}</p>
@@ -433,7 +433,7 @@ export default function PricingPage() {
             <tr className="[&>td]:border-t [&>td]:border-b-secondary">
               {plans.map((plan, i) => (
                 <Cell key={plan.name} columnDivider={i > 0} className="py-5">
-                  <span className="text-[10px] font-mono uppercase tracking-widest text-t-tertiary mb-3 block">
+                  <span className="text-[11px] font-mono uppercase tracking-widest text-t-tertiary mb-3 block">
                     Includes
                   </span>
                   <div className="flex flex-col gap-2.5">

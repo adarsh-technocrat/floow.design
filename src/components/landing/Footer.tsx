@@ -51,7 +51,7 @@ export function Footer() {
               <span className="relative flex h-1.5 w-1.5">
                 <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-green-500" />
               </span>
-              <span className="text-[10px] font-mono text-t-tertiary uppercase tracking-wider">
+              <span className="text-[11px] font-mono text-t-tertiary uppercase tracking-wider">
                 All systems operational
               </span>
             </div>
@@ -60,7 +60,7 @@ export function Footer() {
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-6 sm:gap-8">
             {Object.entries(links).map(([group, items]) => (
               <div key={group}>
-                <p className="text-[10px] font-mono font-semibold uppercase tracking-widest text-t-tertiary mb-3">
+                <p className="text-[11px] font-mono font-semibold uppercase tracking-widest text-t-tertiary mb-3">
                   {group}
                 </p>
                 <ul className="flex flex-col gap-2 list-none m-0 p-0">

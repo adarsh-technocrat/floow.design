@@ -88,7 +88,7 @@ export default function BillingPage() {
             </svg>
             Back to Dashboard
           </Link>
-          <span className="text-[10px] font-mono text-t-tertiary uppercase tracking-wider">
+          <span className="text-[11px] font-mono text-t-tertiary uppercase tracking-wider">
             Billing
           </span>
         </header>
@@ -116,7 +116,7 @@ export default function BillingPage() {
                 <div className="rounded-xl border border-b-secondary bg-surface-elevated p-6">
                   <div className="flex items-center justify-between mb-4">
                     <div>
-                      <p className="text-[10px] font-mono uppercase tracking-wider text-t-tertiary mb-1">
+                      <p className="text-[11px] font-mono uppercase tracking-wider text-t-tertiary mb-1">
                         Current plan
                       </p>
                       <p className="text-xl font-semibold text-t-primary">
@@ -124,7 +124,7 @@ export default function BillingPage() {
                       </p>
                     </div>
                     <span
-                      className={`rounded-full px-3 py-1 text-[10px] font-mono uppercase tracking-wider font-semibold ${
+                      className={`rounded-full px-3 py-1 text-[11px] font-mono uppercase tracking-wider font-semibold ${
                         plan.plan === "FREE"
                           ? "bg-input-bg text-t-tertiary"
                           : "bg-btn-primary-bg text-btn-primary-text"
@@ -144,7 +144,7 @@ export default function BillingPage() {
                     <div className="flex items-center justify-between gap-4 pt-4 border-t border-b-secondary">
                       <div className="flex items-center gap-4">
                         <div>
-                          <p className="text-[10px] font-mono uppercase tracking-wider text-t-tertiary mb-0.5">
+                          <p className="text-[11px] font-mono uppercase tracking-wider text-t-tertiary mb-0.5">
                             AI Credits
                           </p>
                           <p className="text-lg font-semibold text-t-primary font-mono">
@@ -153,7 +153,7 @@ export default function BillingPage() {
                         </div>
                         {plan.creditsResetAt && (
                           <div>
-                            <p className="text-[10px] font-mono uppercase tracking-wider text-t-tertiary mb-0.5">
+                            <p className="text-[11px] font-mono uppercase tracking-wider text-t-tertiary mb-0.5">
                               Resets
                             </p>
                             <p className="text-xs text-t-secondary">
@@ -170,7 +170,7 @@ export default function BillingPage() {
                       </div>
                       <Link
                         href="/billing/credits"
-                        className="text-[10px] font-mono uppercase tracking-wider text-t-tertiary hover:text-t-secondary transition-colors no-underline"
+                        className="text-[11px] font-mono uppercase tracking-wider text-t-tertiary hover:text-t-secondary transition-colors no-underline"
                       >
                         View usage →
                       </Link>

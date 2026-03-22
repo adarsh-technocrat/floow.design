@@ -113,7 +113,7 @@ export function Hero() {
               />
             </svg>
             <motion.div
-              className="ml-4 -mt-0.5 rounded-md px-2 py-0.5 text-[10px] font-semibold shadow-lg whitespace-nowrap"
+              className="ml-4 -mt-0.5 rounded-md px-2 py-0.5 text-[11px] font-semibold shadow-lg whitespace-nowrap"
               style={{ backgroundColor: cursor.color, color: "#000" }}
               initial={{ opacity: 0, x: -8 }}
               animate={{ opacity: 1, x: 0 }}

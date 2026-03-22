@@ -136,7 +136,7 @@ export function TemplatesCarousel() {
                     </div>
                   ) : (
                     <div className="flex h-full w-full items-center justify-center">
-                      <span className="text-[9px] font-mono text-t-tertiary">
+                      <span className="text-[11px] font-mono text-t-tertiary">
                         {t.screens} screens
                       </span>
                     </div>
@@ -146,10 +146,10 @@ export function TemplatesCarousel() {
                   <div className="absolute inset-0 bg-gradient-to-t from-surface/80 via-transparent to-transparent" />
                   <div className="absolute bottom-0 left-0 right-0 p-3">
                     <div className="flex items-center gap-2 mb-1">
-                      <span className="rounded bg-btn-primary-bg/70 px-1.5 py-0.5 text-[9px] font-mono uppercase tracking-wider text-btn-primary-text backdrop-blur-sm">
+                      <span className="rounded bg-btn-primary-bg/70 px-1.5 py-0.5 text-[11px] font-mono uppercase tracking-wider text-btn-primary-text backdrop-blur-sm">
                         {t.tag}
                       </span>
-                      <span className="text-[9px] font-mono text-t-tertiary">
+                      <span className="text-[11px] font-mono text-t-tertiary">
                         {t.screens} screens
                       </span>
                     </div>

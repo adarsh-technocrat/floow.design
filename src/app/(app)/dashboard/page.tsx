@@ -8,6 +8,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { ThemeToggleCompact } from "@/components/ThemeToggle";
 import { Avatar } from "@/components/ui/Avatar";
 import { PricingDialog } from "@/components/PricingDialog";
+import { ProjectFramePreview } from "@/components/ProjectFramePreview";
 
 interface Project {
   id: string;
@@ -80,7 +81,7 @@ function DashboardSidebarUsage({
 }) {
   if (loading) {
     return (
-      <div className="rounded-lg border border-b-secondary bg-input-bg/40 px-3 py-2.5">
+      <div className="rounded-lg border border-b-secondary bg-surface-sunken px-3 py-2.5">
         <div className="mb-2 h-2 w-16 animate-pulse rounded bg-t-tertiary/20" />
         <div className="h-1.5 w-full overflow-hidden rounded-full bg-t-tertiary/10">
           <div className="h-full w-1/3 animate-pulse rounded-full bg-t-tertiary/15" />
@@ -101,10 +102,10 @@ function DashboardSidebarUsage({
 
   const fillClass =
     ratio >= 0.42
-      ? "bg-t-secondary/30 dark:bg-white/15"
+      ? "bg-emerald-500/40 dark:bg-emerald-400/30"
       : ratio >= 0.18
-        ? "bg-amber-500/25 dark:bg-amber-400/18"
-        : "bg-orange-400/30 dark:bg-orange-400/22";
+        ? "bg-amber-500/50 dark:bg-amber-400/35"
+        : "bg-orange-500/50 dark:bg-orange-400/40";
 
   const calmLine =
     ratio >= 0.35
@@ -126,39 +127,37 @@ function DashboardSidebarUsage({
   const resetHint = shortResetHint(creditsResetAt);
 
   return (
-    <div className="rounded-lg border border-b-secondary bg-input-bg/35 px-3 py-2.5">
-      <div className="flex items-start justify-between gap-2 mb-1.5">
+    <div className="rounded-lg border border-b-secondary bg-surface-sunken px-3 py-3">
+      <div className="flex items-start justify-between gap-2 mb-2">
         <div className="min-w-0">
-          <p className="text-[10px] font-mono font-medium uppercase tracking-wider text-t-tertiary">
-            Included capacity
-          </p>
-          <p className="mt-0.5 text-lg font-light font-mono text-t-primary leading-tight tracking-tight">
-            ~{formatCreditsSoftLabel(safeRemaining)}
-            <span className="text-xs font-normal text-t-tertiary ml-1 font-sans">
-              left
+          <p className="text-[11px] font-medium text-t-secondary">Credits</p>
+          <p className="mt-0.5 text-base font-semibold font-mono text-t-primary leading-tight">
+            {formatCreditsSoftLabel(safeRemaining)}
+            <span className="text-xs font-normal text-t-secondary ml-1 font-sans">
+              remaining
             </span>
           </p>
         </div>
         <button
           type="button"
           onClick={onManage}
-          className="shrink-0 text-[10px] font-mono uppercase tracking-wider text-t-tertiary hover:text-t-secondary transition-colors"
+          className="shrink-0 text-[11px] font-medium text-t-secondary hover:text-t-primary transition-colors"
         >
           Manage
         </button>
       </div>
 
-      <div className="h-1.5 w-full overflow-hidden rounded-full bg-t-tertiary/10 dark:bg-white/6">
+      <div className="h-2 w-full overflow-hidden rounded-full bg-surface-elevated dark:bg-white/10">
         <div
           className={`h-full rounded-full ${fillClass} transition-[width] duration-1100 ease-out motion-reduce:transition-none`}
           style={{ width: `${barPct}%` }}
         />
       </div>
 
-      <p className="mt-1.5 text-[10px] leading-snug text-t-tertiary/90">
+      <p className="mt-2 text-[11px] leading-snug text-t-secondary">
         {calmLine}
       </p>
-      <p className="mt-1 text-[9px] font-mono text-t-tertiary/70 uppercase tracking-wide">
+      <p className="mt-1 text-[11px] font-mono text-t-tertiary">
         {planLine}
         {intervalBit}
         {resetHint ? ` · ${resetHint}` : ""}
@@ -543,12 +542,12 @@ export default function DashboardPage() {
     <div className="h-screen w-full bg-surface text-t-primary p-3">
       <div className="h-full w-full rounded-2xl border border-b-secondary bg-canvas-bg overflow-hidden flex relative">
         {/* Left sidebar */}
-        <aside className="relative z-10 flex w-[220px] flex-shrink-0 flex-col border-r border-b-secondary bg-surface/80 backdrop-blur-sm">
+        <aside className="relative z-10 flex w-[260px] flex-shrink-0 flex-col border-r border-b-secondary bg-surface/80 backdrop-blur-sm">
           {/* Logo */}
-          <div className="flex h-12 items-center px-4">
+          <div className="flex h-14 items-center px-4">
             <Link href="/" className="no-underline flex items-center gap-2">
               <span
-                className="text-sm font-bold text-t-primary tracking-tight"
+                className="text-base font-bold text-t-primary tracking-tight"
                 style={{
                   fontFamily: "var(--font-logo), 'Space Grotesk', sans-serif",
                 }}
@@ -565,7 +564,7 @@ export default function DashboardPage() {
                 setActiveView("home");
                 setTimeout(() => inputRef.current?.focus(), 100);
               }}
-              className="flex w-full items-center gap-2 rounded-lg border border-b-secondary px-3 py-2 text-xs font-medium text-t-secondary transition-colors hover:bg-input-bg hover:text-t-primary"
+              className="flex w-full items-center gap-2 rounded-lg border border-b-secondary px-3 py-2.5 text-[13px] font-medium text-t-secondary transition-colors hover:bg-surface-sunken hover:text-t-primary dark:hover:bg-white/[0.06]"
             >
               <svg
                 width="14"
@@ -588,10 +587,10 @@ export default function DashboardPage() {
               <button
                 key={item.key}
                 onClick={item.action}
-                className={`flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-medium transition-colors ${
+                className={`flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-[13px] font-medium transition-colors ${
                   item.active
-                    ? "bg-input-bg text-t-primary"
-                    : "text-t-tertiary hover:bg-input-bg/50 hover:text-t-secondary"
+                    ? "bg-surface-sunken text-t-primary dark:bg-white/[0.08]"
+                    : "text-t-tertiary hover:bg-surface-sunken hover:text-t-secondary dark:hover:bg-white/[0.05]"
                 }`}
               >
                 <span
@@ -601,7 +600,7 @@ export default function DashboardPage() {
                 </span>
                 {item.label}
                 {item.count !== undefined && (
-                  <span className="ml-auto text-[10px] font-mono text-t-tertiary">
+                  <span className="ml-auto text-xs font-mono text-t-tertiary">
                     {item.count}
                   </span>
                 )}
@@ -609,37 +608,25 @@ export default function DashboardPage() {
             ))}
           </nav>
 
-          <div className="px-3 pb-2">
-            <DashboardSidebarUsage
-              summary={planSummary}
-              loading={planLoading}
-              onManage={() => router.push("/billing")}
-            />
-          </div>
-
-          <div className="mx-3 my-1 h-px bg-input-bg" />
-
-          {/* Recent projects + Inspiration — scrollable area */}
+          {/* Recent projects — scrollable area */}
           <div className="flex-1 overflow-y-auto px-3 py-2">
             {/* Recent projects */}
-            <p className="mb-2 px-3 text-[10px] font-mono font-medium uppercase tracking-wider text-t-tertiary">
+            <p className="mb-2 px-3 text-xs font-mono font-medium uppercase tracking-wider text-t-tertiary">
               Recent
             </p>
             {loading ? (
-              <div className="flex items-center gap-2 px-3 py-2 text-[11px] text-t-tertiary">
+              <div className="flex items-center gap-2 px-3 py-2 text-xs text-t-tertiary">
                 <div className="size-1.5 rounded-full bg-t-tertiary animate-pulse" />
                 Loading...
               </div>
             ) : projects.length === 0 ? (
-              <p className="px-3 text-[11px] text-t-tertiary">
-                No projects yet
-              </p>
+              <p className="px-3 text-xs text-t-tertiary">No projects yet</p>
             ) : (
               projects.slice(0, 8).map((project) => (
                 <Link
                   key={project.id}
                   href={`/app/${project.id}`}
-                  className="group flex items-center gap-2.5 rounded-lg px-3 py-1.5 text-xs text-t-tertiary no-underline transition-colors hover:bg-input-bg/50 hover:text-t-secondary"
+                  className="group flex items-center gap-2.5 rounded-lg px-3 py-2 text-[13px] text-t-secondary no-underline transition-colors hover:bg-surface-sunken hover:text-t-primary dark:hover:bg-white/[0.05]"
                 >
                   <svg
                     width="14"
@@ -650,18 +637,27 @@ export default function DashboardPage() {
                     strokeWidth="1.5"
                     strokeLinecap="round"
                     strokeLinejoin="round"
-                    className="shrink-0 text-t-tertiary/60"
+                    className="shrink-0 text-t-tertiary"
                   >
                     <path d="M13 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V9z" />
                     <polyline points="13 2 13 9 20 9" />
                   </svg>
                   <span className="truncate">{project.name}</span>
-                  <span className="ml-auto shrink-0 text-[9px] font-mono text-t-tertiary/60 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <span className="ml-auto shrink-0 text-xs font-mono text-t-tertiary opacity-0 group-hover:opacity-100 transition-opacity">
                     {timeAgo(project.updatedAt)}
                   </span>
                 </Link>
               ))
             )}
+          </div>
+
+          {/* Credit usage */}
+          <div className="px-3 pb-2">
+            <DashboardSidebarUsage
+              summary={planSummary}
+              loading={planLoading}
+              onManage={() => router.push("/billing")}
+            />
           </div>
 
           {/* Bottom — user + controls */}
@@ -672,11 +668,11 @@ export default function DashboardPage() {
             {/* User menu dropdown */}
             {userMenuOpen && (
               <div className="absolute bottom-full left-3 right-3 mb-2 overflow-hidden rounded-xl border border-b-secondary bg-surface-elevated shadow-lg">
-                <div className="px-3 py-2.5 border-b border-b-secondary">
-                  <p className="text-xs font-medium text-t-primary truncate">
+                <div className="px-4 py-3 border-b border-b-secondary">
+                  <p className="text-[13px] font-medium text-t-primary truncate">
                     {user?.displayName || "User"}
                   </p>
-                  <p className="text-[10px] text-t-tertiary truncate">
+                  <p className="text-xs text-t-tertiary truncate">
                     {user?.email || ""}
                   </p>
                 </div>
@@ -686,7 +682,7 @@ export default function DashboardPage() {
                       setUserMenuOpen(false);
                       router.push("/billing");
                     }}
-                    className="flex w-full items-center gap-2.5 px-3 py-2 text-xs text-t-secondary transition-colors hover:bg-input-bg hover:text-t-primary"
+                    className="flex w-full items-center gap-2.5 px-4 py-2.5 text-[13px] text-t-secondary transition-colors hover:bg-surface-sunken hover:text-t-primary dark:hover:bg-white/[0.06]"
                   >
                     <svg
                       width="14"
@@ -708,11 +704,11 @@ export default function DashboardPage() {
                       setUserMenuOpen(false);
                       router.push("/account");
                     }}
-                    className="flex w-full items-center gap-2.5 px-3 py-2 text-xs text-t-secondary transition-colors hover:bg-input-bg hover:text-t-primary"
+                    className="flex w-full items-center gap-2.5 px-4 py-2.5 text-[13px] text-t-secondary transition-colors hover:bg-surface-sunken hover:text-t-primary dark:hover:bg-white/[0.06]"
                   >
                     <svg
-                      width="14"
-                      height="14"
+                      width="16"
+                      height="16"
                       viewBox="0 0 24 24"
                       fill="none"
                       stroke="currentColor"
@@ -727,8 +723,8 @@ export default function DashboardPage() {
                   </button>
                 </div>
                 <div className="border-t border-b-secondary py-1">
-                  <div className="flex items-center justify-between px-3 py-2">
-                    <span className="text-[10px] font-mono text-t-tertiary uppercase tracking-wider">
+                  <div className="flex items-center justify-between px-4 py-2.5">
+                    <span className="text-xs font-mono text-t-tertiary uppercase tracking-wider">
                       Theme
                     </span>
                     <ThemeToggleCompact />
@@ -740,7 +736,7 @@ export default function DashboardPage() {
                       setUserMenuOpen(false);
                       signOut().then(() => router.replace("/signin"));
                     }}
-                    className="flex w-full items-center gap-2.5 px-3 py-2 text-xs text-red-500 transition-colors hover:bg-red-500/10"
+                    className="flex w-full items-center gap-2.5 px-4 py-2.5 text-[13px] text-red-500 transition-colors hover:bg-red-500/10"
                   >
                     <svg
                       width="14"
@@ -764,21 +760,21 @@ export default function DashboardPage() {
 
             <button
               onClick={() => setUserMenuOpen((prev) => !prev)}
-              className="flex w-full items-center gap-2 rounded-lg px-1 py-1 -mx-1 transition-colors hover:bg-input-bg/50"
+              className="flex w-full items-center gap-2.5 rounded-lg px-1 py-1.5 -mx-1 transition-colors hover:bg-surface-sunken dark:hover:bg-white/[0.05]"
             >
               <div className="flex overflow-hidden rounded-full border border-b-secondary">
                 <Avatar
                   src={user?.photoURL}
                   email={user?.email}
                   name={user?.displayName}
-                  size={28}
+                  size={32}
                 />
               </div>
               <div className="flex-1 min-w-0 text-left">
-                <p className="text-xs font-medium text-t-primary truncate">
+                <p className="text-[13px] font-medium text-t-primary truncate">
                   {user?.displayName || "User"}
                 </p>
-                <p className="text-[10px] text-t-tertiary truncate">
+                <p className="text-xs text-t-tertiary truncate">
                   {user?.email || ""}
                 </p>
               </div>
@@ -946,7 +942,7 @@ export default function DashboardPage() {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.15, duration: 0.6 }}
                 >
-                  <div className="rounded-2xl border border-b-secondary bg-surface-elevated/90 backdrop-blur-xl transition-all focus-within:border-b-secondary">
+                  <div className="rounded-2xl border border-b-secondary bg-surface-elevated backdrop-blur-xl transition-all focus-within:border-b-secondary">
                     <div className="px-4 pt-4 pb-2 relative">
                       {!inputValue && (
                         <div className="absolute inset-x-4 top-4 pointer-events-none text-[15px] leading-relaxed">
@@ -977,7 +973,7 @@ export default function DashboardPage() {
                       <div className="flex items-center gap-2">
                         <button
                           type="button"
-                          className="inline-flex size-7 items-center justify-center rounded-md text-t-tertiary hover:text-t-secondary hover:bg-input-bg transition-colors"
+                          className="inline-flex size-7 items-center justify-center rounded-md text-t-tertiary hover:text-t-secondary hover:bg-surface-sunken dark:hover:bg-white/[0.06] transition-colors"
                           title="Attach"
                         >
                           <svg
@@ -991,7 +987,7 @@ export default function DashboardPage() {
                         </button>
                       </div>
                       <div className="flex items-center gap-2">
-                        <span className="text-[10px] font-mono text-t-tertiary hidden border border-b-secondary rounded bg-input-bg px-1.5 py-0.5 sm:inline">
+                        <span className="text-[11px] font-mono text-t-tertiary hidden border border-b-secondary rounded bg-surface-sunken px-1.5 py-0.5 sm:inline">
                           ⌘ Enter
                         </span>
                         <button
@@ -1019,14 +1015,14 @@ export default function DashboardPage() {
 
                   {/* Inspiration chips */}
                   <div className="mt-4 flex items-center justify-center gap-2 overflow-x-auto max-w-full flex-nowrap">
-                    <span className="text-[10px] font-mono text-t-tertiary uppercase tracking-wider mr-1">
+                    <span className="text-[11px] font-mono text-t-tertiary uppercase tracking-wider mr-1">
                       Try
                     </span>
                     {shuffledInspirations.map((item) => (
                       <button
                         key={item.name}
                         onClick={() => streamPrompt(item.prompt)}
-                        className="inline-flex shrink-0 whitespace-nowrap items-center gap-1.5 rounded-full border border-b-secondary bg-surface-elevated/60 px-3 py-1.5 text-[11px] font-medium text-t-secondary transition-all hover:bg-input-bg hover:text-t-primary"
+                        className="inline-flex shrink-0 whitespace-nowrap items-center gap-1.5 rounded-full border border-b-secondary bg-surface-elevated px-3 py-1.5 text-[11px] font-medium text-t-secondary transition-all hover:bg-surface-sunken hover:text-t-primary dark:hover:bg-white/[0.06]"
                       >
                         <svg
                           width="12"
@@ -1056,18 +1052,21 @@ export default function DashboardPage() {
                 exit={{ opacity: 0 }}
                 transition={{ duration: 0.3 }}
               >
-                <div className="flex items-center justify-between px-5 py-4">
-                  <span className="text-[11px] font-mono font-medium uppercase tracking-wider text-t-secondary">
-                    All Projects
+                <div className="flex shrink-0 flex-col gap-3 border-b border-b-secondary px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <h2 className="text-[11px] font-mono font-semibold uppercase tracking-wider text-t-primary">
+                      All projects
+                    </h2>
                     {projects.length > 0 && (
-                      <span className="ml-1.5 text-t-tertiary">
+                      <span className="rounded-md border border-b-secondary bg-surface-sunken px-2 py-0.5 text-[10px] font-mono tabular-nums text-t-tertiary">
                         {projects.length}
                       </span>
                     )}
-                  </span>
+                  </div>
                   <button
+                    type="button"
                     onClick={() => createProject()}
-                    className="flex items-center gap-1.5 rounded-lg border border-b-secondary px-3 py-1.5 text-[11px] font-mono font-medium uppercase tracking-wider text-t-secondary transition-colors hover:text-t-primary"
+                    className="inline-flex w-fit items-center justify-center gap-2 rounded-lg bg-btn-primary-bg px-4 py-2 text-[11px] font-mono font-semibold uppercase tracking-wider text-btn-primary-text transition-opacity hover:opacity-90 active:scale-[0.98]"
                   >
                     <svg width="12" height="12" viewBox="0 0 14 14" fill="none">
                       <path
@@ -1077,93 +1076,81 @@ export default function DashboardPage() {
                         strokeLinecap="round"
                       />
                     </svg>
-                    New
+                    New project
                   </button>
                 </div>
 
                 <div className="flex-1 overflow-y-auto">
                   {loading ? (
-                    <div className="flex items-center justify-center py-20">
+                    <div className="flex items-center justify-center py-24">
                       <div className="flex items-center gap-2 text-sm text-t-tertiary">
                         <div className="size-2 rounded-full bg-t-tertiary animate-pulse" />
-                        Loading...
+                        Loading projects…
                       </div>
                     </div>
                   ) : projects.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center py-20">
-                      <p className="text-sm text-t-tertiary">No projects yet</p>
+                    <div className="flex flex-col items-center justify-center px-6 py-24 text-center">
+                      <div className="mb-4 flex size-14 items-center justify-center rounded-2xl border border-dashed border-b-secondary bg-surface-sunken">
+                        <svg
+                          width="24"
+                          height="24"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="1.5"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          className="text-t-tertiary"
+                        >
+                          <path d="M13 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V9z" />
+                          <polyline points="13 2 13 9 20 9" />
+                        </svg>
+                      </div>
+                      <p className="text-sm font-medium text-t-secondary">
+                        No projects yet
+                      </p>
+                      <p className="mt-1 max-w-sm text-xs text-t-tertiary">
+                        Describe an app on the home screen to generate your
+                        first project.
+                      </p>
                       <button
+                        type="button"
                         onClick={() => {
                           setActiveView("home");
-                          inputRef.current?.focus();
+                          setTimeout(() => inputRef.current?.focus(), 100);
                         }}
-                        className="mt-3 text-xs font-mono uppercase tracking-wider text-t-secondary hover:text-t-primary transition-colors"
+                        className="mt-5 text-[11px] font-mono font-semibold uppercase tracking-wider text-t-secondary underline-offset-4 transition-colors hover:text-t-primary hover:underline"
                       >
-                        Start by describing your app →
+                        Go to home →
                       </button>
                     </div>
                   ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-                      {projects.map((project, i) => (
-                        <Link
+                    <div className="grid grid-cols-1 gap-4 p-5 sm:grid-cols-2 sm:gap-5 xl:grid-cols-3 xl:gap-4">
+                      {projects.map((project) => (
+                        <article
                           key={project.id}
-                          href={`/app/${project.id}`}
-                          className={`group flex flex-col gap-3 p-5 no-underline transition-colors hover:bg-input-bg ${
-                            (i + 1) % 3 !== 0
-                              ? "border-b-secondary lg:border-r"
-                              : ""
-                          } ${(i + 1) % 2 !== 0 ? "max-lg:border-r border-b-secondary" : ""}`}
+                          className="group flex flex-col overflow-hidden rounded-xl border border-b-secondary bg-surface-elevated shadow-xs transition-colors hover:border-b-primary/25 hover:bg-surface-sunken dark:hover:bg-white/[0.04]"
                         >
-                          <div className="relative aspect-[16/10] w-full overflow-hidden rounded-lg border border-b-secondary bg-input-bg">
-                            {project.thumbnail ? (
-                              <img
-                                src={project.thumbnail}
-                                alt={project.name}
-                                className="h-full w-full object-cover"
+                          <div className="relative aspect-[16/10] w-full min-h-0 bg-surface-sunken">
+                            <Link
+                              href={`/app/${project.id}`}
+                              className="relative block h-full min-h-0 w-full overflow-hidden"
+                            >
+                              <ProjectFramePreview
+                                thumbnail={project.thumbnail}
+                                firstFrameHtml={project.firstFrameHtml}
+                                title={project.name}
                               />
-                            ) : project.firstFrameHtml ? (
-                              <div className="pointer-events-none absolute inset-0 overflow-hidden">
-                                <iframe
-                                  srcDoc={project.firstFrameHtml}
-                                  sandbox=""
-                                  title={`${project.name} preview`}
-                                  className="h-[927px] w-[420px] origin-top-left border-none"
-                                  style={{
-                                    transform: "scale(0.28)",
-                                    transformOrigin: "top left",
-                                  }}
-                                  tabIndex={-1}
-                                />
-                              </div>
-                            ) : (
-                              <div className="flex h-full w-full items-center justify-center">
-                                <span className="text-[9px] font-mono text-t-tertiary">
-                                  Empty
-                                </span>
-                              </div>
-                            )}
-                          </div>
-                          <div className="flex items-center justify-between">
-                            <div>
-                              <p className="text-sm font-medium text-t-primary group-hover:text-t-primary transition-colors">
-                                {project.name}
-                              </p>
-                              <p className="text-[10px] font-mono text-t-tertiary mt-0.5">
-                                {project.screens} screens ·{" "}
-                                {timeAgo(project.updatedAt)}
-                              </p>
-                            </div>
+                            </Link>
                             <button
-                              className="flex h-6 w-6 items-center justify-center rounded text-t-tertiary opacity-0 group-hover:opacity-100 hover:bg-red-500/10 hover:text-red-500 transition-all"
+                              type="button"
+                              className="absolute right-2 top-2 z-10 flex size-8 items-center justify-center rounded-lg border border-b-secondary bg-surface/90 text-t-tertiary opacity-100 shadow-sm backdrop-blur-sm transition-all hover:border-red-500/30 hover:bg-red-500/10 hover:text-red-500 md:opacity-0 md:group-hover:opacity-100"
                               title="Move to trash"
-                              onClick={(e) => {
-                                e.preventDefault();
-                                trashProject(project.id);
-                              }}
+                              onClick={() => trashProject(project.id)}
                             >
                               <svg
-                                width="12"
-                                height="12"
+                                width="14"
+                                height="14"
                                 viewBox="0 0 24 24"
                                 fill="none"
                                 stroke="currentColor"
@@ -1176,7 +1163,19 @@ export default function DashboardPage() {
                               </svg>
                             </button>
                           </div>
-                        </Link>
+                          <Link
+                            href={`/app/${project.id}`}
+                            className="flex flex-col gap-1 px-4 py-3 no-underline transition-colors hover:bg-surface-sunken dark:hover:bg-white/[0.03]"
+                          >
+                            <p className="line-clamp-2 text-sm font-medium text-t-primary">
+                              {project.name}
+                            </p>
+                            <p className="text-[11px] font-mono text-t-tertiary">
+                              {project.screens} screens ·{" "}
+                              {timeAgo(project.updatedAt)}
+                            </p>
+                          </Link>
+                        </article>
                       ))}
                     </div>
                   )}
@@ -1192,81 +1191,79 @@ export default function DashboardPage() {
                 exit={{ opacity: 0 }}
                 transition={{ duration: 0.3 }}
               >
-                <div className="flex items-center justify-between px-5 py-4">
-                  <span className="text-[11px] font-mono font-medium uppercase tracking-wider text-t-secondary">
+                <div className="flex shrink-0 flex-wrap items-center gap-2 border-b border-b-secondary px-5 py-4">
+                  <h2 className="text-[11px] font-mono font-semibold uppercase tracking-wider text-t-primary">
                     Trash
-                    {trashedProjects.length > 0 && (
-                      <span className="ml-1.5 text-t-tertiary">
-                        {trashedProjects.length}
-                      </span>
-                    )}
-                  </span>
+                  </h2>
+                  {trashedProjects.length > 0 && (
+                    <span className="rounded-md border border-b-secondary bg-surface-sunken px-2 py-0.5 text-[10px] font-mono tabular-nums text-t-tertiary">
+                      {trashedProjects.length}
+                    </span>
+                  )}
                 </div>
 
                 <div className="flex-1 overflow-y-auto">
                   {trashLoading ? (
-                    <div className="flex items-center justify-center py-20">
+                    <div className="flex items-center justify-center py-24">
                       <div className="flex items-center gap-2 text-sm text-t-tertiary">
                         <div className="size-2 rounded-full bg-t-tertiary animate-pulse" />
-                        Loading...
+                        Loading trash…
                       </div>
                     </div>
                   ) : trashedProjects.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center py-20">
-                      <svg
-                        width="32"
-                        height="32"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="1"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        className="text-t-tertiary/40 mb-3"
-                      >
-                        <polyline points="3 6 5 6 21 6" />
-                        <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" />
-                      </svg>
-                      <p className="text-sm text-t-tertiary">Trash is empty</p>
+                    <div className="flex flex-col items-center justify-center px-6 py-24 text-center">
+                      <div className="mb-4 flex size-14 items-center justify-center rounded-2xl border border-dashed border-b-secondary bg-surface-sunken">
+                        <svg
+                          width="24"
+                          height="24"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="1.5"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          className="text-t-tertiary/70"
+                        >
+                          <polyline points="3 6 5 6 21 6" />
+                          <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" />
+                        </svg>
+                      </div>
+                      <p className="text-sm font-medium text-t-secondary">
+                        Trash is empty
+                      </p>
+                      <p className="mt-1 max-w-sm text-xs text-t-tertiary">
+                        Deleted projects appear here until you restore or remove
+                        them for good.
+                      </p>
                     </div>
                   ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-                      {trashedProjects.map((project, i) => (
-                        <div
+                    <div className="grid grid-cols-1 gap-4 p-5 sm:grid-cols-2 sm:gap-5 xl:grid-cols-3 xl:gap-4">
+                      {trashedProjects.map((project) => (
+                        <article
                           key={project.id}
-                          className={`group flex flex-col gap-3 p-5 transition-colors ${
-                            (i + 1) % 3 !== 0
-                              ? "border-b-secondary lg:border-r"
-                              : ""
-                          } ${(i + 1) % 2 !== 0 ? "max-lg:border-r border-b-secondary" : ""}`}
+                          className="group flex flex-col overflow-hidden rounded-xl border border-b-secondary border-dashed bg-surface-sunken transition-colors hover:border-b-primary/20 hover:bg-surface-elevated"
                         >
-                          <div className="relative aspect-[16/10] w-full overflow-hidden rounded-lg border border-b-secondary bg-input-bg opacity-60">
-                            {project.thumbnail ? (
-                              <img
-                                src={project.thumbnail}
-                                alt={project.name}
-                                className="h-full w-full object-cover"
-                              />
-                            ) : (
-                              <div className="flex h-full w-full items-center justify-center">
-                                <span className="text-[9px] font-mono text-t-tertiary">
-                                  {project.screens} screens
-                                </span>
-                              </div>
-                            )}
+                          <div className="relative aspect-[16/10] w-full min-h-0 bg-surface-sunken">
+                            <ProjectFramePreview
+                              thumbnail={project.thumbnail}
+                              title={project.name}
+                              emptyLabel={`${project.screens} screens`}
+                              dimmed
+                            />
                           </div>
-                          <div className="flex items-center justify-between">
+                          <div className="flex flex-col gap-3 border-t border-b-secondary px-4 py-3">
                             <div>
-                              <p className="text-sm font-medium text-t-secondary line-through">
+                              <p className="line-clamp-2 text-sm font-medium text-t-secondary line-through decoration-t-tertiary/50">
                                 {project.name}
                               </p>
-                              <p className="text-[10px] font-mono text-t-tertiary mt-0.5">
+                              <p className="mt-1 text-[11px] font-mono text-t-tertiary">
                                 Trashed {timeAgo(project.trashedAt)}
                               </p>
                             </div>
-                            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <div className="flex flex-wrap gap-2">
                               <button
-                                className="flex h-7 items-center gap-1 rounded-md px-2 text-[10px] font-mono uppercase tracking-wider text-t-secondary hover:bg-input-bg hover:text-t-primary transition-colors"
+                                type="button"
+                                className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-b-secondary bg-surface-elevated px-3 py-2 text-[11px] font-mono font-semibold uppercase tracking-wider text-t-secondary transition-colors hover:border-b-primary/30 hover:bg-surface-sunken hover:text-t-primary dark:hover:bg-white/[0.06] sm:flex-none"
                                 title="Restore"
                                 onClick={() => restoreProject(project.id)}
                               >
@@ -1286,7 +1283,8 @@ export default function DashboardPage() {
                                 Restore
                               </button>
                               <button
-                                className="flex h-7 items-center gap-1 rounded-md px-2 text-[10px] font-mono uppercase tracking-wider text-red-500/70 hover:bg-red-500/10 hover:text-red-500 transition-colors"
+                                type="button"
+                                className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-red-500/25 bg-red-500/5 px-3 py-2 text-[11px] font-mono font-semibold uppercase tracking-wider text-red-500 transition-colors hover:bg-red-500/15 sm:flex-none"
                                 title="Delete permanently"
                                 onClick={() => permanentlyDelete(project.id)}
                               >
@@ -1307,7 +1305,7 @@ export default function DashboardPage() {
                               </button>
                             </div>
                           </div>
-                        </div>
+                        </article>
                       ))}
                     </div>
                   )}

@@ -104,7 +104,7 @@ function CanvasPanel() {
             </svg>
             <StreamingPrompt />
             <div className="flex items-center gap-1.5 flex-shrink-0">
-              <span className="text-[9px] font-mono text-t-tertiary border border-b-secondary rounded px-1 py-0.5">
+              <span className="text-[11px] font-mono text-t-tertiary border border-b-secondary rounded px-1 py-0.5">
                 ⌘K
               </span>
               <div className="size-5 rounded bg-input-bg flex items-center justify-center">
@@ -163,7 +163,7 @@ function CanvasPanel() {
               />
             </svg>
             <motion.div
-              className="ml-4 -mt-0.5 rounded-md px-2 py-0.5 text-[10px] font-semibold shadow-lg whitespace-nowrap"
+              className="ml-4 -mt-0.5 rounded-md px-2 py-0.5 text-[11px] font-semibold shadow-lg whitespace-nowrap"
               style={{ backgroundColor: cursor.color, color: "#000" }}
               initial={{ opacity: 0, x: -8 }}
               animate={{ opacity: 1, x: 0 }}

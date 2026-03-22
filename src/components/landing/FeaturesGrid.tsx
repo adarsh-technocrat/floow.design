@@ -67,7 +67,7 @@ export function FeaturesGrid() {
               key={f.title}
               className="flex flex-col bg-surface px-4 py-8 md:px-6 md:py-10 lg:px-8 lg:py-12"
             >
-              <span className="mb-3 text-[10px] font-mono font-semibold uppercase tracking-widest text-t-tertiary">
+              <span className="mb-3 text-[11px] font-mono font-semibold uppercase tracking-widest text-t-tertiary">
                 {f.label}
               </span>
               <h3 className="mb-1.5 text-base font-semibold text-t-primary">
@@ -98,7 +98,7 @@ export function FeaturesGrid() {
               >
                 {s.value}
               </span>
-              <span className="mt-1 text-[10px] font-mono uppercase tracking-wider text-t-tertiary">
+              <span className="mt-1 text-[11px] font-mono uppercase tracking-wider text-t-tertiary">
                 {s.label}
               </span>
             </div>

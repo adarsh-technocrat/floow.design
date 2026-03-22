@@ -21,7 +21,7 @@ export function CollapsibleTLDR({
         onClick={() => setOpen(!open)}
         className="flex w-full items-center gap-2 text-left mb-2"
       >
-        <span className="text-[10px] font-mono font-semibold uppercase tracking-widest text-t-tertiary">
+        <span className="text-[11px] font-mono font-semibold uppercase tracking-widest text-t-tertiary">
           TL;DR
         </span>
         <div className="h-px flex-1 bg-b-secondary" />

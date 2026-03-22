@@ -281,7 +281,7 @@ export function PageMentionInput({
           <div className="max-h-48 overflow-y-auto overscroll-contain px-1">
             <div className="sticky top-0 z-10 flex items-center gap-1.5 px-3 py-2 pb-1.5">
               <div className="h-px flex-1 bg-linear-to-r from-transparent via-b-secondary to-transparent" />
-              <span className="text-[10px] font-semibold uppercase tracking-[0.15em] text-t-tertiary">
+              <span className="text-[11px] font-semibold uppercase tracking-[0.15em] text-t-tertiary">
                 Pages
               </span>
               <div className="h-px flex-1 bg-linear-to-r from-transparent via-b-secondary to-transparent" />
@@ -321,7 +321,7 @@ export function PageMentionInput({
                     <span className="min-w-0 flex-1 truncate text-[13px] font-medium">
                       {page.label}
                     </span>
-                    <span className="shrink-0 rounded px-1.5 py-0.5 text-[10px] font-medium text-t-tertiary tabular-nums">
+                    <span className="shrink-0 rounded px-1.5 py-0.5 text-[11px] font-medium text-t-tertiary tabular-nums">
                       Screen
                     </span>
                   </button>

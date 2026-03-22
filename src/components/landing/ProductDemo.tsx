@@ -81,7 +81,7 @@ export function ProductDemo() {
                     Watch demo
                   </button>
 
-                  <span className="text-[10px] font-mono text-t-tertiary uppercase tracking-wider">
+                  <span className="text-[11px] font-mono text-t-tertiary uppercase tracking-wider">
                     2 min
                   </span>
                 </div>
@@ -99,12 +99,12 @@ export function ProductDemo() {
             <div className="flex items-center gap-3 px-4 py-3 border-t border-b-secondary">
               <div className="flex items-center gap-2">
                 <div className="size-2 rounded-full bg-emerald-500" />
-                <span className="text-[10px] font-mono text-t-tertiary uppercase tracking-wider">
+                <span className="text-[11px] font-mono text-t-tertiary uppercase tracking-wider">
                   Live demo
                 </span>
               </div>
               <div className="h-3 w-px bg-input-bg" />
-              <span className="text-[10px] font-mono text-t-tertiary">
+              <span className="text-[11px] font-mono text-t-tertiary">
                 Prompt → Design → Flutter code
               </span>
             </div>
@@ -127,7 +127,7 @@ export function ProductDemo() {
               >
                 {stat.value}
               </p>
-              <p className="mt-1 text-[10px] font-mono text-t-tertiary uppercase tracking-wider">
+              <p className="mt-1 text-[11px] font-mono text-t-tertiary uppercase tracking-wider">
                 {stat.label}
               </p>
             </div>

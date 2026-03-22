@@ -326,7 +326,7 @@ export default function FrameElementToolbar({
 
       {showTailwindMenu && (
         <div className="min-w-[260px] max-h-[220px] overflow-y-auto rounded-xl border border-b-secondary bg-canvas-panel-bg/95 p-2.5 shadow-lg backdrop-blur-sm">
-          <div className="mb-2 text-[10px] font-medium uppercase tracking-wider text-t-tertiary">
+          <div className="mb-2 text-[11px] font-medium uppercase tracking-wider text-t-tertiary">
             Tailwind Classes
           </div>
           <div className="mb-2 flex items-center gap-1.5">
@@ -357,7 +357,7 @@ export default function FrameElementToolbar({
               elementClasses.map((cls, idx) => (
                 <span
                   key={`${cls}-${idx}`}
-                  className="group inline-flex items-center gap-1 rounded-md bg-input-bg px-2 py-1 text-[10px] text-t-secondary"
+                  className="group inline-flex items-center gap-1 rounded-md bg-input-bg px-2 py-1 text-[11px] text-t-secondary"
                 >
                   {cls}
                   <button

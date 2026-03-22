@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { DEFAULT_PROJECT_ID } from "@/constants/project";
-import { ANONYMOUS_USER_ID } from "@/constants/user";
 import {
   CANVAS_CHAT_FRAME_ID,
   recordsToUiMessages,
@@ -10,8 +8,15 @@ import {
 
 export async function GET(req: NextRequest) {
   try {
-    const projectId = req.nextUrl.searchParams.get("id") ?? DEFAULT_PROJECT_ID;
-    const userId = req.nextUrl.searchParams.get("userId") ?? ANONYMOUS_USER_ID;
+    const projectId = req.nextUrl.searchParams.get("id") ?? "";
+    const userId = req.nextUrl.searchParams.get("userId") ?? "";
+
+    if (!projectId || !userId) {
+      return NextResponse.json(
+        { error: "id and userId are required" },
+        { status: 400 },
+      );
+    }
 
     const project = await prisma.project.findUnique({
       where: { id: projectId },

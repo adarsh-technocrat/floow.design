@@ -161,7 +161,7 @@ export function Testimonials() {
                     {t.name}
                   </p>
                   <p
-                    className={`text-[10px] ${
+                    className={`text-[11px] ${
                       t.highlight
                         ? "text-btn-primary-text/60"
                         : "text-t-tertiary"

@@ -32,6 +32,58 @@ export function sendChatMessage(text: string) {
   }
 }
 
+/** Returns true if a chat send function is registered (ChatPanel is mounted) */
+export function isChatBridgeReady(): boolean {
+  return _sendFn !== null;
+}
+
+// Chat status bridge — lets Activity panel know if the agent is working
+type ChatStatus = "ready" | "submitted" | "streaming" | "error";
+type ChatStatusListener = (status: ChatStatus) => void;
+const _statusListeners = new Set<ChatStatusListener>();
+let _lastStatus: ChatStatus = "ready";
+
+export function emitChatStatus(status: ChatStatus): void {
+  _lastStatus = status;
+  for (const l of _statusListeners) l(status);
+}
+
+export function subscribeChatStatus(listener: ChatStatusListener): () => void {
+  _statusListeners.add(listener);
+  listener(_lastStatus);
+  return () => {
+    _statusListeners.delete(listener);
+  };
+}
+
+// Generating frames bridge — tracks which frame IDs are currently being generated
+type GeneratingFramesListener = (ids: Set<string>) => void;
+const _generatingListeners = new Set<GeneratingFramesListener>();
+let _generatingFrameIds = new Set<string>();
+
+export function addGeneratingFrame(id: string): void {
+  _generatingFrameIds = new Set([..._generatingFrameIds, id]);
+  for (const l of _generatingListeners) l(_generatingFrameIds);
+}
+
+export function removeGeneratingFrame(id: string): void {
+  _generatingFrameIds = new Set([..._generatingFrameIds].filter((x) => x !== id));
+  for (const l of _generatingListeners) l(_generatingFrameIds);
+}
+
+export function clearGeneratingFrames(): void {
+  _generatingFrameIds = new Set();
+  for (const l of _generatingListeners) l(_generatingFrameIds);
+}
+
+export function subscribeGeneratingFrames(listener: GeneratingFramesListener): () => void {
+  _generatingListeners.add(listener);
+  listener(_generatingFrameIds);
+  return () => {
+    _generatingListeners.delete(listener);
+  };
+}
+
 export function subscribeChatMessages(
   listener: ChatMessagesSnapshotListener,
 ): () => void {

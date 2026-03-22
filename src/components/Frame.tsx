@@ -1,9 +1,10 @@
 "use client";
 
-import React, { useMemo, useRef } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { FrameToolbar } from "@/components/FrameToolbar";
 import FrameElementInspectionOverlay from "@/components/frame/element-inspection/FrameElementInspectionOverlay";
 import { useAppSelector } from "@/store/hooks";
+import { subscribeGeneratingFrames } from "@/lib/chat-bridge";
 import {
   useFrameInteraction,
   type ResizeHandle,
@@ -142,6 +143,13 @@ export const Frame = React.memo(function Frame({
   const width = widthProp ?? FRAME_WIDTH;
   const height = heightProp ?? FRAME_HEIGHT;
   const frameRef = useRef<HTMLDivElement>(null);
+  const [isGenerating, setIsGenerating] = useState(false);
+
+  useEffect(() => {
+    return subscribeGeneratingFrames((ids) => {
+      setIsGenerating(ids.has(id));
+    });
+  }, [id]);
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const overlayRef = useRef<HTMLDivElement>(null);
   const showToolbar = showToolbarProp ?? selected;
@@ -197,7 +205,7 @@ export const Frame = React.memo(function Frame({
     <div
       ref={frameRef}
       data-frame
-      className={`absolute shrink-0 ${isDragging ? "cursor-grabbing" : ""}`}
+      className={`absolute shrink-0 ${isDragging ? "cursor-grabbing" : ""} ${isGenerating ? "frame-generating" : ""}`}
       style={{
         left: `${left}px`,
         top: `${top}px`,

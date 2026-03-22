@@ -64,10 +64,10 @@ export default async function BlogPage() {
                 )}
               >
                 <div className="flex items-center gap-3">
-                  <span className="rounded-md bg-input-bg px-2 py-0.5 text-[10px] font-mono uppercase tracking-wider text-t-secondary">
+                  <span className="rounded-md bg-input-bg px-2 py-0.5 text-[11px] font-mono uppercase tracking-wider text-t-secondary">
                     {post.frontmatter.category}
                   </span>
-                  <span className="text-[10px] text-t-tertiary font-mono">
+                  <span className="text-[11px] text-t-tertiary font-mono">
                     {post.readingTime}
                   </span>
                 </div>
@@ -89,7 +89,7 @@ export default async function BlogPage() {
                   {post.frontmatter.tags.slice(0, 3).map((tag) => (
                     <span
                       key={tag}
-                      className="rounded-full bg-input-bg px-2 py-0.5 text-[9px] font-mono uppercase tracking-wider text-t-tertiary"
+                      className="rounded-full bg-input-bg px-2 py-0.5 text-[11px] font-mono uppercase tracking-wider text-t-tertiary"
                     >
                       #{tag}
                     </span>

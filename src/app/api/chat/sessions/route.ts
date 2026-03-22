@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import type { Prisma } from "@prisma/client";
 import { prisma, ensureProject, ensureUser } from "@/lib/db";
-import { DEFAULT_PROJECT_ID } from "@/constants/project";
-import { ANONYMOUS_USER_ID } from "@/constants/user";
 import {
   CANVAS_CHAT_FRAME_ID,
   normalizeIncomingMessages,
@@ -35,11 +33,17 @@ function sessionJson(session: {
 
 export async function GET(req: NextRequest) {
   try {
-    const projectId =
-      req.nextUrl.searchParams.get("projectId") ?? DEFAULT_PROJECT_ID;
+    const projectId = req.nextUrl.searchParams.get("projectId") ?? "";
     const frameId =
       req.nextUrl.searchParams.get("frameId") ?? CANVAS_CHAT_FRAME_ID;
-    const userId = req.nextUrl.searchParams.get("userId") ?? ANONYMOUS_USER_ID;
+    const userId = req.nextUrl.searchParams.get("userId") ?? "";
+
+    if (!projectId || !userId) {
+      return NextResponse.json(
+        { error: "projectId and userId are required" },
+        { status: 400 },
+      );
+    }
 
     await ensureUser(userId);
 
@@ -77,12 +81,19 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
     const rawMessages = Array.isArray(body?.messages) ? body.messages : [];
-    const projectId = body?.projectId ?? DEFAULT_PROJECT_ID;
+    const projectId = body?.projectId ?? "";
     const frameId = body?.frameId ?? CANVAS_CHAT_FRAME_ID;
     const userId =
       typeof body?.userId === "string" && body.userId.length > 0
         ? body.userId
-        : ANONYMOUS_USER_ID;
+        : "";
+
+    if (!projectId || !userId) {
+      return NextResponse.json(
+        { error: "projectId and userId are required" },
+        { status: 400 },
+      );
+    }
     const isActive = typeof body?.isActive === "boolean" ? body.isActive : true;
 
     const messages = normalizeIncomingMessages(rawMessages);

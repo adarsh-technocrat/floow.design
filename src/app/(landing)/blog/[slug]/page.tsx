@@ -116,14 +116,14 @@ export default async function BlogPostPage({ params }: PageProps) {
         <header className="border-b border-b-secondary">
           <div className="px-4 py-8 sm:px-6 sm:py-12 md:px-16 md:py-16 max-w-3xl mx-auto">
             <div className="flex flex-wrap items-center gap-3 mb-6">
-              <span className="rounded-md bg-input-bg px-2 py-0.5 text-[10px] font-mono uppercase tracking-wider text-t-secondary">
+              <span className="rounded-md bg-input-bg px-2 py-0.5 text-[11px] font-mono uppercase tracking-wider text-t-secondary">
                 {fm.category}
               </span>
-              <span className="text-[10px] text-t-tertiary font-mono">
+              <span className="text-[11px] text-t-tertiary font-mono">
                 {post.readingTime}
               </span>
-              <span className="text-[10px] text-t-tertiary font-mono">·</span>
-              <span className="text-[10px] text-t-tertiary font-mono">
+              <span className="text-[11px] text-t-tertiary font-mono">·</span>
+              <span className="text-[11px] text-t-tertiary font-mono">
                 {post.wordCount} words
               </span>
             </div>
@@ -145,7 +145,7 @@ export default async function BlogPostPage({ params }: PageProps) {
               {fm.tags.map((tag) => (
                 <span
                   key={tag}
-                  className="rounded-full bg-input-bg px-2 py-0.5 text-[9px] font-mono uppercase tracking-wider text-t-tertiary"
+                  className="rounded-full bg-input-bg px-2 py-0.5 text-[11px] font-mono uppercase tracking-wider text-t-tertiary"
                 >
                   #{tag}
                 </span>
@@ -197,7 +197,7 @@ export default async function BlogPostPage({ params }: PageProps) {
         {relatedPosts.length > 0 && (
           <div className="border-t border-b-secondary">
             <div className="border-b border-b-secondary px-5 py-3">
-              <span className="text-[10px] font-mono font-medium uppercase tracking-wider text-t-tertiary">
+              <span className="text-[11px] font-mono font-medium uppercase tracking-wider text-t-tertiary">
                 Related Articles
               </span>
             </div>
@@ -208,13 +208,13 @@ export default async function BlogPostPage({ params }: PageProps) {
                   href={`/blog/${rp.slug}`}
                   className="group flex flex-col gap-2 p-5 md:p-6 transition-colors hover:bg-input-bg/80 no-underline"
                 >
-                  <span className="text-[9px] font-mono uppercase tracking-wider text-t-tertiary">
+                  <span className="text-[11px] font-mono uppercase tracking-wider text-t-tertiary">
                     {rp.frontmatter.category}
                   </span>
                   <span className="text-sm font-medium text-t-primary leading-snug">
                     {rp.frontmatter.title}
                   </span>
-                  <span className="text-[10px] font-mono text-t-tertiary">
+                  <span className="text-[11px] font-mono text-t-tertiary">
                     {rp.readingTime}
                   </span>
                 </Link>
@@ -230,7 +230,7 @@ export default async function BlogPostPage({ params }: PageProps) {
               href={`/blog/${prevPost.slug}`}
               className="group flex flex-col gap-2 p-6 md:p-8 transition-colors hover:bg-input-bg/80 no-underline"
             >
-              <span className="text-[10px] font-mono uppercase tracking-wider text-t-tertiary">
+              <span className="text-[11px] font-mono uppercase tracking-wider text-t-tertiary">
                 ← Older
               </span>
               <span className="text-sm font-medium text-t-primary">
@@ -245,7 +245,7 @@ export default async function BlogPostPage({ params }: PageProps) {
               href={`/blog/${nextPost.slug}`}
               className="group flex flex-col gap-2 p-6 md:p-8 items-end text-right hover:bg-input-bg transition-colors no-underline"
             >
-              <span className="text-[10px] font-mono uppercase tracking-wider text-t-tertiary">
+              <span className="text-[11px] font-mono uppercase tracking-wider text-t-tertiary">
                 Newer →
               </span>
               <span className="text-sm font-medium text-t-primary">

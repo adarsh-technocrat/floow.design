@@ -9,6 +9,7 @@ import { toggleAgentLogVisible } from "@/store/slices/uiSlice";
 import {
   subscribeActivityHistoryLoading,
   subscribeChatMessages,
+  subscribeChatStatus,
 } from "@/lib/chat-bridge";
 import ReactMarkdown from "react-markdown";
 
@@ -93,7 +94,7 @@ function ToolChip({ part }: { part: MessagePart }) {
         <span className="size-2.5 shrink-0 animate-pulse rounded-full bg-t-secondary" />
       )}
       <span
-        className={`font-mono text-[9px] uppercase tracking-wider ${done ? "text-t-secondary" : "text-t-secondary"}`}
+        className={`font-mono text-[11px] uppercase tracking-wider ${done ? "text-t-secondary" : "text-t-secondary"}`}
       >
         {label}
       </span>
@@ -119,12 +120,12 @@ const activityMarkdownComponents: React.ComponentProps<
     <li className="text-[11px] leading-relaxed text-t-secondary">{children}</li>
   ),
   code: ({ children }) => (
-    <code className="rounded bg-muted/80 px-1 py-0.5 font-mono text-[10px] text-t-primary">
+    <code className="rounded bg-muted/80 px-1 py-0.5 font-mono text-[11px] text-t-primary">
       {children}
     </code>
   ),
   pre: ({ children }) => (
-    <pre className="mb-1.5 max-w-full overflow-x-auto rounded-md bg-muted/80 p-2 font-mono text-[10px] text-t-secondary">
+    <pre className="mb-1.5 max-w-full overflow-x-auto rounded-md bg-muted/80 p-2 font-mono text-[11px] text-t-secondary">
       {children}
     </pre>
   ),
@@ -217,11 +218,11 @@ function ExpandableReasoningBlock({
         id={`reasoning-trigger-${instanceKey}`}
       >
         <div className="min-w-0 flex-1">
-          <span className="font-mono text-[10px] font-medium uppercase tracking-wider text-t-tertiary">
+          <span className="font-mono text-[11px] font-medium uppercase tracking-wider text-t-tertiary">
             Reasoning
           </span>
           {!open && (
-            <p className="mt-0.5 line-clamp-2 text-[10px] leading-snug text-t-secondary">
+            <p className="mt-0.5 line-clamp-2 text-[11px] leading-snug text-t-secondary">
               {preview}
               {truncated ? "…" : ""}
             </p>
@@ -324,9 +325,14 @@ export function CanvasBottomLeft() {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [historyLoading, setHistoryLoading] = useState(true);
+  const [chatStatus, setChatStatus] = useState<string>("ready");
 
   useEffect(() => {
     return subscribeActivityHistoryLoading(setHistoryLoading);
+  }, []);
+
+  useEffect(() => {
+    return subscribeChatStatus(setChatStatus);
   }, []);
 
   // Live sync with ChatPanel useChat state (same source as /api/chat/sessions hydrate)
@@ -352,7 +358,7 @@ export function CanvasBottomLeft() {
         <div className="w-[260px] max-h-[560px] flex flex-col rounded-xl border border-b-secondary bg-surface-elevated/90 backdrop-blur-xl overflow-hidden">
           {/* Header */}
           <div className="flex items-center justify-between px-3 py-2 flex-shrink-0">
-            <span className="text-[10px] font-mono font-medium uppercase tracking-wider text-t-tertiary">
+            <span className="text-[11px] font-mono font-medium uppercase tracking-wider text-t-tertiary">
               Activity
             </span>
             <button
@@ -389,7 +395,8 @@ export function CanvasBottomLeft() {
                 className="max-h-[min(480px,calc(560px-2.75rem))] overflow-y-auto scrollbar-hide"
               >
                 <div className="flex flex-col gap-2 px-3 py-3">
-                  {visibleMessages.map((msg) => {
+                  {visibleMessages.map((msg, idx) => {
+                    const isLast = idx === visibleMessages.length - 1;
                     const userText =
                       msg.role === "user" ? getUserText(msg) : null;
                     return (
@@ -418,6 +425,22 @@ export function CanvasBottomLeft() {
                       </Fragment>
                     );
                   })}
+
+                  {/* Thinking indicator */}
+                  {(chatStatus === "submitted" || chatStatus === "streaming") && (
+                    <div className="flex justify-start">
+                      <div className="flex items-center gap-2 rounded-lg bg-input-bg/60 px-3 py-2">
+                        <div className="flex gap-1">
+                          <span className="size-1.5 rounded-full bg-t-tertiary animate-bounce" style={{ animationDelay: "0ms" }} />
+                          <span className="size-1.5 rounded-full bg-t-tertiary animate-bounce" style={{ animationDelay: "150ms" }} />
+                          <span className="size-1.5 rounded-full bg-t-tertiary animate-bounce" style={{ animationDelay: "300ms" }} />
+                        </div>
+                        <span className="text-xs text-t-tertiary">
+                          {chatStatus === "submitted" ? "Thinking..." : "Generating..."}
+                        </span>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -441,7 +464,7 @@ export function CanvasBottomLeft() {
         <MessageSquareText className="size-4" />
         Agent Log
         {visibleMessages.length > 0 && !logVisible && (
-          <span className="text-[10px] font-mono text-t-tertiary bg-input-bg rounded-full px-1.5 py-0.5 min-w-[20px] text-center">
+          <span className="text-[11px] font-mono text-t-tertiary bg-input-bg rounded-full px-1.5 py-0.5 min-w-[20px] text-center">
             {visibleMessages.length}
           </span>
         )}
