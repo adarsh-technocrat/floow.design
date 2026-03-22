@@ -13,12 +13,21 @@ import {
   replaceTheme,
 } from "@/store/slices/canvasSlice";
 import { pushAgentLog } from "@/store/slices/uiSlice";
-import { registerChatSend, unregisterChatSend } from "@/lib/chat-bridge";
+import {
+  emitActivityHistoryLoading,
+  emitChatMessagesSnapshot,
+  registerChatSend,
+  unregisterChatSend,
+} from "@/lib/chat-bridge";
 import { cursor, initCursor } from "@/lib/cursor";
 import { Brain, ChevronDown, X, Zap } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { ImageIcon } from "@/lib/svg-icons";
 import { PageMentionInput } from "./PageMentionInput";
+import { DEFAULT_PROJECT_ID } from "@/constants/project";
+import { ANONYMOUS_USER_ID } from "@/constants/user";
+import { useAuth } from "@/contexts/AuthContext";
+import { CANVAS_CHAT_FRAME_ID } from "@/lib/chat-session";
 
 const CP_THROTTLE_MS = 300;
 let cpPendingHtml = new Map<string, string>();
@@ -200,7 +209,7 @@ function ToolStepChip({
 
   return (
     <div
-      className={`not-prose flex w-fit items-center gap-2 rounded-md border px-2 py-1 transition-all ${
+      className={`not-prose flex w-fit items-center gap-2 rounded-md border border-b-0 px-2 py-1 transition-all ${
         finished
           ? "border-b-secondary bg-input-bg"
           : "border-b-strong bg-surface-sunken/80"
@@ -487,7 +496,13 @@ export function ChatPanel({
   const [isLoadingHistory, setIsLoadingHistory] = useState(true);
   const [toolSteps, _setToolSteps] = useState<ToolStep[]>([]);
   const chatThreadRef = useRef<HTMLDivElement>(null);
+  const { user } = useAuth();
+  const chatUserId = user?.uid ?? ANONYMOUS_USER_ID;
   const selectedFrameIds = useAppSelector((s) => s.canvas.selectedFrameIds);
+  const projectIdFromStore = useAppSelector((s) => s.project.projectId);
+  const projectId = projectIdFromStore ?? DEFAULT_PROJECT_ID;
+  const frameSessionId =
+    selectedFrameIds.length === 1 ? selectedFrameIds[0] : CANVAS_CHAT_FRAME_ID;
   const frames = useAppSelector((s) => s.canvas.frames);
   const theme = useAppSelector((s) => s.canvas.theme);
   const activeFrameLabel =
@@ -518,7 +533,35 @@ export function ChatPanel({
     latestCanvasState.theme = theme;
   }, [frames, theme]);
 
-  const hasHydratedFromProject = useRef(false);
+  const chatSessionContextRef = useRef({
+    projectId,
+    frameId: frameSessionId,
+    userId: chatUserId,
+  });
+  chatSessionContextRef.current = {
+    projectId,
+    frameId: frameSessionId,
+    userId: chatUserId,
+  };
+
+  const postChatSession = useCallback((messagesPayload: UIMessage[]) => {
+    const {
+      projectId: pid,
+      frameId: fid,
+      userId: uid,
+    } = chatSessionContextRef.current;
+    return fetch("/api/chat/sessions", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        projectId: pid,
+        frameId: fid,
+        userId: uid,
+        isActive: true,
+        messages: messagesPayload,
+      }),
+    });
+  }, []);
 
   const agentCountRef = useRef(agentCount);
   useEffect(() => {
@@ -587,21 +630,6 @@ export function ChatPanel({
           if (spawnData.theme && Object.keys(spawnData.theme).length > 0) {
             dispatch(replaceTheme(spawnData.theme));
           }
-          // orchestration removed
-          fetch("/api/chat/sessions", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              agentId: "__orchestration__",
-              messages: [
-                {
-                  orchestrationId: spawnData.orchestrationId,
-                  assignments: spawnData.agents,
-                  planContext: spawnData.planContext ?? "",
-                },
-              ],
-            }),
-          }).catch(() => {});
           return;
         }
       }
@@ -658,21 +686,6 @@ export function ChatPanel({
           if (output.theme && Object.keys(output.theme).length > 0) {
             dispatch(replaceTheme(output.theme));
           }
-          // orchestration removed
-          fetch("/api/chat/sessions", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              agentId: "__orchestration__",
-              messages: [
-                {
-                  orchestrationId: output.orchestrationId,
-                  assignments: output.agents,
-                  planContext: output.planContext ?? "",
-                },
-              ],
-            }),
-          }).catch(() => {});
           return;
         }
         if (output?.frame) {
@@ -988,62 +1001,52 @@ export function ChatPanel({
             parts: [...stepParts, ...existingParts],
           } as typeof lastMsg;
           setMessages(updated);
-          fetch("/api/chat/sessions", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ messages: updated }),
-          }).catch(() => {});
+          void postChatSession(updated).catch(() => {});
           return;
         }
       } else {
         setLastMessageToolSteps([]);
       }
       if (!isAbort && !isError && finishedMessages.length > 0) {
-        fetch("/api/chat/sessions", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ messages: finishedMessages }),
-        }).catch(() => {});
+        void postChatSession(finishedMessages).catch(() => {});
       }
     },
   });
 
   useEffect(() => {
-    if (hasHydratedFromProject.current) return;
-    hasHydratedFromProject.current = true;
-
-    fetch("/api/chat/sessions")
+    setIsLoadingHistory(true);
+    const hydrateKey = `${projectId}:${frameSessionId}:${chatUserId}`;
+    const q = new URLSearchParams({
+      projectId,
+      frameId: frameSessionId,
+      userId: chatUserId,
+    });
+    fetch(`/api/chat/sessions?${q.toString()}`)
       .then((res) => res.json())
       .then((data: { messages?: UIMessage[] }) => {
+        const nowKey = `${chatSessionContextRef.current.projectId}:${chatSessionContextRef.current.frameId}:${chatSessionContextRef.current.userId}`;
+        if (nowKey !== hydrateKey) return;
         if (data?.messages && data.messages.length > 0) {
           setMessages(data.messages);
+        } else {
+          setMessages([]);
         }
       })
       .catch(() => {})
-      .finally(() => setIsLoadingHistory(false));
+      .finally(() => {
+        const nowKey = `${chatSessionContextRef.current.projectId}:${chatSessionContextRef.current.frameId}:${chatSessionContextRef.current.userId}`;
+        if (nowKey === hydrateKey) setIsLoadingHistory(false);
+      });
+  }, [setMessages, projectId, frameSessionId, chatUserId]);
 
-    if (!orchestrationId) {
-      fetch("/api/chat/sessions?agentId=__orchestration__")
-        .then((res) => res.json())
-        .then(
-          (data: {
-            messages?: Array<{
-              orchestrationId: string;
-              assignments: Array<{
-                id: string;
-                subTask: string;
-                assignedScreens: string[];
-              }>;
-              planContext?: string;
-            }>;
-          }) => {
-            const _meta = data?.messages?.[0];
-            void _meta; // orchestration removed
-          },
-        )
-        .catch(() => {});
-    }
-  }, [setMessages, orchestrationId, dispatch]);
+  useEffect(() => {
+    if (isLoadingHistory) return;
+    emitChatMessagesSnapshot(messages);
+  }, [messages, isLoadingHistory]);
+
+  useEffect(() => {
+    emitActivityHistoryLoading(isLoadingHistory);
+  }, [isLoadingHistory]);
 
   const persistTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
@@ -1051,16 +1054,12 @@ export function ChatPanel({
     if (persistTimeoutRef.current) clearTimeout(persistTimeoutRef.current);
     persistTimeoutRef.current = setTimeout(() => {
       persistTimeoutRef.current = null;
-      fetch("/api/chat/sessions", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages }),
-      }).catch(() => {});
+      void postChatSession(messages).catch(() => {});
     }, 1500);
     return () => {
       if (persistTimeoutRef.current) clearTimeout(persistTimeoutRef.current);
     };
-  }, [messages, status]);
+  }, [messages, status, postChatSession]);
 
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
@@ -1184,7 +1183,7 @@ export function ChatPanel({
 
   return (
     <div
-      className="chat-panel fixed top-[8%] bottom-[10%] z-30 flex flex-col rounded-xl border border-b-primary bg-surface-elevated shadow-lg"
+      className="chat-panel fixed top-[8%] bottom-[10%] z-30 flex flex-col rounded-xl border border-b-0 border-b-primary bg-surface-elevated shadow-lg"
       style={{
         right: `${RAIL_OFFSET + RIGHT_MARGIN}px`,
         width: `${panelWidth}px`,
@@ -1223,7 +1222,7 @@ export function ChatPanel({
               <ChevronDown className="size-3.5 text-t-tertiary" />
             </button>
             {showHeaderDropdown && (
-              <div className="absolute left-0 top-full z-50 mt-1 min-w-[200px] overflow-hidden rounded-xl border border-b-primary bg-surface-elevated/95 py-1 shadow-lg backdrop-blur-xl">
+              <div className="absolute left-0 top-full z-50 mt-1 min-w-[200px] overflow-hidden rounded-xl border border-b-0 border-b-primary bg-surface-elevated/95 py-1 shadow-lg backdrop-blur-xl">
                 <div className="sticky top-0 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-t-tertiary">
                   Active Agents
                 </div>
@@ -1429,7 +1428,7 @@ export function ChatPanel({
       <div className="w-full p-4">
         <form
           onSubmit={handleSend}
-          className="w-full overflow-visible rounded-xl border border-border/60 bg-input-bg shadow-none focus-within:ring-2 focus-within:ring-ring/30"
+          className="w-full overflow-visible rounded-xl border border-b-0 border-border/60 bg-input-bg shadow-none focus-within:ring-2 focus-within:ring-ring/30"
         >
           {selectedFrameIds.length > 0 && (
             <div className="flex flex-wrap gap-1.5 px-4 pt-3 pb-1">
@@ -1498,7 +1497,7 @@ export function ChatPanel({
                   <ChevronDown className="size-3 opacity-60" />
                 </button>
                 {showAgentDropdown && (
-                  <div className="absolute bottom-full left-0 z-50 mb-1 min-w-[130px] overflow-hidden rounded-xl border border-b-primary bg-surface-elevated/95 py-1 shadow-lg backdrop-blur-xl">
+                  <div className="absolute bottom-full left-0 z-50 mb-1 min-w-[130px] overflow-hidden rounded-xl border border-b-0 border-b-primary bg-surface-elevated/95 py-1 shadow-lg backdrop-blur-xl">
                     <div className="sticky top-0 px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-t-tertiary">
                       Agents
                     </div>

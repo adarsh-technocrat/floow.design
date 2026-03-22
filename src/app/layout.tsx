@@ -22,7 +22,7 @@ const spaceGrotesk = Space_Grotesk({
 });
 
 export const metadata: Metadata = {
-  title: "Launchpad AI - Design to Flutter Code with AI",
+  title: "floow.design – Idea to Flutter app, in seconds",
   description: "Turn your app ideas into beautiful designs and production-ready Flutter code in seconds",
 };
 

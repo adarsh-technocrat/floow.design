@@ -132,7 +132,7 @@ export function FrameToolbar({
     canvasScale > 0 ? TOOLBAR_GAP_SCREEN_PX / canvasScale : 70;
   return (
     <div
-      className="absolute left-1/2 flex -translate-x-1/2 items-center gap-2 rounded-md border border-b-primary bg-canvas-panel-bg/95 px-2 py-1 shadow-sm backdrop-blur-sm"
+      className="absolute left-1/2 flex -translate-x-1/2 items-center gap-2 rounded-md border border-b-0 border-b-primary bg-canvas-panel-bg/95 px-2 py-1 shadow-sm backdrop-blur-sm"
       style={{
         transform: `scale(${scale})`,
         top: `-${topOffsetPx}px`,

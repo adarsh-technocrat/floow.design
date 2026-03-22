@@ -7,7 +7,7 @@ import { FAQ } from "@/components/landing/FAQ";
 import { Footer } from "@/components/landing/Footer";
 
 export const metadata = {
-  title: "Launchpad AI - Design to Flutter Code with AI",
+  title: "floow.design – Idea to Flutter app, in seconds",
   description:
     "Turn your app ideas into beautiful designs and production-ready Flutter code in seconds",
 };

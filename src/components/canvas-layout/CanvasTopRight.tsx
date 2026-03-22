@@ -23,7 +23,7 @@ export function CanvasTopRight() {
 
       <button
         type="button"
-        className="inline-flex items-center gap-1.5 rounded-md border border-b-primary px-3 py-1.5 text-[11px] font-mono font-semibold uppercase tracking-wider text-t-primary hover:bg-input-bg transition-colors"
+        className="inline-flex items-center gap-1.5 rounded-md border border-b-0 border-b-primary px-3 py-1.5 text-[11px] font-mono font-semibold uppercase tracking-wider text-t-primary hover:bg-input-bg transition-colors"
         title="Upgrade"
       >
         <Crown className="size-3.5" />
@@ -36,7 +36,7 @@ export function CanvasTopRight() {
 
       <button
         type="button"
-        className="inline-flex size-8 items-center justify-center rounded-full border border-b-primary text-t-secondary transition-colors hover:bg-input-bg hover:text-t-primary"
+        className="inline-flex size-8 items-center justify-center rounded-full border border-b-0 border-b-primary text-t-secondary transition-colors hover:bg-input-bg hover:text-t-primary"
         aria-label="User profile"
       >
         <User className="size-4" />

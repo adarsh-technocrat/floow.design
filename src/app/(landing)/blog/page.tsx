@@ -4,8 +4,8 @@ import { getAllPosts } from "@/lib/blog";
 import Link from "next/link";
 
 export const metadata = {
-  title: "Blog - Launchpad AI",
-  description: "Latest updates, tips, and stories from Launchpad AI",
+  title: "Blog – floow.design",
+  description: "Latest updates, tips, and stories from floow.design",
 };
 
 export const dynamic = "force-dynamic";

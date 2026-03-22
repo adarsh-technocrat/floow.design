@@ -162,9 +162,6 @@ export function Hero() {
                     <path d="M224,128a8,8,0,0,1-8,8H136v80a8,8,0,0,1-16,0V136H40a8,8,0,0,1,0-16h80V40a8,8,0,0,1,16,0v80h80A8,8,0,0,1,224,128Z" />
                   </svg>
                 </button>
-                <span className="text-[10px] font-mono uppercase tracking-wider text-t-tertiary rounded-md bg-input-bg px-2 py-1">
-                  Flutter · Dart
-                </span>
               </div>
               <button className="inline-flex h-9 items-center gap-2 px-5 rounded-lg bg-btn-primary-bg text-sm font-semibold text-btn-primary-text hover:opacity-90 transition-colors">
                 Generate

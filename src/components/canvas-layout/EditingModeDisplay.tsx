@@ -39,7 +39,7 @@ export function EditingModeDisplay() {
 
       {/* Bottom center — AI input box */}
       <div className="absolute bottom-4 left-1/2 z-20 -translate-x-1/2 w-full max-w-[600px] px-4">
-        <div className="rounded-2xl border border-b-strong bg-surface-elevated/95 backdrop-blur-2xl  transition-all focus-within:border-b-strong ">
+        <div className="rounded-2xl border border-b-0 border-b-strong bg-surface-elevated/95 backdrop-blur-2xl transition-all focus-within:border-b-strong">
           <div className="px-4 pt-4 pb-2">
             <textarea
               ref={inputRef}
@@ -57,7 +57,7 @@ export function EditingModeDisplay() {
             />
           </div>
 
-          <div className="flex items-center justify-between px-4 py-2.5 border-t border-b-primary">
+          <div className="flex items-center justify-between px-4 py-2.5">
             <div className="flex items-center gap-2">
               <button
                 type="button"
@@ -73,13 +73,10 @@ export function EditingModeDisplay() {
                   <path d="M224,128a8,8,0,0,1-8,8H136v80a8,8,0,0,1-16,0V136H40a8,8,0,0,1,0-16h80V40a8,8,0,0,1,16,0v80h80A8,8,0,0,1,224,128Z" />
                 </svg>
               </button>
-              <span className="text-[10px] font-mono text-t-tertiary border border-b-primary rounded px-1.5 py-0.5 bg-input-bg">
-                Flutter · Dart
-              </span>
             </div>
 
             <div className="flex items-center gap-2">
-              <span className="text-[10px] font-mono text-t-tertiary border border-b-primary rounded px-1.5 py-0.5 hidden sm:inline bg-input-bg">
+              <span className="text-[10px] font-mono text-t-tertiary border border-b-0 border-b-primary rounded px-1.5 py-0.5 hidden sm:inline bg-input-bg">
                 ⌘ Enter
               </span>
               <button
@@ -108,7 +105,7 @@ export function EditingModeDisplay() {
 
       {/* Right side tools */}
       <div className="absolute right-4 top-16 z-20 flex flex-col items-center gap-2">
-        <div className="flex flex-col items-center gap-1 rounded-lg border border-b-primary bg-canvas-panel-bg backdrop-blur-sm p-1">
+        <div className="flex flex-col items-center gap-1 rounded-lg border border-b-0 border-b-primary bg-canvas-panel-bg backdrop-blur-sm p-1">
           <button
             type="button"
             onClick={() => setStyleGuideOpen((v) => !v)}

@@ -9,7 +9,7 @@ export function Logo({ size = "md" }: { size?: "sm" | "md" | "lg" }) {
         className={`${textSize} font-bold tracking-tight text-t-primary`}
         style={{ fontFamily: "var(--font-logo), 'Space Grotesk', sans-serif" }}
       >
-        launchpad<span className="text-t-secondary">.ai</span>
+        floow<span className="text-t-secondary">.design</span>
       </span>
     </Link>
   );

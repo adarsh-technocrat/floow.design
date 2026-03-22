@@ -15,4 +15,29 @@ export async function ensureProject(projectId: string = DEFAULT_PROJECT_ID) {
   });
 }
 
+export async function ensureUser(
+  userId: string,
+  meta?: { email?: string | null; displayName?: string | null },
+) {
+  const update =
+    meta &&
+    (meta.email !== undefined || meta.displayName !== undefined)
+      ? {
+          ...(meta.email !== undefined ? { email: meta.email } : {}),
+          ...(meta.displayName !== undefined
+            ? { displayName: meta.displayName }
+            : {}),
+        }
+      : {};
+  await prisma.user.upsert({
+    where: { id: userId },
+    create: {
+      id: userId,
+      email: meta?.email ?? undefined,
+      displayName: meta?.displayName ?? undefined,
+    },
+    update,
+  });
+}
+
 export const ensureDefaultProject = () => ensureProject(DEFAULT_PROJECT_ID);

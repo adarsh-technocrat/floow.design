@@ -525,6 +525,43 @@ html {
   display: none;
 }
 
+/* Activity panel — skeleton shimmer (theme-aware) */
+@keyframes activity-shimmer-slide {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.activity-shimmer-bar {
+  position: relative;
+  overflow: hidden;
+  border-radius: 0.375rem;
+  background: color-mix(in srgb, var(--muted) 85%, var(--border-primary));
+}
+
+.activity-shimmer-bar::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    color-mix(in srgb, var(--text-primary) 14%, transparent),
+    transparent
+  );
+  animation: activity-shimmer-slide 1.25s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .activity-shimmer-bar::after {
+    animation: none;
+  }
+}
+
 @keyframes fadeIn {
   from { opacity: 0; }
   to { opacity: 1; }

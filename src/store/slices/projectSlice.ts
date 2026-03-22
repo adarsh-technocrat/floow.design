@@ -15,8 +15,12 @@ const initialState: ProjectState = {
 
 export const fetchProject = createAsyncThunk(
   "project/fetch",
-  async (projectId: string, { dispatch }) => {
-    const res = await fetch(`/api/project?id=${projectId}`).then((r) =>
+  async (
+    { projectId, userId }: { projectId: string; userId: string },
+    { dispatch },
+  ) => {
+    const q = new URLSearchParams({ id: projectId, userId });
+    const res = await fetch(`/api/project?${q.toString()}`).then((r) =>
       r.json(),
     );
     const frames = Array.isArray(res?.frames) ? res.frames : [];

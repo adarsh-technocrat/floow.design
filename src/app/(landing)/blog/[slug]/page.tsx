@@ -23,7 +23,7 @@ export async function generateMetadata({
   const { frontmatter: fm } = post;
 
   return {
-    title: `${fm.title} | Launchpad AI Blog`,
+    title: `${fm.title} | floow.design Blog`,
     description: fm.description,
     keywords: fm.tags,
     authors: [{ name: fm.author }],
@@ -34,7 +34,7 @@ export async function generateMetadata({
       publishedTime: fm.date,
       authors: [fm.author],
       tags: fm.tags,
-      siteName: "Launchpad AI",
+      siteName: "floow.design",
     },
     twitter: {
       card: "summary_large_image",
@@ -71,7 +71,7 @@ export default async function BlogPostPage({ params }: PageProps) {
       name: fm.author,
       ...(fm.authorRole && { jobTitle: fm.authorRole }),
     },
-    publisher: { "@type": "Organization", name: "Launchpad AI" },
+    publisher: { "@type": "Organization", name: "floow.design" },
     wordCount: post.wordCount,
     keywords: fm.tags.join(", "),
     mainEntityOfPage: { "@type": "WebPage", "@id": `/blog/${slug}` },

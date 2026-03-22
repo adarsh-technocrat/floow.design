@@ -130,7 +130,7 @@ export default function FrameElementToolbar({
   const isText = selectedElement.isTextElement;
 
   const toolbarContent = (
-    <div className="flex w-max items-center gap-1.5 rounded-xl border border-b-primary bg-canvas-panel-bg/95 p-1.5 shadow-lg backdrop-blur-sm">
+    <div className="flex w-max items-center gap-1.5 rounded-xl border border-b-0 border-b-primary bg-canvas-panel-bg/95 p-1.5 shadow-lg backdrop-blur-sm">
       {isText && (
         <>
           <button
@@ -170,7 +170,7 @@ export default function FrameElementToolbar({
             <select
               value={fontFamily}
               onChange={(e) => onSetFontFamily(e.target.value)}
-              className="h-8 min-w-[90px] max-w-[120px] rounded-md border border-b-primary bg-input-bg px-2 text-xs text-t-primary focus:outline-none focus:ring-2 focus:ring-[#8A87F8]"
+              className="h-8 min-w-[90px] max-w-[120px] rounded-md border border-b-0 border-b-primary bg-input-bg px-2 text-xs text-t-primary focus:outline-none focus:ring-2 focus:ring-[#8A87F8]"
               style={{ fontFamily }}
               title="Font"
             >
@@ -192,13 +192,13 @@ export default function FrameElementToolbar({
                 type="color"
                 value={textColor.startsWith("#") ? textColor : "#000000"}
                 onChange={(e) => onSetColor(e.target.value)}
-                className="h-8 w-8 cursor-pointer rounded border border-b-primary bg-transparent"
+                className="h-8 w-8 cursor-pointer rounded border border-b-0 border-b-primary bg-transparent"
                 title="Text color"
               />
             </div>
           )}
           {onSetFontSize && (
-            <div className="flex h-8 items-center overflow-hidden rounded-md border border-b-primary bg-input-bg">
+            <div className="flex h-8 items-center overflow-hidden rounded-md border border-b-0 border-b-primary bg-input-bg">
               <button
                 type="button"
                 className="flex h-full w-7 items-center justify-center text-t-secondary hover:bg-surface-sunken hover:text-t-primary"
@@ -217,7 +217,7 @@ export default function FrameElementToolbar({
                   if (!Number.isNaN(v))
                     onSetFontSize(Math.max(8, Math.min(200, v)));
                 }}
-                className="h-full w-10 border-0 border-x border-b-primary bg-transparent text-center text-xs text-t-primary [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                className="h-full w-10 border-0 border-x border-b-0 border-b-primary bg-transparent text-center text-xs text-t-primary [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
               />
               <button
                 type="button"
@@ -325,7 +325,7 @@ export default function FrameElementToolbar({
       {toolbarContent}
 
       {showTailwindMenu && (
-        <div className="min-w-[260px] max-h-[220px] overflow-y-auto rounded-xl border border-b-primary bg-canvas-panel-bg/95 p-2.5 shadow-lg backdrop-blur-sm">
+        <div className="min-w-[260px] max-h-[220px] overflow-y-auto rounded-xl border border-b-0 border-b-primary bg-canvas-panel-bg/95 p-2.5 shadow-lg backdrop-blur-sm">
           <div className="mb-2 text-[10px] font-medium uppercase tracking-wider text-t-tertiary">
             Tailwind Classes
           </div>
@@ -339,7 +339,7 @@ export default function FrameElementToolbar({
                 if (e.key === "Enter") handleAddClass();
               }}
               placeholder="Add class..."
-              className="h-8 flex-1 rounded-md border border-b-primary bg-input-bg px-2.5 text-xs text-t-primary placeholder:text-t-tertiary focus:outline-none focus:ring-2 focus:ring-[#8A87F8]"
+              className="h-8 flex-1 rounded-md border border-b-0 border-b-primary bg-input-bg px-2.5 text-xs text-t-primary placeholder:text-t-tertiary focus:outline-none focus:ring-2 focus:ring-[#8A87F8]"
             />
             <button
               type="button"

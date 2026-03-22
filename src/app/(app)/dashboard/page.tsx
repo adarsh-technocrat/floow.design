@@ -136,7 +136,7 @@ export default function DashboardPage() {
 
   return (
     <div className="h-screen w-full bg-surface text-t-primary p-3">
-      <div className="h-full w-full rounded-2xl border border-b-primary bg-canvas-bg overflow-hidden flex flex-col relative">
+      <div className="h-full w-full rounded-2xl border border-b-0 border-b-primary bg-canvas-bg overflow-hidden flex flex-col relative">
         {/* Dotted canvas bg */}
         <div
           className="pointer-events-none absolute inset-0 z-0"
@@ -148,7 +148,7 @@ export default function DashboardPage() {
         />
 
         {/* Top bar */}
-        <header className="relative z-10 flex items-center justify-between h-12 px-5 border-b border-b-secondary flex-shrink-0">
+        <header className="relative z-10 flex h-12 flex-shrink-0 items-center justify-between px-5">
           <Link href="/" className="no-underline flex items-center gap-2">
             <span
               className="text-sm font-bold text-t-primary tracking-tight"
@@ -156,7 +156,7 @@ export default function DashboardPage() {
                 fontFamily: "var(--font-logo), 'Space Grotesk', sans-serif",
               }}
             >
-              launchpad<span className="text-t-secondary">.ai</span>
+              floow<span className="text-t-secondary">.design</span>
             </span>
           </Link>
           <div className="flex items-center gap-2">
@@ -168,7 +168,7 @@ export default function DashboardPage() {
             <div className="h-4 w-px bg-input-bg" />
             <button
               onClick={() => signOut().then(() => router.replace("/signin"))}
-              className="flex rounded-full border border-b-primary overflow-hidden hover:border-b-strong transition-colors"
+              className="flex overflow-hidden rounded-full border border-b-0 border-b-primary transition-colors hover:border-b-strong"
               title="Sign out"
             >
               <Avatar
@@ -217,7 +217,7 @@ export default function DashboardPage() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.15, duration: 0.6 }}
               >
-                <div className="rounded-2xl border border-b-strong bg-surface-elevated/90 backdrop-blur-xl transition-all focus-within:border-b-strong">
+                <div className="rounded-2xl border border-b-0 border-b-strong bg-surface-elevated/90 backdrop-blur-xl transition-all focus-within:border-b-strong">
                   <div className="px-4 pt-4 pb-2 relative">
                     {!inputValue && (
                       <div className="absolute inset-x-4 top-4 pointer-events-none text-[15px] leading-relaxed">
@@ -243,7 +243,7 @@ export default function DashboardPage() {
                       }}
                     />
                   </div>
-                  <div className="flex items-center justify-between px-4 py-2.5 border-t border-b-secondary">
+                  <div className="flex items-center justify-between px-4 py-2.5">
                     <div className="flex items-center gap-2">
                       <button
                         type="button"
@@ -259,12 +259,9 @@ export default function DashboardPage() {
                           <path d="M224,128a8,8,0,0,1-8,8H136v80a8,8,0,0,1-16,0V136H40a8,8,0,0,1,0-16h80V40a8,8,0,0,1,16,0v80h80A8,8,0,0,1,224,128Z" />
                         </svg>
                       </button>
-                      <span className="text-[10px] font-mono text-t-tertiary border border-b-secondary rounded px-1.5 py-0.5 bg-input-bg">
-                        Flutter · Dart
-                      </span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="text-[10px] font-mono text-t-tertiary border border-b-secondary rounded px-1.5 py-0.5 hidden sm:inline bg-input-bg">
+                      <span className="text-[10px] font-mono text-t-tertiary hidden border border-b-0 border-b-secondary rounded bg-input-bg px-1.5 py-0.5 sm:inline">
                         ⌘ Enter
                       </span>
                       <button
@@ -301,7 +298,7 @@ export default function DashboardPage() {
               exit={{ opacity: 0 }}
               transition={{ duration: 0.3 }}
             >
-              <div className="flex items-center justify-between px-5 py-4 border-b border-b-secondary">
+              <div className="flex items-center justify-between px-5 py-4">
                 <div className="flex items-center gap-3">
                   <button
                     onClick={() => setShowAllProjects(false)}
@@ -332,7 +329,7 @@ export default function DashboardPage() {
                 </div>
                 <button
                   onClick={() => createProject()}
-                  className="flex items-center gap-1.5 rounded-lg border border-b-primary px-3 py-1.5 text-[11px] font-mono font-medium uppercase tracking-wider text-t-secondary hover:text-t-primary hover:border-b-strong transition-colors"
+                  className="flex items-center gap-1.5 rounded-lg border border-b-0 border-b-primary px-3 py-1.5 text-[11px] font-mono font-medium uppercase tracking-wider text-t-secondary transition-colors hover:border-b-strong hover:text-t-primary"
                 >
                   <svg width="12" height="12" viewBox="0 0 14 14" fill="none">
                     <path
@@ -373,24 +370,20 @@ export default function DashboardPage() {
                       <Link
                         key={project.id}
                         href={`/app/${project.id}`}
-                        className={`group flex flex-col gap-3 p-5 transition-colors hover:bg-input-bg no-underline ${
+                        className={`group flex flex-col gap-3 p-5 no-underline transition-colors hover:bg-input-bg ${
                           (i + 1) % 3 !== 0
-                            ? "lg:border-r border-b-secondary"
+                            ? "border-b-secondary lg:border-r"
                             : ""
-                        } ${(i + 1) % 2 !== 0 ? "max-lg:border-r border-b-secondary" : ""} ${
-                          i < projects.length - (projects.length % 3 || 3)
-                            ? "lg:border-b border-b-secondary"
-                            : ""
-                        } ${i < projects.length - (projects.length % 2 || 2) ? "max-lg:border-b border-b-secondary" : ""}`}
+                        } ${(i + 1) % 2 !== 0 ? "max-lg:border-r border-b-secondary" : ""}`}
                       >
-                        <div className="aspect-[16/10] w-full rounded-lg border border-b-secondary bg-input-bg flex items-center justify-center">
+                        <div className="flex aspect-[16/10] w-full items-center justify-center rounded-lg border border-b-0 border-b-secondary bg-input-bg">
                           <div className="flex gap-2">
                             {Array.from({
                               length: Math.min(project.screens, 3),
                             }).map((_, si) => (
                               <div
                                 key={si}
-                                className="w-6 h-10 rounded bg-input-bg border border-b-secondary"
+                                className="h-10 w-6 rounded border border-b-0 border-b-secondary bg-input-bg"
                               />
                             ))}
                             {project.screens > 3 && (
@@ -467,7 +460,7 @@ export default function DashboardPage() {
               )}
             </div>
 
-            <div className="flex gap-px bg-input-bg border-t border-b-secondary">
+            <div className="flex gap-px bg-input-bg">
               {loading ? (
                 <div className="flex-1 flex items-center justify-center py-3 bg-canvas-bg">
                   <span className="text-[10px] text-t-tertiary animate-pulse">

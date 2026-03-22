@@ -250,7 +250,7 @@ export function Canvas() {
       >
         {marqueeStartRef.current && marqueeEnd && (
           <div
-            className="pointer-events-none absolute z-50 border-2 border-t-primary/35 bg-t-primary/[0.08]"
+            className="pointer-events-none absolute z-50 border-2 border-[#8A87F8]/55 bg-[#8A87F8]/12"
             style={{
               left: Math.min(marqueeStartRef.current.contentX, marqueeEnd.x),
               top: Math.min(marqueeStartRef.current.contentY, marqueeEnd.y),

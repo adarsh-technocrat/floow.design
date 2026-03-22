@@ -17,7 +17,7 @@ export function ThemeToggle() {
   ];
 
   return (
-    <div className="inline-flex rounded-lg border border-b-primary bg-input-bg p-0.5">
+    <div className="inline-flex rounded-lg border border-b-0 border-b-primary bg-input-bg p-0.5">
       {options.map((opt) => (
         <button
           key={opt.value}
@@ -54,7 +54,7 @@ export function ThemeToggleCompact() {
   return (
     <button
       onClick={cycle}
-      className="flex h-7 w-7 items-center justify-center rounded-md border border-b-primary text-t-secondary transition-colors hover:bg-input-bg hover:text-t-primary [&_svg]:relative [&_svg]:top-px"
+      className="flex h-7 w-7 items-center justify-center rounded-md border border-b-0 border-b-primary text-t-secondary transition-colors hover:bg-input-bg hover:text-t-primary [&_svg]:relative [&_svg]:top-px"
       title={`Theme: ${theme}`}
     >
       {theme === "dark" ? <MoonIcon /> : theme === "light" ? <SunIcon /> : <SystemIcon />}
