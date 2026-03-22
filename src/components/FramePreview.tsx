@@ -183,9 +183,16 @@ export const FramePreview = React.forwardRef<
         className="frame-preview-loading relative size-full overflow-hidden"
         data-frame-id={frameId}
       >
-        <div className="absolute inset-0 frame-preview-gradient" />
+        <div
+          className="absolute inset-0 bg-linear-to-br from-surface-elevated via-input-bg to-surface-elevated dark:hidden"
+          aria-hidden
+        />
+        <div
+          className="absolute inset-0 hidden dark:block frame-preview-gradient"
+          aria-hidden
+        />
         <div className="absolute inset-0 flex items-center justify-center">
-          <span className="text-sm text-white/50">
+          <span className="text-sm text-t-secondary dark:text-white/50">
             {isMalformed ? "Regenerating…" : "Generating…"}
           </span>
         </div>

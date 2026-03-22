@@ -35,7 +35,7 @@ function ResizeHandleDot({
 
   return (
     <div
-      className={`absolute z-50 size-2.5 shrink-0 rounded-sm border-2 border-white bg-frame-hover-border shadow-md ${position}`}
+      className={`absolute z-50 size-2.5 shrink-0 rounded-sm border-2 border-t-primary/45 bg-frame-hover-border shadow-md ${position}`}
       style={{ cursor }}
       data-resize-handle={corner}
       onPointerDown={(e) => {
@@ -66,7 +66,7 @@ function ResizeHandleEdge({
 
   return (
     <div
-      className={`absolute z-50 shrink-0 rounded-sm border-2 border-white bg-frame-hover-border shadow-md ${position} ${edge === "n" || edge === "s" ? "h-2" : "w-2"} min-w-2 min-h-2`}
+      className={`absolute z-50 shrink-0 rounded-sm border-2 border-t-primary/45 bg-frame-hover-border shadow-md ${position} ${edge === "n" || edge === "s" ? "h-2" : "w-2"} min-w-2 min-h-2`}
       style={{ cursor }}
       data-resize-handle={edge}
       onPointerDown={(e) => {

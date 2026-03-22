@@ -22,7 +22,7 @@ export function ThemeToggle() {
         <button
           key={opt.value}
           onClick={() => setTheme(opt.value)}
-          className={`flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-[11px] font-mono uppercase tracking-wider transition-colors ${
+          className={`inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-[11px] font-mono uppercase tracking-wider transition-colors [&_svg]:relative [&_svg]:top-px ${
             theme === opt.value
               ? "bg-surface-elevated text-t-primary shadow-sm"
               : "text-t-tertiary hover:text-t-secondary"
@@ -54,7 +54,7 @@ export function ThemeToggleCompact() {
   return (
     <button
       onClick={cycle}
-      className="flex h-7 w-7 items-center justify-center rounded-md border border-b-primary text-t-secondary hover:text-t-primary hover:bg-input-bg transition-colors"
+      className="flex h-7 w-7 items-center justify-center rounded-md border border-b-primary text-t-secondary transition-colors hover:bg-input-bg hover:text-t-primary [&_svg]:relative [&_svg]:top-px"
       title={`Theme: ${theme}`}
     >
       {theme === "dark" ? <MoonIcon /> : theme === "light" ? <SunIcon /> : <SystemIcon />}

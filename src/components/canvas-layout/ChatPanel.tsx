@@ -202,18 +202,18 @@ function ToolStepChip({
     <div
       className={`not-prose flex w-fit items-center gap-2 rounded-md border px-2 py-1 transition-all ${
         finished
-          ? "border-white/20 bg-input-bg"
-          : "border-[rgba(255,255,255,0.7)]/40 bg-[rgba(255,255,255,0.7)]/10"
+          ? "border-b-secondary bg-input-bg"
+          : "border-b-strong bg-surface-sunken/80"
       }`}
     >
       {finished ? (
         CheckIcon
       ) : (
-        <span className="inline-block size-3.5 shrink-0 animate-pulse rounded-full bg-[rgba(255,255,255,0.7)]/80" />
+        <span className="inline-block size-3.5 shrink-0 animate-pulse rounded-full bg-t-tertiary/80" />
       )}
       <span
         className={`font-mono text-[11px] uppercase tracking-wider ${
-          finished ? "text-white/70" : "text-white/90"
+          finished ? "text-t-secondary" : "text-t-primary"
         }`}
       >
         {label}
@@ -256,22 +256,22 @@ function ReasoningBlock({
       >
         <div className="flex items-center gap-1.5">
           <Brain
-            className="size-3.5 shrink-0 text-white/90"
+            className="size-3.5 shrink-0 text-t-secondary"
             strokeWidth={1.5}
           />
-          <span className="font-mono text-[11px] text-white/90 uppercase tracking-wider">
+          <span className="font-mono text-[11px] text-t-secondary uppercase tracking-wider">
             {expanded ? "Hide thinking" : "Thinking"}
           </span>
         </div>
         <ChevronDown
-          className={`size-3.5 shrink-0 text-white/90 transition-transform ${
+          className={`size-3.5 shrink-0 text-t-secondary transition-transform ${
             expanded ? "rotate-180" : ""
           }`}
           strokeWidth={2}
         />
       </button>
       {expanded && text && (
-        <div className="chat-markdown py-1.5 text-sm text-white/60 font-sans">
+        <div className="chat-markdown py-1.5 text-sm text-t-secondary font-sans">
           <ReactMarkdown components={markdownComponents}>{text}</ReactMarkdown>
         </div>
       )}
@@ -373,7 +373,7 @@ const CheckIcon = (
     height="1em"
     fill="currentColor"
     viewBox="0 0 256 256"
-    className="size-3.5 shrink-0 text-white/60"
+    className="size-3.5 shrink-0 text-t-tertiary"
   >
     <path d="M229.66,77.66l-128,128a8,8,0,0,1-11.32,0l-56-56a8,8,0,0,1,11.32-11.32L96,188.69,218.34,66.34a8,8,0,0,1,11.32,11.32Z" />
   </svg>
@@ -613,7 +613,12 @@ export function ChatPanel({
         setToolSteps((prev) =>
           addStepIfNew(prev, { toolCallId, toolName, state: "running" }),
         );
-        const label = getToolDisplayLabel(toolName, stateRef.current.frames, undefined, false);
+        const label = getToolDisplayLabel(
+          toolName,
+          stateRef.current.frames,
+          undefined,
+          false,
+        );
         dispatch(pushAgentLog({ type: "status", text: label }));
         if (toolName === "design_screen" || toolName === "read_screen") {
           cursor.working(cursor.MAIN);
@@ -838,7 +843,12 @@ export function ChatPanel({
           const readScreenId = dataWithArgs.args?.id ?? dataWithArgs.id;
           if (readScreenId) endInput.id = readScreenId;
         }
-        const doneLabel = getToolDisplayLabel(data.toolName, stateRef.current.frames, endInput, true);
+        const doneLabel = getToolDisplayLabel(
+          data.toolName,
+          stateRef.current.frames,
+          endInput,
+          true,
+        );
         dispatch(pushAgentLog({ type: "agent", text: doneLabel }));
         setToolSteps((prev) =>
           prev.map((s) =>
@@ -933,15 +943,21 @@ export function ChatPanel({
     onFinish: ({ messages: finishedMessages, isAbort, isError }) => {
       if (!isAbort && !isError) {
         const last = finishedMessages[finishedMessages.length - 1];
-        const textContent = last?.role === "assistant"
-          ? ((last as { parts?: { type: string; text?: string }[] }).parts ?? [])
-              .filter((p) => p.type === "text" && p.text)
-              .map((p) => p.text)
-              .join(" ")
-              .trim()
-          : "";
+        const textContent =
+          last?.role === "assistant"
+            ? (
+                (last as { parts?: { type: string; text?: string }[] }).parts ??
+                []
+              )
+                .filter((p) => p.type === "text" && p.text)
+                .map((p) => p.text)
+                .join(" ")
+                .trim()
+            : "";
         if (textContent) {
-          dispatch(pushAgentLog({ type: "agent", text: textContent.slice(0, 200) }));
+          dispatch(
+            pushAgentLog({ type: "agent", text: textContent.slice(0, 200) }),
+          );
         }
       }
       const stepsToPersist = toolStepsRef.current;
@@ -1168,11 +1184,10 @@ export function ChatPanel({
 
   return (
     <div
-      className="chat-panel fixed top-[8%] bottom-[10%] z-30 flex flex-col rounded-xl shadow-lg"
+      className="chat-panel fixed top-[8%] bottom-[10%] z-30 flex flex-col rounded-xl border border-b-primary bg-surface-elevated shadow-lg"
       style={{
         right: `${RAIL_OFFSET + RIGHT_MARGIN}px`,
         width: `${panelWidth}px`,
-        backgroundColor: "#0a0a0a",
       }}
     >
       <div
@@ -1195,23 +1210,21 @@ export function ChatPanel({
                 return (
                   <>
                     <span className="text-sm">✨</span>
-                    <span style={{ color: "rgba(255,255,255,0.5)" }}>
-                      AI
-                    </span>
+                    <span className="text-t-secondary">AI</span>
                   </>
                 );
               })()}
-              <span className="text-white/40">·</span>
-              <span className="text-white/50 text-xs font-normal">
+              <span className="text-t-tertiary">·</span>
+              <span className="text-t-secondary text-xs font-normal">
                 {activeFrameLabel.length > 12
                   ? `${activeFrameLabel.slice(0, 12)}…`
                   : activeFrameLabel}
               </span>
-              <ChevronDown className="size-3.5 text-white/50" />
+              <ChevronDown className="size-3.5 text-t-tertiary" />
             </button>
             {showHeaderDropdown && (
-              <div className="absolute left-0 top-full z-50 mt-1 min-w-[200px] overflow-hidden rounded-xl border border-white/10 bg-[#111111]/95 py-1 shadow-2xl">
-                <div className="sticky top-0 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-white/40">
+              <div className="absolute left-0 top-full z-50 mt-1 min-w-[200px] overflow-hidden rounded-xl border border-b-primary bg-surface-elevated/95 py-1 shadow-lg backdrop-blur-xl">
+                <div className="sticky top-0 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-t-tertiary">
                   Active Agents
                 </div>
                 {isMultiAgent
@@ -1223,46 +1236,38 @@ export function ChatPanel({
                           // removed: dispatch(setActiveAgent(null));
                           setShowHeaderDropdown(false);
                         }}
-                        className={`flex w-full items-center gap-2.5 px-3 py-2 text-left text-xs transition-colors hover:bg-input-bg hover:text-white ${
+                        className={`flex w-full items-center gap-2.5 px-3 py-2 text-left text-xs transition-colors hover:bg-input-bg hover:text-t-primary ${
                           activeAgentId === null
-                            ? "bg-input-bg text-white"
-                            : "text-white/85"
+                            ? "bg-input-bg text-t-primary"
+                            : "text-t-secondary"
                         }`}
                       >
-                        <span className="text-sm">
-                          {"✨"}
-                        </span>
+                        <span className="text-sm">{"✨"}</span>
                         <div className="flex flex-col">
-                          <span
-                            className="font-medium"
-                            style={{ color: "rgba(255,255,255,0.5)" }}
-                          >
+                          <span className="font-medium text-t-secondary">
                             {"AI"}
                           </span>
                         </div>
                       </button>,
                     ]
                   : Array.from({ length: agentCount }, (_, i) => {
-                      const persona = { name: "AI", emoji: "✨", color: "rgba(255,255,255,0.5)" };
+                      const persona = { name: "AI", emoji: "✨" };
                       const assignedFrame = frames[i];
                       return (
                         <button
                           key={i}
                           type="button"
                           onClick={() => setShowHeaderDropdown(false)}
-                          className="flex w-full items-center gap-2.5 px-3 py-2 text-left text-xs text-white/85 transition-colors hover:bg-input-bg hover:text-white"
+                          className="flex w-full items-center gap-2.5 px-3 py-2 text-left text-xs text-t-secondary transition-colors hover:bg-input-bg hover:text-t-primary"
                         >
-                          <span
-                            className="inline-flex size-5 shrink-0 items-center justify-center rounded-full text-xs"
-                            style={{ backgroundColor: persona.color }}
-                          >
+                          <span className="inline-flex size-5 shrink-0 items-center justify-center rounded-full bg-input-bg text-xs text-t-secondary">
                             {persona.emoji}
                           </span>
                           <div className="flex flex-col">
-                            <span className="font-medium text-white/90">
+                            <span className="font-medium text-t-primary">
                               {persona.name}
                             </span>
-                            <span className="text-[10px] text-white/40">
+                            <span className="text-[10px] text-t-tertiary">
                               {assignedFrame
                                 ? assignedFrame.label
                                 : "Unassigned"}
@@ -1290,12 +1295,9 @@ export function ChatPanel({
         id="chat-thread-area"
         className="min-h-0 flex-1 space-y-4 overflow-y-auto scrollbar-hide p-2"
       >
-        {isLoadingHistory && (
-          <ChatHistoryShimmer />
-        )}
+        {isLoadingHistory && <ChatHistoryShimmer />}
 
-        {
-          !isLoadingHistory &&
+        {!isLoadingHistory &&
           messages.map(
             (
               msg: {
@@ -1362,16 +1364,11 @@ export function ChatPanel({
                     <div
                       className={`rounded-lg px-3 py-2 text-sm ${
                         msg.role === "user"
-                          ? "w-fit max-w-[85%] text-white"
+                          ? "w-fit max-w-[85%] bg-btn-primary-bg text-btn-primary-text"
                           : msg.role === "assistant"
-                            ? "w-full bg-muted/50 text-stone-300"
-                            : "w-fit max-w-[85%] bg-muted/30"
+                            ? "w-full bg-muted/50 text-t-primary"
+                            : "w-fit max-w-[85%] bg-muted/30 text-t-primary"
                       }`}
-                      style={
-                        msg.role === "user"
-                          ? { backgroundColor: "#2e2726" }
-                          : undefined
-                      }
                     >
                       {msg.role === "assistant" ? (
                         msg.parts && msg.parts.length > 0 ? (
@@ -1399,7 +1396,7 @@ export function ChatPanel({
                             toolSteps={stepsForMessage}
                           />
                         ) : isStreamingLastAssistant ? (
-                          <span className="inline-block animate-pulse text-white/40 text-xs">
+                          <span className="inline-block animate-pulse text-t-tertiary text-xs">
                             …
                           </span>
                         ) : null
@@ -1413,9 +1410,9 @@ export function ChatPanel({
             },
           )}
 
-        { showPendingBubble && (
+        {showPendingBubble && (
           <div className="flex w-full justify-start">
-            <div className="w-full rounded-lg bg-muted/50 px-3 py-2.5 text-sm text-stone-300">
+            <div className="w-full rounded-lg bg-muted/50 px-3 py-2.5 text-sm text-t-primary">
               <AssistantMessageContent
                 parts={[]}
                 frames={frames}
@@ -1426,15 +1423,13 @@ export function ChatPanel({
           </div>
         )}
 
-        {
-          showStreamingIndicator && <StreamingActivityIndicator />}
+        {showStreamingIndicator && <StreamingActivityIndicator />}
       </div>
 
       <div className="w-full p-4">
         <form
           onSubmit={handleSend}
-          className="w-full overflow-visible rounded-xl border border-border/60 shadow-none focus-within:ring-2 focus-within:ring-ring/30"
-          style={{ backgroundColor: "#2e2726" }}
+          className="w-full overflow-visible rounded-xl border border-border/60 bg-input-bg shadow-none focus-within:ring-2 focus-within:ring-ring/30"
         >
           {selectedFrameIds.length > 0 && (
             <div className="flex flex-wrap gap-1.5 px-4 pt-3 pb-1">
@@ -1444,10 +1439,10 @@ export function ChatPanel({
                 return (
                   <span
                     key={id}
-                    className="mention-chip inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium text-white"
+                    className="mention-chip inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium text-mention-chip-text"
                     style={{
-                      backgroundColor: "#6E4A2E",
-                      borderColor: "#BF8456",
+                      backgroundColor: "var(--mention-chip-bg)",
+                      borderColor: "var(--mention-chip-border)",
                     }}
                   >
                     <svg
@@ -1496,25 +1491,18 @@ export function ChatPanel({
                 <button
                   type="button"
                   onClick={() => setShowAgentDropdown((v) => !v)}
-                  className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium transition-colors hover:bg-secondary/40"
-                  style={{
-                    color: "rgba(255,255,255,0.5)",
-                  }}
+                  className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium text-t-secondary transition-colors hover:bg-secondary/40"
                 >
-                  <Zap
-                    className="size-3.5"
-                    fill={"rgba(255,255,255,0.5)"}
-                  />
+                  <Zap className="size-3.5" fill="currentColor" />
                   {agentCount}
                   <ChevronDown className="size-3 opacity-60" />
                 </button>
                 {showAgentDropdown && (
-                  <div className="absolute bottom-full left-0 z-50 mb-1 min-w-[130px] overflow-hidden rounded-xl border border-white/10 bg-[#111111]/95 py-1 shadow-2xl">
-                    <div className="sticky top-0 px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-white/40">
+                  <div className="absolute bottom-full left-0 z-50 mb-1 min-w-[130px] overflow-hidden rounded-xl border border-b-primary bg-surface-elevated/95 py-1 shadow-lg backdrop-blur-xl">
+                    <div className="sticky top-0 px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-t-tertiary">
                       Agents
                     </div>
                     {[1, 2, 3, 4, 5, 6].map((n) => {
-                      const persona = { name: "AI", emoji: "✨", color: "rgba(255,255,255,0.5)" };
                       return (
                         <button
                           key={n}
@@ -1527,18 +1515,14 @@ export function ChatPanel({
                             setShowAgentDropdown(false);
                           }}
                           className={`flex w-full items-center gap-2 px-3 py-1.5 text-left text-xs transition-colors hover:bg-input-bg ${
-                            agentCount === n ? "font-semibold" : "text-white/85"
-                          }`}
-                          style={
                             agentCount === n
-                              ? { color: persona.color }
-                              : undefined
-                          }
+                              ? "font-semibold text-t-primary"
+                              : "text-t-secondary"
+                          }`}
                         >
                           <Zap
-                            className="size-3"
-                            style={{ color: persona.color }}
-                            fill={persona.color}
+                            className="size-3 text-t-secondary"
+                            fill="currentColor"
                           />
                           {n} {n === 1 ? "agent" : "agents"}
                         </button>
@@ -1551,7 +1535,7 @@ export function ChatPanel({
             <button
               type="submit"
               disabled={!inputValue.trim() || isActivelyStreaming}
-              className="inline-flex size-8 shrink-0 items-center justify-center rounded-full bg-[rgba(255,255,255,0.7)] text-white shadow-xs outline-none transition-colors hover:bg-[rgba(255,255,255,0.7)]/90 disabled:pointer-events-none disabled:opacity-50 focus-visible:ring-2 focus-visible:ring-ring/50 active:scale-95"
+              className="inline-flex size-8 shrink-0 items-center justify-center rounded-full bg-btn-primary-bg text-btn-primary-text shadow-xs outline-none transition-colors hover:opacity-90 disabled:pointer-events-none disabled:opacity-50 focus-visible:ring-2 focus-visible:ring-ring/50 active:scale-95"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"

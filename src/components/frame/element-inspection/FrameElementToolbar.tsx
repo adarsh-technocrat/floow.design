@@ -32,9 +32,9 @@ function parseFontSize(fontSize: string): number {
 }
 
 const btnBase =
-  "w-8 h-8 flex items-center justify-center rounded-md text-xs transition-colors flex-shrink-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#8A87F8]";
+  "flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-xs transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#8A87F8]";
 const btnActive = "bg-[#8A87F8] text-white hover:bg-[#7674d6]";
-const btnInactive = "text-white/60 hover:bg-white/10 hover:text-white/90";
+const btnInactive = "text-t-secondary hover:bg-input-bg hover:text-t-primary";
 
 export interface FrameElementToolbarProps {
   selectedElement: SelectedElement;
@@ -130,7 +130,7 @@ export default function FrameElementToolbar({
   const isText = selectedElement.isTextElement;
 
   const toolbarContent = (
-    <div className="flex items-center gap-1.5 bg-canvas-panel border border-white/10 rounded-xl p-1.5 shadow-lg w-max">
+    <div className="flex w-max items-center gap-1.5 rounded-xl border border-b-primary bg-canvas-panel-bg/95 p-1.5 shadow-lg backdrop-blur-sm">
       {isText && (
         <>
           <button
@@ -165,12 +165,12 @@ export default function FrameElementToolbar({
           >
             <span className="line-through text-sm">S</span>
           </button>
-          <div className="w-px h-5 bg-white/20 mx-0.5" />
+          <div className="mx-0.5 h-5 w-px bg-b-primary" />
           {onSetFontFamily && (
             <select
               value={fontFamily}
               onChange={(e) => onSetFontFamily(e.target.value)}
-              className="h-8 min-w-[90px] max-w-[120px] px-2 rounded-md text-xs bg-white/5 border border-white/10 text-white/90 focus:outline-none focus:ring-2 focus:ring-[#8A87F8]"
+              className="h-8 min-w-[90px] max-w-[120px] rounded-md border border-b-primary bg-input-bg px-2 text-xs text-t-primary focus:outline-none focus:ring-2 focus:ring-[#8A87F8]"
               style={{ fontFamily }}
               title="Font"
             >
@@ -179,7 +179,7 @@ export default function FrameElementToolbar({
                   key={font}
                   value={font}
                   style={{ fontFamily: font }}
-                  className="bg-[#0d0807] text-white/90"
+                  className="bg-surface-elevated text-t-primary"
                 >
                   {font}
                 </option>
@@ -192,16 +192,16 @@ export default function FrameElementToolbar({
                 type="color"
                 value={textColor.startsWith("#") ? textColor : "#000000"}
                 onChange={(e) => onSetColor(e.target.value)}
-                className="w-8 h-8 rounded border border-white/10 cursor-pointer bg-transparent"
+                className="h-8 w-8 cursor-pointer rounded border border-b-primary bg-transparent"
                 title="Text color"
               />
             </div>
           )}
           {onSetFontSize && (
-            <div className="flex items-center h-8 rounded-md overflow-hidden border border-white/10 bg-white/5">
+            <div className="flex h-8 items-center overflow-hidden rounded-md border border-b-primary bg-input-bg">
               <button
                 type="button"
-                className="w-7 h-full flex items-center justify-center text-white/60 hover:bg-white/10 hover:text-white/90"
+                className="flex h-full w-7 items-center justify-center text-t-secondary hover:bg-surface-sunken hover:text-t-primary"
                 onClick={() => onSetFontSize(Math.max(8, fontSize - 2))}
                 title="Decrease size"
               >
@@ -217,11 +217,11 @@ export default function FrameElementToolbar({
                   if (!Number.isNaN(v))
                     onSetFontSize(Math.max(8, Math.min(200, v)));
                 }}
-                className="w-10 h-full bg-transparent text-center text-xs text-white/90 border-0 border-x border-white/10 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                className="h-full w-10 border-0 border-x border-b-primary bg-transparent text-center text-xs text-t-primary [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
               />
               <button
                 type="button"
-                className="w-7 h-full flex items-center justify-center text-white/60 hover:bg-white/10 hover:text-white/90"
+                className="flex h-full w-7 items-center justify-center text-t-secondary hover:bg-surface-sunken hover:text-t-primary"
                 onClick={() => onSetFontSize(Math.min(200, fontSize + 2))}
                 title="Increase size"
               >
@@ -273,7 +273,7 @@ export default function FrameElementToolbar({
               </button>
             )}
           </div>
-          <div className="w-px h-5 bg-white/20 mx-0.5" />
+          <div className="mx-0.5 h-5 w-px bg-b-primary" />
         </>
       )}
       <button
@@ -288,7 +288,7 @@ export default function FrameElementToolbar({
         <button
           type="button"
           onClick={onDeleteElement}
-          className={`${btnBase} text-white/60 hover:bg-red-500/20 hover:text-red-400`}
+          className={`${btnBase} text-t-tertiary hover:bg-red-500/15 hover:text-red-600 dark:hover:text-red-400`}
           title="Delete element"
         >
           <Trash2 className="w-4 h-4" />
@@ -325,11 +325,11 @@ export default function FrameElementToolbar({
       {toolbarContent}
 
       {showTailwindMenu && (
-        <div className="bg-canvas-panel border border-white/10 rounded-xl p-2.5 shadow-lg min-w-[260px] max-h-[220px] overflow-y-auto">
-          <div className="text-[10px] text-white/40 uppercase tracking-wider mb-2 font-medium">
+        <div className="min-w-[260px] max-h-[220px] overflow-y-auto rounded-xl border border-b-primary bg-canvas-panel-bg/95 p-2.5 shadow-lg backdrop-blur-sm">
+          <div className="mb-2 text-[10px] font-medium uppercase tracking-wider text-t-tertiary">
             Tailwind Classes
           </div>
-          <div className="flex items-center gap-1.5 mb-2">
+          <div className="mb-2 flex items-center gap-1.5">
             <input
               type="text"
               value={newClassInput}
@@ -339,7 +339,7 @@ export default function FrameElementToolbar({
                 if (e.key === "Enter") handleAddClass();
               }}
               placeholder="Add class..."
-              className="flex-1 h-8 px-2.5 text-xs bg-white/5 border border-white/10 rounded-md text-white/90 placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-[#8A87F8]"
+              className="h-8 flex-1 rounded-md border border-b-primary bg-input-bg px-2.5 text-xs text-t-primary placeholder:text-t-tertiary focus:outline-none focus:ring-2 focus:ring-[#8A87F8]"
             />
             <button
               type="button"
@@ -352,18 +352,18 @@ export default function FrameElementToolbar({
           </div>
           <div className="flex flex-wrap gap-1.5">
             {elementClasses.length === 0 ? (
-              <span className="text-xs text-white/40">No classes</span>
+              <span className="text-xs text-t-tertiary">No classes</span>
             ) : (
               elementClasses.map((cls, idx) => (
                 <span
                   key={`${cls}-${idx}`}
-                  className="inline-flex items-center gap-1 px-2 py-1 text-[10px] bg-white/10 text-white/70 rounded-md group"
+                  className="group inline-flex items-center gap-1 rounded-md bg-input-bg px-2 py-1 text-[10px] text-t-secondary"
                 >
                   {cls}
                   <button
                     type="button"
                     onClick={() => onRemoveClass(cls)}
-                    className="text-white/40 hover:text-red-400"
+                    className="text-t-tertiary hover:text-red-600 dark:hover:text-red-400"
                     title="Remove class"
                   >
                     <svg

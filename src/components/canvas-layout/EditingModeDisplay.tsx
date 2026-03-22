@@ -48,7 +48,7 @@ export function EditingModeDisplay() {
               onKeyDown={handleKeyDown}
               placeholder="Describe what to design..."
               rows={2}
-              className="w-full bg-transparent text-[15px] text-white placeholder-t-tertiary outline-none resize-none leading-relaxed max-h-[140px] min-h-[52px]"
+              className="w-full bg-transparent text-[15px] text-t-primary placeholder-t-tertiary outline-none resize-none leading-relaxed max-h-[140px] min-h-[52px]"
               onInput={(e) => {
                 const el = e.currentTarget;
                 el.style.height = "auto";
@@ -64,7 +64,12 @@ export function EditingModeDisplay() {
                 className="inline-flex size-7 items-center justify-center rounded-md text-t-tertiary hover:text-t-secondary hover:bg-input-bg transition-colors"
                 title="Attach image"
               >
-                <svg width="15" height="15" viewBox="0 0 256 256" fill="currentColor">
+                <svg
+                  width="15"
+                  height="15"
+                  viewBox="0 0 256 256"
+                  fill="currentColor"
+                >
                   <path d="M224,128a8,8,0,0,1-8,8H136v80a8,8,0,0,1-16,0V136H40a8,8,0,0,1,0-16h80V40a8,8,0,0,1,16,0v80h80A8,8,0,0,1,224,128Z" />
                 </svg>
               </button>
@@ -83,7 +88,16 @@ export function EditingModeDisplay() {
                 disabled={!inputValue.trim()}
                 className="inline-flex size-8 items-center justify-center rounded-lg bg-btn-primary-bg text-btn-primary-text transition-all hover:opacity-90 disabled:opacity-20 disabled:pointer-events-none active:scale-95"
               >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
                   <path d="M5 12h14M12 5l7 7-7 7" />
                 </svg>
               </button>
@@ -100,16 +114,12 @@ export function EditingModeDisplay() {
             onClick={() => setStyleGuideOpen((v) => !v)}
             className={`rounded-md p-2 transition-colors ${
               styleGuideOpen
-                ? "bg-b-primary text-white"
-                : "text-t-secondary hover:bg-input-bg hover:text-white"
+                ? "bg-btn-primary-bg text-btn-primary-text"
+                : "text-t-secondary hover:bg-input-bg hover:text-t-primary"
             }`}
             title="Style Guide"
           >
-            <StyleGuideIcon
-              color="currentColor"
-              width={18}
-              height={18}
-            />
+            <StyleGuideIcon color="currentColor" width={18} height={18} />
           </button>
         </div>
       </div>

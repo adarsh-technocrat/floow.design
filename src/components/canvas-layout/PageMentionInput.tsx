@@ -269,7 +269,7 @@ export function PageMentionInput({
         onBlur={() => {
           setTimeout(hideSuggestions, 150);
         }}
-        className={`min-h-12 max-h-32 w-full resize-none overflow-y-auto rounded-none border-none bg-transparent p-4 text-sm text-white/90 outline-none ring-0 placeholder:text-zinc-400 focus-visible:ring-0 empty:before:content-[attr(data-placeholder)] empty:before:text-zinc-400 ${className}`}
+        className={`min-h-12 max-h-32 w-full resize-none overflow-y-auto rounded-none border-none bg-transparent p-4 text-sm text-t-primary outline-none ring-0 focus-visible:ring-0 empty:before:content-[attr(data-placeholder)] empty:before:text-t-tertiary ${className}`}
         style={
           {
             fieldSizing: "content",
@@ -277,14 +277,14 @@ export function PageMentionInput({
         }
       />
       {showSuggestions && (
-        <div className="absolute bottom-full left-0 right-0 z-50 mb-2 max-h-52 overflow-hidden rounded-xl border border-white/10 bg-[#111111]/95 py-1.5 shadow-2xl shadow-black/40 backdrop-blur-xl">
+        <div className="absolute bottom-full left-0 right-0 z-50 mb-2 max-h-52 overflow-hidden rounded-xl border border-b-primary bg-surface-elevated/95 py-1.5 shadow-lg backdrop-blur-xl">
           <div className="max-h-48 overflow-y-auto overscroll-contain px-1">
             <div className="sticky top-0 z-10 flex items-center gap-1.5 px-3 py-2 pb-1.5">
-              <div className="h-px flex-1 bg-linear-to-r from-transparent via-white/10 to-transparent" />
-              <span className="text-[10px] font-semibold uppercase tracking-[0.15em] text-white/35">
+              <div className="h-px flex-1 bg-linear-to-r from-transparent via-b-secondary to-transparent" />
+              <span className="text-[10px] font-semibold uppercase tracking-[0.15em] text-t-tertiary">
                 Pages
               </span>
-              <div className="h-px flex-1 bg-linear-to-r from-transparent via-white/10 to-transparent" />
+              <div className="h-px flex-1 bg-linear-to-r from-transparent via-b-secondary to-transparent" />
             </div>
             {hasPages ? (
               <div className="flex flex-col gap-0.5 pb-1">
@@ -294,15 +294,15 @@ export function PageMentionInput({
                     type="button"
                     className={`group flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left transition-all duration-150 ${
                       i === selectedIndex
-                        ? "bg-input-bg text-white shadow-[inset_0_1px_0_rgba(138,135,248,0.15)]"
-                        : "text-white/85 hover:bg-input-bg hover:text-white"
+                        ? "bg-input-bg text-t-primary shadow-[inset_0_1px_0_rgba(138,135,248,0.15)]"
+                        : "text-t-secondary hover:bg-input-bg hover:text-t-primary"
                     }`}
                     onMouseDown={(e) => {
                       e.preventDefault();
                       insertChip(page);
                     }}
                   >
-                    <div className="flex size-7 shrink-0 items-center justify-center rounded-md bg-white/5">
+                    <div className="flex size-7 shrink-0 items-center justify-center rounded-md bg-input-bg">
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
                         width="12"
@@ -313,7 +313,7 @@ export function PageMentionInput({
                         strokeWidth="2"
                         strokeLinecap="round"
                         strokeLinejoin="round"
-                        className="text-white/50"
+                        className="text-t-tertiary"
                       >
                         <rect x="3" y="3" width="18" height="18" rx="2" />
                       </svg>
@@ -321,14 +321,14 @@ export function PageMentionInput({
                     <span className="min-w-0 flex-1 truncate text-[13px] font-medium">
                       {page.label}
                     </span>
-                    <span className="shrink-0 rounded px-1.5 py-0.5 text-[10px] font-medium text-white/35 tabular-nums">
+                    <span className="shrink-0 rounded px-1.5 py-0.5 text-[10px] font-medium text-t-tertiary tabular-nums">
                       Screen
                     </span>
                   </button>
                 ))}
               </div>
             ) : (
-              <div className="px-3 py-4 text-center text-[13px] text-white/45">
+              <div className="px-3 py-4 text-center text-[13px] text-t-secondary">
                 No pages yet. Create screens first.
               </div>
             )}
