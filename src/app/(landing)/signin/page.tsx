@@ -79,7 +79,7 @@ function CanvasPanel() {
         style={{
           width: "600px",
           height: "400px",
-          background: "radial-gradient(ellipse, rgba(255,255,255,0.02) 0%, transparent 70%)",
+          background: "radial-gradient(ellipse, var(--surface-elevated) 0%, transparent 70%)",
         }}
       />
 

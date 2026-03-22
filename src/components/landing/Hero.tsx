@@ -35,7 +35,8 @@ export function Hero() {
         style={{
           width: '900px',
           height: '600px',
-          background: 'radial-gradient(ellipse, rgba(255,255,255,0.03) 0%, transparent 70%)',
+          background: 'radial-gradient(ellipse, var(--surface-elevated) 0%, transparent 70%)',
+          opacity: 0.5,
         }}
       />
 
