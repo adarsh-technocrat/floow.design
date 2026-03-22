@@ -188,11 +188,17 @@ const OUTPUT_CONSTRAINTS = `\
     Use rounded-lg or rounded-xl on cards; shadow-md on elevated surfaces.
     For bar charts using % heights, every wrapper up to the fixed-height container needs h-full.
 
-    Icons — use iconify-icon elements:
-      <iconify-icon icon="solar:user-bold" class="size-5"></iconify-icon>
-      Hugeicons: outlined only ("hugeicons:user")
-      Solar: outlined or bold ("solar:user-linear", "solar:user-bold")
-      MDI: brands only ("mdi:whatsapp")
+    Icons — use HugeIcons font classes (stroke-rounded style):
+      <i class="hgi-stroke hgi-user text-xl"></i>
+      Common icons: hgi-home-01, hgi-search-01, hgi-setting-07, hgi-notification-03,
+        hgi-add-01, hgi-arrow-left-01, hgi-arrow-right-01, hgi-delete-02,
+        hgi-favourite, hgi-share-01, hgi-more-vertical, hgi-calendar-03,
+        hgi-clock-01, hgi-location-01, hgi-mail-01, hgi-call, hgi-camera-01,
+        hgi-image-01, hgi-edit-02, hgi-check, hgi-close, hgi-menu-01,
+        hgi-shopping-cart-01, hgi-credit-card, hgi-download-01, hgi-upload-01,
+        hgi-play, hgi-pause, hgi-star, hgi-bookmark-01, hgi-filter,
+        hgi-sort, hgi-chart-line-data-01, hgi-analytics-01, hgi-user-group
+      Size with text-sm, text-base, text-lg, text-xl, text-2xl
 
     Images:
       Avatars     — https://randomuser.me/api/portraits/men/12.jpg (vary the number)

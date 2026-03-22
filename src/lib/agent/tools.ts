@@ -273,7 +273,7 @@ export function createTools(ctx: ToolContext) {
             error: "Design model is required for design_screen.",
           };
         }
-        const designPrompt = `You are a mobile UI designer. Generate the inner body HTML (no html/head/body tags) for a screen named "${frame.label}".\n\nDescription: ${description}\n\nUse Tailwind classes and iconify-icon where needed. Output only the complete inner body HTML, no markdown or explanation.`;
+        const designPrompt = `You are a mobile UI designer. Generate the inner body HTML (no html/head/body tags) for a screen named "${frame.label}".\n\nDescription: ${description}\n\nUse Tailwind classes and HugeIcons font icons (class="hgi-stroke hgi-icon-name") where needed. Output only the complete inner body HTML, no markdown or explanation.`;
         const generated = await streamScreenHtmlWithDesignModel(
           designModel.vertex,
           designModel.modelId,
@@ -359,7 +359,7 @@ export function createTools(ctx: ToolContext) {
         const currentBody = frame.html ? extractBodyContent(frame.html) : "";
         const designPrompt = currentBody
           ? `You are a mobile UI designer. Update this screen's inner body HTML according to the description below. Output the complete updated inner body HTML only, no markdown or explanation.\n\nDescription of changes: ${description}\n\nCurrent inner body HTML:\n${currentBody}`
-          : `You are a mobile UI designer. Generate the inner body HTML (no html/head/body tags) for a screen named "${frame.label}".\n\nDescription: ${description}\n\nUse Tailwind classes and iconify-icon where needed. Output only the complete inner body HTML, no markdown or explanation.`;
+          : `You are a mobile UI designer. Generate the inner body HTML (no html/head/body tags) for a screen named "${frame.label}".\n\nDescription: ${description}\n\nUse Tailwind classes and HugeIcons font icons (class="hgi-stroke hgi-icon-name") where needed. Output only the complete inner body HTML, no markdown or explanation.`;
         const generated = await streamScreenHtmlWithDesignModel(
           designModel.vertex,
           designModel.modelId,
