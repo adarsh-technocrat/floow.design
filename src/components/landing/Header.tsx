@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { Logo } from './Logo';
 import { useAuth } from '@/contexts/AuthContext';
 import { ThemeToggleCompact } from '@/components/ThemeToggle';
+import { Avatar } from '@/components/ui/Avatar';
 
 const navLinks = [
   { label: 'Features', href: '/#features' },
@@ -45,17 +46,8 @@ export function Header() {
               >
                 Dashboard
               </Link>
-              <Link
-                href="/dashboard"
-                className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-b-primary overflow-hidden"
-              >
-                {user.photoURL ? (
-                  <img src={user.photoURL} alt="" className="h-full w-full object-cover" />
-                ) : (
-                  <span className="text-xs font-semibold text-t-secondary">
-                    {user.displayName?.[0] ?? user.email?.[0] ?? "U"}
-                  </span>
-                )}
+              <Link href="/dashboard" className="inline-flex rounded-full border border-b-primary overflow-hidden">
+                <Avatar src={user.photoURL} email={user.email} name={user.displayName} size={32} />
               </Link>
             </>
           ) : (

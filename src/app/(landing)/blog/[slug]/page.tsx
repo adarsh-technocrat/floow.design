@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Header } from "@/components/landing/Header";
 import { Footer } from "@/components/landing/Footer";
 import { MdxRenderer } from "@/components/blog/MdxRenderer";
+import { Avatar } from "@/components/ui/Avatar";
 import { getAllPosts, getPostBySlug, getRelatedPosts } from "@/lib/blog";
 import type { Metadata } from "next";
 
@@ -108,7 +109,7 @@ export default async function BlogPostPage({ params }: PageProps) {
             </div>
 
             <div className="flex items-center gap-3 mt-8 pt-6 border-t border-b-secondary">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-input-bg border border-b-secondary text-sm font-semibold text-t-secondary">{fm.author[0]}</div>
+              <Avatar name={fm.author} size={40} className="border border-b-secondary" />
               <div>
                 <p className="text-sm font-medium text-t-primary">{fm.author}</p>
                 <div className="flex items-center gap-2">

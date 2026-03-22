@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
 import { ThemeToggleCompact } from "@/components/ThemeToggle";
+import { Avatar } from "@/components/ui/Avatar";
 
 interface Project {
   id: string;
@@ -157,16 +158,10 @@ export default function DashboardPage() {
             <div className="h-4 w-px bg-input-bg" />
             <button
               onClick={() => signOut().then(() => router.replace("/signin"))}
-              className="flex h-7 w-7 items-center justify-center rounded-full border border-b-primary overflow-hidden hover:border-b-strong transition-colors"
+              className="flex rounded-full border border-b-primary overflow-hidden hover:border-b-strong transition-colors"
               title="Sign out"
             >
-              {user?.photoURL ? (
-                <img src={user.photoURL} alt="" className="h-full w-full object-cover" />
-              ) : (
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" className="text-t-secondary">
-                  <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" /><circle cx="12" cy="7" r="4" />
-                </svg>
-              )}
+              <Avatar src={user?.photoURL} email={user?.email} name={user?.displayName} size={28} />
             </button>
           </div>
         </header>

@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { motion } from 'framer-motion';
+import { Avatar } from '@/components/ui/Avatar';
 
 const cursors = [
   { name: 'Ava', color: '#fff', x: '8%', y: '25%', delay: 1.0 },
@@ -150,9 +151,9 @@ export function Hero() {
           transition={{ delay: 0.5, duration: 0.5 }}
         >
           <div className="flex -space-x-2">
-            {['A', 'M', 'S', 'P'].map((l) => (
-              <div key={l} className="flex h-7 w-7 items-center justify-center rounded-full border-2 border-black bg-input-bg text-[10px] font-semibold text-t-secondary">
-                {l}
+            {['alex@demo.com', 'maria@demo.com', 'sam@demo.com', 'priya@demo.com'].map((email) => (
+              <div key={email} className="rounded-full border-2 border-surface">
+                <Avatar email={email} size={28} />
               </div>
             ))}
           </div>
