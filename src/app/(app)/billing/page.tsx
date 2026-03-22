@@ -3,6 +3,20 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+  CartesianGrid,
+} from "recharts";
+import {
+  ChartContainer,
+  ChartTooltipContent,
+  type ChartConfig,
+} from "@/components/ui/chart";
 
 interface PlanInfo {
   plan: string;
@@ -215,6 +229,139 @@ function UsageHeatmap({ data }: { data: DailyUsage[] }) {
   );
 }
 
+const barChartConfig: ChartConfig = {
+  credits: {
+    label: "Credits Used",
+    color: "#8b5cf6",
+  },
+};
+
+function UsageBarChart({ data }: { data: DailyUsage[] }) {
+  // Aggregate into weekly buckets for a cleaner chart
+  const weeklyData = useMemo(() => {
+    const weeks: Array<{ week: string; credits: number }> = [];
+    let bucket: { start: string; total: number } | null = null;
+    let dayCount = 0;
+
+    for (const day of data) {
+      if (!bucket) {
+        bucket = { start: day.date, total: day.count };
+        dayCount = 1;
+      } else {
+        bucket.total += day.count;
+        dayCount++;
+      }
+
+      if (dayCount === 7) {
+        const startDate = new Date(bucket.start);
+        const label = `${startDate.toLocaleDateString("en-US", { month: "short", day: "numeric" })}`;
+        weeks.push({ week: label, credits: bucket.total });
+        bucket = null;
+        dayCount = 0;
+      }
+    }
+
+    // Push remaining partial week
+    if (bucket) {
+      const startDate = new Date(bucket.start);
+      const label = `${startDate.toLocaleDateString("en-US", { month: "short", day: "numeric" })}`;
+      weeks.push({ week: label, credits: bucket.total });
+    }
+
+    return weeks;
+  }, [data]);
+
+  const totalCredits = useMemo(
+    () => data.reduce((sum, d) => sum + Math.max(0, d.count), 0),
+    [data],
+  );
+  const activeDays = useMemo(
+    () => data.filter((d) => d.count > 0).length,
+    [data],
+  );
+  const avgDaily = useMemo(
+    () => (activeDays > 0 ? Math.round(totalCredits / activeDays) : 0),
+    [totalCredits, activeDays],
+  );
+
+  return (
+    <div>
+      {/* Stats */}
+      <div className="flex items-center gap-6 mb-5">
+        <div>
+          <p className="text-xl font-semibold text-t-primary font-mono">
+            {totalCredits.toLocaleString()}
+          </p>
+          <p className="text-xs text-t-tertiary">total used</p>
+        </div>
+        <div className="h-8 w-px bg-b-secondary" />
+        <div>
+          <p className="text-xl font-semibold text-t-primary font-mono">
+            {activeDays}
+          </p>
+          <p className="text-xs text-t-tertiary">active days</p>
+        </div>
+        <div className="h-8 w-px bg-b-secondary" />
+        <div>
+          <p className="text-xl font-semibold text-t-primary font-mono">
+            {avgDaily}
+          </p>
+          <p className="text-xs text-t-tertiary">avg per day</p>
+        </div>
+      </div>
+
+      {/* Bar chart */}
+      <ChartContainer config={barChartConfig} className="h-[220px] w-full">
+        <ResponsiveContainer width="100%" height="100%">
+          <BarChart
+            data={weeklyData}
+            margin={{ top: 4, right: 4, bottom: 0, left: -20 }}
+          >
+            <CartesianGrid
+              strokeDasharray="3 3"
+              stroke="var(--border-secondary, rgba(255,255,255,0.06))"
+              vertical={false}
+            />
+            <XAxis
+              dataKey="week"
+              tick={{ fontSize: 10, fill: "var(--text-tertiary, #94a3b8)" }}
+              tickLine={false}
+              axisLine={false}
+              interval="preserveStartEnd"
+            />
+            <YAxis
+              tick={{ fontSize: 10, fill: "var(--text-tertiary, #94a3b8)" }}
+              tickLine={false}
+              axisLine={false}
+              width={40}
+            />
+            <Tooltip
+              content={({ active, payload, label }) => (
+                <ChartTooltipContent
+                  active={active}
+                  payload={payload?.map((p) => ({
+                    name: "Credits",
+                    value: p.value as number,
+                    color: "#8b5cf6",
+                    dataKey: p.dataKey as string,
+                  }))}
+                  label={typeof label === "string" ? label : undefined}
+                />
+              )}
+            />
+            <Bar
+              dataKey="credits"
+              fill="#8b5cf6"
+              radius={[4, 4, 0, 0]}
+              maxBarSize={24}
+            />
+          </BarChart>
+        </ResponsiveContainer>
+      </ChartContainer>
+    </div>
+  );
+}
+
 export default function BillingPage() {
   const { user } = useAuth();
   const [plan, setPlan] = useState<PlanInfo | null>(null);
@@ -373,11 +520,33 @@ export default function BillingPage() {
                   )}
                 </div>
 
+                {/* Usage bar chart */}
+                <div className="rounded-xl border border-b-secondary bg-surface-elevated p-6">
+                  <div className="flex items-center justify-between mb-5">
+                    <h2 className="text-sm font-semibold text-t-primary">
+                      Daily Credit Usage
+                    </h2>
+                    <Link
+                      href="/billing/credits"
+                      className="text-[11px] font-mono uppercase tracking-wider text-t-tertiary hover:text-t-secondary transition-colors no-underline"
+                    >
+                      View logs →
+                    </Link>
+                  </div>
+                  {dailyUsage.length > 0 ? (
+                    <UsageBarChart data={dailyUsage} />
+                  ) : (
+                    <p className="text-xs text-t-tertiary py-8 text-center">
+                      No usage data yet
+                    </p>
+                  )}
+                </div>
+
                 {/* Usage heatmap */}
                 <div className="rounded-xl border border-b-secondary bg-surface-elevated p-6">
                   <div className="flex items-center justify-between mb-4">
                     <h2 className="text-sm font-semibold text-t-primary">
-                      Credit Usage
+                      Activity
                     </h2>
                     <span className="text-[11px] text-t-tertiary">
                       Last 6 months
