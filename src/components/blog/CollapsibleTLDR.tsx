@@ -2,7 +2,13 @@
 
 import { useState, type ReactNode } from "react";
 
-export function CollapsibleTLDR({ children, text }: { children?: ReactNode; text?: string }) {
+export function CollapsibleTLDR({
+  children,
+  text,
+}: {
+  children?: ReactNode;
+  text?: string;
+}) {
   const [open, setOpen] = useState(true);
 
   const content = children || text;
@@ -15,7 +21,9 @@ export function CollapsibleTLDR({ children, text }: { children?: ReactNode; text
         onClick={() => setOpen(!open)}
         className="flex w-full items-center gap-2 text-left mb-2"
       >
-        <span className="text-[10px] font-mono font-semibold uppercase tracking-widest text-t-tertiary">TL;DR</span>
+        <span className="text-[10px] font-mono font-semibold uppercase tracking-widest text-t-tertiary">
+          TL;DR
+        </span>
         <div className="h-px flex-1 bg-b-secondary" />
         <svg
           width="14"
@@ -34,9 +42,13 @@ export function CollapsibleTLDR({ children, text }: { children?: ReactNode; text
         className="overflow-hidden transition-all duration-300 ease-in-out"
         style={{ maxHeight: open ? "500px" : "0px", opacity: open ? 1 : 0 }}
       >
-        <div className="rounded-xl border border-b-strong bg-input-bg p-5">
+        <div className="rounded-xl border border-b-secondary bg-input-bg p-5">
           <div className="text-sm md:text-base text-t-primary leading-relaxed [&>p]:mb-0">
-            {typeof content === "string" ? <p className="m-0">{content}</p> : content}
+            {typeof content === "string" ? (
+              <p className="m-0">{content}</p>
+            ) : (
+              content
+            )}
           </div>
         </div>
       </div>

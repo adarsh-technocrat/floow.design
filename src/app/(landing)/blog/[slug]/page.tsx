@@ -79,18 +79,18 @@ export default async function BlogPostPage({ params }: PageProps) {
   };
 
   return (
-    <div className="w-full bg-surface text-t-primary">
+    <div className="relative w-full bg-surface text-t-primary">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
 
-      <div className="mx-auto max-w-6xl">
+      <div className="relative mx-auto max-w-6xl border-x border-b-secondary">
         <Header />
 
         {/* Breadcrumb */}
         <nav
-          className="flex items-center gap-2 px-5 py-3 text-[11px] font-mono text-t-tertiary"
+          className="flex items-center gap-2 border-b border-b-secondary px-5 py-3 text-[11px] font-mono text-t-tertiary"
           aria-label="Breadcrumb"
         >
           <Link
@@ -113,7 +113,7 @@ export default async function BlogPostPage({ params }: PageProps) {
         </nav>
 
         {/* Article header */}
-        <header>
+        <header className="border-b border-b-secondary">
           <div className="px-6 md:px-16 py-12 md:py-16 max-w-3xl mx-auto">
             <div className="flex flex-wrap items-center gap-3 mb-6">
               <span className="rounded-md bg-input-bg px-2 py-0.5 text-[10px] font-mono uppercase tracking-wider text-t-secondary">
@@ -188,15 +188,15 @@ export default async function BlogPostPage({ params }: PageProps) {
 
         {/* Article content */}
         <div>
-          <article className="mx-auto max-w-3xl px-6 py-10 md:px-16 md:py-14">
+          <article className="mx-auto max-w-3xl border-t border-b-secondary px-6 pb-10 pt-8 md:px-16 md:pb-14 md:pt-10">
             <MdxRenderer source={post.content} />
           </article>
         </div>
 
         {/* Related posts */}
         {relatedPosts.length > 0 && (
-          <div className="py-6">
-            <div className="px-5 py-3">
+          <div className="border-t border-b-secondary py-8">
+            <div className="px-5 pb-3 pt-2">
               <span className="text-[10px] font-mono font-medium uppercase tracking-wider text-t-tertiary">
                 Related Articles
               </span>
@@ -224,7 +224,7 @@ export default async function BlogPostPage({ params }: PageProps) {
         )}
 
         {/* Prev/Next */}
-        <div className="grid grid-cols-1 gap-4 px-5 py-8 md:grid-cols-2 md:gap-8">
+        <div className="grid grid-cols-1 gap-4 border-t border-b-secondary px-5 py-8 md:grid-cols-2 md:gap-8">
           {prevPost ? (
             <Link
               href={`/blog/${prevPost.slug}`}

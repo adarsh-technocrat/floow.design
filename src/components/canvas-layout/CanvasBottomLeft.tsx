@@ -78,9 +78,7 @@ function ToolChip({ part }: { part: MessagePart }) {
     done,
   );
   return (
-    <div
-      className={`flex items-center gap-1.5 rounded-md border border-b-0 px-2 py-1 ${done ? "border-b-secondary bg-input-bg" : "border-b-primary bg-input-bg"}`}
-    >
+    <div className="flex items-center gap-1.5 rounded-md border border-b-secondary bg-input-bg px-2 py-1">
       {done ? (
         <svg
           width="10"
@@ -150,7 +148,7 @@ const activityMarkdownComponents: React.ComponentProps<
     </h3>
   ),
   blockquote: ({ children }) => (
-    <blockquote className="mb-1.5 border-l-2 border-b-primary pl-2 text-t-secondary">
+    <blockquote className="mb-1.5 border-l-2 pl-2 text-t-secondary [border-left-color:var(--border-secondary)]">
       {children}
     </blockquote>
   ),
@@ -209,7 +207,7 @@ function ExpandableReasoningBlock({
   const truncated = flat.length > 88;
 
   return (
-    <div className="overflow-hidden rounded-md border border-b-0 border-b-secondary bg-input-bg">
+    <div className="overflow-hidden rounded-md border border-b-secondary bg-input-bg">
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
@@ -351,7 +349,7 @@ export function CanvasBottomLeft() {
     <div className="absolute bottom-4 left-4 z-10 flex flex-col items-start gap-2">
       {/* Log panel */}
       {logVisible && (
-        <div className="w-[260px] max-h-[560px] flex flex-col rounded-xl border border-b-0 border-b-primary bg-surface-elevated/90 backdrop-blur-xl overflow-hidden">
+        <div className="w-[260px] max-h-[560px] flex flex-col rounded-xl border border-b-secondary bg-surface-elevated/90 backdrop-blur-xl overflow-hidden">
           {/* Header */}
           <div className="flex items-center justify-between px-3 py-2 flex-shrink-0">
             <span className="text-[10px] font-mono font-medium uppercase tracking-wider text-t-tertiary">
@@ -433,10 +431,10 @@ export function CanvasBottomLeft() {
       <button
         type="button"
         onClick={() => dispatch(toggleAgentLogVisible())}
-        className={`flex items-center gap-2 rounded-xl border border-b-0 backdrop-blur-sm px-4 py-2.5 text-xs font-medium transition-colors ${
+        className={`flex items-center gap-2 rounded-xl border border-b-secondary backdrop-blur-sm px-4 py-2.5 text-xs font-medium transition-colors ${
           logVisible
-            ? "border-b-strong bg-input-bg text-t-primary"
-            : "border-b-strong bg-surface-elevated/80 text-t-secondary hover:text-t-primary hover:border-b-strong"
+            ? "bg-input-bg text-t-primary"
+            : "bg-surface-elevated/80 text-t-secondary hover:text-t-primary"
         }`}
         title="Toggle Agent Log"
       >

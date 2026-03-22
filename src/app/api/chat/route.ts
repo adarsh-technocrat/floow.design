@@ -70,6 +70,37 @@ function stripBase64FromMessages(messages: ModelMessage[]): ModelMessage[] {
 export async function POST(req: Request) {
   try {
     const body = await req.json();
+
+    // Credit gating — must be on a paid plan with credits
+    const userId = body?.userId as string | undefined;
+    const projectId = body?.projectId as string | undefined;
+    if (userId) {
+      const { checkCredits, deductCredits } = await import("@/lib/credits");
+      const creditCheck = await checkCredits(userId);
+      if (creditCheck.needsPlan) {
+        return new Response(
+          JSON.stringify({
+            error: "no_plan",
+            message: "Please subscribe to a plan to use AI features.",
+          }),
+          { status: 402, headers: { "Content-Type": "application/json" } },
+        );
+      }
+      if (!creditCheck.allowed) {
+        return new Response(
+          JSON.stringify({
+            error: "insufficient_credits",
+            message: "You have run out of AI credits. Please upgrade your plan.",
+            remaining: creditCheck.remaining,
+            total: creditCheck.total,
+          }),
+          { status: 402, headers: { "Content-Type": "application/json" } },
+        );
+      }
+      // Deduct credits upfront
+      await deductCredits(userId, "design", projectId);
+    }
+
     const rawMessages = Array.isArray(body?.messages) ? body.messages : [];
     const initialFrames = Array.isArray(body?.frames) ? body.frames : [];
     const initialTheme = (body?.theme ?? {}) as ThemeVariables;

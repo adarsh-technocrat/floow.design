@@ -101,7 +101,7 @@ export function Testimonials() {
           {testimonials.map((t) => (
             <div
               key={t.name}
-              className={`group relative overflow-hidden rounded-2xl border border-b-secondary p-6 transition-colors hover:border-b-strong ${
+              className={`group relative overflow-hidden rounded-2xl border border-b-secondary p-6 transition-colors ${
                 t.colSpan === 2 ? "md:col-span-2" : "md:col-span-1"
               } ${
                 t.highlight
@@ -144,9 +144,7 @@ export function Testimonials() {
 
               <p
                 className={`relative text-sm leading-relaxed ${
-                  t.highlight
-                    ? "text-btn-primary-text/80"
-                    : "text-t-secondary"
+                  t.highlight ? "text-btn-primary-text/80" : "text-t-secondary"
                 } ${t.colSpan === 2 ? "md:text-base" : ""}`}
               >
                 &ldquo;{t.quote}&rdquo;

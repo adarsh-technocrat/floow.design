@@ -7,6 +7,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
 import { ThemeToggleCompact } from "@/components/ThemeToggle";
 import { Avatar } from "@/components/ui/Avatar";
+import { PricingDialog } from "@/components/PricingDialog";
 
 interface Project {
   id: string;
@@ -26,6 +27,144 @@ interface TrashedProject {
   trashedAt: string;
   createdAt: string;
   updatedAt: string;
+}
+
+interface UserPlanSummary {
+  plan: string;
+  billingInterval: string | null;
+  credits: number;
+  creditCap: number;
+  creditsResetAt: string | null;
+}
+
+const planDisplayLabels: Record<string, string> = {
+  FREE: "Free",
+  LITE: "Lite",
+  STARTER: "Starter",
+  PRO: "Pro",
+  TEAM: "Team",
+};
+
+function formatCreditsSoftLabel(n: number): string {
+  if (!Number.isFinite(n) || n <= 0) return "0";
+  if (n >= 1_000_000) return `${Math.round(n / 1_000_000)}M`;
+  if (n >= 10_000) return `${Math.round(n / 1000)}k`;
+  if (n >= 1000) {
+    const k = n / 1000;
+    const s =
+      k >= 10 ? Math.round(k).toString() : k.toFixed(1).replace(/\.0$/, "");
+    return `${s}k`;
+  }
+  return n.toLocaleString();
+}
+
+function shortResetHint(iso: string | null): string | null {
+  if (!iso) return null;
+  const d = new Date(iso);
+  const diff = d.getTime() - Date.now();
+  if (diff < 0) return "Allowance refreshes soon";
+  const days = Math.ceil(diff / 86_400_000);
+  if (days <= 1) return "Refreshes tomorrow";
+  if (days < 7) return `Refreshes in ${days} days`;
+  return `Refreshes ${d.toLocaleDateString(undefined, { month: "short", day: "numeric" })}`;
+}
+
+function DashboardSidebarUsage({
+  summary,
+  loading,
+  onManage,
+}: {
+  summary: UserPlanSummary | null;
+  loading: boolean;
+  onManage: () => void;
+}) {
+  if (loading) {
+    return (
+      <div className="rounded-lg border border-b-secondary bg-input-bg/40 px-3 py-2.5">
+        <div className="mb-2 h-2 w-16 animate-pulse rounded bg-t-tertiary/20" />
+        <div className="h-1.5 w-full overflow-hidden rounded-full bg-t-tertiary/10">
+          <div className="h-full w-1/3 animate-pulse rounded-full bg-t-tertiary/15" />
+        </div>
+      </div>
+    );
+  }
+
+  if (!summary) return null;
+
+  if (summary.plan === "FREE" || summary.creditCap <= 0) return null;
+
+  const { credits, creditCap, plan, billingInterval, creditsResetAt } = summary;
+  const safeRemaining = Math.max(0, credits);
+  const ratio = Math.min(1, safeRemaining / creditCap);
+  /** Keep a sliver visible when there is balance so it never reads as “empty” at a glance. */
+  const barPct = safeRemaining <= 0 ? 0 : Math.max(ratio * 100, 5);
+
+  const fillClass =
+    ratio >= 0.42
+      ? "bg-t-secondary/30 dark:bg-white/15"
+      : ratio >= 0.18
+        ? "bg-amber-500/25 dark:bg-amber-400/18"
+        : "bg-orange-400/30 dark:bg-orange-400/22";
+
+  const calmLine =
+    ratio >= 0.35
+      ? "Comfortable headroom for this period."
+      : ratio >= 0.15
+        ? "You still have a good amount to work with."
+        : safeRemaining <= 0
+          ? "Allowance will refresh on schedule — or upgrade anytime."
+          : "Running lower; designs you’ve started stay safe.";
+
+  const planLine = planDisplayLabels[plan] ?? plan;
+  const intervalBit =
+    plan !== "FREE" && billingInterval
+      ? billingInterval === "yearly"
+        ? " · Yearly"
+        : " · Monthly"
+      : "";
+
+  const resetHint = shortResetHint(creditsResetAt);
+
+  return (
+    <div className="rounded-lg border border-b-secondary bg-input-bg/35 px-3 py-2.5">
+      <div className="flex items-start justify-between gap-2 mb-1.5">
+        <div className="min-w-0">
+          <p className="text-[10px] font-mono font-medium uppercase tracking-wider text-t-tertiary">
+            Included capacity
+          </p>
+          <p className="mt-0.5 text-lg font-light font-mono text-t-primary leading-tight tracking-tight">
+            ~{formatCreditsSoftLabel(safeRemaining)}
+            <span className="text-xs font-normal text-t-tertiary ml-1 font-sans">
+              left
+            </span>
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={onManage}
+          className="shrink-0 text-[10px] font-mono uppercase tracking-wider text-t-tertiary hover:text-t-secondary transition-colors"
+        >
+          Manage
+        </button>
+      </div>
+
+      <div className="h-1.5 w-full overflow-hidden rounded-full bg-t-tertiary/10 dark:bg-white/6">
+        <div
+          className={`h-full rounded-full ${fillClass} transition-[width] duration-1100 ease-out motion-reduce:transition-none`}
+          style={{ width: `${barPct}%` }}
+        />
+      </div>
+
+      <p className="mt-1.5 text-[10px] leading-snug text-t-tertiary/90">
+        {calmLine}
+      </p>
+      <p className="mt-1 text-[9px] font-mono text-t-tertiary/70 uppercase tracking-wide">
+        {planLine}
+        {intervalBit}
+        {resetHint ? ` · ${resetHint}` : ""}
+      </p>
+    </div>
+  );
 }
 
 const streamingPrompts = [
@@ -131,6 +270,12 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [trashLoading, setTrashLoading] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [planSummary, setPlanSummary] = useState<UserPlanSummary | null>(null);
+  const [planLoading, setPlanLoading] = useState(true);
+  const [pricingDialogOpen, setPricingDialogOpen] = useState(false);
+  const [pricingDialogReason, setPricingDialogReason] = useState<
+    "no_plan" | "insufficient_credits"
+  >("no_plan");
   const userMenuRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const streamingRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -205,17 +350,55 @@ export default function DashboardPage() {
       .finally(() => setLoading(false));
   }, [user]);
 
-  // Create new project and navigate
+  // Plan + credits (silent refresh when tab becomes visible — no polling, no skeleton flicker)
+  useEffect(() => {
+    if (!user) return;
+    const loadPlan = (opts?: { silent?: boolean }) => {
+      const silent = opts?.silent === true;
+      if (!silent) setPlanLoading(true);
+      fetch(`/api/user/plan?userId=${encodeURIComponent(user.uid)}`)
+        .then((r) => r.json())
+        .then((data: UserPlanSummary & { error?: string }) => {
+          if (data.error || typeof data.creditCap !== "number") {
+            if (!silent) setPlanSummary(null);
+            return;
+          }
+          setPlanSummary({
+            plan: data.plan,
+            billingInterval: data.billingInterval,
+            credits: data.credits,
+            creditCap: data.creditCap,
+            creditsResetAt: data.creditsResetAt,
+          });
+        })
+        .catch(() => {
+          if (!silent) setPlanSummary(null);
+        })
+        .finally(() => {
+          if (!silent) setPlanLoading(false);
+        });
+    };
+    loadPlan();
+    const onVis = () => {
+      if (document.visibilityState === "visible") loadPlan({ silent: true });
+    };
+    document.addEventListener("visibilitychange", onVis);
+    return () => document.removeEventListener("visibilitychange", onVis);
+  }, [user]);
+
+  // Create new project and navigate with prompt
   const createProject = useCallback(
     async (name?: string) => {
+      const prompt = name || "Untitled Project";
       const res = await fetch("/api/projects", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: name || "Untitled Project" }),
+        body: JSON.stringify({ name: prompt }),
       });
       const data: { id?: string } = await res.json();
       if (data.id) {
-        router.push(`/app/${data.id}`);
+        const params = name ? `?prompt=${encodeURIComponent(name)}` : "";
+        router.push(`/app/${data.id}${params}`);
       }
     },
     [router],
@@ -223,6 +406,17 @@ export default function DashboardPage() {
 
   const handleSubmit = () => {
     if (!inputValue.trim()) return;
+    // Gate: must be on a paid plan
+    if (!planSummary || planSummary.plan === "FREE") {
+      setPricingDialogReason("no_plan");
+      setPricingDialogOpen(true);
+      return;
+    }
+    if (planSummary.credits <= 0) {
+      setPricingDialogReason("insufficient_credits");
+      setPricingDialogOpen(true);
+      return;
+    }
     createProject(inputValue.trim());
   };
 
@@ -241,17 +435,14 @@ export default function DashboardPage() {
   }, []);
 
   // Trash a project (soft delete)
-  const trashProject = useCallback(
-    async (id: string) => {
-      await fetch("/api/projects", {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id }),
-      });
-      setProjects((prev) => prev.filter((p) => p.id !== id));
-    },
-    [],
-  );
+  const trashProject = useCallback(async (id: string) => {
+    await fetch("/api/projects", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id }),
+    });
+    setProjects((prev) => prev.filter((p) => p.id !== id));
+  }, []);
 
   // Restore a trashed project
   const restoreProject = useCallback(async (id: string) => {
@@ -277,13 +468,21 @@ export default function DashboardPage() {
     setTrashedProjects((prev) => prev.filter((p) => p.id !== id));
   }, []);
 
-
   const sidebarNav = [
     {
       key: "home",
       label: "Home",
       icon: (
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <svg
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
           <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
           <polyline points="9 22 9 12 15 12 15 22" />
         </svg>
@@ -295,7 +494,16 @@ export default function DashboardPage() {
       key: "projects",
       label: "Projects",
       icon: (
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <svg
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
           <rect x="2" y="3" width="20" height="14" rx="2" ry="2" />
           <path d="M8 21h8M12 17v4" />
         </svg>
@@ -308,7 +516,16 @@ export default function DashboardPage() {
       key: "trash",
       label: "Trash",
       icon: (
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <svg
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
           <polyline points="3 6 5 6 21 6" />
           <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" />
         </svg>
@@ -348,9 +565,17 @@ export default function DashboardPage() {
                 setActiveView("home");
                 setTimeout(() => inputRef.current?.focus(), 100);
               }}
-              className="flex w-full items-center gap-2 rounded-lg border border-b-secondary px-3 py-2 text-xs font-medium text-t-secondary transition-colors hover:border-b-strong hover:bg-input-bg hover:text-t-primary"
+              className="flex w-full items-center gap-2 rounded-lg border border-b-secondary px-3 py-2 text-xs font-medium text-t-secondary transition-colors hover:bg-input-bg hover:text-t-primary"
             >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+              >
                 <path d="M12 5v14M5 12h14" />
               </svg>
               New project
@@ -369,7 +594,9 @@ export default function DashboardPage() {
                     : "text-t-tertiary hover:bg-input-bg/50 hover:text-t-secondary"
                 }`}
               >
-                <span className={item.active ? "text-t-primary" : "text-t-tertiary"}>
+                <span
+                  className={item.active ? "text-t-primary" : "text-t-tertiary"}
+                >
                   {item.icon}
                 </span>
                 {item.label}
@@ -381,6 +608,14 @@ export default function DashboardPage() {
               </button>
             ))}
           </nav>
+
+          <div className="px-3 pb-2">
+            <DashboardSidebarUsage
+              summary={planSummary}
+              loading={planLoading}
+              onManage={() => router.push("/billing")}
+            />
+          </div>
 
           <div className="mx-3 my-1 h-px bg-input-bg" />
 
@@ -396,7 +631,9 @@ export default function DashboardPage() {
                 Loading...
               </div>
             ) : projects.length === 0 ? (
-              <p className="px-3 text-[11px] text-t-tertiary">No projects yet</p>
+              <p className="px-3 text-[11px] text-t-tertiary">
+                No projects yet
+              </p>
             ) : (
               projects.slice(0, 8).map((project) => (
                 <Link
@@ -404,7 +641,17 @@ export default function DashboardPage() {
                   href={`/app/${project.id}`}
                   className="group flex items-center gap-2.5 rounded-lg px-3 py-1.5 text-xs text-t-tertiary no-underline transition-colors hover:bg-input-bg/50 hover:text-t-secondary"
                 >
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="shrink-0 text-t-tertiary/60">
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="shrink-0 text-t-tertiary/60"
+                  >
                     <path d="M13 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V9z" />
                     <polyline points="13 2 13 9 20 9" />
                   </svg>
@@ -415,11 +662,13 @@ export default function DashboardPage() {
                 </Link>
               ))
             )}
-
           </div>
 
           {/* Bottom — user + controls */}
-          <div className="relative border-t border-b-secondary p-3" ref={userMenuRef}>
+          <div
+            className="relative border-t border-b-secondary p-3"
+            ref={userMenuRef}
+          >
             {/* User menu dropdown */}
             {userMenuOpen && (
               <div className="absolute bottom-full left-3 right-3 mb-2 overflow-hidden rounded-xl border border-b-secondary bg-surface-elevated shadow-lg">
@@ -439,7 +688,16 @@ export default function DashboardPage() {
                     }}
                     className="flex w-full items-center gap-2.5 px-3 py-2 text-xs text-t-secondary transition-colors hover:bg-input-bg hover:text-t-primary"
                   >
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                    <svg
+                      width="14"
+                      height="14"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
                       <rect x="1" y="4" width="22" height="16" rx="2" ry="2" />
                       <line x1="1" y1="10" x2="23" y2="10" />
                     </svg>
@@ -452,7 +710,16 @@ export default function DashboardPage() {
                     }}
                     className="flex w-full items-center gap-2.5 px-3 py-2 text-xs text-t-secondary transition-colors hover:bg-input-bg hover:text-t-primary"
                   >
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                    <svg
+                      width="14"
+                      height="14"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
                       <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" />
                       <circle cx="12" cy="7" r="4" />
                     </svg>
@@ -475,7 +742,16 @@ export default function DashboardPage() {
                     }}
                     className="flex w-full items-center gap-2.5 px-3 py-2 text-xs text-red-500 transition-colors hover:bg-red-500/10"
                   >
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                    <svg
+                      width="14"
+                      height="14"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
                       <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4" />
                       <polyline points="16 17 21 12 16 7" />
                       <line x1="21" y1="12" x2="9" y2="12" />
@@ -506,7 +782,17 @@ export default function DashboardPage() {
                   {user?.email || ""}
                 </p>
               </div>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="shrink-0 text-t-tertiary">
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="shrink-0 text-t-tertiary"
+              >
                 <path d="M7 10l5-5 5 5" />
                 <path d="M7 14l5 5 5-5" />
               </svg>
@@ -545,12 +831,54 @@ export default function DashboardPage() {
                 >
                   {/* Floating thunder icons */}
                   {[
-                    { x: "-60px", y: "-10px", size: 18, color: "#fbbf24", delay: 0.3, rotate: -15 },
-                    { x: "calc(100% + 40px)", y: "0px", size: 20, color: "#a78bfa", delay: 0.5, rotate: 12 },
-                    { x: "-40px", y: "50px", size: 14, color: "#f472b6", delay: 0.7, rotate: 20 },
-                    { x: "calc(100% + 25px)", y: "45px", size: 16, color: "#34d399", delay: 0.9, rotate: -10 },
-                    { x: "20px", y: "-25px", size: 12, color: "#fb923c", delay: 1.1, rotate: 25 },
-                    { x: "calc(100% - 30px)", y: "-20px", size: 13, color: "#60a5fa", delay: 0.6, rotate: -20 },
+                    {
+                      x: "-60px",
+                      y: "-10px",
+                      size: 18,
+                      color: "#fbbf24",
+                      delay: 0.3,
+                      rotate: -15,
+                    },
+                    {
+                      x: "calc(100% + 40px)",
+                      y: "0px",
+                      size: 20,
+                      color: "#a78bfa",
+                      delay: 0.5,
+                      rotate: 12,
+                    },
+                    {
+                      x: "-40px",
+                      y: "50px",
+                      size: 14,
+                      color: "#f472b6",
+                      delay: 0.7,
+                      rotate: 20,
+                    },
+                    {
+                      x: "calc(100% + 25px)",
+                      y: "45px",
+                      size: 16,
+                      color: "#34d399",
+                      delay: 0.9,
+                      rotate: -10,
+                    },
+                    {
+                      x: "20px",
+                      y: "-25px",
+                      size: 12,
+                      color: "#fb923c",
+                      delay: 1.1,
+                      rotate: 25,
+                    },
+                    {
+                      x: "calc(100% - 30px)",
+                      y: "-20px",
+                      size: 13,
+                      color: "#60a5fa",
+                      delay: 0.6,
+                      rotate: -20,
+                    },
                   ].map((bolt, i) => (
                     <motion.div
                       key={i}
@@ -569,7 +897,12 @@ export default function DashboardPage() {
                       <motion.div
                         animate={{
                           y: [0, -6, 4, -3, 0],
-                          rotate: [bolt.rotate, bolt.rotate + 5, bolt.rotate - 3, bolt.rotate],
+                          rotate: [
+                            bolt.rotate,
+                            bolt.rotate + 5,
+                            bolt.rotate - 3,
+                            bolt.rotate,
+                          ],
                         }}
                         transition={{
                           duration: 6 + i,
@@ -596,7 +929,8 @@ export default function DashboardPage() {
                   <h1
                     className="text-3xl md:text-4xl font-semibold tracking-tight text-t-primary"
                     style={{
-                      fontFamily: "var(--font-logo), 'Space Grotesk', sans-serif",
+                      fontFamily:
+                        "var(--font-logo), 'Space Grotesk', sans-serif",
                     }}
                   >
                     What would you like
@@ -612,7 +946,7 @@ export default function DashboardPage() {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.15, duration: 0.6 }}
                 >
-                  <div className="rounded-2xl border border-b-secondary bg-surface-elevated/90 backdrop-blur-xl transition-all focus-within:border-b-strong">
+                  <div className="rounded-2xl border border-b-secondary bg-surface-elevated/90 backdrop-blur-xl transition-all focus-within:border-b-secondary">
                     <div className="px-4 pt-4 pb-2 relative">
                       {!inputValue && (
                         <div className="absolute inset-x-4 top-4 pointer-events-none text-[15px] leading-relaxed">
@@ -634,7 +968,8 @@ export default function DashboardPage() {
                         onInput={(e) => {
                           const el = e.currentTarget;
                           el.style.height = "auto";
-                          el.style.height = Math.min(el.scrollHeight, 240) + "px";
+                          el.style.height =
+                            Math.min(el.scrollHeight, 240) + "px";
                         }}
                       />
                     </div>
@@ -691,9 +1026,19 @@ export default function DashboardPage() {
                       <button
                         key={item.name}
                         onClick={() => streamPrompt(item.prompt)}
-                        className="inline-flex shrink-0 whitespace-nowrap items-center gap-1.5 rounded-full border border-b-strong bg-surface-elevated/60 px-3 py-1.5 text-[11px] font-medium text-t-secondary transition-all hover:bg-input-bg hover:text-t-primary"
+                        className="inline-flex shrink-0 whitespace-nowrap items-center gap-1.5 rounded-full border border-b-secondary bg-surface-elevated/60 px-3 py-1.5 text-[11px] font-medium text-t-secondary transition-all hover:bg-input-bg hover:text-t-primary"
                       >
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="shrink-0">
+                        <svg
+                          width="12"
+                          height="12"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="1.5"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          className="shrink-0"
+                        >
                           <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
                         </svg>
                         {item.name}
@@ -722,7 +1067,7 @@ export default function DashboardPage() {
                   </span>
                   <button
                     onClick={() => createProject()}
-                    className="flex items-center gap-1.5 rounded-lg border border-b-secondary px-3 py-1.5 text-[11px] font-mono font-medium uppercase tracking-wider text-t-secondary transition-colors hover:border-b-strong hover:text-t-primary"
+                    className="flex items-center gap-1.5 rounded-lg border border-b-secondary px-3 py-1.5 text-[11px] font-mono font-medium uppercase tracking-wider text-t-secondary transition-colors hover:text-t-primary"
                   >
                     <svg width="12" height="12" viewBox="0 0 14 14" fill="none">
                       <path
@@ -816,7 +1161,16 @@ export default function DashboardPage() {
                                 trashProject(project.id);
                               }}
                             >
-                              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <svg
+                                width="12"
+                                height="12"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              >
                                 <polyline points="3 6 5 6 21 6" />
                                 <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" />
                               </svg>
@@ -859,7 +1213,17 @@ export default function DashboardPage() {
                     </div>
                   ) : trashedProjects.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-20">
-                      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" className="text-t-tertiary/40 mb-3">
+                      <svg
+                        width="32"
+                        height="32"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="1"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        className="text-t-tertiary/40 mb-3"
+                      >
                         <polyline points="3 6 5 6 21 6" />
                         <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" />
                       </svg>
@@ -906,7 +1270,16 @@ export default function DashboardPage() {
                                 title="Restore"
                                 onClick={() => restoreProject(project.id)}
                               >
-                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <svg
+                                  width="12"
+                                  height="12"
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  strokeWidth="2"
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                >
                                   <polyline points="1 4 1 10 7 10" />
                                   <path d="M3.51 15a9 9 0 102.13-9.36L1 10" />
                                 </svg>
@@ -917,7 +1290,16 @@ export default function DashboardPage() {
                                 title="Delete permanently"
                                 onClick={() => permanentlyDelete(project.id)}
                               >
-                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <svg
+                                  width="12"
+                                  height="12"
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  strokeWidth="2"
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                >
                                   <line x1="18" y1="6" x2="6" y2="18" />
                                   <line x1="6" y1="6" x2="18" y2="18" />
                                 </svg>
@@ -933,9 +1315,14 @@ export default function DashboardPage() {
               </motion.div>
             ) : null}
           </AnimatePresence>
-
         </div>
       </div>
+
+      <PricingDialog
+        open={pricingDialogOpen}
+        onClose={() => setPricingDialogOpen(false)}
+        reason={pricingDialogReason}
+      />
     </div>
   );
 }

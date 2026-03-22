@@ -1,58 +1,78 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { AuthProvider } from "@prisma/client";
 
-const providerMap: Record<string, AuthProvider> = {
-  "google.com": AuthProvider.GOOGLE,
-  "github.com": AuthProvider.GITHUB,
-  "apple.com": AuthProvider.APPLE,
-  password: AuthProvider.EMAIL,
+const providerMap: Record<string, string> = {
+  "google.com": "GOOGLE",
+  "github.com": "GITHUB",
+  "apple.com": "APPLE",
+  password: "EMAIL",
 };
 
 // POST /api/auth/sync — upsert user record after Firebase auth
 export async function POST(req: NextRequest) {
+  let body: Record<string, unknown> = {};
   try {
-    const body = (await req.json()) as {
-      uid?: string;
-      email?: string;
-      displayName?: string;
-      photoURL?: string;
-      phoneNumber?: string;
-      provider?: string;
-    };
+    body = await req.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+  }
 
-    const { uid, email, displayName, photoURL, phoneNumber, provider } = body;
+  const uid = body.uid as string | undefined;
+  const email = (body.email as string) || null;
+  const displayName = (body.displayName as string) || null;
+  const photoURL = (body.photoURL as string) || null;
+  const phoneNumber = (body.phoneNumber as string) || null;
+  const provider = body.provider as string | undefined;
 
-    if (!uid) {
-      return NextResponse.json({ error: "uid is required" }, { status: 400 });
+  if (!uid) {
+    return NextResponse.json({ error: "uid is required" }, { status: 400 });
+  }
+
+  // Map Firebase provider ID to our enum string value
+  const mappedProvider = provider
+    ? (providerMap[provider] as "GOOGLE" | "GITHUB" | "APPLE" | "EMAIL") ??
+      null
+    : null;
+
+  try {
+    // Handle email uniqueness conflict:
+    // If a stale user row exists with this email under a different ID,
+    // clear its email so our upsert won't conflict.
+    if (email) {
+      await prisma.user.updateMany({
+        where: { email, NOT: { id: uid } },
+        data: { email: null },
+      });
     }
-
-    const mappedProvider = provider ? providerMap[provider] ?? null : null;
 
     await prisma.user.upsert({
       where: { id: uid },
       create: {
         id: uid,
-        email: email || null,
-        displayName: displayName || null,
-        photoURL: photoURL || null,
-        phoneNumber: phoneNumber || null,
+        email,
+        displayName,
+        photoURL,
+        phoneNumber,
         provider: mappedProvider,
       },
       update: {
-        ...(email !== undefined && { email }),
-        ...(displayName !== undefined && { displayName }),
-        ...(photoURL !== undefined && { photoURL }),
-        ...(phoneNumber !== undefined && { phoneNumber }),
-        ...(provider !== undefined && { provider: mappedProvider }),
+        email,
+        displayName,
+        photoURL,
+        phoneNumber,
+        provider: mappedProvider,
       },
     });
 
     return NextResponse.json({ ok: true });
   } catch (e) {
-    return NextResponse.json(
-      { error: e instanceof Error ? e.message : "Unknown error" },
-      { status: 500 },
-    );
+    const msg =
+      e instanceof Error
+        ? e.message
+        : typeof e === "object" && e !== null
+          ? JSON.stringify(e)
+          : "Unknown error";
+    console.error("[auth-sync] error for uid", uid, ":", msg);
+    return NextResponse.json({ error: msg }, { status: 500 });
   }
 }

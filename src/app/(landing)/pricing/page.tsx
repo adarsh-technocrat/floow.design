@@ -1,9 +1,11 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import NumberFlow from "@number-flow/react";
 import { Header } from "@/components/landing/Header";
 import { Footer } from "@/components/landing/Footer";
+import { useAuth } from "@/contexts/AuthContext";
 
 const plans = [
   {
@@ -90,22 +92,59 @@ const plans = [
 function Cell({
   children,
   className = "",
-  border = true,
+  columnDivider = false,
 }: {
   children: React.ReactNode;
   className?: string;
-  border?: boolean;
+  /** Vertical rule between plan columns (desktop table) */
+  columnDivider?: boolean;
 }) {
-  void border;
-  return <td className={`px-5 py-4 align-top ${className}`}>{children}</td>;
+  return (
+    <td
+      className={`px-5 py-4 align-top ${columnDivider ? "border-l border-b-secondary" : ""} ${className}`}
+    >
+      {children}
+    </td>
+  );
 }
 
 export default function PricingPage() {
   const [billing, setBilling] = useState<"monthly" | "yearly">("monthly");
+  const [checkoutLoading, setCheckoutLoading] = useState<string | null>(null);
+  const { user } = useAuth();
+  const router = useRouter();
+
+  const handleUpgrade = async (planName: string) => {
+    if (!user) {
+      router.push(`/signin?redirect=/pricing`);
+      return;
+    }
+
+    setCheckoutLoading(planName);
+    try {
+      const res = await fetch("/api/stripe/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId: user.uid,
+          plan: planName,
+          interval: billing,
+        }),
+      });
+      const data: { url?: string } = await res.json();
+      if (data.url) {
+        window.location.href = data.url;
+      }
+    } catch {
+      // silent
+    } finally {
+      setCheckoutLoading(null);
+    }
+  };
 
   return (
     <div className="w-full bg-surface text-t-primary">
-      <div className="mx-auto max-w-6xl">
+      <div className="relative mx-auto max-w-6xl border-x border-b-secondary">
         <Header />
 
         {/* Hero */}
@@ -126,28 +165,27 @@ export default function PricingPage() {
           </div>
         </div>
 
-        {/* Billing toggle */}
-        <div className="flex items-center justify-center gap-3 px-5 py-4">
-          <span className="text-[11px] font-mono uppercase tracking-wider text-t-tertiary">
-            Billing
-          </span>
-          <div className="inline-flex rounded-lg bg-input-bg p-0.5">
+        {/* Monthly / Yearly toggle */}
+        <div className="flex items-center justify-center border-t border-b-secondary px-5 py-4">
+          <div className="inline-flex rounded-lg border border-b-secondary bg-input-bg p-0.5">
             <button
+              type="button"
               onClick={() => setBilling("monthly")}
-              className={`px-4 py-1.5 text-[11px] font-mono font-medium uppercase tracking-wider rounded transition-colors ${
+              className={`rounded-md px-4 py-1.5 text-[11px] font-mono font-medium uppercase tracking-wider transition-colors ${
                 billing === "monthly"
-                  ? "bg-input-bg text-t-primary"
-                  : "text-t-secondary hover:text-t-secondary"
+                  ? "bg-surface-elevated text-t-primary shadow-sm"
+                  : "text-t-tertiary hover:text-t-secondary"
               }`}
             >
               Monthly
             </button>
             <button
+              type="button"
               onClick={() => setBilling("yearly")}
-              className={`px-4 py-1.5 text-[11px] font-mono font-medium uppercase tracking-wider rounded transition-colors flex items-center gap-1.5 ${
+              className={`flex items-center gap-1.5 rounded-md px-4 py-1.5 text-[11px] font-mono font-medium uppercase tracking-wider transition-colors ${
                 billing === "yearly"
-                  ? "bg-input-bg text-t-primary"
-                  : "text-t-secondary hover:text-t-secondary"
+                  ? "bg-surface-elevated text-t-primary shadow-sm"
+                  : "text-t-tertiary hover:text-t-secondary"
               }`}
             >
               Yearly
@@ -159,11 +197,14 @@ export default function PricingPage() {
         </div>
 
         {/* Mobile cards (stacked) */}
-        <div className="lg:hidden">
+        <div className="border-t border-b-secondary lg:hidden">
           {plans.map((plan, i) => {
             const tier = plan[billing];
             return (
-              <div key={plan.name} className="px-5 py-8">
+              <div
+                key={plan.name}
+                className={`px-5 py-8 ${i > 0 ? "border-t border-b-secondary" : ""}`}
+              >
                 <div className="flex items-center gap-2 mb-1">
                   <span
                     className="text-sm font-semibold text-t-primary"
@@ -220,12 +261,13 @@ export default function PricingPage() {
                   billed {billing}
                 </p>
 
-                <a
-                  href="/app"
-                  className={`flex h-10 w-full items-center justify-center rounded text-[11px] font-mono font-semibold uppercase tracking-wider transition-colors no-underline mb-4 ${plan.popular ? "bg-btn-primary-bg text-btn-primary-text hover:opacity-90" : "border border-b-strong text-t-primary hover:bg-input-bg"}`}
+                <button
+                  onClick={() => handleUpgrade(plan.name)}
+                  disabled={checkoutLoading === plan.name}
+                  className={`flex h-10 w-full items-center justify-center rounded text-[11px] font-mono font-semibold uppercase tracking-wider transition-colors mb-4 disabled:opacity-50 ${plan.popular ? "bg-btn-primary-bg text-btn-primary-text hover:opacity-90" : "border border-b-secondary text-t-primary hover:bg-input-bg"}`}
                 >
-                  {plan.cta}
-                </a>
+                  {checkoutLoading === plan.name ? "Loading..." : plan.cta}
+                </button>
 
                 <p className="text-sm font-medium text-t-primary">
                   <NumberFlow
@@ -269,7 +311,7 @@ export default function PricingPage() {
         </div>
 
         {/* Desktop table — rows are perfectly aligned */}
-        <table className="hidden w-full border-collapse lg:table">
+        <table className="hidden w-full border-collapse border-t border-b-secondary lg:table">
           <colgroup>
             {plans.map((p) => (
               <col key={p.name} className="w-1/4" />
@@ -279,8 +321,8 @@ export default function PricingPage() {
           {/* Row: Plan header */}
           <tbody>
             <tr>
-              {plans.map((plan) => (
-                <Cell key={plan.name}>
+              {plans.map((plan, i) => (
+                <Cell key={plan.name} columnDivider={i > 0}>
                   <div className="flex items-center gap-2 mb-1">
                     <span
                       className="text-sm font-semibold text-t-primary"
@@ -306,11 +348,11 @@ export default function PricingPage() {
             </tr>
 
             {/* Row: Price */}
-            <tr>
-              {plans.map((plan) => {
+            <tr className="[&>td]:border-t [&>td]:border-b-secondary">
+              {plans.map((plan, i) => {
                 const tier = plan[billing];
                 return (
-                  <Cell key={plan.name} className="py-6">
+                  <Cell key={plan.name} columnDivider={i > 0} className="py-6">
                     <div className="flex items-baseline gap-0.5">
                       <NumberFlow
                         value={tier.price}
@@ -351,27 +393,28 @@ export default function PricingPage() {
             </tr>
 
             {/* Row: CTA */}
-            <tr>
-              {plans.map((plan) => (
-                <Cell key={plan.name}>
-                  <a
-                    href="/app"
-                    className={`flex h-10 w-full items-center justify-center rounded text-[11px] font-mono font-semibold uppercase tracking-wider transition-colors no-underline ${
+            <tr className="[&>td]:border-t [&>td]:border-b-secondary">
+              {plans.map((plan, i) => (
+                <Cell key={plan.name} columnDivider={i > 0}>
+                  <button
+                    onClick={() => handleUpgrade(plan.name)}
+                    disabled={checkoutLoading === plan.name}
+                    className={`flex h-10 w-full items-center justify-center rounded text-[11px] font-mono font-semibold uppercase tracking-wider transition-colors disabled:opacity-50 ${
                       plan.popular
                         ? "bg-btn-primary-bg text-btn-primary-text hover:opacity-90"
-                        : "border border-b-strong text-t-primary hover:bg-input-bg"
+                        : "border border-b-secondary text-t-primary hover:bg-input-bg"
                     }`}
                   >
-                    {plan.cta}
-                  </a>
+                    {checkoutLoading === plan.name ? "Loading..." : plan.cta}
+                  </button>
                 </Cell>
               ))}
             </tr>
 
             {/* Row: Credits */}
-            <tr>
-              {plans.map((plan) => (
-                <Cell key={plan.name}>
+            <tr className="[&>td]:border-t [&>td]:border-b-secondary">
+              {plans.map((plan, i) => (
+                <Cell key={plan.name} columnDivider={i > 0}>
                   <p className="text-sm font-medium text-t-primary">
                     <NumberFlow
                       value={plan.credits[billing]}
@@ -387,9 +430,9 @@ export default function PricingPage() {
             </tr>
 
             {/* Row: Features */}
-            <tr>
-              {plans.map((plan) => (
-                <Cell key={plan.name} border={false} className="py-5">
+            <tr className="[&>td]:border-t [&>td]:border-b-secondary">
+              {plans.map((plan, i) => (
+                <Cell key={plan.name} columnDivider={i > 0} className="py-5">
                   <span className="text-[10px] font-mono uppercase tracking-widest text-t-tertiary mb-3 block">
                     Includes
                   </span>

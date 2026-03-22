@@ -64,7 +64,7 @@ function StreamingPrompt() {
 
 function CanvasPanel() {
   return (
-    <div className="relative h-full w-full overflow-hidden rounded-2xl border border-b-0 border-b-secondary bg-canvas-bg">
+    <div className="relative h-full w-full overflow-hidden rounded-2xl border border-b-secondary bg-canvas-bg">
       {/* Dotted canvas background */}
       <div
         className="absolute inset-0"
@@ -88,7 +88,7 @@ function CanvasPanel() {
 
       {/* Bottom center — prompt box */}
       <div className="absolute bottom-5 left-1/2 -translate-x-1/2 z-20 w-[85%] max-w-[400px]">
-        <div className="rounded-xl border border-b-0 border-b-primary bg-surface-elevated/90 backdrop-blur-xl px-3.5 py-2.5 shadow-landing-input">
+        <div className="rounded-xl border border-b-secondary bg-surface-elevated/90 backdrop-blur-xl px-3.5 py-2.5 shadow-landing-input">
           <div className="flex items-center gap-2">
             <svg
               width="14"
@@ -104,7 +104,7 @@ function CanvasPanel() {
             </svg>
             <StreamingPrompt />
             <div className="flex items-center gap-1.5 flex-shrink-0">
-              <span className="text-[9px] font-mono text-t-tertiary border border-b-0 border-b-secondary rounded px-1 py-0.5">
+              <span className="text-[9px] font-mono text-t-tertiary border border-b-secondary rounded px-1 py-0.5">
                 ⌘K
               </span>
               <div className="size-5 rounded bg-input-bg flex items-center justify-center">
@@ -201,7 +201,7 @@ export default function SignInPage() {
         });
         const data: { id?: string } = await res.json();
         if (data.id) {
-          router.push(`/app/${data.id}`);
+          router.push(`/app/${data.id}?prompt=${encodeURIComponent(pendingPrompt)}`);
           return;
         }
       } catch {
@@ -264,7 +264,7 @@ export default function SignInPage() {
           </p>
 
           {authError && (
-            <div className="mt-4 rounded-lg border border-b-0 border-red-500/25 bg-red-500/10 px-3 py-2 text-xs text-red-700 dark:text-red-400">
+            <div className="mt-4 rounded-lg border border-red-500/25 bg-red-500/10 px-3 py-2 text-xs text-red-700 dark:text-red-400">
               {authError}
             </div>
           )}
@@ -274,7 +274,7 @@ export default function SignInPage() {
               type="button"
               onClick={handleGoogleSignIn}
               disabled={signingIn}
-              className="flex h-12 w-full items-center justify-center gap-3 rounded-xl border border-b-0 border-b-primary bg-surface-elevated text-sm font-medium text-t-primary shadow-landing-input transition-colors hover:opacity-90 disabled:opacity-50"
+              className="flex h-12 w-full items-center justify-center gap-3 rounded-xl border border-b-secondary bg-surface-elevated text-sm font-medium text-t-primary shadow-landing-input transition-colors hover:opacity-90 disabled:opacity-50"
             >
               {signingIn ? (
                 <div className="size-4 rounded-full border-2 border-t-tertiary border-t-transparent animate-spin" />
@@ -330,7 +330,7 @@ export default function SignInPage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="you@example.com"
-                  className="h-12 w-full rounded-xl border border-b-0 border-b-primary bg-surface-elevated px-4 text-sm text-t-primary placeholder-t-tertiary outline-none shadow-landing-input transition-[border-color,box-shadow,background-color] focus-visible:border-b-strong focus-visible:bg-surface-elevated focus-visible:ring-2 focus-visible:ring-ring/25 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                  className="h-12 w-full rounded-xl border border-b-secondary bg-surface-elevated px-4 text-sm text-t-primary placeholder-t-tertiary outline-none shadow-landing-input transition-[border-color,box-shadow,background-color] focus-visible:border-b-secondary focus-visible:bg-surface-elevated focus-visible:ring-2 focus-visible:ring-ring/25 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
                 />
               </div>
               <button
@@ -359,7 +359,7 @@ export default function SignInPage() {
               </button>
             </form>
           ) : (
-            <div className="flex flex-col items-center rounded-2xl border border-b-0 border-b-secondary bg-input-bg px-6 py-10 text-center">
+            <div className="flex flex-col items-center rounded-2xl border border-b-secondary bg-input-bg px-6 py-10 text-center">
               <div className="flex h-14 w-14 items-center justify-center rounded-full bg-input-bg">
                 <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
                   <path

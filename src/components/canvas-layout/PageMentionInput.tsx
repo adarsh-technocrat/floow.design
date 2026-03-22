@@ -277,7 +277,7 @@ export function PageMentionInput({
         }
       />
       {showSuggestions && (
-        <div className="absolute bottom-full left-0 right-0 z-50 mb-2 max-h-52 overflow-hidden rounded-xl border border-b-0 border-b-primary bg-surface-elevated/95 py-1.5 shadow-lg backdrop-blur-xl">
+        <div className="absolute bottom-full left-0 right-0 z-50 mb-2 max-h-52 overflow-hidden rounded-xl border border-b-secondary bg-surface-elevated/95 py-1.5 shadow-lg backdrop-blur-xl">
           <div className="max-h-48 overflow-y-auto overscroll-contain px-1">
             <div className="sticky top-0 z-10 flex items-center gap-1.5 px-3 py-2 pb-1.5">
               <div className="h-px flex-1 bg-linear-to-r from-transparent via-b-secondary to-transparent" />

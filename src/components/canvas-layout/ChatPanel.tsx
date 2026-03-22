@@ -209,10 +209,8 @@ function ToolStepChip({
 
   return (
     <div
-      className={`not-prose flex w-fit items-center gap-2 rounded-md border border-b-0 px-2 py-1 transition-all ${
-        finished
-          ? "border-b-secondary bg-input-bg"
-          : "border-b-strong bg-surface-sunken/80"
+      className={`not-prose flex w-fit items-center gap-2 rounded-md border border-b-secondary px-2 py-1 transition-all ${
+        finished ? "bg-input-bg" : "bg-surface-sunken/80"
       }`}
     >
       {finished ? (
@@ -582,6 +580,7 @@ export function ChatPanel({
             frames: latestCanvasState.frames,
             theme: latestCanvasState.theme,
             agentCount: agentCountRef.current,
+            userId: chatSessionContextRef.current.userId,
           },
         }),
       }),
@@ -1183,7 +1182,7 @@ export function ChatPanel({
 
   return (
     <div
-      className="chat-panel fixed top-[8%] bottom-[10%] z-30 flex flex-col rounded-xl border border-b-0 border-b-primary bg-surface-elevated shadow-lg"
+      className="chat-panel fixed top-[8%] bottom-[10%] z-30 flex flex-col rounded-xl border border-b-secondary bg-surface-elevated shadow-lg"
       style={{
         right: `${RAIL_OFFSET + RIGHT_MARGIN}px`,
         width: `${panelWidth}px`,
@@ -1222,7 +1221,7 @@ export function ChatPanel({
               <ChevronDown className="size-3.5 text-t-tertiary" />
             </button>
             {showHeaderDropdown && (
-              <div className="absolute left-0 top-full z-50 mt-1 min-w-[200px] overflow-hidden rounded-xl border border-b-0 border-b-primary bg-surface-elevated/95 py-1 shadow-lg backdrop-blur-xl">
+              <div className="absolute left-0 top-full z-50 mt-1 min-w-[200px] overflow-hidden rounded-xl border border-b-secondary bg-surface-elevated/95 py-1 shadow-lg backdrop-blur-xl">
                 <div className="sticky top-0 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-t-tertiary">
                   Active Agents
                 </div>
@@ -1428,7 +1427,7 @@ export function ChatPanel({
       <div className="w-full p-4">
         <form
           onSubmit={handleSend}
-          className="w-full overflow-visible rounded-xl border border-b-0 border-border/60 bg-input-bg shadow-none focus-within:ring-2 focus-within:ring-ring/30"
+          className="w-full overflow-visible rounded-xl border border-border/60 bg-input-bg shadow-none focus-within:ring-2 focus-within:ring-ring/30"
         >
           {selectedFrameIds.length > 0 && (
             <div className="flex flex-wrap gap-1.5 px-4 pt-3 pb-1">
@@ -1497,7 +1496,7 @@ export function ChatPanel({
                   <ChevronDown className="size-3 opacity-60" />
                 </button>
                 {showAgentDropdown && (
-                  <div className="absolute bottom-full left-0 z-50 mb-1 min-w-[130px] overflow-hidden rounded-xl border border-b-0 border-b-primary bg-surface-elevated/95 py-1 shadow-lg backdrop-blur-xl">
+                  <div className="absolute bottom-full left-0 z-50 mb-1 min-w-[130px] overflow-hidden rounded-xl border border-b-secondary bg-surface-elevated/95 py-1 shadow-lg backdrop-blur-xl">
                     <div className="sticky top-0 px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-t-tertiary">
                       Agents
                     </div>

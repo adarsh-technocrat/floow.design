@@ -50,7 +50,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             phoneNumber: firebaseUser.phoneNumber,
             provider: firebaseUser.providerData?.[0]?.providerId || null,
           }),
-        }).catch(() => {});
+        })
+          .then(async (res) => {
+            if (!res.ok) {
+              const data = await res.json().catch(() => ({}));
+              console.error("[auth-sync] failed:", res.status, data);
+            }
+          })
+          .catch((err) => {
+            console.error("[auth-sync] network error:", err);
+          });
       }
     });
     return unsubscribe;

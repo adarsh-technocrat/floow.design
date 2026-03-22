@@ -45,13 +45,13 @@ export function StartNow() {
             <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
               <a
                 href="/app"
-                className="inline-flex h-10 items-center px-6 rounded border border-b-strong bg-btn-primary-bg text-[11px] font-semibold uppercase tracking-wider text-btn-primary-text hover:opacity-90 transition-colors no-underline font-mono"
+                className="inline-flex h-10 items-center px-6 rounded border-0 bg-btn-primary-bg text-[11px] font-semibold uppercase tracking-wider text-btn-primary-text hover:opacity-90 transition-colors no-underline font-mono"
               >
                 Start building free
               </a>
               <a
                 href="/pricing"
-                className="inline-flex h-10 items-center px-6 rounded border border-b-secondary text-[11px] font-semibold uppercase tracking-wider text-t-secondary hover:text-t-primary hover:border-b-strong transition-colors no-underline font-mono"
+                className="inline-flex h-10 items-center px-6 rounded border border-b-secondary text-[11px] font-semibold uppercase tracking-wider text-t-secondary hover:text-t-primary transition-colors no-underline font-mono"
               >
                 View pricing
               </a>

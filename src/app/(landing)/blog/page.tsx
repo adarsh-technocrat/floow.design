@@ -14,12 +14,12 @@ export default async function BlogPage() {
   const posts = await getAllPosts();
 
   return (
-    <div className="w-full bg-surface text-t-primary">
-      <div className="mx-auto max-w-6xl">
+    <div className="relative w-full bg-surface text-t-primary">
+      <div className="relative mx-auto max-w-6xl border-x border-b-secondary">
         <Header />
 
         {/* Hero */}
-        <div className="px-6 py-12 md:px-12 md:py-20">
+        <div className="border-b border-b-secondary px-6 py-12 md:px-12 md:py-20">
           <div className="flex flex-col gap-4 items-center text-center max-w-2xl mx-auto">
             <div className="flex items-center gap-2 rounded-full bg-input-bg px-3 py-1 shadow-sm">
               <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />

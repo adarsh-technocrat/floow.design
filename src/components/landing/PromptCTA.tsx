@@ -43,7 +43,7 @@ export function PromptCTA({
       });
       const data: { id?: string } = await res.json();
       if (data.id) {
-        router.push(`/app/${data.id}`);
+        router.push(`/app/${data.id}?prompt=${encodeURIComponent(text)}`);
       }
     } catch {
       setCreating(false);
