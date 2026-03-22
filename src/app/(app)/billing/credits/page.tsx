@@ -117,14 +117,16 @@ export default function CreditLogsPage() {
               </div>
             ) : logs.length === 0 ? (
               <div className="text-center py-12">
-                <p className="text-sm text-t-tertiary">No credit activity yet</p>
+                <p className="text-sm text-t-tertiary">
+                  No credit activity yet
+                </p>
               </div>
             ) : (
               <>
-                <div className="rounded-xl border border-b-secondary overflow-hidden">
+                <div className="overflow-hidden rounded-xl border border-b-secondary bg-surface-elevated">
                   <table className="w-full">
                     <thead>
-                      <tr className="border-b border-b-secondary bg-input-bg/50">
+                      <tr className="border-b border-b-secondary bg-surface-sunken dark:bg-white/5">
                         <th className="text-left px-4 py-2.5 text-[11px] font-mono font-medium uppercase tracking-wider text-t-tertiary">
                           Date
                         </th>
@@ -143,7 +145,7 @@ export default function CreditLogsPage() {
                       {logs.map((log) => (
                         <tr
                           key={log.id}
-                          className="border-b border-b-secondary last:border-b-0"
+                          className="border-b border-b-secondary bg-surface-elevated last:border-b-0 transition-colors hover:bg-surface-sunken dark:hover:bg-white/4"
                         >
                           <td className="px-4 py-3 text-xs text-t-secondary">
                             {formatDate(log.createdAt)}
@@ -188,16 +190,18 @@ export default function CreditLogsPage() {
                     </p>
                     <div className="flex gap-2">
                       <button
+                        type="button"
                         onClick={() => fetchLogs(Math.max(0, offset - limit))}
                         disabled={offset === 0}
-                        className="rounded-md border border-b-secondary px-3 py-1.5 text-[11px] font-mono uppercase tracking-wider text-t-secondary transition-colors hover:bg-input-bg disabled:opacity-30"
+                        className="rounded-md border border-b-secondary bg-surface-elevated px-3 py-1.5 text-[11px] font-mono uppercase tracking-wider text-t-secondary shadow-xs transition-colors hover:bg-surface-sunken dark:hover:bg-white/6 disabled:pointer-events-none disabled:opacity-30"
                       >
                         Prev
                       </button>
                       <button
+                        type="button"
                         onClick={() => fetchLogs(offset + limit)}
                         disabled={offset + limit >= total}
-                        className="rounded-md border border-b-secondary px-3 py-1.5 text-[11px] font-mono uppercase tracking-wider text-t-secondary transition-colors hover:bg-input-bg disabled:opacity-30"
+                        className="rounded-md border border-b-secondary bg-surface-elevated px-3 py-1.5 text-[11px] font-mono uppercase tracking-wider text-t-secondary shadow-xs transition-colors hover:bg-surface-sunken dark:hover:bg-white/6 disabled:pointer-events-none disabled:opacity-30"
                       >
                         Next
                       </button>

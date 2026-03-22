@@ -25,9 +25,8 @@ export const fetchProject = createAsyncThunk(
     );
     const frames = Array.isArray(res?.frames) ? res.frames : [];
     const messages = Array.isArray(res?.messages) ? res.messages : [];
-    if (frames.length > 0) {
-      dispatch(loadFrames(frames));
-    }
+    // Always dispatch loadFrames — clears stale frames from previous project
+    dispatch(loadFrames(frames));
     return { projectId, messages };
   },
 );

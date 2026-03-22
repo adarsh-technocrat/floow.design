@@ -153,15 +153,13 @@ const canvasSlice = createSlice({
         }>;
       },
     ) => {
-      state.frames = action.payload
-        .filter((f) => f.html && f.html.length > 0)
-        .map((f) => ({
-          id: f.id,
-          label: f.label ?? "Screen",
-          left: f.left ?? 0,
-          top: f.top ?? 0,
-          html: f.html ?? "",
-        }));
+      state.frames = action.payload.map((f) => ({
+        id: f.id,
+        label: f.label ?? "Screen",
+        left: f.left ?? 0,
+        top: f.top ?? 0,
+        html: f.html ?? "",
+      }));
     },
     toggleFrameInSelection: (state, action: { payload: string }) => {
       const id = action.payload;
