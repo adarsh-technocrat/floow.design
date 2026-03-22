@@ -259,14 +259,53 @@ function ExpandableReasoningBlock({
   );
 }
 
+// Planning/internal tools that should be hidden from the activity feed
+const HIDDEN_TOOL_PREFIXES = [
+  "classifyIntent",
+  "planScreens",
+  "planStyle",
+  "build_theme",
+];
+
+// Part types that are streaming noise — skip them
+const NOISE_PART_TYPES = new Set([
+  "step-start",
+  "data-tool-call-start",
+  "data-tool-call-delta",
+  "data-tool-call-end",
+]);
+
+function isHiddenTool(toolName: string | undefined): boolean {
+  if (!toolName) return false;
+  return HIDDEN_TOOL_PREFIXES.some(
+    (prefix) => toolName === prefix || toolName.startsWith(`tool-${prefix}`),
+  );
+}
+
 function AssistantBubble({ msg }: { msg: ChatMessage }) {
   const parts = msg.parts ?? [];
-  const toolParts = parts.filter(
-    (p) =>
+
+  // Filter out noise and hidden planning tools, deduplicate by toolCallId
+  const seenToolCallIds = new Set<string>();
+  const toolParts = parts.filter((p) => {
+    if (NOISE_PART_TYPES.has(p.type ?? "")) return false;
+    const isToolPart =
       p.type === "tool-step" ||
-      p.type?.startsWith("tool-") ||
-      p.type === "dynamic-tool",
-  );
+      (p.type?.startsWith("tool-") && !NOISE_PART_TYPES.has(p.type)) ||
+      p.type === "dynamic-tool";
+    if (!isToolPart) return false;
+    // Get the tool name from either toolName or the type suffix
+    const name =
+      p.toolName ?? (p.type?.startsWith("tool-") ? p.type.slice(5) : "");
+    if (isHiddenTool(name)) return false;
+    // Deduplicate by toolCallId
+    if (p.toolCallId) {
+      if (seenToolCallIds.has(p.toolCallId)) return false;
+      seenToolCallIds.add(p.toolCallId);
+    }
+    return true;
+  });
+
   const textParts = parts.filter(
     (p) => p.type === "text" && p.text != null && p.text.length > 0,
   );
@@ -284,6 +323,14 @@ function AssistantBubble({ msg }: { msg: ChatMessage }) {
 
   return (
     <div className="flex flex-col gap-1.5">
+      {reasoningParts.length > 0 && (
+        <ExpandableReasoningBlock
+          key={`reasoning-${msg.id}`}
+          instanceKey={msg.id}
+          text={reasoningParts.map((p) => p.text!).join("\n\n")}
+          partState={reasoningParts[reasoningParts.length - 1].state}
+        />
+      )}
       {toolParts.length > 0 && (
         <div className="flex flex-wrap gap-1">
           {toolParts.map((p, i) => (
@@ -291,14 +338,6 @@ function AssistantBubble({ msg }: { msg: ChatMessage }) {
           ))}
         </div>
       )}
-      {reasoningParts.map((p, i) => (
-        <ExpandableReasoningBlock
-          key={`reasoning-${msg.id}-${i}`}
-          instanceKey={`${msg.id}-${i}`}
-          text={p.text!}
-          partState={p.state}
-        />
-      ))}
       {textParts.map((p, i) => (
         <div key={`${msg.id}-text-${i}`} className="chat-markdown">
           <ReactMarkdown components={activityMarkdownComponents}>

@@ -125,7 +125,7 @@ interface OverlayEntry {
   fadingOut: boolean;
 }
 
-const SINGLE_AGENT_COLOR = "rgba(255,255,255,0.5)";
+const SINGLE_AGENT_COLOR = "#8b5cf6";
 
 export function AgentShutterOverlays() {
   const frames = useAppSelector((s) => s.canvas.frames);

@@ -45,7 +45,7 @@ function lerp(a: number, b: number, t: number): number {
 }
 
 const FADE_OUT_MS = 600;
-const CURSOR_COLOR = "rgba(255,255,255,0.7)";
+const CURSOR_COLOR = "#8b5cf6";
 const CURSOR_NAME = "AI";
 
 function AgentCursor({
@@ -180,14 +180,15 @@ function AgentCursor({
           d="M1.5 1L5.5 18L8.5 11L15 9.5L1.5 1Z"
           fill={CURSOR_COLOR}
           stroke="white"
-          strokeWidth="1.5"
+          strokeWidth="1.2"
           strokeLinejoin="round"
         />
       </svg>
       <div
-        className="ml-4 -mt-0.5 flex items-center gap-1 whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-semibold text-black shadow-lg"
+        className="ml-4 -mt-0.5 flex items-center gap-1 whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-semibold text-white shadow-lg"
         style={{ backgroundColor: CURSOR_COLOR }}
       >
+        <span className="size-1.5 rounded-full bg-white/60 animate-pulse" />
         {CURSOR_NAME}
       </div>
     </div>
