@@ -16,7 +16,7 @@ export function FAQ() {
   const [openId, setOpenId] = useState<number | null>(0);
 
   return (
-    <section id="faq">
+    <section id="faq" className="scroll-mt-14">
       <div className="border-b border-b-primary px-5 py-4">
         <span className="text-[11px] font-mono font-semibold uppercase tracking-wider text-t-tertiary">FAQ</span>
       </div>
