@@ -19,7 +19,7 @@ export function CanvasTopRight() {
         <span>Share</span>
       </button>
 
-      <div className="mx-1 h-4 w-px bg-white/[0.12]" />
+      <div className="mx-1 h-4 w-px bg-b-primary" />
 
       <button
         type="button"
@@ -30,7 +30,7 @@ export function CanvasTopRight() {
         <span>Upgrade</span>
       </button>
 
-      <div className="mx-1 h-4 w-px bg-white/[0.12]" />
+      <div className="mx-1 h-4 w-px bg-b-primary" />
 
       <ThemeToggleCompact />
 

@@ -56,7 +56,7 @@ function StreamingPrompt() {
   return (
     <span className="flex-1 text-xs text-t-secondary truncate">
       {displayed}
-      {isTyping && <span className="inline-block w-px h-3 bg-white/40 ml-0.5 animate-pulse align-middle" />}
+      {isTyping && <span className="inline-block w-px h-3 bg-t-secondary ml-0.5 animate-pulse align-middle" />}
     </span>
   );
 }
@@ -237,7 +237,7 @@ export default function SignInPage() {
             <form onSubmit={(e) => { e.preventDefault(); if (email) setMagicLinkSent(true); }} className="flex flex-col gap-4">
               <div>
                 <label htmlFor="email" className="mb-1.5 block text-xs font-medium text-t-secondary">Email address</label>
-                <input id="email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" className="h-12 w-full rounded-xl border border-b-primary bg-input-bg px-4 text-sm text-t-primary placeholder-white/25 outline-none focus:border-white/25 focus:bg-input-bg transition-colors" />
+                <input id="email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" className="h-12 w-full rounded-xl border border-b-primary bg-input-bg px-4 text-sm text-t-primary placeholder-t-tertiary outline-none focus:border-b-strong focus:bg-input-bg transition-colors" />
               </div>
               <button type="submit" className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-btn-primary-bg text-sm font-semibold text-btn-primary-text transition-colors hover:opacity-90">
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 4l6 4.5L14 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /><rect x="1.5" y="3" width="13" height="10" rx="2" stroke="currentColor" strokeWidth="1.5" /></svg>
@@ -247,7 +247,7 @@ export default function SignInPage() {
           ) : (
             <div className="flex flex-col items-center rounded-2xl border border-b-secondary bg-input-bg px-6 py-10 text-center">
               <div className="flex h-14 w-14 items-center justify-center rounded-full bg-input-bg">
-                <svg width="28" height="28" viewBox="0 0 24 24" fill="none"><path d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" stroke="rgba(255,255,255,0.5)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none"><path d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" stroke="currentColor" className="text-t-secondary" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
               </div>
               <h2 className="mt-5 text-lg font-semibold text-t-primary">Check your email</h2>
               <p className="mt-2 text-sm leading-relaxed text-t-secondary">We sent a magic link to <span className="font-medium text-t-primary">{email}</span><br />Click the link to sign in.</p>

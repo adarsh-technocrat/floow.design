@@ -202,7 +202,7 @@ function ToolStepChip({
     <div
       className={`not-prose flex w-fit items-center gap-2 rounded-md border px-2 py-1 transition-all ${
         finished
-          ? "border-white/20 bg-white/[0.06]"
+          ? "border-white/20 bg-input-bg"
           : "border-[rgba(255,255,255,0.7)]/40 bg-[rgba(255,255,255,0.7)]/10"
       }`}
     >
@@ -226,7 +226,7 @@ function StreamingActivityIndicator() {
   return (
     <div className="flex w-full justify-start">
       <div className="w-fit max-w-[85%] rounded-lg bg-muted/50 px-3 py-2.5 text-sm">
-        <span className="inline-block animate-pulse bg-gradient-to-r from-stone-400 via-stone-200 to-stone-400 bg-[length:200%_100%] bg-clip-text text-transparent [animation-duration:1.5s] font-medium">
+        <span className="inline-block animate-pulse bg-gradient-to-r from-t-400 via-t-200 to-t-400 bg-[length:200%_100%] bg-clip-text text-transparent [animation-duration:1.5s] font-medium">
           Working…
         </span>
       </div>
@@ -424,32 +424,32 @@ function ChatHistoryShimmer() {
   return (
     <div className="flex flex-col gap-4 p-2">
       <div className="flex justify-end">
-        <div className="h-8 w-[60%] animate-pulse rounded-lg bg-white/[0.06]" />
+        <div className="h-8 w-[60%] animate-pulse rounded-lg bg-input-bg" />
       </div>
       <div className="flex flex-col gap-2">
-        <div className="h-6 w-[45%] animate-pulse rounded-lg bg-white/[0.04]" />
+        <div className="h-6 w-[45%] animate-pulse rounded-lg bg-input-bg" />
         <div
-          className="h-6 w-[70%] animate-pulse rounded-lg bg-white/[0.04]"
+          className="h-6 w-[70%] animate-pulse rounded-lg bg-input-bg"
           style={{ animationDelay: "75ms" }}
         />
         <div
-          className="h-6 w-[55%] animate-pulse rounded-lg bg-white/[0.04]"
+          className="h-6 w-[55%] animate-pulse rounded-lg bg-input-bg"
           style={{ animationDelay: "150ms" }}
         />
       </div>
       <div className="flex justify-end">
         <div
-          className="h-8 w-[50%] animate-pulse rounded-lg bg-white/[0.06]"
+          className="h-8 w-[50%] animate-pulse rounded-lg bg-input-bg"
           style={{ animationDelay: "200ms" }}
         />
       </div>
       <div className="flex flex-col gap-2">
         <div
-          className="h-6 w-[65%] animate-pulse rounded-lg bg-white/[0.04]"
+          className="h-6 w-[65%] animate-pulse rounded-lg bg-input-bg"
           style={{ animationDelay: "250ms" }}
         />
         <div
-          className="h-6 w-[40%] animate-pulse rounded-lg bg-white/[0.04]"
+          className="h-6 w-[40%] animate-pulse rounded-lg bg-input-bg"
           style={{ animationDelay: "325ms" }}
         />
       </div>
@@ -1189,7 +1189,7 @@ export function ChatPanel({
             <button
               type="button"
               onClick={() => setShowHeaderDropdown((v) => !v)}
-              className="inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-sm font-medium text-foreground transition-colors hover:bg-white/10"
+              className="inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-sm font-medium text-foreground transition-colors hover:bg-input-bg"
             >
               {(() => {
                 return (
@@ -1223,9 +1223,9 @@ export function ChatPanel({
                           // removed: dispatch(setActiveAgent(null));
                           setShowHeaderDropdown(false);
                         }}
-                        className={`flex w-full items-center gap-2.5 px-3 py-2 text-left text-xs transition-colors hover:bg-white/[0.06] hover:text-white ${
+                        className={`flex w-full items-center gap-2.5 px-3 py-2 text-left text-xs transition-colors hover:bg-input-bg hover:text-white ${
                           activeAgentId === null
-                            ? "bg-white/[0.04] text-white"
+                            ? "bg-input-bg text-white"
                             : "text-white/85"
                         }`}
                       >
@@ -1250,7 +1250,7 @@ export function ChatPanel({
                           key={i}
                           type="button"
                           onClick={() => setShowHeaderDropdown(false)}
-                          className="flex w-full items-center gap-2.5 px-3 py-2 text-left text-xs text-white/85 transition-colors hover:bg-white/[0.06] hover:text-white"
+                          className="flex w-full items-center gap-2.5 px-3 py-2 text-left text-xs text-white/85 transition-colors hover:bg-input-bg hover:text-white"
                         >
                           <span
                             className="inline-flex size-5 shrink-0 items-center justify-center rounded-full text-xs"
@@ -1526,7 +1526,7 @@ export function ChatPanel({
                             }
                             setShowAgentDropdown(false);
                           }}
-                          className={`flex w-full items-center gap-2 px-3 py-1.5 text-left text-xs transition-colors hover:bg-white/[0.06] ${
+                          className={`flex w-full items-center gap-2 px-3 py-1.5 text-left text-xs transition-colors hover:bg-input-bg ${
                             agentCount === n ? "font-semibold" : "text-white/85"
                           }`}
                           style={

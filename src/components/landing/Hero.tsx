@@ -116,7 +116,7 @@ export function Hero() {
               value={promptText}
               onChange={(e) => setPromptText(e.target.value)}
               placeholder="Describe your app idea... e.g. A fitness tracker with dark theme, weekly progress charts, and bottom nav"
-              className="w-full bg-transparent text-t-primary placeholder-white/25 resize-none focus:outline-none text-[15px] leading-relaxed min-h-[140px]"
+              className="w-full bg-transparent text-t-primary placeholder-t-tertiary resize-none focus:outline-none text-[15px] leading-relaxed min-h-[140px]"
               rows={5}
             />
             <div className="flex items-center justify-between pt-3 mt-2 border-t border-b-secondary">

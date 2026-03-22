@@ -62,7 +62,7 @@ function ToolChip({ part }: { part: MessagePart }) {
           <path d="M229.66,77.66l-128,128a8,8,0,0,1-11.32,0l-56-56a8,8,0,0,1,11.32-11.32L96,188.69,218.34,66.34a8,8,0,0,1,11.32,11.32Z" />
         </svg>
       ) : (
-        <span className="size-2.5 shrink-0 animate-pulse rounded-full bg-white/40" />
+        <span className="size-2.5 shrink-0 animate-pulse rounded-full bg-t-secondary" />
       )}
       <span className={`font-mono text-[9px] uppercase tracking-wider ${done ? "text-t-secondary" : "text-t-secondary"}`}>{label}</span>
     </div>
@@ -157,7 +157,7 @@ export function CanvasBottomLeft() {
             </div>
           ) : (
             <div className="flex-1 min-h-0 relative">
-              <div className="pointer-events-none absolute top-0 left-0 right-0 h-4 bg-gradient-to-b from-[#0e0e10] to-transparent z-10" />
+              <div className="pointer-events-none absolute top-0 left-0 right-0 h-4 bg-gradient-to-b from-surface-elevated to-transparent z-10" />
 
               <div ref={scrollRef} className="h-full max-h-[500px] overflow-y-auto scrollbar-hide">
                 <div className="flex flex-col gap-2 px-3 py-3">
@@ -181,7 +181,7 @@ export function CanvasBottomLeft() {
                 </div>
               </div>
 
-              <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-4 bg-gradient-to-t from-[#0e0e10] to-transparent z-10" />
+              <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-4 bg-gradient-to-t from-surface-elevated to-transparent z-10" />
             </div>
           )}
         </div>

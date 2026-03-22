@@ -39,7 +39,7 @@ export function EditingModeDisplay() {
 
       {/* Bottom center — AI input box */}
       <div className="absolute bottom-4 left-1/2 z-20 -translate-x-1/2 w-full max-w-[600px] px-4">
-        <div className="rounded-2xl border border-b-strong bg-surface-elevated/95 backdrop-blur-2xl shadow-[0_8px_60px_rgba(0,0,0,0.6),inset_0_1px_0_rgba(255,255,255,0.06)] transition-all focus-within:border-b-strong focus-within:shadow-[0_8px_60px_rgba(0,0,0,0.7),inset_0_1px_0_rgba(255,255,255,0.1)]">
+        <div className="rounded-2xl border border-b-strong bg-surface-elevated/95 backdrop-blur-2xl shadow-[0_8px_60px_rgba(0,0,0,0.6),inset_0_1px_0_var(--border-secondary)] transition-all focus-within:border-b-strong focus-within:shadow-[0_8px_60px_rgba(0,0,0,0.7),inset_0_1px_0_var(--border-primary)]">
           <div className="px-4 pt-4 pb-2">
             <textarea
               ref={inputRef}
@@ -48,7 +48,7 @@ export function EditingModeDisplay() {
               onKeyDown={handleKeyDown}
               placeholder="Describe what to design..."
               rows={2}
-              className="w-full bg-transparent text-[15px] text-white placeholder-white/30 outline-none resize-none leading-relaxed max-h-[140px] min-h-[52px]"
+              className="w-full bg-transparent text-[15px] text-white placeholder-t-tertiary outline-none resize-none leading-relaxed max-h-[140px] min-h-[52px]"
               onInput={(e) => {
                 const el = e.currentTarget;
                 el.style.height = "auto";
@@ -100,7 +100,7 @@ export function EditingModeDisplay() {
             onClick={() => setStyleGuideOpen((v) => !v)}
             className={`rounded-md p-2 transition-colors ${
               styleGuideOpen
-                ? "bg-white/[0.12] text-white"
+                ? "bg-b-primary text-white"
                 : "text-t-secondary hover:bg-input-bg hover:text-white"
             }`}
             title="Style Guide"

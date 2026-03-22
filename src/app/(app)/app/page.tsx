@@ -28,7 +28,7 @@ export default function AppPage() {
   return (
     <div className="flex h-screen w-full items-center justify-center bg-canvas-bg text-t-primary">
       <div className="flex items-center gap-2 text-sm text-t-secondary">
-        <div className="size-2 rounded-full bg-white/30 animate-pulse" />
+        <div className="size-2 rounded-full bg-t-tertiary animate-pulse" />
         Creating project...
       </div>
     </div>

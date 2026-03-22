@@ -23,7 +23,7 @@ export function CanvasTopLeft() {
         </span>
       </Link>
 
-      <div className="h-4 w-px bg-white/[0.12]" />
+      <div className="h-4 w-px bg-b-primary" />
 
       <button
         type="button"

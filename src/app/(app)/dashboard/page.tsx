@@ -260,7 +260,7 @@ export default function DashboardPage() {
                 {loading ? (
                   <div className="flex items-center justify-center py-20">
                     <div className="flex items-center gap-2 text-sm text-t-tertiary">
-                      <div className="size-2 rounded-full bg-white/20 animate-pulse" />
+                      <div className="size-2 rounded-full bg-t-tertiary animate-pulse" />
                       Loading...
                     </div>
                   </div>

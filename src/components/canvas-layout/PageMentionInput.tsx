@@ -294,8 +294,8 @@ export function PageMentionInput({
                     type="button"
                     className={`group flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left transition-all duration-150 ${
                       i === selectedIndex
-                        ? "bg-[rgba(255,255,255,0.7)]/25 text-white shadow-[inset_0_1px_0_rgba(138,135,248,0.15)]"
-                        : "text-white/85 hover:bg-white/6 hover:text-white"
+                        ? "bg-input-bg text-white shadow-[inset_0_1px_0_rgba(138,135,248,0.15)]"
+                        : "text-white/85 hover:bg-input-bg hover:text-white"
                     }`}
                     onMouseDown={(e) => {
                       e.preventDefault();

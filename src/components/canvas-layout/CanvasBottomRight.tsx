@@ -62,7 +62,7 @@ function ToolbarButton({
       className={
         "inline-flex size-8 shrink-0 items-center justify-center rounded-md text-sm font-medium outline-none transition-all active:scale-95 disabled:pointer-events-none disabled:opacity-40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg]:size-4 " +
         (selected
-          ? "bg-white/[0.12] text-white"
+          ? "bg-b-primary text-white"
           : "text-t-secondary hover:bg-input-bg hover:text-white")
       }
     >
@@ -112,7 +112,7 @@ export function CanvasBottomRight() {
         </svg>
       </ToolbarButton>
 
-      <div className="mx-0.5 h-4 w-px bg-white/[0.12]" />
+      <div className="mx-0.5 h-4 w-px bg-b-primary" />
 
       <ToolbarButton disabled title="Undo">
         <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" fill="currentColor" viewBox="0 0 256 256">
@@ -125,7 +125,7 @@ export function CanvasBottomRight() {
         </svg>
       </ToolbarButton>
 
-      <div className="mx-0.5 h-4 w-px bg-white/[0.12]" />
+      <div className="mx-0.5 h-4 w-px bg-b-primary" />
 
       <ToolbarButton title="Zoom out" onClick={decreaseCanvasZoom}>
         <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" fill="currentColor" viewBox="0 0 256 256">

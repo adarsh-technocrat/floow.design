@@ -43,7 +43,7 @@ export function TemplatesCarousel() {
             <a key={t.id} href="/app" className="group relative flex-shrink-0 w-[220px] no-underline">
               <div className="relative aspect-[9/16] w-full overflow-hidden rounded-lg border border-b-primary bg-[#111]">
                 <img alt={t.name} src={t.image} className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]" />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
+                <div className="absolute inset-0 bg-gradient-to-t from-surface/80 via-transparent to-transparent" />
                 <div className="absolute bottom-0 left-0 right-0 p-3">
                   <div className="flex items-center gap-2 mb-1">
                     <span className="text-[9px] font-mono uppercase tracking-wider text-t-secondary border border-b-primary rounded px-1.5 py-0.5">{t.tag}</span>
