@@ -21,7 +21,7 @@ function DialogOverlay({
   return (
     <DialogPrimitive.Overlay
       className={cn(
-        "fixed inset-0 z-9999 bg-black/70 backdrop-blur-sm transition-opacity duration-200 data-[state=closed]:opacity-0 data-[state=open]:opacity-100 pointer-events-auto",
+        "fixed inset-0 z-9999 bg-black/40 backdrop-blur-sm transition-opacity duration-200 data-[state=closed]:opacity-0 data-[state=open]:opacity-100 pointer-events-auto dark:bg-black/70",
         className,
       )}
       {...props}

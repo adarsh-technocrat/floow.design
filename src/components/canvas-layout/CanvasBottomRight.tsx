@@ -46,14 +46,12 @@ function ToolbarButton({
   title,
   onClick,
   selected,
-  className = "",
 }: {
   children: React.ReactNode;
   disabled?: boolean;
   title?: string;
   onClick?: () => void;
   selected?: boolean;
-  className?: string;
 }) {
   return (
     <button
@@ -62,11 +60,10 @@ function ToolbarButton({
       disabled={disabled}
       onClick={onClick}
       className={
-        "inline-flex size-8 shrink-0 items-center justify-center rounded-md text-sm font-medium outline-none transition-[color,box-shadow,scale] focus-visible:ring-2 focus-visible:ring-ring/50 active:scale-95 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg]:size-4 " +
+        "inline-flex size-8 shrink-0 items-center justify-center rounded-md text-sm font-medium outline-none transition-all active:scale-95 disabled:pointer-events-none disabled:opacity-40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg]:size-4 " +
         (selected
-          ? "bg-[#48413f] text-[#fafafa]"
-          : "text-white/90 hover:bg-white/10") +
-        (className ? " " + className : "")
+          ? "bg-btn-primary-bg text-btn-primary-text"
+          : "text-t-secondary hover:bg-input-bg hover:text-t-primary")
       }
     >
       {children}
@@ -84,10 +81,30 @@ export function CanvasBottomRight() {
     dispatch(setCanvasToolMode(mode));
 
   return (
-    <div className="absolute bottom-4 right-4 z-10 flex w-auto flex-row items-center gap-2 rounded-xl bg-canvas-panel p-2">
-      <div className="flex items-center gap-1">
+    <div className="absolute bottom-4 right-4 z-10 flex items-center gap-3">
+      {/* Save indicator */}
+      <span className="flex items-center gap-1.5 text-t-tertiary text-[11px]">
+        <svg
+          width="14"
+          height="14"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          className="text-t-tertiary"
+        >
+          <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z" />
+          <path d="M8 12l3 3 5-5" />
+        </svg>
+        Saved
+      </span>
+
+      {/* Toolbar */}
+      <div className="flex items-center gap-1 rounded-lg border border-b-0 border-b-primary bg-canvas-panel-bg backdrop-blur-sm px-1.5 py-1">
         <ToolbarButton
-          title="Select"
+          title="Select (V)"
           selected={canvasToolMode === "select"}
           onClick={setMode("select")}
         >
@@ -102,7 +119,7 @@ export function CanvasBottomRight() {
           </svg>
         </ToolbarButton>
         <ToolbarButton
-          title="Hand"
+          title="Hand (H)"
           selected={canvasToolMode === "hand"}
           onClick={setMode("hand")}
         >
@@ -116,6 +133,9 @@ export function CanvasBottomRight() {
             <path d="M188,48a27.75,27.75,0,0,0-12,2.71V44a28,28,0,0,0-54.65-8.6A28,28,0,0,0,80,60v64l-3.82-6.13a28,28,0,0,0-48.6,27.82c16,33.77,28.93,57.72,43.72,72.69C86.24,233.54,103.2,240,128,240a88.1,88.1,0,0,0,88-88V76A28,28,0,0,0,188,48Zm12,104a72.08,72.08,0,0,1-72,72c-20.38,0-33.51-4.88-45.33-16.85C69.44,193.74,57.26,171,41.9,138.58a6.36,6.36,0,0,0-.3-.58,12,12,0,0,1,20.79-12,1.76,1.76,0,0,0,.14.23l18.67,30A8,8,0,0,0,96,152V60a12,12,0,0,1,24,0v60a8,8,0,0,0,16,0V44a12,12,0,0,1,24,0v76a8,8,0,0,0,16,0V76a12,12,0,0,1,24,0Z" />
           </svg>
         </ToolbarButton>
+
+        <div className="mx-0.5 h-4 w-px bg-b-primary" />
+
         <ToolbarButton disabled title="Undo">
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -138,9 +158,9 @@ export function CanvasBottomRight() {
             <path d="M240,56v48a8,8,0,0,1-8,8H184a8,8,0,0,1,0-16H211.4L184.81,71.64l-.25-.24a80,80,0,1,0-1.67,114.78,8,8,0,0,1,11,11.63A95.44,95.44,0,0,1,128,224h-1.32A96,96,0,1,1,195.75,60L224,85.8V56a8,8,0,1,1,16,0Z" />
           </svg>
         </ToolbarButton>
-      </div>
-      <div className="h-4 w-px shrink-0 bg-white/20" role="none" />
-      <div className="flex items-center">
+
+        <div className="mx-0.5 h-4 w-px bg-b-primary" />
+
         <ToolbarButton title="Zoom out" onClick={decreaseCanvasZoom}>
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -152,7 +172,7 @@ export function CanvasBottomRight() {
             <path d="M224,128a8,8,0,0,1-8,8H40a8,8,0,0,1,0-16H216A8,8,0,0,1,224,128Z" />
           </svg>
         </ToolbarButton>
-        <div className="min-w-10 text-center text-sm text-white/90">
+        <div className="min-w-9 text-center text-[11px] font-mono text-t-secondary">
           {displayPercent}%
         </div>
         <ToolbarButton title="Zoom in" onClick={increaseCanvasZoom}>

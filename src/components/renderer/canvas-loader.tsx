@@ -12,7 +12,7 @@ export function CanvasLoader({
   message = "Loading project...",
 }: CanvasLoaderProps) {
   return (
-    <div className="absolute inset-0 z-[100] bg-bg-light/80 backdrop-blur-md flex items-center justify-center">
+    <div className="absolute inset-0 z-[100] flex items-center justify-center bg-surface-overlay/90 backdrop-blur-md dark:bg-black/50">
       <div className="flex flex-col items-center gap-4">
         <Image
           src="/logo-without-text.png"
@@ -21,12 +21,10 @@ export function CanvasLoader({
           height={64}
           className="rounded-[25px]"
         />
-        <p className="text-neutral-1-light text-sm font-medium">{message}</p>
-
-        {/* Horizontal line loader */}
-        <div className="w-48 h-1 bg-neutral-9-light rounded-full overflow-hidden">
+        <p className="text-sm font-medium text-t-secondary">{message}</p>
+        <div className="h-1 w-48 overflow-hidden rounded-full bg-input-bg">
           <div
-            className="h-full bg-gradient-to-r from-[var(--brand-primary)] to-[var(--secondary-pink-1)] rounded-full"
+            className="h-full rounded-full bg-linear-to-r from-btn-primary-bg via-t-secondary to-btn-primary-bg dark:from-zinc-100 dark:via-zinc-400 dark:to-zinc-100"
             style={{
               animation: "loadLeftToRight 0.5s ease-in-out infinite",
             }}

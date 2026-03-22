@@ -1,6 +1,19 @@
+import { readFileSync } from "fs";
+import path from "path";
 import { NextRequest, NextResponse } from "next/server";
 import { getFrame } from "../frames/store";
-import { injectFrameScripts } from "@/lib/screen-utils";
+import {
+  injectFrameScripts,
+  injectElementInspectorScript,
+} from "@/lib/screen-utils";
+
+function getElementInspectorScript(): string {
+  const scriptPath = path.join(
+    process.cwd(),
+    "src/lib/iframe/element-inspector.js",
+  );
+  return readFileSync(scriptPath, "utf-8");
+}
 
 export async function GET(req: NextRequest) {
   const frameId = req.nextUrl.searchParams.get("frameId");
@@ -16,7 +29,14 @@ export async function GET(req: NextRequest) {
       },
     );
   }
-  const html = injectFrameScripts(rawHtml);
+
+  const elementInspectorScript = getElementInspectorScript();
+
+  const html = injectElementInspectorScript(
+    injectFrameScripts(rawHtml),
+    elementInspectorScript,
+  );
+
   return new NextResponse(html, {
     headers: {
       "Content-Type": "text/html; charset=utf-8",

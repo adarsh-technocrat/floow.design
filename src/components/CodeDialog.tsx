@@ -86,18 +86,18 @@ export function CodeDialog({ open, onClose, title, code }: CodeDialogProps) {
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
       <DialogContent
         showCloseButton={false}
-        className="flex max-h-[85vh] min-h-0 flex-col overflow-hidden rounded-xl border border-white/10 bg-canvas-panel p-0 sm:max-w-lg md:max-w-[min(calc(100%-2rem),var(--container-5xl))]"
+        className="flex max-h-[85vh] min-h-0 flex-col overflow-hidden rounded-xl border border-b-primary bg-surface-elevated p-0 sm:max-w-lg md:max-w-[min(calc(100%-2rem),var(--container-5xl))]"
       >
         <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-hidden p-6 pb-4">
           <DialogHeader className="flex shrink-0 flex-row items-start justify-between gap-4 space-y-0">
-            <DialogTitle className="text-lg font-semibold text-white/95">
+            <DialogTitle className="text-lg font-semibold text-t-primary">
               {title} Code
             </DialogTitle>
             <div className="flex shrink-0 items-center gap-2">
               <button
                 type="button"
                 onClick={download}
-                className="inline-flex h-9 items-center gap-2 rounded-md bg-white/15 px-4 py-2 text-sm font-medium text-white hover:bg-white/25 focus-visible:ring-2 focus-visible:ring-white/30"
+                className="inline-flex h-9 items-center gap-2 rounded-md border border-b-strong bg-input-bg px-4 py-2 text-sm font-medium text-t-primary hover:bg-surface-sunken focus-visible:ring-2 focus-visible:ring-ring/25 dark:border-transparent dark:bg-white/15 dark:text-white dark:hover:bg-white/25 dark:focus-visible:ring-white/30"
               >
                 <Download className="size-3.5" />
                 Download
@@ -105,7 +105,7 @@ export function CodeDialog({ open, onClose, title, code }: CodeDialogProps) {
               <DialogClose asChild>
                 <button
                   type="button"
-                  className="inline-flex size-9 items-center justify-center rounded-sm text-white/70 hover:text-white"
+                  className="inline-flex size-9 items-center justify-center rounded-sm text-t-secondary hover:text-t-primary dark:text-white/70 dark:hover:text-white"
                   aria-label="Close"
                 >
                   <X className="size-4" />
@@ -113,7 +113,7 @@ export function CodeDialog({ open, onClose, title, code }: CodeDialogProps) {
               </DialogClose>
             </div>
           </DialogHeader>
-          <div className="relative min-h-0 flex-1 overflow-auto rounded-lg">
+          <div className="relative min-h-0 flex-1 overflow-auto rounded-lg border border-b-secondary bg-muted/40 dark:border-transparent dark:bg-transparent">
             <div
               className="shiki-themes code-dialog-shiki p-4 text-[13px] [&_pre]:bg-transparent [&_pre]:p-0 [&_pre]:whitespace-pre [&_pre>code]:font-mono"
               dangerouslySetInnerHTML={{ __html: highlightedCode }}
@@ -121,7 +121,7 @@ export function CodeDialog({ open, onClose, title, code }: CodeDialogProps) {
             <button
               type="button"
               onClick={copy}
-              className="absolute right-2 top-2 rounded-md bg-white/10 px-2.5 py-1.5 text-white/80 hover:bg-white/20"
+              className="absolute right-2 top-2 rounded-md border border-b-primary bg-surface-elevated px-2.5 py-1.5 text-t-secondary hover:bg-input-bg dark:border-transparent dark:bg-white/10 dark:text-white/80 dark:hover:bg-white/20"
               title="Copy"
             >
               {copied ? (

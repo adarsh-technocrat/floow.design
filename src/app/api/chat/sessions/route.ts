@@ -1,14 +1,70 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma, ensureDefaultProject } from "@/lib/db";
+import type { Prisma } from "@prisma/client";
+import { prisma, ensureProject, ensureUser } from "@/lib/db";
 import { DEFAULT_PROJECT_ID } from "@/constants/project";
+import { ANONYMOUS_USER_ID } from "@/constants/user";
+import {
+  CANVAS_CHAT_FRAME_ID,
+  normalizeIncomingMessages,
+  recordsToUiMessages,
+  type ChatSessionMessageRecord,
+} from "@/lib/chat-session";
 
-export async function GET() {
+function sessionJson(session: {
+  id: string;
+  projectId: string;
+  frameId: string;
+  userId: string;
+  messages: unknown;
+  isActive: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}) {
+  const messages = (session.messages as ChatSessionMessageRecord[]) ?? [];
+  return {
+    id: session.id,
+    projectId: session.projectId,
+    frameId: session.frameId,
+    userId: session.userId,
+    messages,
+    isActive: session.isActive,
+    createdAt: session.createdAt.toISOString(),
+    updatedAt: session.updatedAt.toISOString(),
+  };
+}
+
+export async function GET(req: NextRequest) {
   try {
+    const projectId =
+      req.nextUrl.searchParams.get("projectId") ?? DEFAULT_PROJECT_ID;
+    const frameId =
+      req.nextUrl.searchParams.get("frameId") ?? CANVAS_CHAT_FRAME_ID;
+    const userId = req.nextUrl.searchParams.get("userId") ?? ANONYMOUS_USER_ID;
+
+    await ensureUser(userId);
+
     const session = await prisma.chatSession.findUnique({
-      where: { projectId: DEFAULT_PROJECT_ID },
+      where: {
+        projectId_frameId_userId: {
+          projectId,
+          frameId,
+          userId,
+        },
+      },
     });
-    const messages = (session?.messages as unknown[]) ?? [];
-    return NextResponse.json({ messages });
+
+    if (!session) {
+      return NextResponse.json({
+        session: null,
+        messages: [] as ReturnType<typeof recordsToUiMessages>,
+      });
+    }
+
+    const records = (session.messages as ChatSessionMessageRecord[]) ?? [];
+    return NextResponse.json({
+      session: sessionJson(session),
+      messages: recordsToUiMessages(records),
+    });
   } catch (e) {
     return NextResponse.json(
       { error: e instanceof Error ? e.message : "Unknown error" },
@@ -19,13 +75,41 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
   try {
-    await ensureDefaultProject();
     const body = await req.json();
-    const messages = Array.isArray(body?.messages) ? body.messages : [];
+    const rawMessages = Array.isArray(body?.messages) ? body.messages : [];
+    const projectId = body?.projectId ?? DEFAULT_PROJECT_ID;
+    const frameId = body?.frameId ?? CANVAS_CHAT_FRAME_ID;
+    const userId =
+      typeof body?.userId === "string" && body.userId.length > 0
+        ? body.userId
+        : ANONYMOUS_USER_ID;
+    const isActive = typeof body?.isActive === "boolean" ? body.isActive : true;
+
+    const messages = normalizeIncomingMessages(rawMessages);
+    const messagesJson = messages as unknown as Prisma.InputJsonValue;
+
+    await ensureProject(projectId);
+    await ensureUser(userId);
+
     await prisma.chatSession.upsert({
-      where: { projectId: DEFAULT_PROJECT_ID },
-      create: { projectId: DEFAULT_PROJECT_ID, messages },
-      update: { messages },
+      where: {
+        projectId_frameId_userId: {
+          projectId,
+          frameId,
+          userId,
+        },
+      },
+      create: {
+        projectId,
+        frameId,
+        userId,
+        messages: messagesJson,
+        isActive,
+      },
+      update: {
+        messages: messagesJson,
+        isActive,
+      },
     });
     return NextResponse.json({ ok: true });
   } catch (e) {

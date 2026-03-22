@@ -1,10 +1,12 @@
 "use client";
 
-import { useRef, useEffect, useCallback } from "react";
+import { useRef, useEffect, useCallback, useMemo } from "react";
 import { toast } from "sonner";
 import { SelectionToast } from "@/components/custom-toast/selection-toast";
 import { Frame } from "@/components/Frame";
 import { FramePreview } from "@/components/FramePreview";
+import { AgentCursors } from "@/components/AgentCursors";
+import { AgentShutterOverlays } from "@/components/AgentShutterOverlay";
 import { useCanvas } from "@/hooks/useCanvas";
 import { useCanvasInteraction } from "@/hooks/useCanvasInteraction";
 import { useAppSelector } from "@/store/hooks";
@@ -22,6 +24,7 @@ export function Canvas() {
     removeFrameFromCanvas,
     duplicateFrameById,
     zoomCanvasAtCursorPosition,
+    fitView,
   } = useCanvas();
 
   const persistFramePosition = useCallback(
@@ -54,13 +57,19 @@ export function Canvas() {
     const currentIds = new Set(frames.map((f) => f.id));
     const prevIds = prevFrameIdsRef.current;
     const addedIds = [...currentIds].filter((id) => !prevIds.has(id));
-    if (
+    if (addedIds.length > 1) {
+      fitView(
+        containerRef.current,
+        { top: 80, right: 80, bottom: 80, left: 400 },
+        0.6,
+      );
+    } else if (
       addedIds.length === 1 &&
       selectedFrameIds[0] === addedIds[0] &&
       prevIds.size > 0
     ) {
       const frame = frames.find((f) => f.id === addedIds[0]);
-      if (frame)
+      if (frame && frame.html && frame.html.length > 0)
         persistFramePosition(
           frame.id,
           frame.label,
@@ -70,7 +79,7 @@ export function Canvas() {
         );
     }
     prevFrameIdsRef.current = currentIds;
-  }, [frames, selectedFrameIds, persistFramePosition]);
+  }, [frames, selectedFrameIds, persistFramePosition, fitView]);
 
   const handlePositionChange = useCallback(
     (id: string, newLeft: number, newTop: number) => {
@@ -150,6 +159,61 @@ export function Canvas() {
     }
   }, [selectedFrameIds, duplicateFrameById, removeFrameFromCanvas]);
 
+  const positionChangeHandlers = useRef(
+    new Map<string, (l: number, t: number) => void>(),
+  );
+  const sizeChangeHandlers = useRef(
+    new Map<
+      string,
+      (c: {
+        left?: number;
+        top?: number;
+        width?: number;
+        height?: number;
+      }) => void
+    >(),
+  );
+
+  useMemo(() => {
+    const ids = new Set(frames.map((f) => f.id));
+    for (const k of positionChangeHandlers.current.keys()) {
+      if (!ids.has(k)) {
+        positionChangeHandlers.current.delete(k);
+        sizeChangeHandlers.current.delete(k);
+      }
+    }
+  }, [frames]);
+
+  const getPositionChangeHandler = useCallback(
+    (id: string) => {
+      let fn = positionChangeHandlers.current.get(id);
+      if (!fn) {
+        fn = (newLeft: number, newTop: number) =>
+          handlePositionChange(id, newLeft, newTop);
+        positionChangeHandlers.current.set(id, fn);
+      }
+      return fn;
+    },
+    [handlePositionChange],
+  );
+
+  const getSizeChangeHandler = useCallback(
+    (id: string) => {
+      let fn = sizeChangeHandlers.current.get(id);
+      if (!fn) {
+        fn = (changes: {
+          left?: number;
+          top?: number;
+          width?: number;
+          height?: number;
+        }) => updateFrameProperties(id, changes);
+        sizeChangeHandlers.current.set(id, fn);
+      }
+      return fn;
+    },
+    [updateFrameProperties],
+  );
+
   const { x, y, scale } = transform;
 
   return (
@@ -157,9 +221,8 @@ export function Canvas() {
       ref={containerRef}
       className="relative size-full contain-layout contain-paint overflow-hidden"
       style={{
-        backgroundColor: "#1d1716",
-        backgroundImage:
-          "radial-gradient(circle, #48403f 1px, transparent 1px)",
+        backgroundColor: "var(--canvas-bg)",
+        backgroundImage: `radial-gradient(circle, var(--canvas-dot) 1px, transparent 1px)`,
         backgroundSize: "20px 20px",
         cursor: isPanning
           ? "grabbing"
@@ -179,7 +242,7 @@ export function Canvas() {
       aria-label="Canvas"
     >
       <div
-        className={`absolute left-0 top-0 origin-top-left will-change-transform ${!isPanning && !isZooming ? "transition-transform duration-150 ease-out" : ""}`}
+        className="absolute left-0 top-0 origin-top-left will-change-transform"
         style={{
           transform: `translate3d(${Math.round(x)}px, ${Math.round(y)}px, 0) scale(${scale})`,
           backfaceVisibility: "hidden" as const,
@@ -187,7 +250,7 @@ export function Canvas() {
       >
         {marqueeStartRef.current && marqueeEnd && (
           <div
-            className="pointer-events-none absolute z-50 border-4 border-[#8A87F8] bg-[#8A87F8]/10"
+            className="pointer-events-none absolute z-50 border-2 border-[#8A87F8]/55 bg-[#8A87F8]/12"
             style={{
               left: Math.min(marqueeStartRef.current.contentX, marqueeEnd.x),
               top: Math.min(marqueeStartRef.current.contentY, marqueeEnd.y),
@@ -213,10 +276,8 @@ export function Canvas() {
               selectedFrameIds.length === 1
             }
             canvasScale={scale}
-            onPositionChange={(newLeft, newTop) =>
-              handlePositionChange(frame.id, newLeft, newTop)
-            }
-            onSizeChange={(changes) => updateFrameProperties(frame.id, changes)}
+            onPositionChange={getPositionChangeHandler(frame.id)}
+            onSizeChange={getSizeChangeHandler(frame.id)}
             spaceHeld={spaceHeld}
             onWheelForZoom={
               selectedFrameIds.includes(frame.id) &&
@@ -238,6 +299,8 @@ export function Canvas() {
             />
           </Frame>
         ))}
+        <AgentShutterOverlays />
+        <AgentCursors />
       </div>
     </div>
   );

@@ -1,5 +1,9 @@
 import { createSlice } from "@reduxjs/toolkit";
-import { wrapScreenBody, extractBodyContent } from "@/lib/screen-utils";
+import {
+  wrapScreenBody,
+  extractBodyContent,
+  looksLikeMalformedFrameContent,
+} from "@/lib/screen-utils";
 
 export interface CanvasTransform {
   x: number;
@@ -58,7 +62,6 @@ const canvasSlice = createSlice({
         html: payload.html ?? "",
       });
     },
-    /** Add frame with a specific id. Used for placeholder frames from tool streaming. */
     addFrameWithId: (
       state,
       action: {
@@ -104,6 +107,7 @@ const canvasSlice = createSlice({
       state,
       action: { payload: { id: string; html: string } },
     ) => {
+      if (looksLikeMalformedFrameContent(action.payload.html)) return;
       const frame = state.frames.find((f) => f.id === action.payload.id);
       if (frame) frame.html = action.payload.html;
     },
@@ -149,13 +153,15 @@ const canvasSlice = createSlice({
         }>;
       },
     ) => {
-      state.frames = action.payload.map((f) => ({
-        id: f.id,
-        label: f.label ?? "Screen",
-        left: f.left ?? 0,
-        top: f.top ?? 0,
-        html: f.html ?? "",
-      }));
+      state.frames = action.payload
+        .filter((f) => f.html && f.html.length > 0)
+        .map((f) => ({
+          id: f.id,
+          label: f.label ?? "Screen",
+          left: f.left ?? 0,
+          top: f.top ?? 0,
+          html: f.html ?? "",
+        }));
     },
     toggleFrameInSelection: (state, action: { payload: string }) => {
       const id = action.payload;

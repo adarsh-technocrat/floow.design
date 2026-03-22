@@ -1,11 +1,10 @@
 "use client";
 
 import type React from "react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { Fragment, useCallback, useEffect, useRef, useState } from "react";
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport, type UIMessage } from "ai";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
-import { useProject } from "@/contexts/ProjectContext";
 import {
   addFrameWithId,
   updateFrameHtml,
@@ -13,10 +12,72 @@ import {
   setTheme,
   replaceTheme,
 } from "@/store/slices/canvasSlice";
-import { Brain, ChevronDown, CircleX } from "lucide-react";
+import { pushAgentLog } from "@/store/slices/uiSlice";
+import {
+  emitActivityHistoryLoading,
+  emitChatMessagesSnapshot,
+  registerChatSend,
+  unregisterChatSend,
+} from "@/lib/chat-bridge";
+import { cursor, initCursor } from "@/lib/cursor";
+import { Brain, ChevronDown, X, Zap } from "lucide-react";
 import ReactMarkdown from "react-markdown";
-import { CloseIcon } from "./icons";
+import { ImageIcon } from "@/lib/svg-icons";
 import { PageMentionInput } from "./PageMentionInput";
+import { DEFAULT_PROJECT_ID } from "@/constants/project";
+import { ANONYMOUS_USER_ID } from "@/constants/user";
+import { useAuth } from "@/contexts/AuthContext";
+import { CANVAS_CHAT_FRAME_ID } from "@/lib/chat-session";
+
+const CP_THROTTLE_MS = 300;
+let cpPendingHtml = new Map<string, string>();
+let cpFlushTimer: ReturnType<typeof setTimeout> | null = null;
+let cpDispatchRef: ReturnType<typeof useAppDispatch> | null = null;
+
+function cpEnqueueHtml(id: string, html: string) {
+  cpPendingHtml.set(id, html);
+  if (cpFlushTimer) return;
+  cpFlushTimer = setTimeout(() => {
+    cpFlushTimer = null;
+    const batch = cpPendingHtml;
+    cpPendingHtml = new Map();
+    if (!cpDispatchRef) return;
+    for (const [fid, fhtml] of batch) {
+      cpDispatchRef(updateFrameHtml({ id: fid, html: fhtml }));
+    }
+  }, CP_THROTTLE_MS);
+}
+
+function cpFlushHtmlNow() {
+  if (cpFlushTimer) {
+    clearTimeout(cpFlushTimer);
+    cpFlushTimer = null;
+  }
+  const batch = cpPendingHtml;
+  cpPendingHtml = new Map();
+  if (!cpDispatchRef) return;
+  for (const [fid, fhtml] of batch) {
+    cpDispatchRef(updateFrameHtml({ id: fid, html: fhtml }));
+  }
+}
+
+interface ToolStep {
+  toolCallId: string;
+  toolName: string;
+  state: "running" | "done" | "error";
+  input?: { id?: string; name?: string };
+}
+
+const latestCanvasState: {
+  frames: {
+    id: string;
+    label: string;
+    left: number;
+    top: number;
+    html: string;
+  }[];
+  theme: Record<string, string>;
+} = { frames: [], theme: {} };
 
 function getToolDisplayLabel(
   toolType: string,
@@ -26,58 +87,160 @@ function getToolDisplayLabel(
 ): string {
   const toTitle = (s: string) => s.replace(/\b\w/g, (c) => c.toUpperCase());
 
+  if (toolType === "classifyIntent")
+    return isCalled ? "Understood intent" : "Understanding intent…";
+  if (toolType === "planScreens")
+    return isCalled ? "Planned screens" : "Planning screens…";
+  if (toolType === "planStyle")
+    return isCalled ? "Defined visual style" : "Defining visual style…";
+
   if (toolType === "build_theme")
     return isCalled ? "Created theme" : "Creating theme…";
   if (toolType === "update_theme")
     return isCalled ? "Updated theme" : "Updating theme…";
 
-  if (toolType === "create_screen" && input?.name) {
-    return isCalled
-      ? `Created ${toTitle(input.name)} screen`
-      : `Creating ${toTitle(input.name)} screen…`;
+  if (toolType === "create_all_screens") {
+    return isCalled ? "Created all screens" : "Creating all screens…";
   }
-  if (toolType === "generate_image" && input?.id)
-    return isCalled
-      ? `Generated image ${input.id}`
-      : `Generating image ${input.id}…`;
-
   if (
     input?.id &&
     (toolType === "read_screen" ||
       toolType === "update_screen" ||
-      toolType === "edit_screen")
+      toolType === "edit_design" ||
+      toolType === "design_screen")
   ) {
     const frame = frames.find((f) => f.id === input.id);
     const label = frame?.label ?? "Screen";
     const name = toTitle(label);
     if (toolType === "read_screen")
       return isCalled ? `Read ${name} screen` : `Reading ${name} screen…`;
-    if (toolType === "edit_screen")
+    if (toolType === "edit_design")
       return isCalled ? `Edited ${name} screen` : `Editing ${name} screen…`;
     if (toolType === "update_screen")
       return isCalled ? `Updated ${name} screen` : `Updating ${name} screen…`;
+    if (toolType === "design_screen")
+      return isCalled ? `Designed ${name} screen` : `Designing ${name} screen…`;
   }
 
   const base = toTitle(toolType.replace(/_/g, " "));
   return isCalled ? base : `${base}…`;
 }
 
+type JsonValue =
+  | string
+  | number
+  | boolean
+  | null
+  | { [key: string]: JsonValue }
+  | JsonValue[];
+
 interface MessagePart {
   type: string;
-  id?: string;
   text?: string;
-  state?: string;
   toolCallId?: string;
-  input?: {
-    id?: string;
-    name?: string;
-    screen_html?: string;
-  };
-  data?: {
-    result?: unknown;
-    status?: string;
-    stepId?: string;
-  };
+  toolName?: string;
+  state?: string;
+  input?: Record<string, JsonValue>;
+}
+
+const TOOL_STEP_PART_TYPE = "tool-step";
+
+function toolStepsFromParts(
+  parts: MessagePart[] | undefined,
+): ToolStep[] | undefined {
+  if (!parts?.length) return undefined;
+
+  const steps: ToolStep[] = [];
+
+  for (const p of parts) {
+    if (p.type === TOOL_STEP_PART_TYPE) {
+      steps.push({
+        toolCallId: p.toolCallId ?? "",
+        toolName: p.toolName ?? "tool",
+        state: (p.state as ToolStep["state"]) ?? "done",
+        input: p.input as { id?: string; name?: string } | undefined,
+      });
+      continue;
+    }
+    if (p.type?.startsWith("tool-") || p.type === "dynamic-tool") {
+      const state =
+        p.state === "output-available"
+          ? ("done" as const)
+          : p.state === "output-error" || p.state === "input-error"
+            ? ("error" as const)
+            : ("running" as const);
+      const input: { id?: string; name?: string } = {};
+      const raw = p.input as { id?: string; name?: string } | undefined;
+      if (raw?.id) input.id = raw.id;
+      if (raw?.name) input.name = raw.name;
+      const toolName =
+        p.toolName ?? (p.type?.startsWith("tool-") ? p.type.slice(5) : "");
+      steps.push({
+        toolCallId: p.toolCallId ?? "",
+        toolName: toolName || "tool",
+        state,
+        input: Object.keys(input).length ? input : undefined,
+      });
+    }
+  }
+
+  return steps.length > 0 ? steps : undefined;
+}
+
+function addStepIfNew(prev: ToolStep[], step: ToolStep): ToolStep[] {
+  if (prev.some((s) => s.toolCallId === step.toolCallId)) return prev;
+  return [...prev, step];
+}
+
+function ToolStepChip({
+  step,
+  frames,
+}: {
+  step: ToolStep;
+  frames: { id: string; label: string }[];
+}) {
+  const label = getToolDisplayLabel(
+    step.toolName,
+    frames,
+    step.input,
+    step.state === "done",
+  );
+  const finished = step.state === "done";
+
+  return (
+    <div
+      className={`not-prose flex w-fit items-center gap-2 rounded-md border border-b-0 px-2 py-1 transition-all ${
+        finished
+          ? "border-b-secondary bg-input-bg"
+          : "border-b-strong bg-surface-sunken/80"
+      }`}
+    >
+      {finished ? (
+        CheckIcon
+      ) : (
+        <span className="inline-block size-3.5 shrink-0 animate-pulse rounded-full bg-t-tertiary/80" />
+      )}
+      <span
+        className={`font-mono text-[11px] uppercase tracking-wider ${
+          finished ? "text-t-secondary" : "text-t-primary"
+        }`}
+      >
+        {label}
+      </span>
+    </div>
+  );
+}
+
+function StreamingActivityIndicator() {
+  return (
+    <div className="flex w-full justify-start">
+      <div className="w-fit max-w-[85%] rounded-lg bg-muted/50 px-3 py-2.5 text-sm">
+        <span className="inline-block animate-pulse bg-gradient-to-r from-t-400 via-t-200 to-t-400 bg-[length:200%_100%] bg-clip-text text-transparent [animation-duration:1.5s] font-medium">
+          Working…
+        </span>
+      </div>
+    </div>
+  );
 }
 
 function ReasoningBlock({
@@ -89,39 +252,35 @@ function ReasoningBlock({
   isStreaming?: boolean;
   isComplete?: boolean;
 }) {
-  const [expanded, setExpanded] = useState(() => !!isStreaming && !isComplete);
-
-  useEffect(() => {
-    if (isComplete) {
-      setExpanded(false);
-    }
-  }, [isComplete]);
+  const defaultExpanded = !!isStreaming && !isComplete;
+  const [userExpanded, setUserExpanded] = useState<boolean | null>(null);
+  const expanded = userExpanded !== null ? userExpanded : defaultExpanded;
 
   return (
     <div className="not-prose flex w-full flex-col transition-all">
       <button
         type="button"
-        onClick={() => setExpanded((e) => !e)}
+        onClick={() => setUserExpanded(!expanded)}
         className="inline-flex w-full items-center justify-between gap-1 px-0 py-1 text-left"
       >
         <div className="flex items-center gap-1.5">
           <Brain
-            className="size-3.5 shrink-0 text-white/90"
+            className="size-3.5 shrink-0 text-t-secondary"
             strokeWidth={1.5}
           />
-          <span className="font-mono text-[11px] text-white/90 uppercase tracking-wider">
+          <span className="font-mono text-[11px] text-t-secondary uppercase tracking-wider">
             {expanded ? "Hide thinking" : "Thinking"}
           </span>
         </div>
         <ChevronDown
-          className={`size-3.5 shrink-0 text-white/90 transition-transform ${
+          className={`size-3.5 shrink-0 text-t-secondary transition-transform ${
             expanded ? "rotate-180" : ""
           }`}
           strokeWidth={2}
         />
       </button>
       {expanded && text && (
-        <div className="chat-markdown py-1.5 text-sm text-white/60 font-sans">
+        <div className="chat-markdown py-1.5 text-sm text-t-secondary font-sans">
           <ReactMarkdown components={markdownComponents}>{text}</ReactMarkdown>
         </div>
       )}
@@ -129,165 +288,105 @@ function ReasoningBlock({
   );
 }
 
+type StreamOrderItem =
+  | { kind: "tool"; toolCallId: string }
+  | { kind: "reasoning"; text: string }
+  | { kind: "text"; text: string };
+
 function AssistantMessageContent({
   parts,
   frames,
   isStreaming,
+  toolSteps = [],
 }: {
   parts: MessagePart[];
   frames: { id: string; label: string }[];
   isStreaming?: boolean;
+  toolSteps?: ToolStep[];
 }) {
-  const blocks: Array<
-    | { kind: "text"; text: string }
-    | { kind: "reasoning"; text: string }
-    | { kind: "step-result"; part: MessagePart }
-    | { kind: "step-start" }
-    | { kind: "tools"; tools: MessagePart[] }
-  > = [];
-  const seenStepIds = new Set<string>();
-  let i = 0;
-  while (i < parts.length) {
-    const part = parts[i];
+  const stepByCallId = new Map(
+    (toolSteps ?? []).map((s) => [s.toolCallId, s] as const),
+  );
+  const seenToolIds = new Set<string>();
+  const ordered: StreamOrderItem[] = [];
+
+  for (const part of parts) {
+    if (part.type === "step-start" || part.type?.startsWith("data-")) continue;
     if (part.type === "text") {
-      blocks.push({ kind: "text", text: part.text ?? "" });
-      i++;
+      ordered.push({ kind: "text", text: part.text ?? "" });
     } else if (part.type === "reasoning") {
-      blocks.push({ kind: "reasoning", text: part.text ?? "" });
-      i++;
-    } else if (part.type === "data-step-result") {
-      const rawId =
-        (part.data as { stepId?: string })?.stepId ?? part.id ?? `step-${i}`;
-      const stepId = String(rawId).toLowerCase().replace(/\s+/g, "");
-      if (seenStepIds.has(stepId)) {
-        i++;
-        continue;
-      }
-      seenStepIds.add(stepId);
-      blocks.push({ kind: "step-result", part });
-      i++;
-    } else if (part.type === "data-step-start") {
-      blocks.push({ kind: "step-start" });
-      i++;
-    } else if (part.type.startsWith("tool-")) {
-      const toolGroup: MessagePart[] = [];
-      while (i < parts.length && parts[i].type.startsWith("tool-")) {
-        toolGroup.push(parts[i]);
-        i++;
-      }
-      blocks.push({ kind: "tools", tools: toolGroup });
-    } else {
-      i++;
+      ordered.push({ kind: "reasoning", text: part.text ?? "" });
+    } else if (
+      (part.type?.startsWith("tool-") || part.type === "dynamic-tool") &&
+      part.toolCallId &&
+      !seenToolIds.has(part.toolCallId)
+    ) {
+      seenToolIds.add(part.toolCallId);
+      ordered.push({ kind: "tool", toolCallId: part.toolCallId });
     }
   }
 
   return (
     <div className="space-y-3">
-      {blocks.map((block, bi) =>
-        block.kind === "text" ? (
-          block.text ? (
-            <div key={bi} className="chat-markdown">
-              <ReactMarkdown components={markdownComponents}>
-                {block.text}
-              </ReactMarkdown>
+      {ordered.map((item, i) => {
+        if (item.kind === "tool") {
+          const step = stepByCallId.get(item.toolCallId);
+          if (!step) return null;
+          return (
+            <div
+              key={`${item.toolCallId}-${i}`}
+              className="flex flex-col gap-2 shrink-0"
+            >
+              <ToolStepChip step={step} frames={frames} />
             </div>
-          ) : null
-        ) : block.kind === "reasoning" ? (
-          <ReasoningBlock
-            key={bi}
-            text={block.text}
-            isStreaming={isStreaming}
-            isComplete={!isStreaming || bi < blocks.length - 1}
-          />
-        ) : block.kind === "step-result" ? (
-          <div
-            key={bi}
-            className="not-prose flex w-fit flex-col rounded-md border border-emerald-500/30 bg-emerald-500/10 px-2 py-1"
-          >
-            <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-emerald-400">
-              {block.part.data?.stepId?.replace(/([A-Z])/g, " $1").trim() ??
-                "Step"}
-            </span>
+          );
+        }
+        if (item.kind === "reasoning") {
+          return (
+            <ReasoningBlock
+              key={`reasoning-${i}`}
+              text={item.text}
+              isStreaming={isStreaming}
+              isComplete={
+                !isStreaming ||
+                ordered.slice(i + 1).some((x) => x.kind === "reasoning")
+              }
+            />
+          );
+        }
+        return item.text ? (
+          <div key={`text-${i}`} className="chat-markdown">
+            <ReactMarkdown components={markdownComponents}>
+              {item.text}
+            </ReactMarkdown>
           </div>
-        ) : block.kind === "step-start" ? (
-          <div key={bi} className="h-px w-full shrink-0 bg-border/40" />
-        ) : (
-          <div key={bi} className="flex flex-wrap gap-2">
-            {block.tools.map((tool, ti) => {
-              const toolType = tool.type.replace("tool-", "");
-              const isCalled = tool.state === "output-available";
-              const isError = tool.state === "output-error";
-              const isCalling =
-                !isCalled &&
-                !isError &&
-                (tool.state === "input-streaming" ||
-                  tool.state === "input-available" ||
-                  !tool.state);
-              const label = getToolDisplayLabel(
-                toolType,
-                frames,
-                tool.input,
-                isCalled || isError,
-              );
-              return (
-                <div
-                  key={ti}
-                  className={`not-prose flex w-fit flex-col rounded-md border transition-all ${
-                    isError
-                      ? "border-red-500/40 bg-red-500/10"
-                      : isCalled
-                        ? "border-emerald-500/40 bg-emerald-500/10"
-                        : "border-[#8A87F8]/40 bg-[#8A87F8]/10"
-                  }`}
-                >
-                  <button
-                    type="button"
-                    className="inline-flex w-full items-center justify-between gap-2 px-2 py-1"
-                  >
-                    <div className="flex items-center gap-2">
-                      {isError ? (
-                        <CircleX
-                          className="size-3.5 shrink-0 text-red-400"
-                          strokeWidth={2}
-                        />
-                      ) : isCalled ? (
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          width="1em"
-                          height="1em"
-                          fill="currentColor"
-                          viewBox="0 0 256 256"
-                          className="size-3.5 shrink-0 text-emerald-400"
-                        >
-                          <path d="M229.66,77.66l-128,128a8,8,0,0,1-11.32,0l-56-56a8,8,0,0,1,11.32-11.32L96,188.69,218.34,66.34a8,8,0,0,1,11.32,11.32Z" />
-                        </svg>
-                      ) : isCalling ? (
-                        <span className="inline-block size-3.5 shrink-0 animate-pulse rounded-full bg-[#8A87F8]/80" />
-                      ) : (
-                        <span className="inline-block size-3.5 shrink-0 rounded-full bg-white/40" />
-                      )}
-                      <span
-                        className={`font-mono text-[11px] uppercase tracking-wider ${
-                          isError
-                            ? "text-red-300"
-                            : isCalled
-                              ? "text-emerald-300"
-                              : "text-white/90"
-                        }`}
-                      >
-                        {label}
-                      </span>
-                    </div>
-                  </button>
-                </div>
-              );
-            })}
-          </div>
-        ),
-      )}
+        ) : null;
+      })}
     </div>
   );
 }
+
+function getUserMessageText(msg: {
+  content?: string;
+  parts?: Array<{ type: string; text?: string }>;
+}): string | null {
+  if (typeof msg.content === "string") return msg.content;
+  const textPart = msg.parts?.find((p) => p.type === "text" && p.text);
+  return textPart?.text ?? null;
+}
+
+const CheckIcon = (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width="1em"
+    height="1em"
+    fill="currentColor"
+    viewBox="0 0 256 256"
+    className="size-3.5 shrink-0 text-t-tertiary"
+  >
+    <path d="M229.66,77.66l-128,128a8,8,0,0,1-11.32,0l-56-56a8,8,0,0,1,11.32-11.32L96,188.69,218.34,66.34a8,8,0,0,1,11.32,11.32Z" />
+  </svg>
+);
 
 const markdownComponents: React.ComponentProps<
   typeof ReactMarkdown
@@ -329,7 +428,43 @@ const MAX_PANEL_WIDTH = 600;
 const DEFAULT_PANEL_WIDTH = 432;
 const RAIL_OFFSET = 70;
 const RIGHT_MARGIN = 16;
-const FRAME_SPACING = 420;
+
+function ChatHistoryShimmer() {
+  return (
+    <div className="flex flex-col gap-4 p-2">
+      <div className="flex justify-end">
+        <div className="h-8 w-[60%] animate-pulse rounded-lg bg-input-bg" />
+      </div>
+      <div className="flex flex-col gap-2">
+        <div className="h-6 w-[45%] animate-pulse rounded-lg bg-input-bg" />
+        <div
+          className="h-6 w-[70%] animate-pulse rounded-lg bg-input-bg"
+          style={{ animationDelay: "75ms" }}
+        />
+        <div
+          className="h-6 w-[55%] animate-pulse rounded-lg bg-input-bg"
+          style={{ animationDelay: "150ms" }}
+        />
+      </div>
+      <div className="flex justify-end">
+        <div
+          className="h-8 w-[50%] animate-pulse rounded-lg bg-input-bg"
+          style={{ animationDelay: "200ms" }}
+        />
+      </div>
+      <div className="flex flex-col gap-2">
+        <div
+          className="h-6 w-[65%] animate-pulse rounded-lg bg-input-bg"
+          style={{ animationDelay: "250ms" }}
+        />
+        <div
+          className="h-6 w-[40%] animate-pulse rounded-lg bg-input-bg"
+          style={{ animationDelay: "325ms" }}
+        />
+      </div>
+    </div>
+  );
+}
 
 interface ChatPanelProps {
   isVisible: boolean;
@@ -343,11 +478,31 @@ export function ChatPanel({
   frameName = "Screen",
 }: ChatPanelProps) {
   const dispatch = useAppDispatch();
+  cpDispatchRef = dispatch;
+  initCursor(dispatch);
   const [panelWidth, setPanelWidth] = useState(DEFAULT_PANEL_WIDTH);
   const [isResizing, setIsResizing] = useState(false);
   const [inputValue, setInputValue] = useState("");
+  const agentCount = 1;
+  const orchestrationId = null as string | null;
+  const agents: never[] = [];
+  const activeAgentId = null as string | null;
+  const isMultiAgent = orchestrationId !== null && agents.length > 0;
+  const [_multiAgentPlanContext, setMultiAgentPlanContext] = useState("");
+  const [showAgentDropdown, setShowAgentDropdown] = useState(false);
+  const [showHeaderDropdown, setShowHeaderDropdown] = useState(false);
+  const agentDropdownRef = useRef<HTMLDivElement>(null);
+  const headerDropdownRef = useRef<HTMLDivElement>(null);
+  const [isLoadingHistory, setIsLoadingHistory] = useState(true);
+  const [toolSteps, _setToolSteps] = useState<ToolStep[]>([]);
   const chatThreadRef = useRef<HTMLDivElement>(null);
+  const { user } = useAuth();
+  const chatUserId = user?.uid ?? ANONYMOUS_USER_ID;
   const selectedFrameIds = useAppSelector((s) => s.canvas.selectedFrameIds);
+  const projectIdFromStore = useAppSelector((s) => s.project.projectId);
+  const projectId = projectIdFromStore ?? DEFAULT_PROJECT_ID;
+  const frameSessionId =
+    selectedFrameIds.length === 1 ? selectedFrameIds[0] : CANVAS_CHAT_FRAME_ID;
   const frames = useAppSelector((s) => s.canvas.frames);
   const theme = useAppSelector((s) => s.canvas.theme);
   const activeFrameLabel =
@@ -356,171 +511,542 @@ export function ChatPanel({
       : frameName;
 
   const stateRef = useRef({ frames, theme });
-  stateRef.current = { frames, theme };
-  const { data: projectData, loaded: projectLoaded } = useProject();
-  const hasHydratedFromProject = useRef(false);
-
-  const handleFrameAction = useCallback(
-    (data: {
-      action: string;
-      payload?: {
-        id?: string;
-        label?: string;
-        left?: number;
-        top?: number;
-        html?: string;
-        updates?: Record<string, string>;
-        theme?: Record<string, string>;
-      };
-    }) => {
-      if (!data?.action) return;
-      switch (data.action) {
-        case "add":
-          if (data.payload?.id && data.payload?.label !== undefined) {
-            dispatch(
-              addFrameWithId({
-                id: data.payload.id,
-                label: data.payload.label,
-                left: data.payload.left ?? 0,
-                top: data.payload.top ?? 0,
-                html: data.payload.html ?? "",
-              }),
-            );
-            if (data.payload.html && data.payload.html.length > 0) {
-              fetch("/api/frames", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                  frameId: data.payload.id,
-                  html: data.payload.html,
-                  label: data.payload.label,
-                  left: data.payload.left,
-                  top: data.payload.top,
-                }),
-              }).catch(() => {});
-            }
-          }
-          break;
-        case "updateHtml":
-          if (data.payload?.id && data.payload?.html !== undefined) {
-            dispatch(
-              updateFrameHtml({ id: data.payload.id, html: data.payload.html }),
-            );
-            if (data.payload.html.length > 0) {
-              const frame = stateRef.current.frames.find(
-                (f) => f.id === data.payload?.id,
-              );
-              fetch("/api/frames", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                  frameId: data.payload.id,
-                  html: data.payload.html,
-                  label: frame?.label,
-                  left: frame?.left,
-                  top: frame?.top,
-                }),
-              }).catch(() => {});
-            }
-          }
-          break;
-        case "updateFrame":
-          if (data.payload?.id) {
-            const changes: { label?: string; html?: string } = {};
-            if (data.payload.label !== undefined)
-              changes.label = data.payload.label;
-            if (data.payload.html !== undefined)
-              changes.html = data.payload.html;
-            if (Object.keys(changes).length > 0) {
-              dispatch(updateFrame({ id: data.payload.id, changes }));
-              if (
-                data.payload.html !== undefined &&
-                data.payload.html.length > 0
-              ) {
-                const frame = stateRef.current.frames.find(
-                  (f) => f.id === data.payload?.id,
-                );
-                fetch("/api/frames", {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({
-                    frameId: data.payload.id,
-                    html: data.payload.html,
-                    label: frame?.label ?? data.payload.label,
-                    left: frame?.left ?? data.payload.left,
-                    top: frame?.top ?? data.payload.top,
-                  }),
-                }).catch(() => {});
-              }
-            }
-          }
-          break;
-        case "setTheme":
-          if (data.payload?.updates) {
-            dispatch(setTheme(data.payload.updates));
-          }
-          break;
-        case "replaceTheme":
-          if (data.payload?.theme) {
-            dispatch(replaceTheme(data.payload.theme));
-          }
-          break;
-      }
-    },
-    [dispatch],
+  const toolStepsRef = useRef<ToolStep[]>([]);
+  const [lastMessageToolSteps, setLastMessageToolSteps] = useState<ToolStep[]>(
+    [],
   );
 
-  const transportRef = useRef<DefaultChatTransport<UIMessage> | null>(null);
-  if (!transportRef.current) {
-    transportRef.current = new DefaultChatTransport({
-      api: "/api/chat",
-      prepareSendMessagesRequest: (options) => ({
-        body: {
-          ...options.body,
-          messages: options.messages,
-          id: options.id,
-          trigger: options.trigger,
-          messageId: options.messageId,
-          frames: stateRef.current.frames,
-          theme: stateRef.current.theme,
-        },
+  const setToolSteps = useCallback(
+    (updater: ToolStep[] | ((prev: ToolStep[]) => ToolStep[])) => {
+      _setToolSteps((prev) => {
+        const next = typeof updater === "function" ? updater(prev) : updater;
+        toolStepsRef.current = next;
+        return next;
+      });
+    },
+    [],
+  );
+
+  useEffect(() => {
+    stateRef.current = { frames, theme };
+    latestCanvasState.frames = frames;
+    latestCanvasState.theme = theme;
+  }, [frames, theme]);
+
+  const chatSessionContextRef = useRef({
+    projectId,
+    frameId: frameSessionId,
+    userId: chatUserId,
+  });
+  chatSessionContextRef.current = {
+    projectId,
+    frameId: frameSessionId,
+    userId: chatUserId,
+  };
+
+  const postChatSession = useCallback((messagesPayload: UIMessage[]) => {
+    const {
+      projectId: pid,
+      frameId: fid,
+      userId: uid,
+    } = chatSessionContextRef.current;
+    return fetch("/api/chat/sessions", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        projectId: pid,
+        frameId: fid,
+        userId: uid,
+        isActive: true,
+        messages: messagesPayload,
       }),
     });
-  }
-  const transport = transportRef.current;
+  }, []);
+
+  const agentCountRef = useRef(agentCount);
+  useEffect(() => {
+    agentCountRef.current = agentCount;
+  }, [agentCount]);
+
+  const [transport] = useState(
+    () =>
+      new DefaultChatTransport({
+        api: "/api/chat",
+        prepareSendMessagesRequest: (options) => ({
+          body: {
+            ...options.body,
+            messages: options.messages,
+            id: options.id,
+            trigger: options.trigger,
+            messageId: options.messageId,
+            frames: latestCanvasState.frames,
+            theme: latestCanvasState.theme,
+            agentCount: agentCountRef.current,
+          },
+        }),
+      }),
+  );
 
   const { messages, setMessages, sendMessage, status } = useChat({
     transport,
     onData: (dataPart) => {
-      if (dataPart.type === "data-frame-action" && dataPart.data) {
-        handleFrameAction(
-          dataPart.data as Parameters<typeof handleFrameAction>[0],
+      interface DataPartEvent {
+        type: string;
+        toolCallId?: string;
+        toolName?: string;
+        input?: Record<string, JsonValue>;
+        output?: JsonValue;
+        data?: {
+          toolCallId: string;
+          toolName: string;
+          frame?: {
+            id: string;
+            label?: string;
+            left?: number;
+            top?: number;
+            html?: string;
+          };
+          theme?: Record<string, string>;
+          themeUpdates?: Record<string, string>;
+        };
+      }
+      const ev = dataPart as DataPartEvent;
+
+      if (ev.type === "data-spawn-agents" && ev.data) {
+        const spawnData = ev.data as unknown as {
+          orchestrationId?: string;
+          agents?: Array<{
+            id: string;
+            subTask: string;
+            assignedScreens: string[];
+            assignedFrameIds?: string[];
+            screenPositions?: Array<{ left: number; top: number }>;
+          }>;
+          planContext?: string;
+          theme?: Record<string, string>;
+        };
+        if (spawnData.orchestrationId && spawnData.agents) {
+          setMultiAgentPlanContext(spawnData.planContext ?? "");
+          if (spawnData.theme && Object.keys(spawnData.theme).length > 0) {
+            dispatch(replaceTheme(spawnData.theme));
+          }
+          return;
+        }
+      }
+
+      const toolCallId = ev.toolCallId ?? ev.data?.toolCallId;
+      const toolName = ev.toolName ?? ev.data?.toolName;
+
+      if (ev.type === "tool-input-start" && toolCallId && toolName) {
+        setToolSteps((prev) =>
+          addStepIfNew(prev, { toolCallId, toolName, state: "running" }),
         );
+        const label = getToolDisplayLabel(
+          toolName,
+          stateRef.current.frames,
+          undefined,
+          false,
+        );
+        dispatch(pushAgentLog({ type: "status", text: label }));
+        if (toolName === "design_screen" || toolName === "read_screen") {
+          cursor.working(cursor.MAIN);
+        }
+        return;
+      }
+      if (ev.type === "tool-output-available" && toolCallId) {
+        cpFlushHtmlNow();
+        const output = ev.output as
+          | {
+              frame?: {
+                id: string;
+                label?: string;
+                left?: number;
+                top?: number;
+                html?: string;
+              };
+              theme?: Record<string, string>;
+              themeUpdates?: Record<string, string>;
+              orchestrationId?: string;
+              agents?: Array<{
+                id: string;
+                subTask: string;
+                assignedScreens: string[];
+                screenPositions?: Array<{ left: number; top: number }>;
+              }>;
+              planContext?: string;
+            }
+          | undefined;
+        setToolSteps((prev) =>
+          prev.map((s) =>
+            s.toolCallId === toolCallId ? { ...s, state: "done" as const } : s,
+          ),
+        );
+        if (output?.orchestrationId && Array.isArray(output?.agents)) {
+          setMultiAgentPlanContext(output.planContext ?? "");
+          if (output.theme && Object.keys(output.theme).length > 0) {
+            dispatch(replaceTheme(output.theme));
+          }
+          return;
+        }
+        if (output?.frame) {
+          const f = output.frame;
+          const isCreate =
+            f.id &&
+            (f.left !== undefined || f.top !== undefined) &&
+            f.html !== undefined;
+          if (isCreate) {
+            dispatch(
+              addFrameWithId({
+                id: f.id,
+                label: f.label ?? "",
+                left: f.left ?? 0,
+                top: f.top ?? 0,
+                html: f.html ?? "",
+              }),
+            );
+            dispatch(
+              updateFrame({
+                id: f.id,
+                changes: { label: f.label, html: f.html },
+              }),
+            );
+            if (f.html && f.html.length > 0) {
+              fetch("/api/frames", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  frameId: f.id,
+                  html: f.html,
+                  label: f.label,
+                  left: f.left,
+                  top: f.top,
+                }),
+              }).catch(() => {});
+            }
+          } else if (f.id && f.html !== undefined) {
+            dispatch(updateFrameHtml({ id: f.id, html: f.html }));
+            const frame = stateRef.current.frames.find((x) => x.id === f.id);
+            fetch("/api/frames", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                frameId: f.id,
+                html: f.html,
+                label: frame?.label,
+                left: frame?.left,
+                top: frame?.top,
+              }),
+            }).catch(() => {});
+          }
+        }
+        if (output?.themeUpdates) {
+          dispatch(setTheme(output.themeUpdates));
+        }
+        if (output?.theme) {
+          dispatch(replaceTheme(output.theme));
+        }
+        const finishedStep = toolStepsRef.current.find(
+          (s) => s.toolCallId === toolCallId,
+        );
+        if (
+          finishedStep?.toolName === "read_screen" &&
+          finishedStep?.input?.id
+        ) {
+          cursor.scan(cursor.MAIN, finishedStep.input.id);
+        } else if (finishedStep?.toolName !== "read_screen") {
+          cursor.hide(cursor.MAIN);
+        }
+        return;
+      }
+      if (ev.type === "tool-input-available" && ev.toolCallId && ev.input) {
+        const input = ev.input as { id?: string; name?: string };
+        const step = toolStepsRef.current.find(
+          (s) => s.toolCallId === ev.toolCallId,
+        );
+        if (input.id && step) {
+          if (step.toolName === "design_screen") {
+            cursor.design(cursor.MAIN, input.id);
+          } else if (step.toolName === "read_screen") {
+            cursor.scan(cursor.MAIN, input.id);
+          } else if (step.toolName === "edit_design") {
+            cursor.show(cursor.MAIN, input.id);
+          }
+        }
+        setToolSteps((prev) =>
+          prev.map((s) =>
+            s.toolCallId === ev.toolCallId
+              ? { ...s, input: { id: input.id, name: input.name } }
+              : s,
+          ),
+        );
+        return;
+      }
+
+      if (!ev.data) return;
+      const { data } = ev;
+
+      if (ev.type === "data-tool-call-start") {
+        setToolSteps((prev) =>
+          addStepIfNew(prev, {
+            toolCallId: data.toolCallId,
+            toolName: data.toolName,
+            state: "running",
+          }),
+        );
+        if (data.toolName === "read_screen") {
+          cursor.working(cursor.MAIN);
+        }
+        return;
+      }
+
+      if (ev.type === "data-tool-call-delta") {
+        const dataWithArgs = data as { args?: { id?: string }; id?: string };
+        if (
+          data.toolName === "read_screen" &&
+          (dataWithArgs.id ?? dataWithArgs.args?.id)
+        ) {
+          const frameId = dataWithArgs.id ?? dataWithArgs.args?.id ?? "";
+          cursor.scan(cursor.MAIN, frameId);
+          setToolSteps((prev) =>
+            prev.map((s) =>
+              s.toolCallId === data.toolCallId
+                ? { ...s, input: { ...s.input, id: frameId } }
+                : s,
+            ),
+          );
+        } else if (data.toolName === "design_screen" && data.frame) {
+          if (data.frame.html !== undefined) {
+            cpEnqueueHtml(data.frame.id, data.frame.html);
+          }
+          if (data.frame.label !== undefined) {
+            dispatch(
+              updateFrame({
+                id: data.frame.id,
+                changes: { label: data.frame.label },
+              }),
+            );
+            setToolSteps((prev) =>
+              prev.map((s) =>
+                s.toolCallId === data.toolCallId
+                  ? { ...s, input: { ...s.input, name: data.frame!.label } }
+                  : s,
+              ),
+            );
+          }
+        } else if (
+          (data.toolName === "update_screen" ||
+            data.toolName === "design_screen") &&
+          data.frame?.html !== undefined
+        ) {
+          cpEnqueueHtml(data.frame.id, data.frame.html);
+          if (data.toolName === "design_screen" && data.frame.id) {
+            cursor.design(cursor.MAIN, data.frame.id);
+          }
+        }
+        return;
+      }
+
+      if (ev.type === "data-tool-call-end") {
+        cpFlushHtmlNow();
+        const endInput: { id?: string; name?: string } = {};
+        if (data.frame?.id) endInput.id = data.frame.id;
+        if (data.frame?.label) endInput.name = data.frame.label;
+        if (data.toolName === "read_screen") {
+          const dataWithArgs = data as { args?: { id?: string }; id?: string };
+          const readScreenId = dataWithArgs.args?.id ?? dataWithArgs.id;
+          if (readScreenId) endInput.id = readScreenId;
+        }
+        const doneLabel = getToolDisplayLabel(
+          data.toolName,
+          stateRef.current.frames,
+          endInput,
+          true,
+        );
+        dispatch(pushAgentLog({ type: "agent", text: doneLabel }));
+        setToolSteps((prev) =>
+          prev.map((s) =>
+            s.toolCallId === data.toolCallId
+              ? {
+                  ...s,
+                  state: "done" as const,
+                  input: { ...s.input, ...endInput },
+                }
+              : s,
+          ),
+        );
+        if (
+          (data.toolName === "create_screen" ||
+            data.toolName === "create_all_screens") &&
+          data.frame
+        ) {
+          dispatch(
+            addFrameWithId({
+              id: data.frame.id,
+              label: data.frame.label ?? "",
+              left: data.frame.left ?? 0,
+              top: data.frame.top ?? 0,
+              html: data.frame.html ?? "",
+            }),
+          );
+          dispatch(
+            updateFrame({
+              id: data.frame.id,
+              changes: {
+                label: data.frame.label,
+                html: data.frame.html,
+                ...(data.frame.left !== undefined && { left: data.frame.left }),
+                ...(data.frame.top !== undefined && { top: data.frame.top }),
+              },
+            }),
+          );
+          if (data.frame.html && data.frame.html.length > 0) {
+            fetch("/api/frames", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                frameId: data.frame.id,
+                html: data.frame.html,
+                label: data.frame.label,
+                left: data.frame.left,
+                top: data.frame.top,
+              }),
+            }).catch(() => {});
+          }
+        } else if (
+          (data.toolName === "update_screen" ||
+            data.toolName === "edit_design" ||
+            data.toolName === "design_screen") &&
+          data.frame?.html !== undefined
+        ) {
+          dispatch(
+            updateFrameHtml({ id: data.frame.id, html: data.frame.html }),
+          );
+          const frame = stateRef.current.frames.find(
+            (f) => f.id === data.frame?.id,
+          );
+          fetch("/api/frames", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              frameId: data.frame.id,
+              html: data.frame.html,
+              label: frame?.label,
+              left: frame?.left,
+              top: frame?.top,
+            }),
+          }).catch(() => {});
+        } else if (data.toolName === "update_theme" && data.themeUpdates) {
+          dispatch(setTheme(data.themeUpdates));
+        } else if (data.toolName === "build_theme" && data.theme) {
+          dispatch(replaceTheme(data.theme));
+        }
+        if (data.toolName === "read_screen") {
+          const frameId =
+            (data as { args?: { id?: string }; id?: string }).args?.id ??
+            (data as { id?: string }).id;
+          if (frameId) {
+            cursor.scan(cursor.MAIN, frameId);
+          }
+        } else {
+          cursor.hide(cursor.MAIN);
+        }
+        return;
       }
     },
     onFinish: ({ messages: finishedMessages, isAbort, isError }) => {
+      if (!isAbort && !isError) {
+        const last = finishedMessages[finishedMessages.length - 1];
+        const textContent =
+          last?.role === "assistant"
+            ? (
+                (last as { parts?: { type: string; text?: string }[] }).parts ??
+                []
+              )
+                .filter((p) => p.type === "text" && p.text)
+                .map((p) => p.text)
+                .join(" ")
+                .trim()
+            : "";
+        if (textContent) {
+          dispatch(
+            pushAgentLog({ type: "agent", text: textContent.slice(0, 200) }),
+          );
+        }
+      }
+      const stepsToPersist = toolStepsRef.current;
+      setToolSteps([]);
+      if (
+        !isAbort &&
+        !isError &&
+        finishedMessages.length > 0 &&
+        stepsToPersist.length > 0
+      ) {
+        setLastMessageToolSteps([...stepsToPersist]);
+        const lastIdx = finishedMessages.length - 1;
+        const lastMsg = finishedMessages[lastIdx];
+        if (lastMsg?.role === "assistant") {
+          const stepParts = stepsToPersist.map((s) => ({
+            type: TOOL_STEP_PART_TYPE,
+            toolCallId: s.toolCallId,
+            toolName: s.toolName,
+            state: s.state,
+            input: s.input,
+          }));
+          const existingParts = (
+            (lastMsg as { parts?: MessagePart[] }).parts ?? []
+          ).filter((p) => p.type !== TOOL_STEP_PART_TYPE);
+          const updated = [...finishedMessages];
+          updated[lastIdx] = {
+            ...lastMsg,
+            parts: [...stepParts, ...existingParts],
+          } as typeof lastMsg;
+          setMessages(updated);
+          void postChatSession(updated).catch(() => {});
+          return;
+        }
+      } else {
+        setLastMessageToolSteps([]);
+      }
       if (!isAbort && !isError && finishedMessages.length > 0) {
-        fetch("/api/chat/sessions", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ messages: finishedMessages }),
-        }).catch(() => {});
+        void postChatSession(finishedMessages).catch(() => {});
       }
     },
   });
 
   useEffect(() => {
-    if (
-      !hasHydratedFromProject.current &&
-      projectLoaded &&
-      projectData?.messages &&
-      Array.isArray(projectData.messages) &&
-      projectData.messages.length > 0
-    ) {
-      hasHydratedFromProject.current = true;
-      setMessages(projectData.messages as UIMessage[]);
-    }
-  }, [projectLoaded, projectData?.messages, setMessages]);
+    setIsLoadingHistory(true);
+    const hydrateKey = `${projectId}:${frameSessionId}:${chatUserId}`;
+    const q = new URLSearchParams({
+      projectId,
+      frameId: frameSessionId,
+      userId: chatUserId,
+    });
+    fetch(`/api/chat/sessions?${q.toString()}`)
+      .then((res) => res.json())
+      .then((data: { messages?: UIMessage[] }) => {
+        const nowKey = `${chatSessionContextRef.current.projectId}:${chatSessionContextRef.current.frameId}:${chatSessionContextRef.current.userId}`;
+        if (nowKey !== hydrateKey) return;
+        if (data?.messages && data.messages.length > 0) {
+          setMessages(data.messages);
+        } else {
+          setMessages([]);
+        }
+      })
+      .catch(() => {})
+      .finally(() => {
+        const nowKey = `${chatSessionContextRef.current.projectId}:${chatSessionContextRef.current.frameId}:${chatSessionContextRef.current.userId}`;
+        if (nowKey === hydrateKey) setIsLoadingHistory(false);
+      });
+  }, [setMessages, projectId, frameSessionId, chatUserId]);
+
+  useEffect(() => {
+    if (isLoadingHistory) return;
+    emitChatMessagesSnapshot(messages);
+  }, [messages, isLoadingHistory]);
+
+  useEffect(() => {
+    emitActivityHistoryLoading(isLoadingHistory);
+  }, [isLoadingHistory]);
 
   const persistTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
@@ -528,16 +1054,12 @@ export function ChatPanel({
     if (persistTimeoutRef.current) clearTimeout(persistTimeoutRef.current);
     persistTimeoutRef.current = setTimeout(() => {
       persistTimeoutRef.current = null;
-      fetch("/api/chat/sessions", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages }),
-      }).catch(() => {});
+      void postChatSession(messages).catch(() => {});
     }, 1500);
     return () => {
       if (persistTimeoutRef.current) clearTimeout(persistTimeoutRef.current);
     };
-  }, [messages, status]);
+  }, [messages, status, postChatSession]);
 
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
@@ -579,28 +1101,92 @@ export function ChatPanel({
     (e?: React.FormEvent) => {
       e?.preventDefault();
       if (!inputValue.trim()) return;
-      sendMessage({ text: inputValue.trim() });
+      const prompt = inputValue.trim();
       setInputValue("");
+
+      setToolSteps([]);
+      setLastMessageToolSteps([]);
+      dispatch(pushAgentLog({ type: "user", text: prompt }));
+      sendMessage({ text: prompt });
     },
-    [inputValue, sendMessage],
+    [inputValue, sendMessage, setToolSteps, dispatch],
   );
+
+  // Register send function for the bottom input box
+  useEffect(() => {
+    const bridgeSend = (text: string) => {
+      setToolSteps([]);
+      setLastMessageToolSteps([]);
+      dispatch(pushAgentLog({ type: "user", text }));
+      sendMessage({ text });
+    };
+    registerChatSend(bridgeSend);
+    return () => unregisterChatSend();
+  }, [sendMessage, dispatch, setToolSteps]);
 
   useEffect(() => {
     chatThreadRef.current?.scrollTo({
       top: chatThreadRef.current.scrollHeight,
       behavior: "smooth",
     });
-  }, [messages]);
+  }, [messages, toolSteps]);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (
+        agentDropdownRef.current &&
+        !agentDropdownRef.current.contains(e.target as Node)
+      )
+        setShowAgentDropdown(false);
+      if (
+        headerDropdownRef.current &&
+        !headerDropdownRef.current.contains(e.target as Node)
+      )
+        setShowHeaderDropdown(false);
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   if (!isVisible) return null;
 
+  const isActivelyStreaming = status === "submitted" || status === "streaming";
+
+  const lastMsg = messages[messages.length - 1];
+  const lastMsgIsAssistant = lastMsg?.role === "assistant";
+
+  const assistantBubbleAlreadyVisible =
+    isActivelyStreaming && lastMsgIsAssistant;
+
+  const showPendingBubble =
+    isActivelyStreaming &&
+    toolSteps.length > 0 &&
+    !assistantBubbleAlreadyVisible;
+
+  const lastMsgHasContent =
+    lastMsgIsAssistant &&
+    ((lastMsg.parts ?? []).some(
+      (p) =>
+        (p as MessagePart).type === "text" ||
+        (p as MessagePart).type === "reasoning" ||
+        (p as MessagePart).type?.startsWith?.("tool-") ||
+        (p as MessagePart).type === "dynamic-tool",
+    ) ||
+      (typeof (lastMsg as { content?: string }).content === "string" &&
+        ((lastMsg as { content?: string }).content ?? "").trim().length > 0));
+
+  const showStreamingIndicator =
+    isActivelyStreaming &&
+    toolSteps.length === 0 &&
+    !showPendingBubble &&
+    !lastMsgHasContent;
+
   return (
     <div
-      className="chat-panel fixed top-[8%] bottom-[10%] z-30 flex flex-col rounded-xl shadow-lg"
+      className="chat-panel fixed top-[8%] bottom-[10%] z-30 flex flex-col rounded-xl border border-b-0 border-b-primary bg-surface-elevated shadow-lg"
       style={{
         right: `${RAIL_OFFSET + RIGHT_MARGIN}px`,
         width: `${panelWidth}px`,
-        backgroundColor: "#0d0807",
       }}
     >
       <div
@@ -612,19 +1198,94 @@ export function ChatPanel({
       </div>
 
       <div className="flex flex-row items-center justify-between p-2 pl-3">
-        <h2 className="text-sm font-medium leading-[150%] text-foreground">
-          Edit{" "}
-          {activeFrameLabel.length > 15
-            ? `${activeFrameLabel.slice(0, 15)}…`
-            : activeFrameLabel}
-        </h2>
+        <div className="flex items-center gap-2">
+          <div ref={headerDropdownRef} className="relative">
+            <button
+              type="button"
+              onClick={() => setShowHeaderDropdown((v) => !v)}
+              className="inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-sm font-medium text-foreground transition-colors hover:bg-input-bg"
+            >
+              {(() => {
+                return (
+                  <>
+                    <span className="text-sm">✨</span>
+                    <span className="text-t-secondary">AI</span>
+                  </>
+                );
+              })()}
+              <span className="text-t-tertiary">·</span>
+              <span className="text-t-secondary text-xs font-normal">
+                {activeFrameLabel.length > 12
+                  ? `${activeFrameLabel.slice(0, 12)}…`
+                  : activeFrameLabel}
+              </span>
+              <ChevronDown className="size-3.5 text-t-tertiary" />
+            </button>
+            {showHeaderDropdown && (
+              <div className="absolute left-0 top-full z-50 mt-1 min-w-[200px] overflow-hidden rounded-xl border border-b-0 border-b-primary bg-surface-elevated/95 py-1 shadow-lg backdrop-blur-xl">
+                <div className="sticky top-0 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-t-tertiary">
+                  Active Agents
+                </div>
+                {isMultiAgent
+                  ? [
+                      <button
+                        key="main-agent"
+                        type="button"
+                        onClick={() => {
+                          // removed: dispatch(setActiveAgent(null));
+                          setShowHeaderDropdown(false);
+                        }}
+                        className={`flex w-full items-center gap-2.5 px-3 py-2 text-left text-xs transition-colors hover:bg-input-bg hover:text-t-primary ${
+                          activeAgentId === null
+                            ? "bg-input-bg text-t-primary"
+                            : "text-t-secondary"
+                        }`}
+                      >
+                        <span className="text-sm">{"✨"}</span>
+                        <div className="flex flex-col">
+                          <span className="font-medium text-t-secondary">
+                            {"AI"}
+                          </span>
+                        </div>
+                      </button>,
+                    ]
+                  : Array.from({ length: agentCount }, (_, i) => {
+                      const persona = { name: "AI", emoji: "✨" };
+                      const assignedFrame = frames[i];
+                      return (
+                        <button
+                          key={i}
+                          type="button"
+                          onClick={() => setShowHeaderDropdown(false)}
+                          className="flex w-full items-center gap-2.5 px-3 py-2 text-left text-xs text-t-secondary transition-colors hover:bg-input-bg hover:text-t-primary"
+                        >
+                          <span className="inline-flex size-5 shrink-0 items-center justify-center rounded-full bg-input-bg text-xs text-t-secondary">
+                            {persona.emoji}
+                          </span>
+                          <div className="flex flex-col">
+                            <span className="font-medium text-t-primary">
+                              {persona.name}
+                            </span>
+                            <span className="text-[10px] text-t-tertiary">
+                              {assignedFrame
+                                ? assignedFrame.label
+                                : "Unassigned"}
+                            </span>
+                          </div>
+                        </button>
+                      );
+                    })}
+              </div>
+            )}
+          </div>
+        </div>
         <button
           type="button"
           onClick={onClose}
           aria-label="Close panel"
           className="inline-flex w-8 h-8 min-h-8 shrink-0 cursor-pointer items-center justify-center rounded-md bg-secondary/40 text-secondary-foreground/30 px-2 py-1.5 shadow-xs transition-colors hover:bg-secondary/60"
         >
-          <CloseIcon className="h-3 w-3" />
+          <X className="h-3 w-3" />
         </button>
       </div>
 
@@ -633,98 +1294,141 @@ export function ChatPanel({
         id="chat-thread-area"
         className="min-h-0 flex-1 space-y-4 overflow-y-auto scrollbar-hide p-2"
       >
-        {messages.map(
-          (
-            msg: {
-              id: string;
-              role: string;
-              parts?: Array<{ type: string; text?: string; state?: string }>;
-              content?: string;
-            },
-            msgIndex: number,
-          ) => {
-            const nextMsg = messages[msgIndex + 1];
-            const prevMsg = messages[msgIndex - 1];
-            const isPlannerOnly =
-              msg.role === "assistant" &&
-              (msg.parts ?? []).length <= 4 &&
-              (msg.parts ?? []).every(
-                (p: { type: string }) =>
-                  p.type === "data-step-result" || p.type === "data-step-start",
+        {isLoadingHistory && <ChatHistoryShimmer />}
+
+        {!isLoadingHistory &&
+          messages.map(
+            (
+              msg: {
+                id: string;
+                role: string;
+                parts?: Array<{
+                  type: string;
+                  text?: string;
+                  state?: string;
+                }>;
+                content?: string;
+              },
+              msgIndex: number,
+            ) => {
+              const isLastMessage = msgIndex === messages.length - 1;
+              const stepsFromParts =
+                msg.role === "assistant"
+                  ? toolStepsFromParts(msg.parts as MessagePart[])
+                  : undefined;
+
+              const liveToolSteps =
+                isLastMessage && isActivelyStreaming ? toolSteps : undefined;
+
+              const fallbackPersisted =
+                msg.role === "assistant" && isLastMessage
+                  ? lastMessageToolSteps
+                  : undefined;
+
+              const stepsForMessage =
+                liveToolSteps && liveToolSteps.length > 0
+                  ? liveToolSteps
+                  : (stepsFromParts ??
+                    (fallbackPersisted?.length
+                      ? fallbackPersisted
+                      : undefined));
+
+              const isStreamingLastAssistant =
+                isLastMessage &&
+                msg.role === "assistant" &&
+                isActivelyStreaming;
+
+              const hasVisibleContent =
+                isStreamingLastAssistant ||
+                msg.role !== "assistant" ||
+                (msg.parts ?? []).some(
+                  (p) =>
+                    p.type === "text" ||
+                    p.type === "reasoning" ||
+                    (p as MessagePart).type?.startsWith?.("tool-") ||
+                    (p as MessagePart).type === "dynamic-tool",
+                ) ||
+                typeof msg.content === "string" ||
+                (stepsForMessage && stepsForMessage.length > 0);
+
+              if (!hasVisibleContent) return null;
+
+              return (
+                <Fragment key={msg.id}>
+                  <div
+                    className={`flex w-full ${
+                      msg.role === "user" ? "justify-end" : "justify-start"
+                    }`}
+                  >
+                    <div
+                      className={`rounded-lg px-3 py-2 text-sm ${
+                        msg.role === "user"
+                          ? "w-fit max-w-[85%] bg-btn-primary-bg text-btn-primary-text"
+                          : msg.role === "assistant"
+                            ? "w-full bg-muted/50 text-t-primary"
+                            : "w-fit max-w-[85%] bg-muted/30 text-t-primary"
+                      }`}
+                    >
+                      {msg.role === "assistant" ? (
+                        msg.parts && msg.parts.length > 0 ? (
+                          <AssistantMessageContent
+                            parts={msg.parts as MessagePart[]}
+                            frames={frames}
+                            isStreaming={
+                              status === "streaming" && isLastMessage
+                            }
+                            toolSteps={stepsForMessage}
+                          />
+                        ) : typeof msg.content === "string" ? (
+                          <div className="chat-markdown">
+                            <ReactMarkdown components={markdownComponents}>
+                              {msg.content}
+                            </ReactMarkdown>
+                          </div>
+                        ) : stepsForMessage && stepsForMessage.length > 0 ? (
+                          <AssistantMessageContent
+                            parts={[]}
+                            frames={frames}
+                            isStreaming={
+                              status === "streaming" && isLastMessage
+                            }
+                            toolSteps={stepsForMessage}
+                          />
+                        ) : isStreamingLastAssistant ? (
+                          <span className="inline-block animate-pulse text-t-tertiary text-xs">
+                            …
+                          </span>
+                        ) : null
+                      ) : msg.role === "user" ? (
+                        getUserMessageText(msg)
+                      ) : null}
+                    </div>
+                  </div>
+                </Fragment>
               );
-            const hasAdjacentAssistant =
-              nextMsg?.role === "assistant" || prevMsg?.role === "assistant";
-            if (isPlannerOnly && hasAdjacentAssistant) return null;
-            return (
-              <div
-                key={msg.id}
-                className={`flex w-full ${
-                  msg.role === "user" ? "justify-end" : "justify-start"
-                }`}
-              >
-                <div
-                  className={`rounded-lg px-3 py-2 text-sm ${
-                    msg.role === "user"
-                      ? "w-fit max-w-[85%] text-white"
-                      : msg.role === "assistant"
-                        ? "w-full bg-muted/50 text-stone-300"
-                        : "w-fit max-w-[85%] bg-muted/30"
-                  }`}
-                  style={
-                    msg.role === "user"
-                      ? { backgroundColor: "#2e2726" }
-                      : undefined
-                  }
-                >
-                  {msg.role === "assistant" ? (
-                    msg.parts && msg.parts.length > 0 ? (
-                      <AssistantMessageContent
-                        parts={msg.parts as MessagePart[]}
-                        frames={frames}
-                        isStreaming={
-                          msg.role === "assistant" &&
-                          status === "streaming" &&
-                          msgIndex === messages.length - 1
-                        }
-                      />
-                    ) : typeof msg.content === "string" ? (
-                      <div className="chat-markdown">
-                        <ReactMarkdown components={markdownComponents}>
-                          {msg.content}
-                        </ReactMarkdown>
-                      </div>
-                    ) : null
-                  ) : msg.role === "user" ? (
-                    (() => {
-                      if (typeof msg.content === "string") return msg.content;
-                      const textPart = msg.parts?.find(
-                        (p: { type: string; text?: string }) =>
-                          p.type === "text" && p.text,
-                      );
-                      return textPart?.text ?? null;
-                    })()
-                  ) : null}
-                </div>
-              </div>
-            );
-          },
-        )}
-        {(status === "submitted" || status === "streaming") && (
+            },
+          )}
+
+        {showPendingBubble && (
           <div className="flex w-full justify-start">
-            <div className="w-fit max-w-[85%] rounded-lg bg-muted/50 px-3 py-2 text-sm text-stone-400">
-              {status === "submitted"
-                ? "Analyzing your request…"
-                : "Creating designs…"}
+            <div className="w-full rounded-lg bg-muted/50 px-3 py-2.5 text-sm text-t-primary">
+              <AssistantMessageContent
+                parts={[]}
+                frames={frames}
+                isStreaming={status === "streaming"}
+                toolSteps={toolSteps}
+              />
             </div>
           </div>
         )}
+
+        {showStreamingIndicator && <StreamingActivityIndicator />}
       </div>
 
       <div className="w-full p-4">
         <form
           onSubmit={handleSend}
-          className="w-full overflow-visible rounded-xl border border-border/60 shadow-none focus-within:ring-2 focus-within:ring-ring/30"
-          style={{ backgroundColor: "#2e2726" }}
+          className="w-full overflow-visible rounded-xl border border-b-0 border-border/60 bg-input-bg shadow-none focus-within:ring-2 focus-within:ring-ring/30"
         >
           {selectedFrameIds.length > 0 && (
             <div className="flex flex-wrap gap-1.5 px-4 pt-3 pb-1">
@@ -734,10 +1438,10 @@ export function ChatPanel({
                 return (
                   <span
                     key={id}
-                    className="mention-chip inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium text-white"
+                    className="mention-chip inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium text-mention-chip-text"
                     style={{
-                      backgroundColor: "#6E4A2E",
-                      borderColor: "#BF8456",
+                      backgroundColor: "var(--mention-chip-bg)",
+                      borderColor: "var(--mention-chip-border)",
                     }}
                   >
                     <svg
@@ -770,18 +1474,67 @@ export function ChatPanel({
                 handleSend();
               }
             }}
-            disabled={status === "submitted" || status === "streaming"}
+            disabled={isActivelyStreaming}
             className="text-sm"
           />
-          <div className="flex items-center justify-end p-2">
+          <div className="flex items-center justify-between p-2">
+            <div className="flex items-center gap-1">
+              <button
+                type="button"
+                aria-label="Attach image"
+                className="inline-flex size-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground/60 transition-colors hover:text-muted-foreground hover:bg-secondary/40"
+              >
+                <ImageIcon className="size-4" />
+              </button>
+              <div ref={agentDropdownRef} className="relative">
+                <button
+                  type="button"
+                  onClick={() => setShowAgentDropdown((v) => !v)}
+                  className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium text-t-secondary transition-colors hover:bg-secondary/40"
+                >
+                  <Zap className="size-3.5" fill="currentColor" />
+                  {agentCount}
+                  <ChevronDown className="size-3 opacity-60" />
+                </button>
+                {showAgentDropdown && (
+                  <div className="absolute bottom-full left-0 z-50 mb-1 min-w-[130px] overflow-hidden rounded-xl border border-b-0 border-b-primary bg-surface-elevated/95 py-1 shadow-lg backdrop-blur-xl">
+                    <div className="sticky top-0 px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-t-tertiary">
+                      Agents
+                    </div>
+                    {[1, 2, 3, 4, 5, 6].map((n) => {
+                      return (
+                        <button
+                          key={n}
+                          type="button"
+                          onClick={() => {
+                            // removed: dispatch(setAgentCountAction(n));
+                            if (n === 1 && isMultiAgent) {
+                              // removed;
+                            }
+                            setShowAgentDropdown(false);
+                          }}
+                          className={`flex w-full items-center gap-2 px-3 py-1.5 text-left text-xs transition-colors hover:bg-input-bg ${
+                            agentCount === n
+                              ? "font-semibold text-t-primary"
+                              : "text-t-secondary"
+                          }`}
+                        >
+                          <Zap
+                            className="size-3 text-t-secondary"
+                            fill="currentColor"
+                          />
+                          {n} {n === 1 ? "agent" : "agents"}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            </div>
             <button
               type="submit"
-              disabled={
-                !inputValue.trim() ||
-                status === "submitted" ||
-                status === "streaming"
-              }
-              className="inline-flex size-8 shrink-0 items-center justify-center rounded-full bg-[#8A87F8] text-white shadow-xs outline-none transition-colors hover:bg-[#8A87F8]/90 disabled:pointer-events-none disabled:opacity-50 focus-visible:ring-2 focus-visible:ring-ring/50 active:scale-95"
+              disabled={!inputValue.trim() || isActivelyStreaming}
+              className="inline-flex size-8 shrink-0 items-center justify-center rounded-full bg-btn-primary-bg text-btn-primary-text shadow-xs outline-none transition-colors hover:opacity-90 disabled:pointer-events-none disabled:opacity-50 focus-visible:ring-2 focus-visible:ring-ring/50 active:scale-95"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"

@@ -1,159 +1,125 @@
 "use client";
 
-import { useState } from "react";
-import { useAppDispatch, useAppSelector } from "@/store/hooks";
-import { setChatPanelOpen, toggleChatPanel } from "@/store/slices/uiSlice";
+import { useRef, useState } from "react";
+import { useAppDispatch } from "@/store/hooks";
+import { setAgentLogVisible } from "@/store/slices/uiSlice";
+import { StyleGuideIcon } from "@/lib/svg-icons";
+import { sendChatMessage } from "@/lib/chat-bridge";
 import { ChatPanel } from "./ChatPanel";
-import {
-  ReferenceModeIcon,
-  SectionalEditIcon,
-  StyleGuideIcon,
-  TextEditingIcon,
-} from "./icons";
-
-function ChatToggleButton() {
-  const dispatch = useAppDispatch();
-  const isOpen = useAppSelector((s) => s.ui.chatPanelOpen);
-
-  return (
-    <button
-      type="button"
-      onClick={() => dispatch(toggleChatPanel())}
-      className="inline-flex size-14 shrink-0 items-center justify-center rounded-full bg-canvas-panel text-white/90 outline-none transition-colors hover:bg-white/10 focus-visible:ring-2 focus-visible:ring-ring/50 active:scale-95"
-      aria-label={isOpen ? "Close chat" : "Open chat"}
-    >
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        width="24"
-        height="24"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      >
-        <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" />
-        <path d="M12 8v4" />
-        <path d="M12 16h.01" />
-      </svg>
-    </button>
-  );
-}
 
 export function EditingModeDisplay() {
   const dispatch = useAppDispatch();
-  const chatPanelOpen = useAppSelector((s) => s.ui.chatPanelOpen);
-  const [referenceMode, setReferenceMode] = useState(false);
-  const [sectionalMode, setSectionalMode] = useState(false);
-  const [textEditingMode, setTextEditingMode] = useState(false);
   const [styleGuideOpen, setStyleGuideOpen] = useState(false);
+  const [inputValue, setInputValue] = useState("");
+  const inputRef = useRef<HTMLTextAreaElement>(null);
+
+  const handleSubmit = () => {
+    if (!inputValue.trim()) return;
+    sendChatMessage(inputValue.trim());
+    setInputValue("");
+    // Auto-open agent log so user sees activity
+    dispatch(setAgentLogVisible(true));
+    // Reset textarea height
+    if (inputRef.current) {
+      inputRef.current.style.height = "auto";
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleSubmit();
+    }
+  };
 
   return (
-    <div className="absolute right-4 top-20 z-20 flex flex-col items-center gap-4">
-      <ChatPanel
-        isVisible={chatPanelOpen}
-        onClose={() => dispatch(setChatPanelOpen(false))}
-      />
-      <ChatToggleButton />
-      <div className="flex flex-col items-center justify-center gap-4 rounded-full bg-canvas-panel px-2 py-3">
-        <div className="relative">
-          <button
-            type="button"
-            onClick={() => setReferenceMode((v) => !v)}
-            className={`rounded-md p-2 ${referenceMode ? "reference-mode-button" : "text-white/90 hover:bg-white/10"}`}
-          >
-            <ReferenceModeIcon
-              color={
-                referenceMode
-                  ? "var(--primary-foreground)"
-                  : "rgba(255,255,255,0.9)"
-              }
+    <>
+      {/* ChatPanel — invisible but runs useChat hook and processes agent logic */}
+      <ChatPanel isVisible={false} onClose={() => {}} />
+
+      {/* Bottom center — AI input box */}
+      <div className="absolute bottom-4 left-1/2 z-20 -translate-x-1/2 w-full max-w-[600px] px-4">
+        <div className="rounded-2xl border border-b-0 border-b-strong bg-surface-elevated/95 backdrop-blur-2xl transition-all focus-within:border-b-strong">
+          <div className="px-4 pt-4 pb-2">
+            <textarea
+              ref={inputRef}
+              value={inputValue}
+              onChange={(e) => setInputValue(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder="Describe what to design..."
+              rows={2}
+              className="w-full bg-transparent text-[15px] text-t-primary placeholder-t-tertiary outline-none resize-none leading-relaxed max-h-[140px] min-h-[52px]"
+              onInput={(e) => {
+                const el = e.currentTarget;
+                el.style.height = "auto";
+                el.style.height = Math.min(el.scrollHeight, 140) + "px";
+              }}
             />
-          </button>
-          {referenceMode && (
-            <button
-              type="button"
-              onClick={() => setReferenceMode(false)}
-              className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-white/20 text-xs font-bold text-white"
-            >
-              ×
-            </button>
-          )}
+          </div>
+
+          <div className="flex items-center justify-between px-4 py-2.5">
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                className="inline-flex size-7 items-center justify-center rounded-md text-t-tertiary hover:text-t-secondary hover:bg-input-bg transition-colors"
+                title="Attach image"
+              >
+                <svg
+                  width="15"
+                  height="15"
+                  viewBox="0 0 256 256"
+                  fill="currentColor"
+                >
+                  <path d="M224,128a8,8,0,0,1-8,8H136v80a8,8,0,0,1-16,0V136H40a8,8,0,0,1,0-16h80V40a8,8,0,0,1,16,0v80h80A8,8,0,0,1,224,128Z" />
+                </svg>
+              </button>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] font-mono text-t-tertiary border border-b-0 border-b-primary rounded px-1.5 py-0.5 hidden sm:inline bg-input-bg">
+                ⌘ Enter
+              </span>
+              <button
+                type="button"
+                onClick={handleSubmit}
+                disabled={!inputValue.trim()}
+                className="inline-flex size-8 items-center justify-center rounded-lg bg-btn-primary-bg text-btn-primary-text transition-all hover:opacity-90 disabled:opacity-20 disabled:pointer-events-none active:scale-95"
+              >
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M5 12h14M12 5l7 7-7 7" />
+                </svg>
+              </button>
+            </div>
+          </div>
         </div>
-        <button
-          type="button"
-          onClick={() => setSectionalMode((v) => !v)}
-          className={`relative rounded-md p-2 ${sectionalMode ? "reference-mode-button" : "text-white/90 hover:bg-white/10"}`}
-        >
-          <SectionalEditIcon
-            color={
-              sectionalMode
-                ? "var(--primary-foreground)"
-                : "rgba(255,255,255,0.9)"
-            }
-          />
-          {sectionalMode && (
-            <button
-              type="button"
-              onClick={() => setSectionalMode(false)}
-              className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-white/20 text-xs font-bold text-white"
-            >
-              ×
-            </button>
-          )}
-        </button>
-        <div className="relative">
-          <button
-            type="button"
-            onClick={() => setTextEditingMode((v) => !v)}
-            className={`rounded-md p-2 ${textEditingMode ? "reference-mode-button" : "text-white/90 hover:bg-white/10"}`}
-          >
-            <TextEditingIcon
-              color={
-                textEditingMode
-                  ? "var(--primary-foreground)"
-                  : "rgba(255,255,255,0.9)"
-              }
-            />
-          </button>
-          {textEditingMode && (
-            <button
-              type="button"
-              onClick={() => setTextEditingMode(false)}
-              className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-white/20 text-xs font-bold text-white"
-            >
-              ×
-            </button>
-          )}
-        </div>
-        <div className="relative">
+      </div>
+
+      {/* Right side tools */}
+      <div className="absolute right-4 top-16 z-20 flex flex-col items-center gap-2">
+        <div className="flex flex-col items-center gap-1 rounded-lg border border-b-0 border-b-primary bg-canvas-panel-bg backdrop-blur-sm p-1">
           <button
             type="button"
             onClick={() => setStyleGuideOpen((v) => !v)}
-            className={`rounded-md p-2 ${styleGuideOpen ? "reference-mode-button" : "text-white/90 hover:bg-white/10"}`}
+            className={`rounded-md p-2 transition-colors ${
+              styleGuideOpen
+                ? "bg-btn-primary-bg text-btn-primary-text"
+                : "text-t-secondary hover:bg-input-bg hover:text-t-primary"
+            }`}
+            title="Style Guide"
           >
-            <StyleGuideIcon
-              color={
-                styleGuideOpen
-                  ? "var(--primary-foreground)"
-                  : "rgba(255,255,255,0.9)"
-              }
-              width={20}
-              height={20}
-            />
+            <StyleGuideIcon color="currentColor" width={18} height={18} />
           </button>
-          {styleGuideOpen && (
-            <button
-              type="button"
-              onClick={() => setStyleGuideOpen(false)}
-              className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-white/20 text-xs font-bold text-white"
-            >
-              ×
-            </button>
-          )}
         </div>
       </div>
-    </div>
+    </>
   );
 }
