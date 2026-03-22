@@ -3,7 +3,6 @@ import Link from "next/link";
 import { Header } from "@/components/landing/Header";
 import { Footer } from "@/components/landing/Footer";
 import { MdxRenderer } from "@/components/blog/MdxRenderer";
-import { CollapsibleTLDR } from "@/components/blog/CollapsibleTLDR";
 import { getAllPosts, getPostBySlug, getRelatedPosts } from "@/lib/blog";
 import type { Metadata } from "next";
 
@@ -123,13 +122,6 @@ export default async function BlogPostPage({ params }: PageProps) {
             </div>
           </div>
         </header>
-
-        {/* Collapsible TL;DR */}
-        {fm.tldr && (
-          <div className="border-b border-b-primary px-6 md:px-16 max-w-3xl mx-auto">
-            <CollapsibleTLDR text={fm.tldr} />
-          </div>
-        )}
 
         {/* Article content */}
         <div className="border-b border-b-primary">
