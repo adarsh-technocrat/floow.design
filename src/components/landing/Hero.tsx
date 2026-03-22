@@ -53,7 +53,7 @@ export function Hero() {
   return (
     <section
       id="hero"
-      className="relative bg-surface px-5 py-20 md:py-28 overflow-hidden"
+      className="relative bg-surface px-4 py-14 sm:px-5 sm:py-20 md:py-28 overflow-hidden"
     >
       {/* Dotted canvas background */}
       <div
@@ -141,7 +141,7 @@ export function Hero() {
 
         {/* Heading */}
         <motion.h1
-          className="text-[32px] md:text-[56px] font-semibold leading-[1.1] tracking-tight text-t-primary"
+          className="text-[26px] sm:text-[32px] md:text-[56px] font-semibold leading-[1.1] tracking-tight text-t-primary"
           style={{
             fontFamily: "var(--font-logo), 'Space Grotesk', sans-serif",
           }}
@@ -155,7 +155,7 @@ export function Hero() {
         </motion.h1>
 
         <motion.p
-          className="mt-5 text-base md:text-lg text-t-secondary max-w-md text-balance leading-relaxed"
+          className="mt-4 text-sm sm:text-base md:text-lg text-t-secondary max-w-md text-balance leading-relaxed"
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2, duration: 0.6 }}
@@ -166,18 +166,18 @@ export function Hero() {
 
         {/* Prompt box */}
         <motion.div
-          className="mt-10 w-full max-w-xl"
+          className="mt-8 sm:mt-10 w-full max-w-xl"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.35, duration: 0.7 }}
         >
-          <div className="flex w-full flex-col rounded-2xl bg-surface-elevated p-5 shadow-prompt-card transition-shadow duration-200 focus-within:ring-2 focus-within:ring-zinc-400/35 dark:focus-within:ring-white/15">
+          <div className="flex w-full flex-col rounded-2xl bg-surface-elevated p-4 sm:p-5 shadow-prompt-card transition-shadow duration-200 focus-within:ring-2 focus-within:ring-zinc-400/35 dark:focus-within:ring-white/15">
             <textarea
               value={promptText}
               onChange={(e) => setPromptText(e.target.value)}
               placeholder="Describe your app idea... e.g. A fitness tracker with dark theme, weekly progress charts, and bottom nav"
-              className="w-full bg-transparent text-t-primary placeholder-t-tertiary resize-none focus:outline-none text-[15px] leading-relaxed min-h-[140px]"
-              rows={5}
+              className="w-full bg-transparent text-t-primary placeholder-t-tertiary resize-none focus:outline-none text-[14px] sm:text-[15px] leading-relaxed min-h-[100px] sm:min-h-[140px]"
+              rows={4}
             />
             <div className="flex items-center justify-between pt-3 mt-2">
               <div className="flex items-center gap-2">

@@ -44,9 +44,9 @@ export function FAQ() {
 
       <div className="flex flex-col lg:flex-row">
         {/* Left — heading */}
-        <div className="flex-shrink-0 border-b border-b-secondary p-5 lg:w-[340px] lg:border-b-0 lg:border-r lg:border-b-secondary lg:p-8">
+        <div className="flex-shrink-0 border-b border-b-secondary p-4 sm:p-5 lg:w-[340px] lg:border-b-0 lg:border-r lg:border-b-secondary lg:p-8">
           <h2
-            className="text-2xl md:text-3xl font-semibold tracking-tight text-t-primary"
+            className="text-xl sm:text-2xl md:text-3xl font-semibold tracking-tight text-t-primary"
             style={{
               fontFamily: "var(--font-logo), 'Space Grotesk', sans-serif",
             }}

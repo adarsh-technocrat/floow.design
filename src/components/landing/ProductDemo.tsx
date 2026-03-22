@@ -17,10 +17,10 @@ export function ProductDemo() {
         <span aria-hidden className="h-px min-w-8 flex-1 bg-b-secondary" />
       </div>
 
-      <div className="px-5 pb-16 md:pb-20">
-        <div className="mx-auto max-w-3xl text-center mb-10">
+      <div className="px-4 pb-12 sm:px-5 sm:pb-16 md:pb-20">
+        <div className="mx-auto max-w-3xl text-center mb-8 sm:mb-10">
           <h2
-            className="text-2xl md:text-[40px] font-semibold tracking-tight leading-[1.1] text-t-primary"
+            className="text-xl sm:text-2xl md:text-[40px] font-semibold tracking-tight leading-[1.1] text-t-primary"
             style={{
               fontFamily: "var(--font-logo), 'Space Grotesk', sans-serif",
             }}
@@ -39,7 +39,7 @@ export function ProductDemo() {
 
         {/* Video player */}
         <div className="mx-auto max-w-4xl">
-          <div className="relative overflow-hidden rounded-2xl border border-b-secondary bg-surface-elevated shadow-prompt-card">
+          <div className="relative overflow-hidden rounded-xl sm:rounded-2xl border border-b-secondary bg-surface-elevated shadow-prompt-card">
             {/* Video aspect ratio container */}
             <div className="relative aspect-video bg-canvas-bg">
               {/* Dotted background behind video */}
@@ -61,7 +61,7 @@ export function ProductDemo() {
                     {[1, 2, 3].map((i) => (
                       <div
                         key={i}
-                        className="h-28 w-16 rounded-xl border border-b-secondary bg-surface-elevated/80 shadow-sm"
+                        className="h-20 w-12 sm:h-28 sm:w-16 rounded-lg sm:rounded-xl border border-b-secondary bg-surface-elevated/80 shadow-sm"
                       />
                     ))}
                   </div>
@@ -112,7 +112,7 @@ export function ProductDemo() {
         </div>
 
         {/* Stats row */}
-        <div className="mx-auto mt-10 grid max-w-2xl grid-cols-3 gap-4">
+        <div className="mx-auto mt-8 sm:mt-10 grid max-w-2xl grid-cols-3 gap-3 sm:gap-4">
           {[
             { value: "< 60s", label: "Average generation time" },
             { value: "100%", label: "Production-ready Flutter" },

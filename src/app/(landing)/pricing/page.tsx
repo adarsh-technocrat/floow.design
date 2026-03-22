@@ -148,10 +148,10 @@ export default function PricingPage() {
         <Header />
 
         {/* Hero */}
-        <div className="px-5 py-12 md:px-12 md:py-20">
+        <div className="px-4 py-8 sm:px-5 sm:py-12 md:px-12 md:py-20">
           <div className="max-w-2xl mx-auto text-center">
             <h1
-              className="text-[28px] md:text-[40px] font-semibold leading-tight tracking-tight text-t-primary"
+              className="text-[22px] sm:text-[28px] md:text-[40px] font-semibold leading-tight tracking-tight text-t-primary"
               style={{
                 fontFamily: "var(--font-logo), 'Space Grotesk', sans-serif",
               }}

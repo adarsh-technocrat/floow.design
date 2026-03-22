@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { Logo } from "./Logo";
 import { useAuth } from "@/contexts/AuthContext";
 import { ThemeToggleCompact } from "@/components/ThemeToggle";
@@ -13,11 +14,47 @@ const navLinks = [
   { label: "Pricing", href: "/pricing" },
   { label: "Blog", href: "/blog" },
   { label: "FAQ", href: "/#faq" },
-];
+] as const;
+
+function isNavLinkActive(
+  href: string,
+  pathname: string,
+  hash: string,
+): boolean {
+  if (href === "/pricing") return pathname === "/pricing";
+  if (href === "/blog")
+    return pathname === "/blog" || pathname.startsWith("/blog/");
+  if (href.startsWith("/#")) {
+    const expected = href.slice(1);
+    return pathname === "/" && hash === expected;
+  }
+  return false;
+}
+
+const navLinkBaseClass =
+  "px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wider rounded transition-colors no-underline font-mono";
+const navLinkInactiveClass =
+  "text-t-secondary hover:text-t-primary hover:bg-input-bg";
+const navLinkActiveClass = "text-t-primary bg-input-bg";
+
+const mobileNavLinkBaseClass =
+  "px-3 py-2.5 text-sm font-medium rounded transition-colors no-underline";
+const mobileNavLinkInactiveClass =
+  "text-t-secondary hover:text-t-primary hover:bg-input-bg";
+const mobileNavLinkActiveClass = "text-t-primary bg-input-bg";
 
 export function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [hash, setHash] = useState("");
+  const pathname = usePathname();
   const { user, loading } = useAuth();
+
+  useEffect(() => {
+    setHash(typeof window !== "undefined" ? window.location.hash : "");
+    const onHashChange = () => setHash(window.location.hash);
+    window.addEventListener("hashchange", onHashChange);
+    return () => window.removeEventListener("hashchange", onHashChange);
+  }, []);
 
   return (
     <header className="sticky top-0 z-50 border-b border-b-secondary bg-surface/80 backdrop-blur-lg">
@@ -25,15 +62,19 @@ export function Header() {
         <Logo />
 
         <nav className="hidden items-center gap-1 md:flex">
-          {navLinks.map((link) => (
-            <Link
-              key={link.label}
-              href={link.href}
-              className="px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-t-secondary hover:text-t-primary hover:bg-input-bg rounded transition-colors no-underline font-mono"
-            >
-              {link.label}
-            </Link>
-          ))}
+          {navLinks.map((link) => {
+            const active = isNavLinkActive(link.href, pathname, hash);
+            return (
+              <Link
+                key={link.label}
+                href={link.href}
+                aria-current={active ? "page" : undefined}
+                className={`${navLinkBaseClass} ${active ? navLinkActiveClass : navLinkInactiveClass}`}
+              >
+                {link.label}
+              </Link>
+            );
+          })}
         </nav>
 
         <div className="flex items-center gap-2">
@@ -106,16 +147,20 @@ export function Header() {
       {menuOpen && (
         <div className="bg-surface md:hidden">
           <nav className="flex flex-col px-5 py-3 gap-1">
-            {navLinks.map((link) => (
-              <Link
-                key={link.label}
-                href={link.href}
-                onClick={() => setMenuOpen(false)}
-                className="px-3 py-2.5 text-sm font-medium text-t-secondary hover:text-t-primary hover:bg-input-bg rounded transition-colors no-underline"
-              >
-                {link.label}
-              </Link>
-            ))}
+            {navLinks.map((link) => {
+              const active = isNavLinkActive(link.href, pathname, hash);
+              return (
+                <Link
+                  key={link.label}
+                  href={link.href}
+                  onClick={() => setMenuOpen(false)}
+                  aria-current={active ? "page" : undefined}
+                  className={`${mobileNavLinkBaseClass} ${active ? mobileNavLinkActiveClass : mobileNavLinkInactiveClass}`}
+                >
+                  {link.label}
+                </Link>
+              );
+            })}
           </nav>
         </div>
       )}

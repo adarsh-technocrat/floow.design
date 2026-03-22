@@ -114,7 +114,7 @@ export default async function BlogPostPage({ params }: PageProps) {
 
         {/* Article header */}
         <header className="border-b border-b-secondary">
-          <div className="px-6 md:px-16 py-12 md:py-16 max-w-3xl mx-auto">
+          <div className="px-4 py-8 sm:px-6 sm:py-12 md:px-16 md:py-16 max-w-3xl mx-auto">
             <div className="flex flex-wrap items-center gap-3 mb-6">
               <span className="rounded-md bg-input-bg px-2 py-0.5 text-[10px] font-mono uppercase tracking-wider text-t-secondary">
                 {fm.category}
@@ -182,31 +182,31 @@ export default async function BlogPostPage({ params }: PageProps) {
         </header>
 
         {/* Prompt CTA */}
-        <div className="mx-auto max-w-3xl px-6 md:px-16 pt-2 pb-6">
+        <div className="mx-auto max-w-3xl px-4 sm:px-6 md:px-16 pt-2 pb-6">
           <BlogPromptCTA />
         </div>
 
-        {/* Article content */}
-        <div>
-          <article className="mx-auto max-w-3xl border-t border-b-secondary px-6 pb-10 pt-8 md:px-16 md:pb-14 md:pt-10">
+        {/* Article content — full-bleed top rule meets border-x */}
+        <div className="border-t border-b-secondary">
+          <article className="mx-auto max-w-3xl px-4 pb-8 pt-6 sm:px-6 sm:pb-10 sm:pt-8 md:px-16 md:pb-14 md:pt-10">
             <MdxRenderer source={post.content} />
           </article>
         </div>
 
         {/* Related posts */}
         {relatedPosts.length > 0 && (
-          <div className="border-t border-b-secondary py-8">
-            <div className="px-5 pb-3 pt-2">
+          <div className="border-t border-b-secondary">
+            <div className="border-b border-b-secondary px-5 py-3">
               <span className="text-[10px] font-mono font-medium uppercase tracking-wider text-t-tertiary">
                 Related Articles
               </span>
             </div>
-            <div className="grid grid-cols-1 gap-4 px-5 md:grid-cols-3 md:gap-6">
+            <div className="grid grid-cols-1 divide-y divide-b-secondary md:grid-cols-3 md:divide-x md:divide-y-0 md:divide-b-secondary md:gap-0">
               {relatedPosts.map((rp) => (
                 <Link
                   key={rp.slug}
                   href={`/blog/${rp.slug}`}
-                  className="group flex flex-col gap-2 rounded-xl p-5 transition-colors hover:bg-input-bg/80 no-underline"
+                  className="group flex flex-col gap-2 p-5 md:p-6 transition-colors hover:bg-input-bg/80 no-underline"
                 >
                   <span className="text-[9px] font-mono uppercase tracking-wider text-t-tertiary">
                     {rp.frontmatter.category}
@@ -224,11 +224,11 @@ export default async function BlogPostPage({ params }: PageProps) {
         )}
 
         {/* Prev/Next */}
-        <div className="grid grid-cols-1 gap-4 border-t border-b-secondary px-5 py-8 md:grid-cols-2 md:gap-8">
+        <div className="grid grid-cols-1 divide-y divide-b-secondary border-t border-b-secondary md:grid-cols-2 md:divide-x md:divide-y-0 md:divide-b-secondary md:gap-0">
           {prevPost ? (
             <Link
               href={`/blog/${prevPost.slug}`}
-              className="group flex flex-col gap-2 rounded-xl p-6 transition-colors hover:bg-input-bg/80 no-underline"
+              className="group flex flex-col gap-2 p-6 md:p-8 transition-colors hover:bg-input-bg/80 no-underline"
             >
               <span className="text-[10px] font-mono uppercase tracking-wider text-t-tertiary">
                 ← Older
@@ -238,12 +238,12 @@ export default async function BlogPostPage({ params }: PageProps) {
               </span>
             </Link>
           ) : (
-            <div />
+            <div className="hidden md:block" aria-hidden />
           )}
           {nextPost ? (
             <Link
               href={`/blog/${nextPost.slug}`}
-              className="group flex flex-col gap-2 p-6 items-end text-right hover:bg-input-bg transition-colors no-underline"
+              className="group flex flex-col gap-2 p-6 md:p-8 items-end text-right hover:bg-input-bg transition-colors no-underline"
             >
               <span className="text-[10px] font-mono uppercase tracking-wider text-t-tertiary">
                 Newer →
@@ -253,7 +253,7 @@ export default async function BlogPostPage({ params }: PageProps) {
               </span>
             </Link>
           ) : (
-            <div />
+            <div className="hidden md:block" aria-hidden />
           )}
         </div>
 

@@ -29,7 +29,7 @@ export function TemplatesCarousel() {
 
   const scroll = (dir: "left" | "right") => {
     scrollRef.current?.scrollBy({
-      left: dir === "left" ? -280 : 280,
+      left: dir === "left" ? -200 : 200,
       behavior: "smooth",
     });
   };
@@ -79,7 +79,7 @@ export function TemplatesCarousel() {
       </div>
 
       {/* Cards */}
-      <div className="px-5 py-8">
+      <div className="px-4 py-6 sm:px-5 sm:py-8">
         <h2
           className="text-2xl md:text-3xl font-semibold tracking-tight text-t-primary mb-2"
           style={{
@@ -97,7 +97,7 @@ export function TemplatesCarousel() {
             {Array.from({ length: 4 }).map((_, i) => (
               <div
                 key={i}
-                className="flex-shrink-0 w-[220px] aspect-[9/16] rounded-lg bg-input-bg animate-pulse"
+                className="flex-shrink-0 w-[170px] sm:w-[200px] md:w-[220px] aspect-[9/16] rounded-lg bg-input-bg animate-pulse"
               />
             ))}
           </div>
@@ -110,7 +110,7 @@ export function TemplatesCarousel() {
               <Link
                 key={t.id}
                 href={`/app/${t.id}`}
-                className="group relative flex-shrink-0 w-[220px] no-underline"
+                className="group relative flex-shrink-0 w-[170px] sm:w-[200px] md:w-[220px] no-underline"
               >
                 <div className="relative aspect-[9/16] w-full overflow-hidden rounded-lg border border-b-secondary bg-input-bg shadow-sm transition-shadow hover:shadow-md">
                   {/* Frame preview */}

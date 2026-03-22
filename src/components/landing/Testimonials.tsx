@@ -82,10 +82,10 @@ export function Testimonials() {
         <span aria-hidden className="h-px min-w-8 flex-1 bg-b-secondary" />
       </div>
 
-      <div className="px-5 pb-16 md:pb-20">
-        <div className="mx-auto max-w-2xl text-center mb-12">
+      <div className="px-4 pb-12 sm:px-5 sm:pb-16 md:pb-20">
+        <div className="mx-auto max-w-2xl text-center mb-8 sm:mb-12">
           <h2
-            className="text-2xl md:text-[40px] font-semibold tracking-tight leading-[1.1] text-t-primary"
+            className="text-xl sm:text-2xl md:text-[40px] font-semibold tracking-tight leading-[1.1] text-t-primary"
             style={{
               fontFamily: "var(--font-logo), 'Space Grotesk', sans-serif",
             }}
@@ -97,12 +97,12 @@ export function Testimonials() {
         </div>
 
         {/* Bento grid */}
-        <div className="mx-auto max-w-4xl grid grid-cols-1 md:grid-cols-3 gap-3">
+        <div className="mx-auto max-w-4xl grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3">
           {testimonials.map((t) => (
             <div
               key={t.name}
               className={`group relative overflow-hidden rounded-2xl border border-b-secondary p-6 transition-colors ${
-                t.colSpan === 2 ? "md:col-span-2" : "md:col-span-1"
+                t.colSpan === 2 ? "sm:col-span-2 md:col-span-2" : "md:col-span-1"
               } ${
                 t.highlight
                   ? "bg-btn-primary-bg text-btn-primary-text"

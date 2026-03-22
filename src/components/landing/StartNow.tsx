@@ -24,10 +24,10 @@ export function StartNow() {
             backgroundSize: "52px 52px",
           }}
         />
-        <div className="relative z-1 px-5 py-20 md:py-28">
+        <div className="relative z-1 px-4 py-14 sm:px-5 sm:py-20 md:py-28">
           <div className="mx-auto max-w-xl text-center">
             <h2
-              className="text-3xl md:text-[44px] font-semibold tracking-tight leading-[1.1] text-t-primary"
+              className="text-2xl sm:text-3xl md:text-[44px] font-semibold tracking-tight leading-[1.1] text-t-primary"
               style={{
                 fontFamily: "var(--font-logo), 'Space Grotesk', sans-serif",
               }}

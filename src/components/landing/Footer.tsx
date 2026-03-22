@@ -39,8 +39,8 @@ export function Footer() {
         />
       </div>
 
-      <div className="py-12">
-        <div className="flex flex-col gap-10 md:flex-row md:justify-between">
+      <div className="py-8 sm:py-12">
+        <div className="flex flex-col gap-8 sm:gap-10 md:flex-row md:justify-between">
           <div className="max-w-[220px]">
             <Logo />
             <p className="mt-3 text-xs text-t-tertiary leading-relaxed">
@@ -57,7 +57,7 @@ export function Footer() {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-8">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-6 sm:gap-8">
             {Object.entries(links).map(([group, items]) => (
               <div key={group}>
                 <p className="text-[10px] font-mono font-semibold uppercase tracking-widest text-t-tertiary mb-3">
