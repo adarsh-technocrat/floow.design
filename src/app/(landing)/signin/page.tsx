@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import { Logo } from "@/components/landing/Logo";
 import { useAuth } from "@/contexts/AuthContext";
@@ -181,25 +181,51 @@ function CanvasPanel() {
 
 export default function SignInPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { user, loading, signInWithGoogle } = useAuth();
   const [email, setEmail] = useState("");
   const [magicLinkSent, setMagicLinkSent] = useState(false);
   const [authError, setAuthError] = useState("");
   const [signingIn, setSigningIn] = useState(false);
 
+  const pendingPrompt = searchParams.get("prompt");
+
+  /** After sign-in, create a project from the pending prompt and go to canvas,
+   *  or fall back to /dashboard. */
+  const navigateAfterAuth = async () => {
+    if (pendingPrompt) {
+      try {
+        const res = await fetch("/api/projects", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name: pendingPrompt }),
+        });
+        const data: { id?: string } = await res.json();
+        if (data.id) {
+          router.push(`/app/${data.id}`);
+          return;
+        }
+      } catch {
+        // fall through to dashboard
+      }
+    }
+    router.push("/dashboard");
+  };
+
   // Redirect if already signed in
   useEffect(() => {
     if (!loading && user) {
-      router.replace("/dashboard");
+      navigateAfterAuth();
     }
-  }, [user, loading, router]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, loading]);
 
   const handleGoogleSignIn = async () => {
     setAuthError("");
     setSigningIn(true);
     try {
       await signInWithGoogle();
-      router.push("/dashboard");
+      await navigateAfterAuth();
     } catch (err) {
       setAuthError(err instanceof Error ? err.message : "Sign in failed");
     } finally {

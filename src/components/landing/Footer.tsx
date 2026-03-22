@@ -1,5 +1,8 @@
+"use client";
+
 import Link from "next/link";
 import { Logo } from "./Logo";
+import { PromptCTA } from "./PromptCTA";
 
 const links = {
   Product: [
@@ -24,7 +27,18 @@ const links = {
 
 export function Footer() {
   return (
-    <footer className="bg-surface px-5 pt-8">
+    <footer className="border-t border-b-secondary bg-surface px-5 pt-8">
+      {/* Prompt CTA */}
+      <div className="mx-auto max-w-xl py-10">
+        <p className="mb-3 text-center text-sm font-medium text-t-secondary">
+          Have an app idea? Start building now.
+        </p>
+        <PromptCTA
+          variant="compact"
+          placeholder="Describe your app idea and hit Generate..."
+        />
+      </div>
+
       <div className="py-12">
         <div className="flex flex-col gap-10 md:flex-row md:justify-between">
           <div className="max-w-[220px]">

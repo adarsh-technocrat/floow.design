@@ -20,7 +20,7 @@ export function Header() {
   const { user, loading } = useAuth();
 
   return (
-    <header className="sticky top-0 z-50 bg-surface/80 backdrop-blur-lg">
+    <header className="sticky top-0 z-50 border-b border-b-secondary bg-surface/80 backdrop-blur-lg">
       <div className="flex h-14 items-center justify-between gap-4 px-5">
         <Logo />
 

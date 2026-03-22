@@ -36,64 +36,74 @@ const features = [
 
 export function FeaturesGrid() {
   return (
-    <section id="features" className="scroll-mt-14">
-      <div className="px-5 py-4">
-        <span className="text-[11px] font-mono font-semibold uppercase tracking-wider text-t-tertiary">
+    <section id="features" className="scroll-mt-14 border-t border-b-secondary">
+      <div className="flex items-center gap-3 px-5 py-4">
+        <span className="shrink-0 text-[11px] font-mono font-semibold uppercase tracking-wider text-t-tertiary">
           Features
         </span>
+        <span aria-hidden className="h-px min-w-8 flex-1 bg-b-secondary" />
       </div>
 
-      <div className="px-5 pb-10 pt-8">
-        <h2
-          className="text-2xl md:text-3xl font-semibold tracking-tight text-t-primary mb-3"
-          style={{
-            fontFamily: "var(--font-logo), 'Space Grotesk', sans-serif",
-          }}
-        >
-          Everything you need to build
-        </h2>
-        <p className="text-sm text-t-secondary max-w-md">
-          From idea to deployed Flutter app — design, code, and export in one
-          place.
-        </p>
-      </div>
+      {/* One frame: intro + feature grid + stats share the same width so column lines line up; avoids double borders between blocks */}
+      <div className="mx-5 border border-b-secondary">
+        <div className="px-5 pb-8 pt-8">
+          <h2
+            className="mb-3 text-2xl font-semibold tracking-tight text-t-primary md:text-3xl"
+            style={{
+              fontFamily: "var(--font-logo), 'Space Grotesk', sans-serif",
+            }}
+          >
+            Everything you need to build
+          </h2>
+          <p className="max-w-md text-sm text-t-secondary">
+            From idea to deployed Flutter app — design, code, and export in one
+            place.
+          </p>
+        </div>
 
-      <div className="grid grid-cols-1 gap-8 px-5 py-6 md:grid-cols-2 md:gap-10 lg:grid-cols-3 lg:gap-12">
-        {features.map((f) => (
-          <div key={f.title} className="flex flex-col">
-            <span className="text-[10px] font-mono font-semibold uppercase tracking-widest text-t-tertiary mb-3">
-              {f.label}
-            </span>
-            <h3 className="text-base font-semibold text-t-primary mb-1.5">
-              {f.title}
-            </h3>
-            <p className="text-sm text-t-secondary leading-relaxed">
-              {f.description}
-            </p>
-          </div>
-        ))}
-      </div>
-
-      <div className="grid grid-cols-3 gap-4 px-5 py-10">
-        {[
-          { value: "10x", label: "Faster than manual" },
-          { value: "100+", label: "Widgets supported" },
-          { value: "50k+", label: "Apps designed" },
-        ].map((s) => (
-          <div key={s.label} className="flex flex-col items-center py-4">
-            <span
-              className="text-xl md:text-2xl font-bold text-t-primary"
-              style={{
-                fontFamily: "var(--font-logo), 'Space Grotesk', sans-serif",
-              }}
+        <div className="grid grid-cols-1 gap-px border-t border-b-secondary bg-b-secondary md:grid-cols-2 lg:grid-cols-3">
+          {features.map((f) => (
+            <div
+              key={f.title}
+              className="flex flex-col bg-surface px-4 py-8 md:px-6 md:py-10 lg:px-8 lg:py-12"
             >
-              {s.value}
-            </span>
-            <span className="mt-1 text-[10px] font-mono uppercase tracking-wider text-t-tertiary">
-              {s.label}
-            </span>
-          </div>
-        ))}
+              <span className="mb-3 text-[10px] font-mono font-semibold uppercase tracking-widest text-t-tertiary">
+                {f.label}
+              </span>
+              <h3 className="mb-1.5 text-base font-semibold text-t-primary">
+                {f.title}
+              </h3>
+              <p className="text-sm leading-relaxed text-t-secondary">
+                {f.description}
+              </p>
+            </div>
+          ))}
+        </div>
+
+        <div className="grid grid-cols-3 gap-px border-t border-b-secondary bg-b-secondary">
+          {[
+            { value: "10x", label: "Faster than manual" },
+            { value: "100+", label: "Widgets supported" },
+            { value: "50k+", label: "Apps designed" },
+          ].map((s) => (
+            <div
+              key={s.label}
+              className="flex flex-col items-center bg-surface px-2 py-8 md:py-10"
+            >
+              <span
+                className="text-xl md:text-2xl font-bold text-t-primary"
+                style={{
+                  fontFamily: "var(--font-logo), 'Space Grotesk', sans-serif",
+                }}
+              >
+                {s.value}
+              </span>
+              <span className="mt-1 text-[10px] font-mono uppercase tracking-wider text-t-tertiary">
+                {s.label}
+              </span>
+            </div>
+          ))}
+        </div>
       </div>
     </section>
   );

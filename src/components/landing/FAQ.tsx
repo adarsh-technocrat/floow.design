@@ -34,16 +34,17 @@ export function FAQ() {
   const [openId, setOpenId] = useState<number | null>(0);
 
   return (
-    <section id="faq" className="scroll-mt-14">
-      <div className="px-5 py-4">
-        <span className="text-[11px] font-mono font-semibold uppercase tracking-wider text-t-tertiary">
+    <section id="faq" className="scroll-mt-14 border-t border-b-secondary">
+      <div className="flex items-center gap-3 px-5 py-4">
+        <span className="shrink-0 text-[11px] font-mono font-semibold uppercase tracking-wider text-t-tertiary">
           FAQ
         </span>
+        <span aria-hidden className="h-px min-w-8 flex-1 bg-b-secondary" />
       </div>
 
       <div className="flex flex-col lg:flex-row">
         {/* Left — heading */}
-        <div className="flex-shrink-0 p-5 lg:w-[340px] lg:p-8">
+        <div className="flex-shrink-0 border-b border-b-secondary p-5 lg:w-[340px] lg:border-b-0 lg:border-r lg:border-b-secondary lg:p-8">
           <h2
             className="text-2xl md:text-3xl font-semibold tracking-tight text-t-primary"
             style={{

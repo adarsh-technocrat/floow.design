@@ -4,6 +4,7 @@ import { Header } from "@/components/landing/Header";
 import { Footer } from "@/components/landing/Footer";
 import { MdxRenderer } from "@/components/blog/MdxRenderer";
 import { Avatar } from "@/components/ui/Avatar";
+import { BlogPromptCTA } from "@/components/landing/BlogPromptCTA";
 import { getAllPosts, getPostBySlug, getRelatedPosts } from "@/lib/blog";
 import type { Metadata } from "next";
 
@@ -179,6 +180,11 @@ export default async function BlogPostPage({ params }: PageProps) {
             </div>
           </div>
         </header>
+
+        {/* Prompt CTA */}
+        <div className="mx-auto max-w-3xl px-6 md:px-16 pt-2 pb-6">
+          <BlogPromptCTA />
+        </div>
 
         {/* Article content */}
         <div>

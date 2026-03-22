@@ -55,12 +55,16 @@ export function TemplatesCarousel() {
   };
 
   return (
-    <section id="templates" className="scroll-mt-14">
-      <div className="flex items-center justify-between px-5 py-4">
-        <span className="text-[11px] font-mono font-semibold uppercase tracking-wider text-t-tertiary">
+    <section
+      id="templates"
+      className="scroll-mt-14 border-t border-b-secondary"
+    >
+      <div className="flex items-center gap-3 px-5 py-4">
+        <span className="shrink-0 text-[11px] font-mono font-semibold uppercase tracking-wider text-t-tertiary">
           Templates
         </span>
-        <div className="flex gap-1">
+        <span aria-hidden className="h-px min-w-8 flex-1 bg-b-secondary" />
+        <div className="flex shrink-0 gap-1">
           <button
             onClick={() => scroll("left")}
             className="flex h-7 w-7 items-center justify-center rounded-md bg-input-bg text-t-tertiary transition-colors hover:bg-surface-sunken hover:text-t-primary"

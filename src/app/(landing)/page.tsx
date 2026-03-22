@@ -14,8 +14,8 @@ export const metadata = {
 
 export default function LandingPage() {
   return (
-    <div className="w-full bg-surface text-t-primary">
-      <div className="mx-auto max-w-6xl">
+    <div className="relative w-full bg-surface text-t-primary">
+      <div className="relative mx-auto max-w-6xl border-x border-b-secondary">
         <Header />
         <main>
           <Hero />

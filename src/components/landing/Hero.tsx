@@ -1,8 +1,10 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { Avatar } from "@/components/ui/Avatar";
+import { useAuth } from "@/contexts/AuthContext";
 
 const cursors = [
   { name: "Ava", color: "#f87171", x: "8%", y: "22%", delay: 0.8 },
@@ -15,6 +17,38 @@ const cursors = [
 
 export function Hero() {
   const [promptText, setPromptText] = useState("");
+  const [creating, setCreating] = useState(false);
+  const router = useRouter();
+  const { user } = useAuth();
+
+  const handleGenerate = async () => {
+    const text = promptText.trim();
+    if (!text || creating) return;
+
+    if (!user) {
+      const params = new URLSearchParams({
+        prompt: text,
+        redirect: "/",
+      });
+      router.push(`/signin?${params.toString()}`);
+      return;
+    }
+
+    setCreating(true);
+    try {
+      const res = await fetch("/api/projects", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: text }),
+      });
+      const data: { id?: string } = await res.json();
+      if (data.id) {
+        router.push(`/app/${data.id}`);
+      }
+    } catch {
+      setCreating(false);
+    }
+  };
 
   return (
     <section
@@ -92,16 +126,15 @@ export function Hero() {
       ))}
 
       <div className="relative z-[3] mx-auto flex max-w-2xl flex-col items-center text-center">
-        {/* Badge */}
         <motion.div
           className="mb-6 inline-flex items-center gap-2 rounded-full bg-input-bg px-3.5 py-1.5 text-xs text-t-secondary shadow-sm"
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
         >
-          <span className="relative flex h-1.5 w-1.5">
-            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-t-primary/25 opacity-75 dark:bg-white/60" />
-            <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-t-tertiary dark:bg-white/80" />
+          <span className="relative flex h-2 w-2 shrink-0">
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-500/50 dark:bg-emerald-400/55" />
+            <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-600 dark:bg-emerald-400" />
           </span>
           Now in public beta
         </motion.div>
@@ -163,20 +196,30 @@ export function Hero() {
                   </svg>
                 </button>
               </div>
-              <button className="inline-flex h-9 items-center gap-2 px-5 rounded-lg bg-btn-primary-bg text-sm font-semibold text-btn-primary-text hover:opacity-90 transition-colors">
-                Generate
-                <svg
-                  width="14"
-                  height="14"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <path d="M5 12h14M12 5l7 7-7 7" />
-                </svg>
+              <button
+                onClick={handleGenerate}
+                disabled={creating || !promptText.trim()}
+                className="inline-flex h-9 items-center gap-2 px-5 rounded-lg bg-btn-primary-bg text-sm font-semibold text-btn-primary-text hover:opacity-90 transition-colors disabled:opacity-50"
+              >
+                {creating ? (
+                  <div className="size-3.5 rounded-full border-2 border-btn-primary-text/40 border-t-transparent animate-spin" />
+                ) : (
+                  <>
+                    Generate
+                    <svg
+                      width="14"
+                      height="14"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="M5 12h14M12 5l7 7-7 7" />
+                    </svg>
+                  </>
+                )}
               </button>
             </div>
           </div>
