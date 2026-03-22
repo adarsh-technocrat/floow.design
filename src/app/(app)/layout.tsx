@@ -1,5 +1,6 @@
 import { StoreProvider } from "@/store/StoreProvider";
 import { ProjectLoader } from "@/components/ProjectLoader";
+import { AuthGuard } from "@/components/AuthGuard";
 import { Toaster } from "sonner";
 
 export default function AppLayout({
@@ -8,9 +9,11 @@ export default function AppLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <StoreProvider>
-      <ProjectLoader>{children}</ProjectLoader>
-      <Toaster position="bottom-center" richColors />
-    </StoreProvider>
+    <AuthGuard>
+      <StoreProvider>
+        <ProjectLoader>{children}</ProjectLoader>
+        <Toaster position="bottom-center" richColors />
+      </StoreProvider>
+    </AuthGuard>
   );
 }

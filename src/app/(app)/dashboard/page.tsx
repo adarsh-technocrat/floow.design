@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
@@ -12,6 +12,18 @@ interface Project {
   id: string;
   name: string;
   screens: number;
+  thumbnail: string | null;
+  firstFrameHtml: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface TrashedProject {
+  id: string;
+  name: string;
+  screens: number;
+  thumbnail: string | null;
+  trashedAt: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -21,6 +33,39 @@ const streamingPrompts = [
   "E-commerce app with product cards and cart",
   "Social media feed with stories and bottom nav",
   "Music player with album art and playlist view",
+];
+
+const inspirationPrompts = [
+  {
+    name: "Health Dashboard",
+    color: "#34d399",
+    prompt:
+      "Personal health dashboard. Widgets for heart rate graph, sleep quality score with moon icon, daily caloric intake vs burn, hydration water level tracker, and recovery battery percentage. Activity rings and step counter. Create also the other screens.",
+  },
+  {
+    name: "Crypto Wallet",
+    color: "#a78bfa",
+    prompt:
+      "Mobile dashboard, Bento Grid layout, Soft Neo-Brutalism. Dark mode, deep charcoal background, rounded cards with vivid pastel accents (salmon, periwinkle, yellow). Bold all-caps sans-serif typography, modular fintech SaaS aesthetic with high contrast. Cryptocurrency wallet dashboard. A holographic virtual credit card. Line graph visualizing asset growth displayed on a translucent floating sheet. Token list with glowing logos and frosted row backgrounds. Total balance displayed in large, luminous digits. Create also the other screens.",
+  },
+  {
+    name: "Pet Manager",
+    color: "#fb923c",
+    prompt:
+      "Mobile UI, Glassmorphism aesthetic. Frosted glass cards with background blur and high transparency. Gradient background. Thin 1px white borders on containers. Floating elements, 3D depth effects, glossy icons, clean white sans-serif typography. Pet management app. Pet avatars are cute, stylized drawings. Task checklist items have wobbly hand-drawn checkmarks. Feeding schedule illustrated with a smiling food bowl icon. Vet appointment cards look like little paw prints. Bright, cheerful background.",
+  },
+  {
+    name: "Subscription Tracker",
+    color: "#f472b6",
+    prompt:
+      "Mobile UI, Playful Whimsical aesthetic. Bright, saturated color palette (e.g., sunshine yellow, sky blue, candy pink). Hand-drawn sketch lines, organic blob shapes, uneven borders. Cute cartoon character illustrations. Bubblegum sans-serif fonts, bouncy animations, sticker-like elements. Subscription tracker dashboard. Total monthly and yearly spending displayed prominently, active subscriptions count, list of services sorted by renewal date showing service icons, names, prices and next billing dates. Create also the other screens.",
+  },
+  {
+    name: "Clay 3D Minimal",
+    color: "#fbbf24",
+    prompt:
+      "Mobile UI, Soft Clay 3D Minimal aesthetic. Warm pastel palette (oatmeal, soft peach, pale sage green). Claymorphism — inflated puffy 3D shapes, soft inner shadows, directional lighting. Squeezable pillowy buttons, floating bubbly cards, large border radius. Rounded sans-serif typography. Floating capsule navigation bar. Friendly, tangible, youthful.",
+  },
 ];
 
 function timeAgo(dateStr: string): string {
@@ -78,17 +123,75 @@ export default function DashboardPage() {
   const router = useRouter();
   const { user, loading: authLoading, signOut } = useAuth();
   const [inputValue, setInputValue] = useState("");
-  const [showAllProjects, setShowAllProjects] = useState(false);
+  const [activeView, setActiveView] = useState<"home" | "projects" | "trash">(
+    "home",
+  );
   const [projects, setProjects] = useState<Project[]>([]);
+  const [trashedProjects, setTrashedProjects] = useState<TrashedProject[]>([]);
   const [loading, setLoading] = useState(true);
+  const [trashLoading, setTrashLoading] = useState(false);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const userMenuRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const streamingRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  // Redirect if not signed in
-  useEffect(() => {
-    if (!authLoading && !user) {
-      router.replace("/signin");
+  // Stream a prompt into the input box character by character
+  const streamPrompt = useCallback((text: string) => {
+    // Clear any existing stream
+    if (streamingRef.current) {
+      clearInterval(streamingRef.current);
+      streamingRef.current = null;
     }
-  }, [user, authLoading, router]);
+    setActiveView("home");
+    setInputValue("");
+    let i = 0;
+    streamingRef.current = setInterval(() => {
+      if (i < text.length) {
+        setInputValue(text.slice(0, i + 1));
+        i++;
+        // Auto-resize textarea as content streams in
+        const el = inputRef.current;
+        if (el) {
+          el.style.height = "auto";
+          el.style.height = Math.min(el.scrollHeight, 240) + "px";
+        }
+      } else {
+        if (streamingRef.current) {
+          clearInterval(streamingRef.current);
+          streamingRef.current = null;
+        }
+        // Focus input after streaming completes
+        inputRef.current?.focus();
+      }
+    }, 20);
+  }, []);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (streamingRef.current) clearInterval(streamingRef.current);
+    };
+  }, []);
+
+  // Close user menu on click outside
+  useEffect(() => {
+    const handleClick = (e: MouseEvent) => {
+      if (
+        userMenuRef.current &&
+        !userMenuRef.current.contains(e.target as Node)
+      ) {
+        setUserMenuOpen(false);
+      }
+    };
+    if (userMenuOpen) document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [userMenuOpen]);
+
+  // Shuffle inspiration prompts so it feels fresh each visit
+  const shuffledInspirations = useMemo(
+    () => [...inspirationPrompts].sort(() => Math.random() - 0.5),
+    [],
+  );
 
   // Fetch projects
   useEffect(() => {
@@ -123,201 +226,492 @@ export default function DashboardPage() {
     createProject(inputValue.trim());
   };
 
-  if (authLoading || !user) {
-    return (
-      <div className="flex h-screen w-full items-center justify-center bg-surface">
-        <div className="flex items-center gap-2 text-sm text-t-secondary">
-          <div className="size-2 rounded-full bg-t-tertiary animate-pulse" />
-          Loading...
-        </div>
-      </div>
-    );
-  }
+  // Fetch trashed projects
+  const fetchTrash = useCallback(async () => {
+    setTrashLoading(true);
+    try {
+      const res = await fetch("/api/projects/trash");
+      const data: { projects?: TrashedProject[] } = await res.json();
+      if (data.projects) setTrashedProjects(data.projects);
+    } catch {
+      // silent
+    } finally {
+      setTrashLoading(false);
+    }
+  }, []);
+
+  // Trash a project (soft delete)
+  const trashProject = useCallback(
+    async (id: string) => {
+      await fetch("/api/projects", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id }),
+      });
+      setProjects((prev) => prev.filter((p) => p.id !== id));
+    },
+    [],
+  );
+
+  // Restore a trashed project
+  const restoreProject = useCallback(async (id: string) => {
+    await fetch("/api/projects/trash", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id }),
+    });
+    setTrashedProjects((prev) => prev.filter((p) => p.id !== id));
+    // Refresh active projects
+    const res = await fetch("/api/projects");
+    const data: { projects?: Project[] } = await res.json();
+    if (data.projects) setProjects(data.projects);
+  }, []);
+
+  // Permanently delete a project
+  const permanentlyDelete = useCallback(async (id: string) => {
+    await fetch("/api/projects/trash", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id }),
+    });
+    setTrashedProjects((prev) => prev.filter((p) => p.id !== id));
+  }, []);
+
+
+  const sidebarNav = [
+    {
+      key: "home",
+      label: "Home",
+      icon: (
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
+          <polyline points="9 22 9 12 15 12 15 22" />
+        </svg>
+      ),
+      action: () => setActiveView("home"),
+      active: activeView === "home",
+    },
+    {
+      key: "projects",
+      label: "Projects",
+      icon: (
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+          <rect x="2" y="3" width="20" height="14" rx="2" ry="2" />
+          <path d="M8 21h8M12 17v4" />
+        </svg>
+      ),
+      action: () => setActiveView("projects"),
+      active: activeView === "projects",
+      count: projects.length || undefined,
+    },
+    {
+      key: "trash",
+      label: "Trash",
+      icon: (
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+          <polyline points="3 6 5 6 21 6" />
+          <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" />
+        </svg>
+      ),
+      action: () => {
+        setActiveView("trash");
+        fetchTrash();
+      },
+      active: activeView === "trash",
+      count: trashedProjects.length || undefined,
+    },
+  ];
 
   return (
     <div className="h-screen w-full bg-surface text-t-primary p-3">
-      <div className="h-full w-full rounded-2xl border border-b-0 border-b-primary bg-canvas-bg overflow-hidden flex flex-col relative">
-        {/* Dotted canvas bg */}
-        <div
-          className="pointer-events-none absolute inset-0 z-0"
-          style={{
-            backgroundImage:
-              "radial-gradient(circle, var(--canvas-dot) 1px, transparent 1px)",
-            backgroundSize: "20px 20px",
-          }}
-        />
+      <div className="h-full w-full rounded-2xl border border-b-secondary bg-canvas-bg overflow-hidden flex relative">
+        {/* Left sidebar */}
+        <aside className="relative z-10 flex w-[220px] flex-shrink-0 flex-col border-r border-b-secondary bg-surface/80 backdrop-blur-sm">
+          {/* Logo */}
+          <div className="flex h-12 items-center px-4">
+            <Link href="/" className="no-underline flex items-center gap-2">
+              <span
+                className="text-sm font-bold text-t-primary tracking-tight"
+                style={{
+                  fontFamily: "var(--font-logo), 'Space Grotesk', sans-serif",
+                }}
+              >
+                floow<span className="text-t-secondary">.design</span>
+              </span>
+            </Link>
+          </div>
 
-        {/* Top bar */}
-        <header className="relative z-10 flex h-12 flex-shrink-0 items-center justify-between px-5">
-          <Link href="/" className="no-underline flex items-center gap-2">
-            <span
-              className="text-sm font-bold text-t-primary tracking-tight"
-              style={{
-                fontFamily: "var(--font-logo), 'Space Grotesk', sans-serif",
-              }}
-            >
-              floow<span className="text-t-secondary">.design</span>
-            </span>
-          </Link>
-          <div className="flex items-center gap-2">
-            <span className="text-[10px] font-mono text-t-tertiary uppercase tracking-wider">
-              Dashboard
-            </span>
-            <div className="ml-1 h-4 w-px bg-input-bg" />
-            <ThemeToggleCompact />
-            <div className="h-4 w-px bg-input-bg" />
+          {/* New project button */}
+          <div className="px-3 mb-1">
             <button
-              onClick={() => signOut().then(() => router.replace("/signin"))}
-              className="flex overflow-hidden rounded-full border border-b-0 border-b-primary transition-colors hover:border-b-strong"
-              title="Sign out"
+              onClick={() => {
+                setActiveView("home");
+                setTimeout(() => inputRef.current?.focus(), 100);
+              }}
+              className="flex w-full items-center gap-2 rounded-lg border border-b-secondary px-3 py-2 text-xs font-medium text-t-secondary transition-colors hover:border-b-strong hover:bg-input-bg hover:text-t-primary"
             >
-              <Avatar
-                src={user?.photoURL}
-                email={user?.email}
-                name={user?.displayName}
-                size={28}
-              />
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                <path d="M12 5v14M5 12h14" />
+              </svg>
+              New project
             </button>
           </div>
-        </header>
 
-        {/* Center content */}
-        <AnimatePresence mode="wait">
-          {!showAllProjects ? (
-            <motion.div
-              key="home"
-              className="relative z-10 flex-1 flex flex-col items-center justify-center px-6"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0, y: -20 }}
-              transition={{ duration: 0.3 }}
-            >
-              <motion.div
-                className="flex flex-col items-center text-center mb-10"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6 }}
+          {/* Nav items */}
+          <nav className="flex flex-col gap-0.5 px-3 py-2">
+            {sidebarNav.map((item) => (
+              <button
+                key={item.key}
+                onClick={item.action}
+                className={`flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-medium transition-colors ${
+                  item.active
+                    ? "bg-input-bg text-t-primary"
+                    : "text-t-tertiary hover:bg-input-bg/50 hover:text-t-secondary"
+                }`}
               >
-                <h1
-                  className="text-3xl md:text-4xl font-semibold tracking-tight text-t-primary"
-                  style={{
-                    fontFamily: "var(--font-logo), 'Space Grotesk', sans-serif",
-                  }}
+                <span className={item.active ? "text-t-primary" : "text-t-tertiary"}>
+                  {item.icon}
+                </span>
+                {item.label}
+                {item.count !== undefined && (
+                  <span className="ml-auto text-[10px] font-mono text-t-tertiary">
+                    {item.count}
+                  </span>
+                )}
+              </button>
+            ))}
+          </nav>
+
+          <div className="mx-3 my-1 h-px bg-input-bg" />
+
+          {/* Recent projects + Inspiration — scrollable area */}
+          <div className="flex-1 overflow-y-auto px-3 py-2">
+            {/* Recent projects */}
+            <p className="mb-2 px-3 text-[10px] font-mono font-medium uppercase tracking-wider text-t-tertiary">
+              Recent
+            </p>
+            {loading ? (
+              <div className="flex items-center gap-2 px-3 py-2 text-[11px] text-t-tertiary">
+                <div className="size-1.5 rounded-full bg-t-tertiary animate-pulse" />
+                Loading...
+              </div>
+            ) : projects.length === 0 ? (
+              <p className="px-3 text-[11px] text-t-tertiary">No projects yet</p>
+            ) : (
+              projects.slice(0, 8).map((project) => (
+                <Link
+                  key={project.id}
+                  href={`/app/${project.id}`}
+                  className="group flex items-center gap-2.5 rounded-lg px-3 py-1.5 text-xs text-t-tertiary no-underline transition-colors hover:bg-input-bg/50 hover:text-t-secondary"
                 >
-                  What would you like
-                  <br />
-                  <span className="text-t-tertiary">to build today?</span>
-                </h1>
-              </motion.div>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="shrink-0 text-t-tertiary/60">
+                    <path d="M13 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V9z" />
+                    <polyline points="13 2 13 9 20 9" />
+                  </svg>
+                  <span className="truncate">{project.name}</span>
+                  <span className="ml-auto shrink-0 text-[9px] font-mono text-t-tertiary/60 opacity-0 group-hover:opacity-100 transition-opacity">
+                    {timeAgo(project.updatedAt)}
+                  </span>
+                </Link>
+              ))
+            )}
 
-              {/* Prompt input */}
-              <motion.div
-                className="w-full max-w-[580px]"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.15, duration: 0.6 }}
-              >
-                <div className="rounded-2xl border border-b-0 border-b-strong bg-surface-elevated/90 backdrop-blur-xl transition-all focus-within:border-b-strong">
-                  <div className="px-4 pt-4 pb-2 relative">
-                    {!inputValue && (
-                      <div className="absolute inset-x-4 top-4 pointer-events-none text-[15px] leading-relaxed">
-                        <StreamingPlaceholder />
-                      </div>
-                    )}
-                    <textarea
-                      ref={inputRef}
-                      value={inputValue}
-                      onChange={(e) => setInputValue(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter" && !e.shiftKey) {
-                          e.preventDefault();
-                          handleSubmit();
-                        }
-                      }}
-                      rows={3}
-                      className="w-full bg-transparent text-[15px] text-t-primary placeholder-transparent outline-none resize-none leading-relaxed min-h-[76px] max-h-[140px] relative z-10"
-                      onInput={(e) => {
-                        const el = e.currentTarget;
-                        el.style.height = "auto";
-                        el.style.height = Math.min(el.scrollHeight, 140) + "px";
-                      }}
-                    />
+          </div>
+
+          {/* Bottom — user + controls */}
+          <div className="relative border-t border-b-secondary p-3" ref={userMenuRef}>
+            {/* User menu dropdown */}
+            {userMenuOpen && (
+              <div className="absolute bottom-full left-3 right-3 mb-2 overflow-hidden rounded-xl border border-b-secondary bg-surface-elevated shadow-lg">
+                <div className="px-3 py-2.5 border-b border-b-secondary">
+                  <p className="text-xs font-medium text-t-primary truncate">
+                    {user?.displayName || "User"}
+                  </p>
+                  <p className="text-[10px] text-t-tertiary truncate">
+                    {user?.email || ""}
+                  </p>
+                </div>
+                <div className="py-1">
+                  <button
+                    onClick={() => {
+                      setUserMenuOpen(false);
+                      router.push("/billing");
+                    }}
+                    className="flex w-full items-center gap-2.5 px-3 py-2 text-xs text-t-secondary transition-colors hover:bg-input-bg hover:text-t-primary"
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                      <rect x="1" y="4" width="22" height="16" rx="2" ry="2" />
+                      <line x1="1" y1="10" x2="23" y2="10" />
+                    </svg>
+                    Billing
+                  </button>
+                  <button
+                    onClick={() => {
+                      setUserMenuOpen(false);
+                      router.push("/account");
+                    }}
+                    className="flex w-full items-center gap-2.5 px-3 py-2 text-xs text-t-secondary transition-colors hover:bg-input-bg hover:text-t-primary"
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" />
+                      <circle cx="12" cy="7" r="4" />
+                    </svg>
+                    Account
+                  </button>
+                </div>
+                <div className="border-t border-b-secondary py-1">
+                  <div className="flex items-center justify-between px-3 py-2">
+                    <span className="text-[10px] font-mono text-t-tertiary uppercase tracking-wider">
+                      Theme
+                    </span>
+                    <ThemeToggleCompact />
                   </div>
-                  <div className="flex items-center justify-between px-4 py-2.5">
-                    <div className="flex items-center gap-2">
-                      <button
-                        type="button"
-                        className="inline-flex size-7 items-center justify-center rounded-md text-t-tertiary hover:text-t-secondary hover:bg-input-bg transition-colors"
-                        title="Attach"
+                </div>
+                <div className="border-t border-b-secondary py-1">
+                  <button
+                    onClick={() => {
+                      setUserMenuOpen(false);
+                      signOut().then(() => router.replace("/signin"));
+                    }}
+                    className="flex w-full items-center gap-2.5 px-3 py-2 text-xs text-red-500 transition-colors hover:bg-red-500/10"
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4" />
+                      <polyline points="16 17 21 12 16 7" />
+                      <line x1="21" y1="12" x2="9" y2="12" />
+                    </svg>
+                    Log out
+                  </button>
+                </div>
+              </div>
+            )}
+
+            <button
+              onClick={() => setUserMenuOpen((prev) => !prev)}
+              className="flex w-full items-center gap-2 rounded-lg px-1 py-1 -mx-1 transition-colors hover:bg-input-bg/50"
+            >
+              <div className="flex overflow-hidden rounded-full border border-b-secondary">
+                <Avatar
+                  src={user?.photoURL}
+                  email={user?.email}
+                  name={user?.displayName}
+                  size={28}
+                />
+              </div>
+              <div className="flex-1 min-w-0 text-left">
+                <p className="text-xs font-medium text-t-primary truncate">
+                  {user?.displayName || "User"}
+                </p>
+                <p className="text-[10px] text-t-tertiary truncate">
+                  {user?.email || ""}
+                </p>
+              </div>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="shrink-0 text-t-tertiary">
+                <path d="M7 10l5-5 5 5" />
+                <path d="M7 14l5 5 5-5" />
+              </svg>
+            </button>
+          </div>
+        </aside>
+
+        {/* Main content area */}
+        <div className="flex-1 flex flex-col relative overflow-hidden">
+          {/* Dotted canvas bg */}
+          <div
+            className="pointer-events-none absolute inset-0 z-0"
+            style={{
+              backgroundImage:
+                "radial-gradient(circle, var(--canvas-dot) 1px, transparent 1px)",
+              backgroundSize: "20px 20px",
+            }}
+          />
+
+          {/* Center content */}
+          <AnimatePresence mode="wait">
+            {activeView === "home" ? (
+              <motion.div
+                key="home"
+                className="relative z-10 flex-1 flex flex-col items-center justify-center px-6"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0, y: -20 }}
+                transition={{ duration: 0.3 }}
+              >
+                <motion.div
+                  className="relative flex flex-col items-center text-center mb-10"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.6 }}
+                >
+                  {/* Floating thunder icons */}
+                  {[
+                    { x: "-60px", y: "-10px", size: 18, color: "#fbbf24", delay: 0.3, rotate: -15 },
+                    { x: "calc(100% + 40px)", y: "0px", size: 20, color: "#a78bfa", delay: 0.5, rotate: 12 },
+                    { x: "-40px", y: "50px", size: 14, color: "#f472b6", delay: 0.7, rotate: 20 },
+                    { x: "calc(100% + 25px)", y: "45px", size: 16, color: "#34d399", delay: 0.9, rotate: -10 },
+                    { x: "20px", y: "-25px", size: 12, color: "#fb923c", delay: 1.1, rotate: 25 },
+                    { x: "calc(100% - 30px)", y: "-20px", size: 13, color: "#60a5fa", delay: 0.6, rotate: -20 },
+                  ].map((bolt, i) => (
+                    <motion.div
+                      key={i}
+                      className="pointer-events-none absolute"
+                      style={{ left: bolt.x, top: bolt.y }}
+                      initial={{ opacity: 0, scale: 0 }}
+                      animate={{ opacity: 0.7, scale: 1 }}
+                      transition={{
+                        delay: bolt.delay,
+                        duration: 0.4,
+                        type: "spring",
+                        stiffness: 260,
+                        damping: 20,
+                      }}
+                    >
+                      <motion.div
+                        animate={{
+                          y: [0, -6, 4, -3, 0],
+                          rotate: [bolt.rotate, bolt.rotate + 5, bolt.rotate - 3, bolt.rotate],
+                        }}
+                        transition={{
+                          duration: 6 + i,
+                          repeat: Infinity,
+                          ease: "easeInOut",
+                        }}
                       >
                         <svg
-                          width="15"
-                          height="15"
-                          viewBox="0 0 256 256"
-                          fill="currentColor"
-                        >
-                          <path d="M224,128a8,8,0,0,1-8,8H136v80a8,8,0,0,1-16,0V136H40a8,8,0,0,1,0-16h80V40a8,8,0,0,1,16,0v80h80A8,8,0,0,1,224,128Z" />
-                        </svg>
-                      </button>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-[10px] font-mono text-t-tertiary hidden border border-b-0 border-b-secondary rounded bg-input-bg px-1.5 py-0.5 sm:inline">
-                        ⌘ Enter
-                      </span>
-                      <button
-                        type="button"
-                        onClick={handleSubmit}
-                        disabled={!inputValue.trim()}
-                        className="inline-flex size-8 items-center justify-center rounded-lg bg-btn-primary-bg text-btn-primary-text transition-all hover:opacity-90 disabled:opacity-15 disabled:pointer-events-none active:scale-95"
-                      >
-                        <svg
-                          width="14"
-                          height="14"
+                          width={bolt.size}
+                          height={bolt.size}
                           viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2.5"
+                          fill={bolt.color}
+                          stroke={bolt.color}
+                          strokeWidth="0.5"
                           strokeLinecap="round"
                           strokeLinejoin="round"
                         >
-                          <path d="M5 12h14M12 5l7 7-7 7" />
+                          <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
                         </svg>
-                      </button>
+                      </motion.div>
+                    </motion.div>
+                  ))}
+
+                  <h1
+                    className="text-3xl md:text-4xl font-semibold tracking-tight text-t-primary"
+                    style={{
+                      fontFamily: "var(--font-logo), 'Space Grotesk', sans-serif",
+                    }}
+                  >
+                    What would you like
+                    <br />
+                    <span className="text-t-tertiary">to build today?</span>
+                  </h1>
+                </motion.div>
+
+                {/* Prompt input */}
+                <motion.div
+                  className="w-full max-w-[820px]"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.15, duration: 0.6 }}
+                >
+                  <div className="rounded-2xl border border-b-secondary bg-surface-elevated/90 backdrop-blur-xl transition-all focus-within:border-b-strong">
+                    <div className="px-4 pt-4 pb-2 relative">
+                      {!inputValue && (
+                        <div className="absolute inset-x-4 top-4 pointer-events-none text-[15px] leading-relaxed">
+                          <StreamingPlaceholder />
+                        </div>
+                      )}
+                      <textarea
+                        ref={inputRef}
+                        value={inputValue}
+                        onChange={(e) => setInputValue(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" && !e.shiftKey) {
+                            e.preventDefault();
+                            handleSubmit();
+                          }
+                        }}
+                        rows={3}
+                        className="w-full bg-transparent text-[15px] text-t-primary placeholder-transparent outline-none resize-none leading-relaxed min-h-[100px] max-h-[240px] relative z-10"
+                        onInput={(e) => {
+                          const el = e.currentTarget;
+                          el.style.height = "auto";
+                          el.style.height = Math.min(el.scrollHeight, 240) + "px";
+                        }}
+                      />
+                    </div>
+                    <div className="flex items-center justify-between px-4 py-2.5">
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          className="inline-flex size-7 items-center justify-center rounded-md text-t-tertiary hover:text-t-secondary hover:bg-input-bg transition-colors"
+                          title="Attach"
+                        >
+                          <svg
+                            width="15"
+                            height="15"
+                            viewBox="0 0 256 256"
+                            fill="currentColor"
+                          >
+                            <path d="M224,128a8,8,0,0,1-8,8H136v80a8,8,0,0,1-16,0V136H40a8,8,0,0,1,0-16h80V40a8,8,0,0,1,16,0v80h80A8,8,0,0,1,224,128Z" />
+                          </svg>
+                        </button>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] font-mono text-t-tertiary hidden border border-b-secondary rounded bg-input-bg px-1.5 py-0.5 sm:inline">
+                          ⌘ Enter
+                        </span>
+                        <button
+                          type="button"
+                          onClick={handleSubmit}
+                          disabled={!inputValue.trim()}
+                          className="inline-flex size-8 items-center justify-center rounded-lg bg-btn-primary-bg text-btn-primary-text transition-all hover:opacity-90 disabled:opacity-15 disabled:pointer-events-none active:scale-95"
+                        >
+                          <svg
+                            width="14"
+                            height="14"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2.5"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          >
+                            <path d="M5 12h14M12 5l7 7-7 7" />
+                          </svg>
+                        </button>
+                      </div>
                     </div>
                   </div>
-                </div>
+
+                  {/* Inspiration chips */}
+                  <div className="mt-4 flex items-center justify-center gap-2 overflow-x-auto max-w-full flex-nowrap">
+                    <span className="text-[10px] font-mono text-t-tertiary uppercase tracking-wider mr-1">
+                      Try
+                    </span>
+                    {shuffledInspirations.map((item) => (
+                      <button
+                        key={item.name}
+                        onClick={() => streamPrompt(item.prompt)}
+                        className="inline-flex shrink-0 whitespace-nowrap items-center gap-1.5 rounded-full border border-b-strong bg-surface-elevated/60 px-3 py-1.5 text-[11px] font-medium text-t-secondary transition-all hover:bg-input-bg hover:text-t-primary"
+                      >
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="shrink-0">
+                          <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+                        </svg>
+                        {item.name}
+                      </button>
+                    ))}
+                  </div>
+                </motion.div>
               </motion.div>
-            </motion.div>
-          ) : (
-            /* All projects view */
-            <motion.div
-              key="projects"
-              className="relative z-10 flex-1 flex flex-col overflow-hidden"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.3 }}
-            >
-              <div className="flex items-center justify-between px-5 py-4">
-                <div className="flex items-center gap-3">
-                  <button
-                    onClick={() => setShowAllProjects(false)}
-                    className="flex items-center gap-1.5 text-[11px] font-mono uppercase tracking-wider text-t-tertiary hover:text-t-secondary transition-colors"
-                  >
-                    <svg
-                      width="14"
-                      height="14"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                    >
-                      <path d="M19 12H5M12 19l-7-7 7-7" />
-                    </svg>
-                    Back
-                  </button>
-                  <div className="h-4 w-px bg-input-bg" />
+            ) : activeView === "projects" ? (
+              <motion.div
+                key="projects"
+                className="relative z-10 flex-1 flex flex-col overflow-hidden"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.3 }}
+              >
+                <div className="flex items-center justify-between px-5 py-4">
                   <span className="text-[11px] font-mono font-medium uppercase tracking-wider text-t-secondary">
                     All Projects
                     {projects.length > 0 && (
@@ -326,172 +720,221 @@ export default function DashboardPage() {
                       </span>
                     )}
                   </span>
-                </div>
-                <button
-                  onClick={() => createProject()}
-                  className="flex items-center gap-1.5 rounded-lg border border-b-0 border-b-primary px-3 py-1.5 text-[11px] font-mono font-medium uppercase tracking-wider text-t-secondary transition-colors hover:border-b-strong hover:text-t-primary"
-                >
-                  <svg width="12" height="12" viewBox="0 0 14 14" fill="none">
-                    <path
-                      d="M7 1v12M1 7h12"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                    />
-                  </svg>
-                  New
-                </button>
-              </div>
-
-              <div className="flex-1 overflow-y-auto">
-                {loading ? (
-                  <div className="flex items-center justify-center py-20">
-                    <div className="flex items-center gap-2 text-sm text-t-tertiary">
-                      <div className="size-2 rounded-full bg-t-tertiary animate-pulse" />
-                      Loading...
-                    </div>
-                  </div>
-                ) : projects.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center py-20">
-                    <p className="text-sm text-t-tertiary">No projects yet</p>
-                    <button
-                      onClick={() => {
-                        setShowAllProjects(false);
-                        inputRef.current?.focus();
-                      }}
-                      className="mt-3 text-xs font-mono uppercase tracking-wider text-t-secondary hover:text-t-primary transition-colors"
-                    >
-                      Start by describing your app →
-                    </button>
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-                    {projects.map((project, i) => (
-                      <Link
-                        key={project.id}
-                        href={`/app/${project.id}`}
-                        className={`group flex flex-col gap-3 p-5 no-underline transition-colors hover:bg-input-bg ${
-                          (i + 1) % 3 !== 0
-                            ? "border-b-secondary lg:border-r"
-                            : ""
-                        } ${(i + 1) % 2 !== 0 ? "max-lg:border-r border-b-secondary" : ""}`}
-                      >
-                        <div className="flex aspect-[16/10] w-full items-center justify-center rounded-lg border border-b-0 border-b-secondary bg-input-bg">
-                          <div className="flex gap-2">
-                            {Array.from({
-                              length: Math.min(project.screens, 3),
-                            }).map((_, si) => (
-                              <div
-                                key={si}
-                                className="h-10 w-6 rounded border border-b-0 border-b-secondary bg-input-bg"
-                              />
-                            ))}
-                            {project.screens > 3 && (
-                              <span className="text-[9px] font-mono text-t-tertiary self-center">
-                                +{project.screens - 3}
-                              </span>
-                            )}
-                            {project.screens === 0 && (
-                              <span className="text-[9px] font-mono text-t-tertiary">
-                                Empty
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <p className="text-sm font-medium text-t-primary group-hover:text-t-primary transition-colors">
-                              {project.name}
-                            </p>
-                            <p className="text-[10px] font-mono text-t-tertiary mt-0.5">
-                              {project.screens} screens ·{" "}
-                              {timeAgo(project.updatedAt)}
-                            </p>
-                          </div>
-                          <button
-                            className="flex h-6 w-6 items-center justify-center rounded text-t-tertiary opacity-0 group-hover:opacity-100 hover:bg-input-bg transition-all"
-                            onClick={(e) => e.preventDefault()}
-                          >
-                            <svg
-                              width="12"
-                              height="12"
-                              viewBox="0 0 14 14"
-                              fill="none"
-                            >
-                              <circle cx="7" cy="3" r="1" fill="currentColor" />
-                              <circle cx="7" cy="7" r="1" fill="currentColor" />
-                              <circle
-                                cx="7"
-                                cy="11"
-                                r="1"
-                                fill="currentColor"
-                              />
-                            </svg>
-                          </button>
-                        </div>
-                      </Link>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* Bottom — recent projects strip */}
-        {!showAllProjects && (
-          <motion.div
-            className="relative z-10 border-t border-b-secondary flex-shrink-0"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.3, duration: 0.5 }}
-          >
-            <div className="flex items-center justify-between px-5 py-2.5">
-              <span className="text-[10px] font-mono font-medium uppercase tracking-wider text-t-tertiary">
-                Recent
-              </span>
-              {projects.length > 0 && (
-                <button
-                  onClick={() => setShowAllProjects(true)}
-                  className="text-[10px] font-mono uppercase tracking-wider text-t-tertiary hover:text-t-secondary transition-colors"
-                >
-                  View all →
-                </button>
-              )}
-            </div>
-
-            <div className="flex gap-px bg-input-bg">
-              {loading ? (
-                <div className="flex-1 flex items-center justify-center py-3 bg-canvas-bg">
-                  <span className="text-[10px] text-t-tertiary animate-pulse">
-                    Loading...
-                  </span>
-                </div>
-              ) : projects.length === 0 ? (
-                <div className="flex-1 flex items-center justify-center py-3 bg-canvas-bg">
-                  <span className="text-[10px] text-t-tertiary">
-                    No projects yet — describe your app above to start
-                  </span>
-                </div>
-              ) : (
-                projects.slice(0, 4).map((project) => (
-                  <Link
-                    key={project.id}
-                    href={`/app/${project.id}`}
-                    className="flex-1 flex flex-col gap-1 px-4 py-3 bg-canvas-bg hover:bg-input-bg transition-colors no-underline group"
+                  <button
+                    onClick={() => createProject()}
+                    className="flex items-center gap-1.5 rounded-lg border border-b-secondary px-3 py-1.5 text-[11px] font-mono font-medium uppercase tracking-wider text-t-secondary transition-colors hover:border-b-strong hover:text-t-primary"
                   >
-                    <p className="text-xs font-medium text-t-secondary group-hover:text-t-primary truncate transition-colors">
-                      {project.name}
-                    </p>
-                    <p className="text-[10px] font-mono text-t-tertiary">
-                      {project.screens} screens · {timeAgo(project.updatedAt)}
-                    </p>
-                  </Link>
-                ))
-              )}
-            </div>
-          </motion.div>
-        )}
+                    <svg width="12" height="12" viewBox="0 0 14 14" fill="none">
+                      <path
+                        d="M7 1v12M1 7h12"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                      />
+                    </svg>
+                    New
+                  </button>
+                </div>
+
+                <div className="flex-1 overflow-y-auto">
+                  {loading ? (
+                    <div className="flex items-center justify-center py-20">
+                      <div className="flex items-center gap-2 text-sm text-t-tertiary">
+                        <div className="size-2 rounded-full bg-t-tertiary animate-pulse" />
+                        Loading...
+                      </div>
+                    </div>
+                  ) : projects.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center py-20">
+                      <p className="text-sm text-t-tertiary">No projects yet</p>
+                      <button
+                        onClick={() => {
+                          setActiveView("home");
+                          inputRef.current?.focus();
+                        }}
+                        className="mt-3 text-xs font-mono uppercase tracking-wider text-t-secondary hover:text-t-primary transition-colors"
+                      >
+                        Start by describing your app →
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+                      {projects.map((project, i) => (
+                        <Link
+                          key={project.id}
+                          href={`/app/${project.id}`}
+                          className={`group flex flex-col gap-3 p-5 no-underline transition-colors hover:bg-input-bg ${
+                            (i + 1) % 3 !== 0
+                              ? "border-b-secondary lg:border-r"
+                              : ""
+                          } ${(i + 1) % 2 !== 0 ? "max-lg:border-r border-b-secondary" : ""}`}
+                        >
+                          <div className="relative aspect-[16/10] w-full overflow-hidden rounded-lg border border-b-secondary bg-input-bg">
+                            {project.thumbnail ? (
+                              <img
+                                src={project.thumbnail}
+                                alt={project.name}
+                                className="h-full w-full object-cover"
+                              />
+                            ) : project.firstFrameHtml ? (
+                              <div className="pointer-events-none absolute inset-0 overflow-hidden">
+                                <iframe
+                                  srcDoc={project.firstFrameHtml}
+                                  sandbox=""
+                                  title={`${project.name} preview`}
+                                  className="h-[927px] w-[420px] origin-top-left border-none"
+                                  style={{
+                                    transform: "scale(0.28)",
+                                    transformOrigin: "top left",
+                                  }}
+                                  tabIndex={-1}
+                                />
+                              </div>
+                            ) : (
+                              <div className="flex h-full w-full items-center justify-center">
+                                <span className="text-[9px] font-mono text-t-tertiary">
+                                  Empty
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <p className="text-sm font-medium text-t-primary group-hover:text-t-primary transition-colors">
+                                {project.name}
+                              </p>
+                              <p className="text-[10px] font-mono text-t-tertiary mt-0.5">
+                                {project.screens} screens ·{" "}
+                                {timeAgo(project.updatedAt)}
+                              </p>
+                            </div>
+                            <button
+                              className="flex h-6 w-6 items-center justify-center rounded text-t-tertiary opacity-0 group-hover:opacity-100 hover:bg-red-500/10 hover:text-red-500 transition-all"
+                              title="Move to trash"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                trashProject(project.id);
+                              }}
+                            >
+                              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <polyline points="3 6 5 6 21 6" />
+                                <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" />
+                              </svg>
+                            </button>
+                          </div>
+                        </Link>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </motion.div>
+            ) : activeView === "trash" ? (
+              /* Trash view */
+              <motion.div
+                key="trash"
+                className="relative z-10 flex-1 flex flex-col overflow-hidden"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.3 }}
+              >
+                <div className="flex items-center justify-between px-5 py-4">
+                  <span className="text-[11px] font-mono font-medium uppercase tracking-wider text-t-secondary">
+                    Trash
+                    {trashedProjects.length > 0 && (
+                      <span className="ml-1.5 text-t-tertiary">
+                        {trashedProjects.length}
+                      </span>
+                    )}
+                  </span>
+                </div>
+
+                <div className="flex-1 overflow-y-auto">
+                  {trashLoading ? (
+                    <div className="flex items-center justify-center py-20">
+                      <div className="flex items-center gap-2 text-sm text-t-tertiary">
+                        <div className="size-2 rounded-full bg-t-tertiary animate-pulse" />
+                        Loading...
+                      </div>
+                    </div>
+                  ) : trashedProjects.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center py-20">
+                      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" className="text-t-tertiary/40 mb-3">
+                        <polyline points="3 6 5 6 21 6" />
+                        <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" />
+                      </svg>
+                      <p className="text-sm text-t-tertiary">Trash is empty</p>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+                      {trashedProjects.map((project, i) => (
+                        <div
+                          key={project.id}
+                          className={`group flex flex-col gap-3 p-5 transition-colors ${
+                            (i + 1) % 3 !== 0
+                              ? "border-b-secondary lg:border-r"
+                              : ""
+                          } ${(i + 1) % 2 !== 0 ? "max-lg:border-r border-b-secondary" : ""}`}
+                        >
+                          <div className="relative aspect-[16/10] w-full overflow-hidden rounded-lg border border-b-secondary bg-input-bg opacity-60">
+                            {project.thumbnail ? (
+                              <img
+                                src={project.thumbnail}
+                                alt={project.name}
+                                className="h-full w-full object-cover"
+                              />
+                            ) : (
+                              <div className="flex h-full w-full items-center justify-center">
+                                <span className="text-[9px] font-mono text-t-tertiary">
+                                  {project.screens} screens
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <p className="text-sm font-medium text-t-secondary line-through">
+                                {project.name}
+                              </p>
+                              <p className="text-[10px] font-mono text-t-tertiary mt-0.5">
+                                Trashed {timeAgo(project.trashedAt)}
+                              </p>
+                            </div>
+                            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <button
+                                className="flex h-7 items-center gap-1 rounded-md px-2 text-[10px] font-mono uppercase tracking-wider text-t-secondary hover:bg-input-bg hover:text-t-primary transition-colors"
+                                title="Restore"
+                                onClick={() => restoreProject(project.id)}
+                              >
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                  <polyline points="1 4 1 10 7 10" />
+                                  <path d="M3.51 15a9 9 0 102.13-9.36L1 10" />
+                                </svg>
+                                Restore
+                              </button>
+                              <button
+                                className="flex h-7 items-center gap-1 rounded-md px-2 text-[10px] font-mono uppercase tracking-wider text-red-500/70 hover:bg-red-500/10 hover:text-red-500 transition-colors"
+                                title="Delete permanently"
+                                onClick={() => permanentlyDelete(project.id)}
+                              >
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                  <line x1="18" y1="6" x2="6" y2="18" />
+                                  <line x1="6" y1="6" x2="18" y2="18" />
+                                </svg>
+                                Delete
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </motion.div>
+            ) : null}
+          </AnimatePresence>
+
+        </div>
       </div>
     </div>
   );

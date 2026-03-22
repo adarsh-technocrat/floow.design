@@ -1,58 +1,40 @@
 "use client";
 
-import { useRef } from "react";
+import { useRef, useEffect, useState } from "react";
+import Link from "next/link";
 
-const templates = [
-  {
-    id: "health",
-    name: "Health Tracker",
-    tag: "Material 3",
-    screens: "6 screens",
-    image:
-      "https://lh3.googleusercontent.com/CwGQkERZQIadMhpEphW3k58HmhCs02NQRYpR9L_GIhU7qHIDfQlJp-ykadYDGA-x6_Bkq_Ea2r-fFr3rv4kW8Xw9A1DgJuD9hlE5Fw",
-  },
-  {
-    id: "entertainment",
-    name: "Entertainment",
-    tag: "Cupertino",
-    screens: "8 screens",
-    image:
-      "https://lh3.googleusercontent.com/-MMEDlQhYVE8CLSReq5dD_9s_mXvDaJUB8HaM-gKSh4LUsgjpQOK3ov7qdaH7hsVFDF0rc3L6Hi1ppWlaWx-rYMhK8IAViAM-Gk",
-  },
-  {
-    id: "fashion",
-    name: "Fashion Store",
-    tag: "Material 3",
-    screens: "10 screens",
-    image:
-      "https://lh3.googleusercontent.com/D6d1SQF0r3pePXE2e02y5nuvncVNFlQTMLmJm8ycWnjxC0Re9wQdvjQWHgcYYpduzGd7_QrfUTjC-OBUjDHOf_vWQ7fkMSRyEwhJ",
-  },
-  {
-    id: "utility",
-    name: "Utility Tools",
-    tag: "Material 3",
-    screens: "5 screens",
-    image:
-      "https://lh3.googleusercontent.com/7zm0iGoJpEdqqpo4GoqcLdOn0k-s9ZEMVy4MYn6Ia_3_FLlOzKHpb2iLlq7mVaLN7E4_5raueLuya7-MuvUyWFILPxBSdhTTz1XN",
-  },
-  {
-    id: "social",
-    name: "Social Feed",
-    tag: "Material 3",
-    screens: "7 screens",
-    image:
-      "https://lh3.googleusercontent.com/CwGQkERZQIadMhpEphW3k58HmhCs02NQRYpR9L_GIhU7qHIDfQlJp-ykadYDGA-x6_Bkq_Ea2r-fFr3rv4kW8Xw9A1DgJuD9hlE5Fw",
-  },
-];
+interface Template {
+  id: string;
+  name: string;
+  tag: string;
+  screens: number;
+  thumbnail: string | null;
+  firstFrameHtml: string | null;
+}
 
 export function TemplatesCarousel() {
   const scrollRef = useRef<HTMLDivElement>(null);
+  const [templates, setTemplates] = useState<Template[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch("/api/templates")
+      .then((r) => r.json())
+      .then((data: { templates?: Template[] }) => {
+        if (data.templates) setTemplates(data.templates);
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
+
   const scroll = (dir: "left" | "right") => {
     scrollRef.current?.scrollBy({
       left: dir === "left" ? -280 : 280,
       behavior: "smooth",
     });
   };
+
+  if (!loading && templates.length === 0) return null;
 
   return (
     <section
@@ -110,38 +92,76 @@ export function TemplatesCarousel() {
           Every template exports production-ready Flutter code.
         </p>
 
-        <div
-          ref={scrollRef}
-          className="flex gap-4 overflow-x-auto pb-2 scroll-smooth scrollbar-hide"
-        >
-          {templates.map((t) => (
-            <a
-              key={t.id}
-              href="/app"
-              className="group relative flex-shrink-0 w-[220px] no-underline"
-            >
-              <div className="relative aspect-[9/16] w-full overflow-hidden rounded-lg bg-zinc-200 shadow-md dark:bg-[#111] dark:shadow-none">
-                <img
-                  alt={t.name}
-                  src={t.image}
-                  className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-surface/80 via-transparent to-transparent" />
-                <div className="absolute bottom-0 left-0 right-0 p-3">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="rounded bg-black/25 px-1.5 py-0.5 text-[9px] font-mono uppercase tracking-wider text-white backdrop-blur-sm dark:bg-white/10">
-                      {t.tag}
-                    </span>
-                    <span className="text-[9px] font-mono text-t-tertiary">
-                      {t.screens}
-                    </span>
+        {loading ? (
+          <div className="flex gap-4">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div
+                key={i}
+                className="flex-shrink-0 w-[220px] aspect-[9/16] rounded-lg bg-input-bg animate-pulse"
+              />
+            ))}
+          </div>
+        ) : (
+          <div
+            ref={scrollRef}
+            className="flex gap-4 overflow-x-auto pb-2 scroll-smooth scrollbar-hide"
+          >
+            {templates.map((t) => (
+              <Link
+                key={t.id}
+                href={`/app/${t.id}`}
+                className="group relative flex-shrink-0 w-[220px] no-underline"
+              >
+                <div className="relative aspect-[9/16] w-full overflow-hidden rounded-lg border border-b-secondary bg-input-bg shadow-sm transition-shadow hover:shadow-md">
+                  {/* Frame preview */}
+                  {t.thumbnail ? (
+                    <img
+                      alt={t.name}
+                      src={t.thumbnail}
+                      className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+                    />
+                  ) : t.firstFrameHtml ? (
+                    <div className="pointer-events-none absolute inset-0 overflow-hidden">
+                      <iframe
+                        srcDoc={t.firstFrameHtml}
+                        sandbox=""
+                        title={`${t.name} preview`}
+                        className="h-[927px] w-[420px] origin-top-left border-none"
+                        style={{
+                          transform: "scale(0.523)",
+                          transformOrigin: "top left",
+                        }}
+                        tabIndex={-1}
+                      />
+                    </div>
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center">
+                      <span className="text-[9px] font-mono text-t-tertiary">
+                        {t.screens} screens
+                      </span>
+                    </div>
+                  )}
+
+                  {/* Overlay */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-surface/80 via-transparent to-transparent" />
+                  <div className="absolute bottom-0 left-0 right-0 p-3">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="rounded bg-btn-primary-bg/70 px-1.5 py-0.5 text-[9px] font-mono uppercase tracking-wider text-btn-primary-text backdrop-blur-sm">
+                        {t.tag}
+                      </span>
+                      <span className="text-[9px] font-mono text-t-tertiary">
+                        {t.screens} screens
+                      </span>
+                    </div>
+                    <p className="text-xs font-medium text-t-primary">
+                      {t.name}
+                    </p>
                   </div>
-                  <p className="text-xs font-medium text-t-primary">{t.name}</p>
                 </div>
-              </div>
-            </a>
-          ))}
-        </div>
+              </Link>
+            ))}
+          </div>
+        )}
       </div>
 
       <style>{`.scrollbar-hide::-webkit-scrollbar{display:none}.scrollbar-hide{scrollbar-width:none}`}</style>

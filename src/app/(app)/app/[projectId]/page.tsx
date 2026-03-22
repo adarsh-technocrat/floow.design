@@ -1,5 +1,6 @@
 "use client";
 
+import { useSelector } from "react-redux";
 import { Canvas } from "@/components/Canvas";
 import {
   CanvasBottomLeft,
@@ -8,8 +9,13 @@ import {
   CanvasTopRight,
   EditingModeDisplay,
 } from "@/components/canvas-layout";
+import { useCanvasThumbnail } from "@/hooks/useCanvasThumbnail";
+import type { RootState } from "@/store";
 
 export default function ProjectCanvasPage() {
+  const projectId = useSelector((s: RootState) => s.project.projectId);
+  useCanvasThumbnail(projectId);
+
   return (
     <div className="flex h-screen w-full flex-col bg-canvas-bg">
       <div

@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import { Logo } from "@/components/landing/Logo";
@@ -392,16 +391,7 @@ export default function SignInPage() {
             </div>
           )}
 
-          <p className="mt-8 text-center text-sm text-t-secondary">
-            Don&apos;t have an account?{" "}
-            <Link
-              href="/signup"
-              className="font-medium text-t-primary hover:text-t-primary transition-colors no-underline"
-            >
-              Sign up
-            </Link>
-          </p>
-          <p className="mt-6 text-center text-[11px] leading-relaxed text-t-tertiary">
+          <p className="mt-8 text-center text-[11px] leading-relaxed text-t-tertiary">
             By continuing, you agree to our{" "}
             <a
               href="#"

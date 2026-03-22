@@ -33,9 +33,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = onAuthChange((user) => {
-      setUser(user);
+    const unsubscribe = onAuthChange((firebaseUser) => {
+      setUser(firebaseUser);
       setLoading(false);
+
+      // Sync user to database
+      if (firebaseUser) {
+        fetch("/api/auth/sync", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            uid: firebaseUser.uid,
+            email: firebaseUser.email,
+            displayName: firebaseUser.displayName,
+            photoURL: firebaseUser.photoURL,
+            phoneNumber: firebaseUser.phoneNumber,
+            provider: firebaseUser.providerData?.[0]?.providerId || null,
+          }),
+        }).catch(() => {});
+      }
     });
     return unsubscribe;
   }, []);

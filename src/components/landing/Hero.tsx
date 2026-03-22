@@ -12,7 +12,7 @@ const cursors = [
   { name: "Priya", color: "#34d399", x: "78%", y: "72%", delay: 1.6 },
   { name: "Jake", color: "#fbbf24", x: "12%", y: "68%", delay: 2.0 },
   { name: "Mei", color: "#c084fc", x: "90%", y: "45%", delay: 1.0 },
-  { name: "Sara", color: "#fb923c", x: "45%", y: "82%", delay: 1.8 },
+  { name: "Sara", color: "#fb923c", x: "22%", y: "88%", delay: 1.8 },
 ];
 
 export function Hero() {
@@ -83,7 +83,7 @@ export function Hero() {
       {cursors.map((cursor) => (
         <motion.div
           key={cursor.name}
-          className="pointer-events-none absolute z-[2] hidden lg:block"
+          className="pointer-events-none absolute z-1 hidden lg:block"
           style={{ left: cursor.x, top: cursor.y }}
           initial={{ opacity: 0, scale: 0 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -125,7 +125,7 @@ export function Hero() {
         </motion.div>
       ))}
 
-      <div className="relative z-[3] mx-auto flex max-w-2xl flex-col items-center text-center">
+      <div className="relative z-10 mx-auto flex max-w-2xl flex-col items-center text-center">
         <motion.div
           className="mb-6 inline-flex items-center gap-2 rounded-full bg-input-bg px-3.5 py-1.5 text-xs text-t-secondary shadow-sm"
           initial={{ opacity: 0, y: 12 }}

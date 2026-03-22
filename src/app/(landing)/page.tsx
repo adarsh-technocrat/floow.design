@@ -2,6 +2,8 @@ import { Header } from "@/components/landing/Header";
 import { Hero } from "@/components/landing/Hero";
 import { TemplatesCarousel } from "@/components/landing/TemplatesCarousel";
 import { FeaturesGrid } from "@/components/landing/FeaturesGrid";
+import { ProductDemo } from "@/components/landing/ProductDemo";
+import { Testimonials } from "@/components/landing/Testimonials";
 import { StartNow } from "@/components/landing/StartNow";
 import { FAQ } from "@/components/landing/FAQ";
 import { Footer } from "@/components/landing/Footer";
@@ -21,6 +23,8 @@ export default function LandingPage() {
           <Hero />
           <TemplatesCarousel />
           <FeaturesGrid />
+          <ProductDemo />
+          <Testimonials />
           <StartNow />
           <FAQ />
         </main>
