@@ -66,15 +66,7 @@ export default function CreditLogsPage() {
 
   return (
     <div className="h-screen w-full bg-surface text-t-primary p-3">
-      <div className="h-full w-full rounded-2xl border border-b-secondary bg-canvas-bg overflow-hidden flex flex-col relative">
-        <div
-          className="pointer-events-none absolute inset-0 z-0"
-          style={{
-            backgroundImage:
-              "radial-gradient(circle, var(--canvas-dot) 1px, transparent 1px)",
-            backgroundSize: "20px 20px",
-          }}
-        />
+      <div className="h-full w-full rounded-2xl border border-b-secondary bg-surface overflow-hidden flex flex-col relative">
 
         <header className="relative z-10 flex h-12 items-center justify-between px-5 border-b border-b-secondary">
           <Link
@@ -100,7 +92,7 @@ export default function CreditLogsPage() {
         </header>
 
         <div className="relative z-10 flex-1 overflow-y-auto px-6 py-8">
-          <div className="mx-auto max-w-2xl">
+          <div className="mx-auto max-w-4xl">
             <h1
               className="text-xl font-semibold tracking-tight text-t-primary mb-6"
               style={{

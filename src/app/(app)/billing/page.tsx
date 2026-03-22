@@ -261,16 +261,7 @@ export default function BillingPage() {
 
   return (
     <div className="h-screen w-full bg-surface text-t-primary p-3">
-      <div className="h-full w-full rounded-2xl border border-b-secondary bg-canvas-bg overflow-hidden flex flex-col relative">
-        {/* Dotted bg */}
-        <div
-          className="pointer-events-none absolute inset-0 z-0"
-          style={{
-            backgroundImage:
-              "radial-gradient(circle, var(--canvas-dot) 1px, transparent 1px)",
-            backgroundSize: "20px 20px",
-          }}
-        />
+      <div className="h-full w-full rounded-2xl border border-b-secondary bg-surface overflow-hidden flex flex-col relative">
 
         {/* Header */}
         <header className="relative z-10 flex h-12 items-center justify-between px-5 border-b border-b-secondary">
@@ -298,7 +289,7 @@ export default function BillingPage() {
 
         {/* Content */}
         <div className="relative z-10 flex-1 flex items-start justify-center overflow-y-auto px-6 py-12">
-          <div className="w-full max-w-lg">
+          <div className="w-full max-w-3xl">
             <h1
               className="text-2xl font-semibold tracking-tight text-t-primary mb-8"
               style={{
