@@ -16,6 +16,7 @@ export interface CreditLogEntry {
   amount: number;
   balance: number;
   projectId: string | null;
+  projectName: string | null;
   meta: string | null;
   createdAt: string;
 }

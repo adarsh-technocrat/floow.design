@@ -15,6 +15,7 @@ export interface TrashedProject {
   name: string;
   screens: number;
   thumbnail: string | null;
+  firstFrameHtml?: string | null;
   trashedAt: string;
   createdAt: string;
   updatedAt: string;

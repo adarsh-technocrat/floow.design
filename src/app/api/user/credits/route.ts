@@ -25,6 +25,19 @@ export async function GET(req: NextRequest) {
       prisma.creditLog.count({ where: { userId } }),
     ]);
 
+    // Resolve project names for logs that have projectId
+    const projectIds = [
+      ...new Set(logs.map((l) => l.projectId).filter(Boolean) as string[]),
+    ];
+    const projects =
+      projectIds.length > 0
+        ? await prisma.project.findMany({
+            where: { id: { in: projectIds } },
+            select: { id: true, name: true },
+          })
+        : [];
+    const projectNameMap = new Map(projects.map((p) => [p.id, p.name]));
+
     return NextResponse.json({
       logs: logs.map((l) => ({
         id: l.id,
@@ -32,6 +45,9 @@ export async function GET(req: NextRequest) {
         amount: l.amount,
         balance: l.balance,
         projectId: l.projectId,
+        projectName: l.projectId
+          ? projectNameMap.get(l.projectId) ?? null
+          : null,
         meta: l.meta,
         createdAt: l.createdAt.toISOString(),
       })),

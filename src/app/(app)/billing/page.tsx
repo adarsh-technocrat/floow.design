@@ -41,14 +41,33 @@ interface CreditLogEntry {
   amount: number;
   balance: number;
   projectId: string | null;
+  projectName: string | null;
   meta: string | null;
   createdAt: string;
 }
 
-const actionConfig: Record<string, { label: string; icon: string; color: string }> = {
-  design: { label: "AI Design Generation", icon: "🎨", color: "bg-purple-500/15 text-purple-500" },
-  chat: { label: "AI Chat", icon: "💬", color: "bg-blue-500/15 text-blue-500" },
-  reset: { label: "Credits Refreshed", icon: "🔄", color: "bg-emerald-500/15 text-emerald-500" },
+const actionConfig: Record<
+  string,
+  { label: string; icon: string; bgColor: string; iconColor: string }
+> = {
+  design: {
+    label: "Screen Design",
+    icon: "🎨",
+    bgColor: "bg-purple-500/10",
+    iconColor: "text-purple-500",
+  },
+  chat: {
+    label: "AI Chat",
+    icon: "💬",
+    bgColor: "bg-blue-500/10",
+    iconColor: "text-blue-500",
+  },
+  reset: {
+    label: "Credits Refreshed",
+    icon: "🔄",
+    bgColor: "bg-emerald-500/10",
+    iconColor: "text-emerald-500",
+  },
 };
 
 function formatLogDate(iso: string): string {
@@ -66,6 +85,16 @@ function formatLogDate(iso: string): string {
     month: "short",
     day: "numeric",
     year: d.getFullYear() !== now.getFullYear() ? "numeric" : undefined,
+  });
+}
+
+function formatFullDate(iso: string): string {
+  return new Date(iso).toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
   });
 }
 
@@ -428,47 +457,59 @@ export default function BillingPage() {
                     </p>
                   ) : (
                     <>
-                      <div className="divide-y divide-b-secondary">
+                      <div className="space-y-1">
                         {logs.map((log) => {
                           const cfg = actionConfig[log.action] ?? {
                             label: log.action,
                             icon: "⚡",
-                            color: "bg-input-bg text-t-secondary",
+                            bgColor: "bg-input-bg",
+                            iconColor: "text-t-secondary",
                           };
+                          const isDeduction = log.amount < 0;
                           return (
                             <div
                               key={log.id}
-                              className="flex items-center gap-3 py-3 first:pt-0 last:pb-0"
+                              className="flex items-start gap-3 rounded-lg px-3 py-3 transition-colors hover:bg-input-bg/50"
+                              title={formatFullDate(log.createdAt)}
                             >
                               <div
-                                className={`size-9 rounded-full flex items-center justify-center text-base shrink-0 ${cfg.color}`}
+                                className={`size-10 rounded-xl flex items-center justify-center text-lg shrink-0 ${cfg.bgColor}`}
                               >
                                 {cfg.icon}
                               </div>
                               <div className="flex-1 min-w-0">
-                                <p className="text-[13px] font-medium text-t-primary truncate">
-                                  {cfg.label}
-                                </p>
-                                <p className="text-xs text-t-tertiary">
-                                  {formatLogDate(log.createdAt)}
-                                  {log.meta && log.meta !== `AI ${log.action} generation`
-                                    ? ` · ${log.meta}`
-                                    : ""}
-                                </p>
+                                <div className="flex items-center gap-2">
+                                  <p className="text-[13px] font-semibold text-t-primary truncate">
+                                    {cfg.label}
+                                  </p>
+                                  {isDeduction && (
+                                    <span className="shrink-0 rounded bg-red-500/10 px-1.5 py-0.5 text-[10px] font-mono font-medium text-red-500 dark:text-red-400">
+                                      -{Math.abs(log.amount)} credits
+                                    </span>
+                                  )}
+                                  {!isDeduction && log.amount > 0 && (
+                                    <span className="shrink-0 rounded bg-emerald-500/10 px-1.5 py-0.5 text-[10px] font-mono font-medium text-emerald-600 dark:text-emerald-400">
+                                      +{log.amount.toLocaleString()} credits
+                                    </span>
+                                  )}
+                                </div>
+                                <div className="flex items-center gap-1.5 mt-0.5">
+                                  <span className="text-xs text-t-tertiary">
+                                    {formatLogDate(log.createdAt)}
+                                  </span>
+                                  {log.projectName && (
+                                    <>
+                                      <span className="text-t-tertiary">·</span>
+                                      <span className="text-xs text-t-secondary truncate">
+                                        {log.projectName}
+                                      </span>
+                                    </>
+                                  )}
+                                </div>
                               </div>
-                              <div className="text-right shrink-0">
-                                <p
-                                  className={`text-[13px] font-semibold font-mono ${
-                                    log.amount > 0
-                                      ? "text-emerald-600 dark:text-emerald-400"
-                                      : "text-t-primary"
-                                  }`}
-                                >
-                                  {log.amount > 0 ? "+" : ""}
-                                  {log.amount.toLocaleString()}
-                                </p>
-                                <p className="text-[11px] font-mono text-t-tertiary">
-                                  bal {log.balance.toLocaleString()}
+                              <div className="text-right shrink-0 pt-0.5">
+                                <p className="text-xs font-mono text-t-tertiary">
+                                  {log.balance.toLocaleString()} left
                                 </p>
                               </div>
                             </div>

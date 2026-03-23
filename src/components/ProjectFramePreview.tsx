@@ -93,7 +93,7 @@ export function ProjectFramePreview({
           "relative w-full max-w-[min(220px,78%)] overflow-hidden rounded-[11px] border border-b-secondary bg-surface-elevated shadow-[0_2px_16px_-2px_rgba(0,0,0,0.18)] dark:shadow-[0_4px_28px_-4px_rgba(0,0,0,0.55)] sm:max-w-[min(260px,82%)]",
           "aspect-[420/927]",
           dimmed &&
-            "opacity-[0.52] grayscale transition-[opacity,filter] duration-300 group-hover:opacity-[0.68] group-hover:grayscale-[0.35]",
+            "opacity-[0.68] grayscale-[0.45] transition-[opacity,filter] duration-300 group-hover:opacity-[0.82] group-hover:grayscale-[0.15]",
         )}
       >
         {thumbnail ? (

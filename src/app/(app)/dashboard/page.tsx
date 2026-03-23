@@ -35,6 +35,7 @@ interface TrashedProject {
   name: string;
   screens: number;
   thumbnail: string | null;
+  firstFrameHtml?: string | null;
   trashedAt: string;
   createdAt: string;
   updatedAt: string;
@@ -1134,9 +1135,9 @@ export default function DashboardPage() {
                       {projects.map((project) => (
                         <article
                           key={project.id}
-                          className="group flex flex-col overflow-hidden rounded-xl border border-b-secondary bg-surface-elevated shadow-xs transition-colors hover:border-b-primary/25 hover:bg-surface-sunken dark:hover:bg-white/[0.04]"
+                          className="group flex h-full flex-col overflow-hidden rounded-2xl border border-b-secondary bg-surface-elevated shadow-xs transition-all hover:-translate-y-0.5 hover:border-b-primary/25 hover:shadow-sm dark:hover:bg-white/[0.04]"
                         >
-                          <div className="relative aspect-[16/10] w-full min-h-0 bg-surface-sunken">
+                          <div className="relative aspect-[16/10] w-full min-h-0 border-b border-b-secondary/80 bg-surface-sunken">
                             <Link
                               href={`/app/${project.id}`}
                               className="relative block h-full min-h-0 w-full overflow-hidden"
@@ -1170,7 +1171,7 @@ export default function DashboardPage() {
                           </div>
                           <Link
                             href={`/app/${project.id}`}
-                            className="flex flex-col gap-1 px-4 py-3 no-underline transition-colors hover:bg-surface-sunken dark:hover:bg-white/[0.03]"
+                            className="flex min-h-[78px] flex-col justify-center gap-1 px-4 py-3 no-underline transition-colors hover:bg-surface-sunken dark:hover:bg-white/[0.03]"
                           >
                             <p className="line-clamp-2 text-sm font-medium text-t-primary">
                               {project.name}
@@ -1246,17 +1247,18 @@ export default function DashboardPage() {
                       {trashedProjects.map((project) => (
                         <article
                           key={project.id}
-                          className="group flex flex-col overflow-hidden rounded-xl border border-b-secondary border-dashed bg-surface-sunken transition-colors hover:border-b-primary/20 hover:bg-surface-elevated"
+                          className="group flex h-full flex-col overflow-hidden rounded-2xl border border-b-secondary border-dashed bg-surface-sunken transition-all hover:-translate-y-0.5 hover:border-b-primary/20 hover:bg-surface-elevated"
                         >
-                          <div className="relative aspect-[16/10] w-full min-h-0 bg-surface-sunken">
+                          <div className="relative aspect-[16/10] w-full min-h-0 border-b border-b-secondary/80 bg-surface-sunken">
                             <ProjectFramePreview
                               thumbnail={project.thumbnail}
+                              firstFrameHtml={project.firstFrameHtml}
                               title={project.name}
                               emptyLabel={`${project.screens} screens`}
                               dimmed
                             />
                           </div>
-                          <div className="flex flex-col gap-3 border-t border-b-secondary px-4 py-3">
+                          <div className="flex min-h-[124px] flex-col gap-3 px-4 py-3">
                             <div>
                               <p className="line-clamp-2 text-sm font-medium text-t-secondary line-through decoration-t-tertiary/50">
                                 {project.name}
@@ -1265,10 +1267,10 @@ export default function DashboardPage() {
                                 Trashed {timeAgo(project.trashedAt)}
                               </p>
                             </div>
-                            <div className="flex flex-wrap gap-2">
+                            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                               <button
                                 type="button"
-                                className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-b-secondary bg-surface-elevated px-3 py-2 text-[11px] font-mono font-semibold uppercase tracking-wider text-t-secondary transition-colors hover:border-b-primary/30 hover:bg-surface-sunken hover:text-t-primary dark:hover:bg-white/[0.06] sm:flex-none"
+                                className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-b-secondary bg-surface-elevated px-3 py-2 text-[11px] font-mono font-semibold uppercase tracking-wider text-t-secondary transition-colors hover:border-b-primary/30 hover:bg-surface-sunken hover:text-t-primary dark:hover:bg-white/[0.06]"
                                 title="Restore"
                                 onClick={() => restoreProject(project.id)}
                               >
@@ -1289,7 +1291,7 @@ export default function DashboardPage() {
                               </button>
                               <button
                                 type="button"
-                                className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-red-500/25 bg-red-500/5 px-3 py-2 text-[11px] font-mono font-semibold uppercase tracking-wider text-red-500 transition-colors hover:bg-red-500/15 sm:flex-none"
+                                className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-red-500/25 bg-red-500/5 px-3 py-2 text-[11px] font-mono font-semibold uppercase tracking-wider text-red-500 transition-colors hover:bg-red-500/15"
                                 title="Delete permanently"
                                 onClick={() => permanentlyDelete(project.id)}
                               >
