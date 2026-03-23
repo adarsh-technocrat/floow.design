@@ -65,16 +65,22 @@ export default async function BlogPage() {
                 )}
               >
                 {/* Cover image */}
-                {post.frontmatter.coverImage && (
-                  <div className="overflow-hidden">
+                <div className="overflow-hidden">
+                  {post.frontmatter.coverImage ? (
                     <img
                       src={post.frontmatter.coverImage}
                       alt={post.frontmatter.title}
                       className="w-full h-[180px] md:h-[200px] object-cover transition-transform duration-300 group-hover:scale-[1.02]"
                       loading="lazy"
                     />
-                  </div>
-                )}
+                  ) : (
+                    <div className="w-full h-[180px] md:h-[200px] bg-gradient-to-br from-input-bg to-surface-elevated flex items-center justify-center">
+                      <span className="text-4xl text-t-tertiary/30 font-mono">
+                        floow
+                      </span>
+                    </div>
+                  )}
+                </div>
 
                 <div className="flex flex-col gap-4 p-6 md:p-8">
                   <div className="flex items-center gap-3">
