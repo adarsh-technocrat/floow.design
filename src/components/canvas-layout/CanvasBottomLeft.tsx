@@ -369,10 +369,16 @@ export function CanvasBottomLeft() {
     return subscribeChatStatus(setChatStatus);
   }, []);
 
-  // Live sync with ChatPanel useChat state (same source as /api/chat/sessions hydrate)
+  // Live sync with ChatPanel useChat state — only update if message count or last id changed
+  const lastMsgKeyRef = useRef("");
   useEffect(() => {
     return subscribeChatMessages((next) => {
-      if (Array.isArray(next)) setMessages(next as ChatMessage[]);
+      if (!Array.isArray(next)) return;
+      const arr = next as ChatMessage[];
+      const key = `${arr.length}:${arr[arr.length - 1]?.id ?? ""}`;
+      if (key === lastMsgKeyRef.current) return;
+      lastMsgKeyRef.current = key;
+      setMessages(arr);
     });
   }, []);
 

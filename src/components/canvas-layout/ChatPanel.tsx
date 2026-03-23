@@ -1053,9 +1053,16 @@ export function ChatPanel({
     },
   });
 
+  // Only re-fetch history when projectId or userId changes — NOT on frame selection
+  const lastHydrateKeyRef = useRef("");
   useEffect(() => {
+    if (!projectId || !chatUserId) return;
+    const hydrateKey = `${projectId}:${chatUserId}`;
+    // Skip if the key hasn't changed (e.g., frame selection changed)
+    if (hydrateKey === lastHydrateKeyRef.current) return;
+    lastHydrateKeyRef.current = hydrateKey;
+
     setIsLoadingHistory(true);
-    const hydrateKey = `${projectId}:${frameSessionId}:${chatUserId}`;
     const q = new URLSearchParams({
       projectId,
       frameId: frameSessionId,
@@ -1064,8 +1071,7 @@ export function ChatPanel({
     fetch(`/api/chat/sessions?${q.toString()}`)
       .then((res) => res.json())
       .then((data: { messages?: UIMessage[] }) => {
-        const nowKey = `${chatSessionContextRef.current.projectId}:${chatSessionContextRef.current.frameId}:${chatSessionContextRef.current.userId}`;
-        if (nowKey !== hydrateKey) return;
+        if (lastHydrateKeyRef.current !== hydrateKey) return;
         if (data?.messages && data.messages.length > 0) {
           setMessages(data.messages);
         } else {
@@ -1074,8 +1080,9 @@ export function ChatPanel({
       })
       .catch(() => {})
       .finally(() => {
-        const nowKey = `${chatSessionContextRef.current.projectId}:${chatSessionContextRef.current.frameId}:${chatSessionContextRef.current.userId}`;
-        if (nowKey === hydrateKey) setIsLoadingHistory(false);
+        if (lastHydrateKeyRef.current === hydrateKey) {
+          setIsLoadingHistory(false);
+        }
       });
   }, [setMessages, projectId, frameSessionId, chatUserId]);
 
