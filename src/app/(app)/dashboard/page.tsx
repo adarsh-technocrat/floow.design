@@ -558,7 +558,7 @@ export default function DashboardPage() {
                   fontFamily: "var(--font-logo), 'Space Grotesk', sans-serif",
                 }}
               >
-                floow<span className="text-t-secondary">.design</span>
+                floow<span className="text-t-primary/60">.design</span>
               </span>
             </Link>
           </div>
@@ -570,7 +570,7 @@ export default function DashboardPage() {
                 setActiveView("home");
                 setTimeout(() => inputRef.current?.focus(), 100);
               }}
-              className="flex w-full items-center gap-2 rounded-lg border border-b-secondary px-3 py-2.5 text-[13px] font-medium text-t-secondary transition-colors hover:bg-surface-sunken hover:text-t-primary dark:hover:bg-white/[0.06]"
+              className="flex w-full items-center gap-2 rounded-lg border border-b-secondary px-3 py-2.5 text-[13px] font-medium text-t-primary transition-colors hover:bg-input-bg"
             >
               <svg
                 width="14"
@@ -593,20 +593,20 @@ export default function DashboardPage() {
               <button
                 key={item.key}
                 onClick={item.action}
-                className={`flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-[13px] font-medium transition-colors ${
+                className={`flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-[13px] font-medium transition-all ${
                   item.active
-                    ? "bg-surface-sunken text-t-primary dark:bg-white/[0.08]"
-                    : "text-t-tertiary hover:bg-surface-sunken hover:text-t-secondary dark:hover:bg-white/[0.05]"
+                    ? "bg-input-bg text-t-primary"
+                    : "text-t-secondary hover:bg-input-bg hover:text-t-primary"
                 }`}
               >
                 <span
-                  className={item.active ? "text-t-primary" : "text-t-tertiary"}
+                  className={`transition-colors ${item.active ? "text-t-primary" : "text-t-secondary"}`}
                 >
                   {item.icon}
                 </span>
                 {item.label}
                 {item.count !== undefined && (
-                  <span className="ml-auto text-xs font-mono text-t-tertiary">
+                  <span className="ml-auto text-xs font-mono text-t-secondary">
                     {item.count}
                   </span>
                 )}
@@ -617,22 +617,22 @@ export default function DashboardPage() {
           {/* Recent projects — scrollable area */}
           <div className="flex-1 overflow-y-auto px-3 py-2">
             {/* Recent projects */}
-            <p className="mb-2 px-3 text-xs font-mono font-medium uppercase tracking-wider text-t-tertiary">
+            <p className="mb-2 px-3 text-xs font-mono font-medium uppercase tracking-wider text-t-secondary">
               Recent
             </p>
             {loading ? (
-              <div className="flex items-center gap-2 px-3 py-2 text-xs text-t-tertiary">
-                <div className="size-1.5 rounded-full bg-t-tertiary animate-pulse" />
+              <div className="flex items-center gap-2 px-3 py-2 text-xs text-t-secondary">
+                <div className="size-1.5 rounded-full bg-t-secondary animate-pulse" />
                 Loading...
               </div>
             ) : projects.length === 0 ? (
-              <p className="px-3 text-xs text-t-tertiary">No projects yet</p>
+              <p className="px-3 text-xs text-t-secondary">No projects yet</p>
             ) : (
               projects.slice(0, 8).map((project) => (
                 <Link
                   key={project.id}
                   href={`/app/${project.id}`}
-                  className="group flex items-center gap-2.5 rounded-lg px-3 py-2 text-[13px] text-t-secondary no-underline transition-colors hover:bg-surface-sunken hover:text-t-primary dark:hover:bg-white/[0.05]"
+                  className="group flex items-center gap-2.5 rounded-lg px-3 py-2 text-[13px] text-t-primary no-underline transition-all hover:bg-input-bg"
                 >
                   <svg
                     width="14"
@@ -643,7 +643,7 @@ export default function DashboardPage() {
                     strokeWidth="1.5"
                     strokeLinecap="round"
                     strokeLinejoin="round"
-                    className="shrink-0 text-t-tertiary"
+                    className="shrink-0 text-t-secondary"
                   >
                     <path d="M13 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V9z" />
                     <polyline points="13 2 13 9 20 9" />
