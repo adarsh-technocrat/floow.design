@@ -100,9 +100,6 @@ export function EditingModeDisplay() {
                 </button>
               ) : (
                 <>
-                  <span className="text-[11px] font-mono text-t-tertiary border border-b-secondary rounded px-1.5 py-0.5 hidden sm:inline bg-input-bg">
-                    ⌘ Enter
-                  </span>
                   <button
                     type="button"
                     onClick={handleSubmit}
