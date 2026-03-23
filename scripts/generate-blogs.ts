@@ -236,20 +236,78 @@ Return a valid JSON object with EXACTLY this structure (no markdown fencing, no 
 }
 
 /* ------------------------------------------------------------------ */
-/*  Step 2: Generate banner image via Imagen / Gemini                  */
+/*  Step 2: Generate banner image                                      */
+/*                                                                     */
+/*  Priority:                                                          */
+/*    1. Nano Banana 2 (gemini-3.1-flash-image-preview)                */
+/*    2. Nano Banana   (gemini-2.5-flash-image-preview)                */
+/*    3. Imagen 4.0 API                                                */
+/*    4. Unsplash fallback                                             */
 /* ------------------------------------------------------------------ */
 
-// Imagen models to try in order (newest first)
-const IMAGEN_MODELS = [
-  "imagen-4.0-generate-001",
-  "imagen-3.0-generate-002",
-  "imagen-3.0-generate-001",
+type ImageResult = { imageBytes: string; mimeType: string };
+
+// Nano Banana models — Gemini Flash Image (newest first)
+const NANO_BANANA_MODELS = [
+  "gemini-3.1-flash-image-preview", // Nano Banana 2
+  "gemini-2.5-flash-image-preview", // Nano Banana (original)
 ];
+
+// Imagen models — dedicated image generation API
+const IMAGEN_MODELS = ["imagen-4.0-generate-001", "imagen-3.0-generate-002"];
+
+function extractImageFromParts(
+  parts: unknown[] | undefined,
+): ImageResult | null {
+  if (!parts) return null;
+  for (const part of parts) {
+    const p = part as Record<string, unknown>;
+    const inlineData = p.inlineData as
+      | { data?: string; mimeType?: string }
+      | undefined;
+    if (inlineData?.data && inlineData?.mimeType?.startsWith("image/")) {
+      return { imageBytes: inlineData.data, mimeType: inlineData.mimeType };
+    }
+  }
+  return null;
+}
+
+async function tryNanoBanana(
+  ai: GoogleGenAI,
+  prompt: string,
+): Promise<ImageResult | null> {
+  for (const model of NANO_BANANA_MODELS) {
+    try {
+      const label = model.includes("3.1") ? "Nano Banana 2" : "Nano Banana";
+      console.log(`    Trying ${label} (${model})...`);
+
+      const response = await ai.models.generateContent({
+        model,
+        contents: `Generate a single high-quality, photorealistic banner image for a blog post. No text or watermarks in the image. 16:9 aspect ratio.\n\n${prompt}`,
+        config: {
+          responseModalities: ["TEXT", "IMAGE"],
+        },
+      });
+
+      const result = extractImageFromParts(
+        response.candidates?.[0]?.content?.parts as unknown[] | undefined,
+      );
+      if (result) {
+        console.log(`    Success with ${label}`);
+        return result;
+      }
+    } catch (err) {
+      const msg = (err as Error).message?.slice(0, 120) ?? "Unknown error";
+      console.log(`    ${model} failed: ${msg}`);
+    }
+  }
+  return null;
+}
 
 async function tryImagen(
   ai: GoogleGenAI,
   prompt: string,
-): Promise<{ imageBytes: string; mimeType: string } | null> {
+): Promise<ImageResult | null> {
   for (const model of IMAGEN_MODELS) {
     try {
       console.log(`    Trying ${model}...`);
@@ -272,47 +330,9 @@ async function tryImagen(
       }
     } catch (err) {
       console.log(
-        `    ${model} failed: ${(err as Error).message?.slice(0, 100)}`,
+        `    ${model} failed: ${(err as Error).message?.slice(0, 120)}`,
       );
     }
-  }
-  return null;
-}
-
-async function tryGeminiInlineImage(
-  ai: GoogleGenAI,
-  prompt: string,
-): Promise<{ imageBytes: string; mimeType: string } | null> {
-  try {
-    console.log(`    Trying Gemini 2.0 Flash inline image generation...`);
-    const response = await ai.models.generateContent({
-      model: "gemini-2.0-flash-exp",
-      contents: `Generate a single photorealistic image: ${prompt}`,
-      config: {
-        responseModalities: ["image", "text"],
-      },
-    });
-
-    const parts = response.candidates?.[0]?.content?.parts;
-    if (!parts) return null;
-
-    for (const part of parts) {
-      const p = part as Record<string, unknown>;
-      const inlineData = p.inlineData as
-        | { data?: string; mimeType?: string }
-        | undefined;
-      if (inlineData?.data && inlineData?.mimeType?.startsWith("image/")) {
-        console.log(`    Success with Gemini inline image`);
-        return {
-          imageBytes: inlineData.data,
-          mimeType: inlineData.mimeType,
-        };
-      }
-    }
-  } catch (err) {
-    console.log(
-      `    Gemini inline failed: ${(err as Error).message?.slice(0, 100)}`,
-    );
   }
   return null;
 }
@@ -322,12 +342,12 @@ async function generateBannerImage(
   bannerPrompt: string,
   slug: string,
 ): Promise<string> {
-  // Strategy 1: Imagen API (dedicated image generation)
-  let result = await tryImagen(ai, bannerPrompt);
+  // Strategy 1: Nano Banana (Gemini Flash Image — best quality)
+  let result = await tryNanoBanana(ai, bannerPrompt);
 
-  // Strategy 2: Gemini inline image generation
+  // Strategy 2: Imagen API (dedicated image generation)
   if (!result) {
-    result = await tryGeminiInlineImage(ai, bannerPrompt);
+    result = await tryImagen(ai, bannerPrompt);
   }
 
   // Upload to Vercel Blob if we got an image
