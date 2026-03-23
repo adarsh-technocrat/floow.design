@@ -92,7 +92,7 @@ function getToolLabel(
   return done ? base : `${base}…`;
 }
 
-function ToolStep({ part, frameLookup }: { part: MessagePart; frameLookup: (id: string) => string | undefined }) {
+function ToolChip({ part, frameLookup }: { part: MessagePart; frameLookup: (id: string) => string | undefined }) {
   const done = part.state === "done" || part.state === "output-available";
   const label = getToolLabel(
     part.toolName ??
@@ -102,19 +102,28 @@ function ToolStep({ part, frameLookup }: { part: MessagePart; frameLookup: (id: 
     frameLookup,
   );
   return (
-    <div className="flex items-center gap-2 py-0.5">
+    <div
+      className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 ${
+        done
+          ? "border-emerald-500/30 bg-emerald-500/8"
+          : "border-blue-500/30 bg-blue-500/8"
+      }`}
+    >
       {done ? (
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" className="shrink-0">
-          <circle cx="12" cy="12" r="10" fill="#22c55e" fillOpacity="0.15" />
-          <path d="M8 12.5l2.5 2.5 5-5" stroke="#22c55e" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" className="shrink-0">
+          <path d="M8 12.5l2.5 2.5 5-5" stroke="#22c55e" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
       ) : (
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" className="shrink-0 animate-spin" style={{ animationDuration: "1.5s" }}>
-          <circle cx="12" cy="12" r="10" stroke="#22c55e" strokeOpacity="0.2" strokeWidth="2" />
-          <path d="M12 2a10 10 0 0 1 10 10" stroke="#22c55e" strokeWidth="2" strokeLinecap="round" />
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" className="shrink-0 animate-spin" style={{ animationDuration: "1.5s" }}>
+          <circle cx="12" cy="12" r="9" stroke="#3b82f6" strokeOpacity="0.3" strokeWidth="2.5" />
+          <path d="M12 3a9 9 0 0 1 9 9" stroke="#3b82f6" strokeWidth="2.5" strokeLinecap="round" />
         </svg>
       )}
-      <span className={`text-xs ${done ? "text-t-secondary" : "text-t-primary"}`}>
+      <span
+        className={`text-[11px] font-medium ${
+          done ? "text-emerald-600 dark:text-emerald-400" : "text-blue-600 dark:text-blue-400"
+        }`}
+      >
         {label}
       </span>
     </div>
@@ -313,9 +322,9 @@ function AssistantBubble({ msg, frameLookup }: { msg: ChatMessage; frameLookup: 
         />
       )}
       {toolParts.length > 0 && (
-        <div className="rounded-lg border border-b-secondary bg-input-bg/40 px-3 py-2">
+        <div className="flex flex-wrap gap-1.5">
           {toolParts.map((p, i) => (
-            <ToolStep key={p.toolCallId ?? i} part={p} frameLookup={frameLookup} />
+            <ToolChip key={p.toolCallId ?? i} part={p} frameLookup={frameLookup} />
           ))}
         </div>
       )}
