@@ -44,18 +44,22 @@ export async function POST(req: NextRequest) {
           | "monthly"
           | "yearly"
           | undefined;
+        const seats = Math.max(1, parseInt(session.metadata?.seats || "1", 10));
 
         if (userId && plan && session.subscription) {
           const planEnum = toPlan(plan);
-          const credits = PLAN_CREDITS[plan]?.[interval || "monthly"] || 0;
+          const isTeam = planEnum === "TEAM";
+          const baseCredits = PLAN_CREDITS[plan]?.[interval || "monthly"] || 0;
+          const totalCredits = isTeam ? baseCredits * seats : baseCredits;
 
           await prisma.user.update({
             where: { id: userId },
             data: {
               plan: planEnum,
               billingInterval: interval || "monthly",
+              seats: isTeam ? seats : 1,
               stripeSubscriptionId: session.subscription as string,
-              credits,
+              credits: totalCredits,
               creditsResetAt: new Date(
                 Date.now() +
                   (interval === "yearly"
@@ -82,15 +86,18 @@ export async function POST(req: NextRequest) {
           });
 
           if (user && user.plan !== ("FREE" as PlanString)) {
-            const credits =
+            const baseCredits =
               PLAN_CREDITS[user.plan]?.[
                 (user.billingInterval as "monthly" | "yearly") || "monthly"
               ] || 0;
+            const totalCredits = user.plan === "TEAM"
+              ? baseCredits * (user.seats ?? 1)
+              : baseCredits;
 
             await prisma.user.update({
               where: { id: user.id },
               data: {
-                credits,
+                credits: totalCredits,
                 creditsResetAt: new Date(
                   Date.now() +
                     (user.billingInterval === "yearly"
@@ -125,7 +132,6 @@ export async function POST(req: NextRequest) {
       }
 
       case "customer.subscription.updated": {
-        // Plan change
         const subscription = event.data.object;
         const userId = subscription.metadata?.userId;
         const plan = subscription.metadata?.plan;
@@ -136,13 +142,61 @@ export async function POST(req: NextRequest) {
 
         if (userId && plan) {
           const planEnum = toPlan(plan);
-          await prisma.user.update({
+          const billingInterval = interval || "monthly";
+
+          const user = await prisma.user.findUnique({
             where: { id: userId },
-            data: {
-              plan: planEnum,
-              billingInterval: interval || "monthly",
-            },
           });
+
+          if (user && user.plan !== planEnum) {
+            const newCredits =
+              PLAN_CREDITS[plan]?.[billingInterval] || 0;
+            const currentCredits = Math.max(0, user.credits);
+            const PLAN_ORDER = ["FREE", "LITE", "STARTER", "PRO", "TEAM"];
+            const isUpgrade =
+              PLAN_ORDER.indexOf(planEnum) > PLAN_ORDER.indexOf(user.plan);
+            const finalCredits = isUpgrade
+              ? currentCredits + newCredits
+              : newCredits;
+
+            await prisma.user.update({
+              where: { id: userId },
+              data: {
+                plan: planEnum,
+                billingInterval,
+                credits: finalCredits,
+                creditsResetAt: new Date(
+                  Date.now() +
+                    (billingInterval === "yearly"
+                      ? 365 * 24 * 60 * 60 * 1000
+                      : 30 * 24 * 60 * 60 * 1000),
+                ),
+              },
+            });
+
+            await prisma.creditLog.create({
+              data: {
+                userId,
+                action: "plan_change",
+                amount: finalCredits - currentCredits,
+                balance: finalCredits,
+                meta: JSON.stringify({
+                  from: user.plan,
+                  to: planEnum,
+                  interval: billingInterval,
+                  prorated: true,
+                }),
+              },
+            });
+          } else {
+            await prisma.user.update({
+              where: { id: userId },
+              data: {
+                plan: planEnum,
+                billingInterval,
+              },
+            });
+          }
         }
         break;
       }

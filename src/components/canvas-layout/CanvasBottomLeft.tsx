@@ -235,9 +235,9 @@ function ExpandableReasoningBlock({
           id={`reasoning-body-${instanceKey}`}
           role="region"
           aria-labelledby={`reasoning-trigger-${instanceKey}`}
-          className="px-2 py-1.5"
+          className="max-h-[120px] overflow-y-auto px-2 py-1.5"
         >
-          <div className="chat-markdown">
+          <div className="chat-markdown text-[11px] leading-relaxed">
             <ReactMarkdown components={activityMarkdownComponents}>
               {text}
             </ReactMarkdown>

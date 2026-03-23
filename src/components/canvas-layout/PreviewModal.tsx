@@ -101,8 +101,8 @@ export function PreviewModal({ open, onClose, initialFrameId }: PreviewModalProp
                 key={currentFrame.id}
                 title={`Preview: ${currentFrame.label}`}
                 srcDoc={currentFrame.html}
-                sandbox="allow-scripts allow-same-origin"
-                className="border-0 bg-white"
+                sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
+                className="pointer-events-auto border-0 bg-white"
                 style={{
                   width: FRAME_WIDTH,
                   height: FRAME_HEIGHT,

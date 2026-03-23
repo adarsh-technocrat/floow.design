@@ -495,7 +495,7 @@ export default function BillingPage() {
                     </p>
                   ) : (
                     <>
-                      <div className="space-y-1">
+                      <div className="max-h-[400px] overflow-y-auto space-y-1">
                         {logs.map((log) => {
                           const cfg = actionConfig[log.action] ?? {
                             label: log.action,

@@ -128,15 +128,18 @@ export const createCheckoutSession = createAsyncThunk(
     userId,
     plan,
     interval,
+    seats,
   }: {
     userId: string;
     plan: string;
     interval: "monthly" | "yearly";
+    seats?: number;
   }) => {
     const { data } = await http.post("/api/stripe/checkout", {
       userId,
       plan,
       interval,
+      ...(seats && seats > 1 ? { seats } : {}),
     });
     if (data.url) {
       window.location.href = data.url;

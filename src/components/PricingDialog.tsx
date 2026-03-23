@@ -13,6 +13,7 @@ import {
   DialogTitle,
   DialogClose,
 } from "@/components/ui/dialog";
+import { SeatPicker } from "@/components/SeatPicker";
 
 const PLAN_ORDER = ["FREE", "LITE", "STARTER", "PRO", "TEAM"];
 
@@ -122,6 +123,7 @@ export function PricingDialog({ open, onClose, reason }: PricingDialogProps) {
   const userPlan = useAppSelector((s) => s.user.plan);
   const [billing, setBilling] = useState<"monthly" | "yearly">("monthly");
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
+  const [teamSeats, setTeamSeats] = useState(3);
 
   const currentPlanName = userPlan?.plan?.toUpperCase() ?? "FREE";
   const currentPlanIdx = PLAN_ORDER.indexOf(currentPlanName);
@@ -159,6 +161,7 @@ export function PricingDialog({ open, onClose, reason }: PricingDialogProps) {
           userId: user.uid,
           plan: planName,
           interval: billing,
+          ...(planName.toUpperCase() === "TEAM" ? { seats: teamSeats } : {}),
         }),
       ).unwrap();
     } catch {
@@ -302,27 +305,35 @@ export function PricingDialog({ open, onClose, reason }: PricingDialogProps) {
                   {plan.description}
                 </p>
 
+                {plan.name === "Team" && (
+                  <div className="mb-3">
+                    <SeatPicker seats={teamSeats} onSeatsChange={setTeamSeats} />
+                  </div>
+                )}
+
                 <div className="flex items-baseline gap-0.5 mb-0.5">
                   <NumberFlow
-                    value={tier.price}
+                    value={plan.name === "Team" ? tier.price * teamSeats : tier.price}
                     format={{ style: "currency", currency: "USD", minimumFractionDigits: 2 }}
                     className="text-[28px] font-light font-mono text-t-primary leading-none"
                   />
                   <span className="text-xs text-t-tertiary font-mono">
-                    {tier.period}
+                    {plan.name === "Team" ? "/mo" : tier.period}
                   </span>
                 </div>
                 {tier.original && (
                   <span className="text-xs text-t-tertiary line-through font-mono">
                     <NumberFlow
-                      value={tier.original}
+                      value={plan.name === "Team" ? tier.original * teamSeats : tier.original}
                       format={{ style: "currency", currency: "USD", minimumFractionDigits: 2 }}
                     />
                     /mo
                   </span>
                 )}
                 <p className="text-[11px] text-t-tertiary font-mono mt-1 mb-4">
-                  billed {billing}
+                  {plan.name === "Team"
+                    ? `${teamSeats} seat${teamSeats > 1 ? "s" : ""} · billed ${billing}`
+                    : `billed ${billing}`}
                 </p>
 
                 <button
@@ -339,7 +350,7 @@ export function PricingDialog({ open, onClose, reason }: PricingDialogProps) {
 
                 <p className="text-sm font-medium text-t-primary">
                   <NumberFlow
-                    value={plan.credits[billing]}
+                    value={plan.name === "Team" ? plan.credits[billing] * teamSeats : plan.credits[billing]}
                     format={{ useGrouping: true }}
                   />{" "}
                   AI credits

@@ -6,6 +6,7 @@ import NumberFlow from "@number-flow/react";
 import { Header } from "@/components/landing/Header";
 import { Footer } from "@/components/landing/Footer";
 import { useAuth } from "@/contexts/AuthContext";
+import { SeatPicker } from "@/components/SeatPicker";
 import http from "@/lib/http";
 
 interface UserPlan {
@@ -118,6 +119,7 @@ export default function PricingPage() {
   const [billing, setBilling] = useState<"monthly" | "yearly">("monthly");
   const [checkoutLoading, setCheckoutLoading] = useState<string | null>(null);
   const [userPlan, setUserPlan] = useState<UserPlan | null>(null);
+  const [teamSeats, setTeamSeats] = useState(3);
   const { user } = useAuth();
   const router = useRouter();
 
@@ -165,6 +167,7 @@ export default function PricingPage() {
         userId: user.uid,
         plan: planName,
         interval: billing,
+        ...(planName.toUpperCase() === "TEAM" ? { seats: teamSeats } : {}),
       });
       if (data.url) {
         window.location.href = data.url;
@@ -284,9 +287,15 @@ export default function PricingPage() {
                   {plan.description}
                 </p>
 
+                {plan.name === "Team" && (
+                  <div className="mb-3">
+                    <SeatPicker seats={teamSeats} onSeatsChange={setTeamSeats} />
+                  </div>
+                )}
+
                 <div className="flex items-baseline gap-0.5 mb-1">
                   <NumberFlow
-                    value={tier.price}
+                    value={plan.name === "Team" ? tier.price * teamSeats : tier.price}
                     format={{
                       style: "currency",
                       currency: "USD",
@@ -294,16 +303,14 @@ export default function PricingPage() {
                     }}
                     className="text-[32px] font-light text-t-primary font-mono leading-none"
                   />
-                  {tier.period && (
-                    <span className="text-xs text-t-tertiary font-mono">
-                      {tier.period}
-                    </span>
-                  )}
+                  <span className="text-xs text-t-tertiary font-mono">
+                    {plan.name === "Team" ? "/mo" : tier.period}
+                  </span>
                 </div>
                 {tier.original && (
                   <span className="text-xs text-t-tertiary line-through font-mono">
                     <NumberFlow
-                      value={tier.original}
+                      value={plan.name === "Team" ? tier.original * teamSeats : tier.original}
                       format={{
                         style: "currency",
                         currency: "USD",
@@ -314,7 +321,9 @@ export default function PricingPage() {
                   </span>
                 )}
                 <p className="text-[11px] text-t-tertiary font-mono mt-1 mb-4">
-                  billed {billing}
+                  {plan.name === "Team"
+                    ? `${teamSeats} seat${teamSeats > 1 ? "s" : ""} · billed ${billing}`
+                    : `billed ${billing}`}
                 </p>
 
                 <button
@@ -327,13 +336,15 @@ export default function PricingPage() {
 
                 <p className="text-sm font-medium text-t-primary">
                   <NumberFlow
-                    value={plan.credits[billing]}
+                    value={plan.name === "Team" ? plan.credits[billing] * teamSeats : plan.credits[billing]}
                     format={{ useGrouping: true }}
                   />{" "}
                   AI credits / {billing === "monthly" ? "month" : "year"}
                 </p>
                 <p className="text-xs text-t-tertiary mb-4">
-                  {plan.screens[billing]}
+                  {plan.name === "Team"
+                    ? `≈ ${(parseInt(plan.screens[billing].replace(/[^\d]/g, ""), 10) * teamSeats).toLocaleString()} screens per ${billing === "monthly" ? "month" : "year"}`
+                    : plan.screens[billing]}
                 </p>
 
                 <span className="text-[11px] font-mono uppercase tracking-widest text-t-tertiary mb-2 block">
@@ -404,6 +415,11 @@ export default function PricingPage() {
                     {plan.badge}
                   </span>
                   <p className="text-xs text-t-secondary">{plan.description}</p>
+                  {plan.name === "Team" && (
+                    <div className="mt-3">
+                      <SeatPicker seats={teamSeats} onSeatsChange={setTeamSeats} />
+                    </div>
+                  )}
                 </Cell>
               ))}
             </tr>
@@ -416,7 +432,7 @@ export default function PricingPage() {
                   <Cell key={plan.name} columnDivider={i > 0} className="py-6">
                     <div className="flex items-baseline gap-0.5">
                       <NumberFlow
-                        value={tier.price}
+                        value={plan.name === "Team" ? tier.price * teamSeats : tier.price}
                         format={{
                           style: "currency",
                           currency: "USD",
@@ -424,17 +440,15 @@ export default function PricingPage() {
                         }}
                         className="text-[36px] font-light text-t-primary font-mono leading-none"
                       />
-                      {tier.period && (
-                        <span className="text-xs text-t-tertiary font-mono">
-                          {tier.period}
-                        </span>
-                      )}
+                      <span className="text-xs text-t-tertiary font-mono">
+                        {plan.name === "Team" ? "/mo" : tier.period}
+                      </span>
                     </div>
                     {tier.original && (
                       <div className="mt-1">
                         <span className="text-xs text-t-tertiary line-through font-mono">
                           <NumberFlow
-                            value={tier.original}
+                            value={plan.name === "Team" ? tier.original * teamSeats : tier.original}
                             format={{
                               style: "currency",
                               currency: "USD",
@@ -446,7 +460,9 @@ export default function PricingPage() {
                       </div>
                     )}
                     <p className="mt-1 text-[11px] text-t-tertiary font-mono">
-                      billed {billing}
+                      {plan.name === "Team"
+                        ? `${teamSeats} seat${teamSeats > 1 ? "s" : ""} · billed ${billing}`
+                        : `billed ${billing}`}
                     </p>
                   </Cell>
                 );
@@ -474,13 +490,15 @@ export default function PricingPage() {
                 <Cell key={plan.name} columnDivider={i > 0}>
                   <p className="text-sm font-medium text-t-primary">
                     <NumberFlow
-                      value={plan.credits[billing]}
+                      value={plan.name === "Team" ? plan.credits[billing] * teamSeats : plan.credits[billing]}
                       format={{ useGrouping: true }}
                     />{" "}
                     AI credits / {billing === "monthly" ? "month" : "year"}
                   </p>
                   <p className="mt-0.5 text-xs text-t-tertiary">
-                    {plan.screens[billing]}
+                    {plan.name === "Team"
+                      ? `≈ ${(parseInt(plan.screens[billing].replace(/[^\d]/g, ""), 10) * teamSeats).toLocaleString()} screens per ${billing === "monthly" ? "month" : "year"}`
+                      : plan.screens[billing]}
                   </p>
                 </Cell>
               ))}

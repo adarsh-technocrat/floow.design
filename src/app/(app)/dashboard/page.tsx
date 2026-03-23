@@ -285,21 +285,29 @@ function ApiKeysView({ userId }: { userId: string }) {
   const [creating, setCreating] = useState(false);
   const [newKeyName, setNewKeyName] = useState("");
   const [showCreate, setShowCreate] = useState(false);
-  const [justCreated, setJustCreated] = useState<{ id: string; key: string; name: string } | null>(null);
+  const [justCreated, setJustCreated] = useState<{
+    id: string;
+    key: string;
+    name: string;
+  } | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
   const fetchKeys = useCallback(async () => {
     if (!userId) return;
     setLoading(true);
     try {
-      const { data } = await http.get(`/api/api-keys?userId=${encodeURIComponent(userId)}`);
+      const { data } = await http.get(
+        `/api/api-keys?userId=${encodeURIComponent(userId)}`,
+      );
       setKeys(data.keys ?? []);
     } finally {
       setLoading(false);
     }
   }, [userId]);
 
-  useEffect(() => { fetchKeys(); }, [fetchKeys]);
+  useEffect(() => {
+    fetchKeys();
+  }, [fetchKeys]);
 
   const handleCreate = async () => {
     if (!userId) return;
@@ -353,7 +361,12 @@ function ApiKeysView({ userId }: { userId: string }) {
           className="inline-flex items-center gap-2 rounded-lg bg-btn-primary-bg px-4 py-2 text-[11px] font-mono font-semibold uppercase tracking-wider text-btn-primary-text transition-opacity hover:opacity-90 active:scale-[0.98]"
         >
           <svg width="12" height="12" viewBox="0 0 14 14" fill="none">
-            <path d="M7 1v12M1 7h12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+            <path
+              d="M7 1v12M1 7h12"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+            />
           </svg>
           Create key
         </button>
@@ -377,7 +390,9 @@ function ApiKeysView({ userId }: { userId: string }) {
                   </code>
                   <button
                     type="button"
-                    onClick={() => copyToClipboard(justCreated.key, justCreated.id)}
+                    onClick={() =>
+                      copyToClipboard(justCreated.key, justCreated.id)
+                    }
                     className="shrink-0 rounded-md px-2 py-1 text-[11px] font-medium text-t-secondary hover:bg-input-bg hover:text-t-primary transition-colors"
                   >
                     {copiedId === justCreated.id ? "Copied!" : "Copy"}
@@ -389,8 +404,17 @@ function ApiKeysView({ userId }: { userId: string }) {
                 onClick={() => setJustCreated(null)}
                 className="shrink-0 rounded-md p-1 text-t-tertiary hover:text-t-primary"
               >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                  <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                >
+                  <line x1="18" y1="6" x2="6" y2="18" />
+                  <line x1="6" y1="6" x2="18" y2="18" />
                 </svg>
               </button>
             </div>
@@ -412,13 +436,19 @@ function ApiKeysView({ userId }: { userId: string }) {
               autoFocus
               onKeyDown={(e) => {
                 if (e.key === "Enter") handleCreate();
-                if (e.key === "Escape") { setShowCreate(false); setNewKeyName(""); }
+                if (e.key === "Escape") {
+                  setShowCreate(false);
+                  setNewKeyName("");
+                }
               }}
             />
             <div className="mt-3 flex items-center justify-end gap-2">
               <button
                 type="button"
-                onClick={() => { setShowCreate(false); setNewKeyName(""); }}
+                onClick={() => {
+                  setShowCreate(false);
+                  setNewKeyName("");
+                }}
                 className="rounded-lg px-4 py-2 text-[11px] font-mono font-medium uppercase tracking-wider text-t-secondary hover:bg-input-bg transition-colors"
               >
                 Cancel
@@ -449,11 +479,23 @@ function ApiKeysView({ userId }: { userId: string }) {
         {!loading && keys.length === 0 && (
           <div className="flex flex-col items-center justify-center px-6 py-24 text-center">
             <div className="mb-4 flex size-14 items-center justify-center rounded-2xl border border-dashed border-b-secondary bg-surface-sunken">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-t-tertiary">
+              <svg
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="text-t-tertiary"
+              >
                 <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4" />
               </svg>
             </div>
-            <p className="text-sm font-medium text-t-secondary">No API keys yet</p>
+            <p className="text-sm font-medium text-t-secondary">
+              No API keys yet
+            </p>
             <p className="mt-1 max-w-sm text-xs text-t-tertiary">
               Create a key to access the platform API programmatically.
             </p>
@@ -473,12 +515,28 @@ function ApiKeysView({ userId }: { userId: string }) {
                   className="group flex items-center justify-between rounded-xl border border-b-secondary bg-surface-elevated px-4 py-3.5 transition-all hover:-translate-y-0.5 hover:border-b-primary/25 hover:shadow-sm dark:hover:bg-white/[0.04]"
                 >
                   <div className="min-w-0 flex-1">
-                    <p className="text-[13px] font-medium text-t-primary">{k.name}</p>
-                    <code className="mt-1 block truncate text-xs text-t-tertiary font-mono">{k.key}</code>
+                    <p className="text-[13px] font-medium text-t-primary">
+                      {k.name}
+                    </p>
+                    <code className="mt-1 block truncate text-xs text-t-tertiary font-mono">
+                      {k.key}
+                    </code>
                     <p className="mt-1.5 text-[10px] text-t-tertiary/60">
-                      Created {new Date(k.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                      Created{" "}
+                      {new Date(k.createdAt).toLocaleDateString("en-US", {
+                        month: "short",
+                        day: "numeric",
+                        year: "numeric",
+                      })}
                       {k.lastUsed && (
-                        <> &middot; Last used {new Date(k.lastUsed).toLocaleDateString("en-US", { month: "short", day: "numeric" })}</>
+                        <>
+                          {" "}
+                          &middot; Last used{" "}
+                          {new Date(k.lastUsed).toLocaleDateString("en-US", {
+                            month: "short",
+                            day: "numeric",
+                          })}
+                        </>
                       )}
                     </p>
                   </div>
@@ -517,10 +575,21 @@ function ApiKeysView({ userId }: { userId: string }) {
                   className="flex items-center justify-between rounded-xl border border-b-secondary border-dashed bg-surface-sunken px-4 py-3.5 opacity-50"
                 >
                   <div className="min-w-0 flex-1">
-                    <p className="text-[13px] font-medium text-t-primary line-through">{k.name}</p>
-                    <code className="mt-1 block truncate text-xs text-t-tertiary font-mono">{k.key}</code>
+                    <p className="text-[13px] font-medium text-t-primary line-through">
+                      {k.name}
+                    </p>
+                    <code className="mt-1 block truncate text-xs text-t-tertiary font-mono">
+                      {k.key}
+                    </code>
                     <p className="mt-1.5 text-[10px] text-t-tertiary/60">
-                      Revoked {k.revokedAt ? new Date(k.revokedAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : ""}
+                      Revoked{" "}
+                      {k.revokedAt
+                        ? new Date(k.revokedAt).toLocaleDateString("en-US", {
+                            month: "short",
+                            day: "numeric",
+                            year: "numeric",
+                          })
+                        : ""}
                     </p>
                   </div>
                   <span className="ml-4 rounded-full bg-red-500/10 px-2.5 py-1 text-[10px] font-mono font-medium text-red-400">
@@ -536,7 +605,8 @@ function ApiKeysView({ userId }: { userId: string }) {
         {keys.length > 0 && (
           <div className="border-t border-b-secondary px-5 py-3">
             <p className="text-[11px] text-t-tertiary/60">
-              API keys grant full access to your account. Keep them secret and never share them publicly.
+              API keys grant full access to your account. Keep them secret and
+              never share them publicly.
             </p>
           </div>
         )}
@@ -556,9 +626,9 @@ export default function DashboardPage() {
   const planSummary = useAppSelector((s) => s.user.plan);
   const planLoading = useAppSelector((s) => s.user.planLoading);
   const [inputValue, setInputValue] = useState("");
-  const [activeView, setActiveView] = useState<"home" | "projects" | "trash" | "api-keys">(
-    "home",
-  );
+  const [activeView, setActiveView] = useState<
+    "home" | "projects" | "trash" | "api-keys"
+  >("home");
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [pricingDialogOpen, setPricingDialogOpen] = useState(false);
   const [pricingDialogReason, setPricingDialogReason] = useState<
@@ -1474,7 +1544,8 @@ export default function DashboardPage() {
                               {project.name}
                             </p>
                             <p className="text-[10px] font-mono text-t-tertiary">
-                              {project.screens} screens · {timeAgo(project.updatedAt)}
+                              {project.screens} screens ·{" "}
+                              {timeAgo(project.updatedAt)}
                             </p>
                           </Link>
                         </article>

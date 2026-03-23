@@ -99,27 +99,27 @@ export function ProjectFramePreview({
           )}
         />
       ) : (
-      <div
-        className={cn(
-          "relative w-full max-w-[min(200px,75%)] overflow-hidden rounded-[11px] border border-b-secondary bg-surface-elevated shadow-[0_2px_16px_-2px_rgba(0,0,0,0.18)] dark:shadow-[0_4px_28px_-4px_rgba(0,0,0,0.55)] sm:max-w-[min(240px,80%)]",
-          "aspect-[420/927]",
-          dimmed &&
-            "opacity-[0.68] grayscale-[0.45] transition-[opacity,filter] duration-300 group-hover:opacity-[0.82] group-hover:grayscale-[0.15]",
-        )}
-      >
-        {firstFrameHtml ? (
-          <HtmlFramePreview
-            srcDoc={firstFrameHtml}
-            title={`${title} preview`}
-          />
-        ) : (
-          <div className="absolute inset-0 flex items-center justify-center bg-surface-sunken">
-            <span className="px-2 text-center text-[10px] font-mono text-t-tertiary">
-              {emptyLabel}
-            </span>
-          </div>
-        )}
-      </div>
+        <div
+          className={cn(
+            "relative w-full max-w-[min(200px,75%)] overflow-hidden rounded-[11px] border border-b-secondary bg-surface-elevated shadow-[0_2px_16px_-2px_rgba(0,0,0,0.18)] dark:shadow-[0_4px_28px_-4px_rgba(0,0,0,0.55)] sm:max-w-[min(240px,80%)]",
+            "aspect-[420/927]",
+            dimmed &&
+              "opacity-[0.68] grayscale-[0.45] transition-[opacity,filter] duration-300 group-hover:opacity-[0.82] group-hover:grayscale-[0.15]",
+          )}
+        >
+          {firstFrameHtml ? (
+            <HtmlFramePreview
+              srcDoc={firstFrameHtml}
+              title={`${title} preview`}
+            />
+          ) : (
+            <div className="absolute inset-0 flex items-center justify-center bg-surface-sunken">
+              <span className="px-2 text-center text-[10px] font-mono text-t-tertiary">
+                {emptyLabel}
+              </span>
+            </div>
+          )}
+        </div>
       )}
     </div>
   );

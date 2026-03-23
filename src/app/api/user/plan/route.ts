@@ -15,6 +15,7 @@ export async function GET(req: NextRequest) {
       select: {
         plan: true,
         billingInterval: true,
+        seats: true,
         credits: true,
         creditsResetAt: true,
         stripeCustomerId: true,
@@ -31,8 +32,9 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({
       plan: user.plan,
       billingInterval: user.billingInterval,
+      seats: user.seats,
       credits: user.credits,
-      creditCap,
+      creditCap: user.plan === "TEAM" ? creditCap * (user.seats ?? 1) : creditCap,
       creditsResetAt: user.creditsResetAt?.toISOString() || null,
       hasStripeAccount: !!user.stripeCustomerId,
       hasSubscription: !!user.stripeSubscriptionId,
