@@ -129,7 +129,7 @@ export default async function BlogPostPage({ params }: PageProps) {
         )}
 
         {/* Article header */}
-        <header className="border-b border-b-secondary">
+        <header>
           <div className="px-4 py-8 sm:px-6 sm:py-12 md:px-16 md:py-16 max-w-3xl mx-auto">
             <div className="flex flex-wrap items-center gap-3 mb-6">
               <span className="rounded-md bg-input-bg px-2.5 py-1 text-[11px] font-mono uppercase tracking-wider text-t-secondary border border-b-secondary">
@@ -203,7 +203,7 @@ export default async function BlogPostPage({ params }: PageProps) {
         </div>
 
         {/* Article content */}
-        <div className="border-t border-b-secondary">
+        <div>
           <article className="mx-auto max-w-3xl px-4 pb-8 pt-6 sm:px-6 sm:pb-10 sm:pt-8 md:px-16 md:pb-14 md:pt-10">
             <MdxRenderer source={post.content} />
           </article>
