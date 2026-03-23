@@ -28,6 +28,31 @@ interface PlanInfo {
   hasSubscription: boolean;
 }
 
+interface CreditLogEntry {
+  id: string;
+  action: string;
+  amount: number;
+  balance: number;
+  projectId: string | null;
+  meta: string | null;
+  createdAt: string;
+}
+
+const actionLabels: Record<string, string> = {
+  design: "AI Design",
+  chat: "AI Chat",
+  reset: "Credits Refreshed",
+};
+
+function formatLogDate(iso: string): string {
+  return new Date(iso).toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  });
+}
+
 interface DailyUsage {
   date: string;
   count: number;
@@ -183,23 +208,45 @@ export default function BillingPage() {
   const [loading, setLoading] = useState(true);
   const [portalLoading, setPortalLoading] = useState(false);
   const [dailyUsage, setDailyUsage] = useState<DailyUsage[]>([]);
+  const [logs, setLogs] = useState<CreditLogEntry[]>([]);
+  const [logsTotal, setLogsTotal] = useState(0);
+  const [logsOffset, setLogsOffset] = useState(0);
+  const logsLimit = 15;
 
   useEffect(() => {
     if (!user) return;
-    // Fetch plan + daily usage in parallel
     Promise.all([
       fetch(`/api/user/plan?userId=${user.uid}`).then((r) => r.json()),
-      fetch(
-        `/api/user/credits/daily?userId=${user.uid}&days=180`,
-      ).then((r) => r.json()),
+      fetch(`/api/user/credits/daily?userId=${user.uid}&days=180`).then((r) => r.json()),
+      fetch(`/api/user/credits?userId=${user.uid}&limit=${logsLimit}&offset=0`).then((r) => r.json()),
     ])
-      .then(([planData, usageData]) => {
+      .then(([planData, usageData, logsData]) => {
         setPlan(planData as PlanInfo);
         if (Array.isArray(usageData?.days)) setDailyUsage(usageData.days);
+        if (Array.isArray(logsData?.logs)) {
+          setLogs(logsData.logs);
+          setLogsTotal(logsData.total ?? 0);
+        }
       })
       .catch(() => {})
       .finally(() => setLoading(false));
   }, [user]);
+
+  const fetchLogs = useCallback(
+    async (offset: number) => {
+      if (!user) return;
+      const res = await fetch(
+        `/api/user/credits?userId=${user.uid}&limit=${logsLimit}&offset=${offset}`,
+      );
+      const data = await res.json();
+      if (Array.isArray(data?.logs)) {
+        setLogs(data.logs);
+        setLogsTotal(data.total ?? 0);
+        setLogsOffset(offset);
+      }
+    },
+    [user],
+  );
 
   const openPortal = useCallback(async () => {
     if (!user) return;
@@ -325,12 +372,6 @@ export default function BillingPage() {
                           </div>
                         )}
                       </div>
-                      <Link
-                        href="/billing/credits"
-                        className="text-[11px] font-mono uppercase tracking-wider text-t-tertiary hover:text-t-secondary transition-colors no-underline"
-                      >
-                        View usage →
-                      </Link>
                     </div>
                   )}
                 </div>
@@ -341,12 +382,6 @@ export default function BillingPage() {
                     <h2 className="text-sm font-semibold text-t-primary">
                       Daily Credit Usage
                     </h2>
-                    <Link
-                      href="/billing/credits"
-                      className="text-[11px] font-mono uppercase tracking-wider text-t-tertiary hover:text-t-secondary transition-colors no-underline"
-                    >
-                      View logs →
-                    </Link>
                   </div>
                   {dailyUsage.length > 0 ? (
                     <UsageBarChart data={dailyUsage} />
@@ -354,6 +389,101 @@ export default function BillingPage() {
                     <p className="text-xs text-t-tertiary py-8 text-center">
                       No usage data yet
                     </p>
+                  )}
+                </div>
+
+                {/* Credit logs */}
+                <div className="rounded-xl border border-b-secondary bg-surface-elevated p-6">
+                  <h2 className="text-sm font-semibold text-t-primary mb-4">
+                    Recent Activity
+                  </h2>
+                  {logs.length === 0 ? (
+                    <p className="text-xs text-t-tertiary py-6 text-center">
+                      No credit activity yet
+                    </p>
+                  ) : (
+                    <>
+                      <div className="overflow-hidden rounded-lg border border-b-secondary">
+                        <table className="w-full">
+                          <thead>
+                            <tr className="border-b border-b-secondary bg-input-bg/50">
+                              <th className="text-left px-4 py-2.5 text-[11px] font-mono font-medium uppercase tracking-wider text-t-tertiary">
+                                Date
+                              </th>
+                              <th className="text-left px-4 py-2.5 text-[11px] font-mono font-medium uppercase tracking-wider text-t-tertiary">
+                                Action
+                              </th>
+                              <th className="text-right px-4 py-2.5 text-[11px] font-mono font-medium uppercase tracking-wider text-t-tertiary">
+                                Credits
+                              </th>
+                              <th className="text-right px-4 py-2.5 text-[11px] font-mono font-medium uppercase tracking-wider text-t-tertiary">
+                                Balance
+                              </th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {logs.map((log) => (
+                              <tr
+                                key={log.id}
+                                className="border-b border-b-secondary last:border-b-0"
+                              >
+                                <td className="px-4 py-3 text-xs text-t-secondary">
+                                  {formatLogDate(log.createdAt)}
+                                </td>
+                                <td className="px-4 py-3">
+                                  <span className="text-xs text-t-primary">
+                                    {actionLabels[log.action] || log.action}
+                                  </span>
+                                  {log.meta && (
+                                    <p className="text-[11px] text-t-tertiary mt-0.5">
+                                      {log.meta}
+                                    </p>
+                                  )}
+                                </td>
+                                <td className="px-4 py-3 text-right">
+                                  <span
+                                    className={`text-xs font-mono font-medium ${
+                                      log.amount > 0
+                                        ? "text-emerald-600 dark:text-emerald-400"
+                                        : "text-t-secondary"
+                                    }`}
+                                  >
+                                    {log.amount > 0 ? "+" : ""}
+                                    {log.amount.toLocaleString()}
+                                  </span>
+                                </td>
+                                <td className="px-4 py-3 text-right text-xs font-mono text-t-tertiary">
+                                  {log.balance.toLocaleString()}
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                      {logsTotal > logsLimit && (
+                        <div className="flex items-center justify-between mt-3">
+                          <p className="text-[11px] text-t-tertiary">
+                            {logsOffset + 1}–{Math.min(logsOffset + logsLimit, logsTotal)} of {logsTotal}
+                          </p>
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => fetchLogs(Math.max(0, logsOffset - logsLimit))}
+                              disabled={logsOffset === 0}
+                              className="rounded-md border border-b-secondary px-3 py-1.5 text-[11px] font-mono uppercase tracking-wider text-t-secondary hover:bg-input-bg disabled:opacity-30 disabled:pointer-events-none"
+                            >
+                              Prev
+                            </button>
+                            <button
+                              onClick={() => fetchLogs(logsOffset + logsLimit)}
+                              disabled={logsOffset + logsLimit >= logsTotal}
+                              className="rounded-md border border-b-secondary px-3 py-1.5 text-[11px] font-mono uppercase tracking-wider text-t-secondary hover:bg-input-bg disabled:opacity-30 disabled:pointer-events-none"
+                            >
+                              Next
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </>
                   )}
                 </div>
 
