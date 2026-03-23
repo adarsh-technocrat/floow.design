@@ -1,11 +1,33 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 
-// GET /api/projects — list active (non-trashed) projects
-export async function GET() {
+// GET /api/projects — list active (non-trashed) projects for a user
+export async function GET(req: NextRequest) {
+  const userId = req.nextUrl.searchParams.get("userId");
+  const teamId = req.nextUrl.searchParams.get("teamId");
+
   try {
+    const where: Record<string, unknown> = { trashedAt: null, isTemplate: false };
+
+    if (teamId) {
+      where.teamId = teamId;
+    } else if (userId) {
+      const teamIds = (
+        await prisma.teamMember.findMany({
+          where: { userId },
+          select: { teamId: true },
+        })
+      ).map((m) => m.teamId);
+
+      where.OR = [
+        { ownerId: userId },
+        { ownerId: null, teamId: null },
+        ...(teamIds.length > 0 ? [{ teamId: { in: teamIds } }] : []),
+      ];
+    }
+
     const projects = await prisma.project.findMany({
-      where: { trashedAt: null, isTemplate: false },
+      where,
       orderBy: { updatedAt: "desc" },
       select: {
         id: true,
@@ -45,10 +67,19 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json().catch(() => ({}));
-    const name = (body as { name?: string }).name || "Untitled Project";
+    const { name: rawName, userId: ownerId, teamId } = body as {
+      name?: string;
+      userId?: string;
+      teamId?: string;
+    };
+    const name = rawName || "Untitled Project";
 
     const project = await prisma.project.create({
-      data: { name },
+      data: {
+        name,
+        ...(ownerId ? { ownerId } : {}),
+        ...(teamId ? { teamId } : {}),
+      },
     });
 
     return NextResponse.json({

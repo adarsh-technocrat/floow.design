@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/db";
 import { getCreditCapForUser, isOnPaidPlan } from "@/lib/plan-credits";
+import { resolveCreditsSource } from "@/lib/team-auth";
 
-// Credits consumed per AI generation request
 const CREDITS_PER_REQUEST: Record<string, number> = {
   chat: 30,
   design: 50,
@@ -11,8 +11,58 @@ export function getCreditCost(type: string): number {
   return CREDITS_PER_REQUEST[type] ?? 30;
 }
 
-/** Check if user has a paid plan and enough credits */
-export async function checkCredits(userId: string) {
+export async function checkCredits(userId: string, projectId?: string) {
+  const source = await resolveCreditsSource(userId, projectId);
+
+  if (source.type === "team") {
+    const team = await prisma.team.findUnique({
+      where: { id: source.id },
+      select: { credits: true, seats: true, billingInterval: true, creditsResetAt: true },
+    });
+
+    if (!team) return { allowed: false, remaining: 0, total: 0, needsPlan: true };
+
+    if (team.creditsResetAt && new Date() > team.creditsResetAt) {
+      const baseCap = getCreditCapForUser("TEAM", team.billingInterval);
+      const totalCredits = baseCap * (team.seats ?? 1);
+
+      await prisma.team.update({
+        where: { id: source.id },
+        data: {
+          credits: totalCredits,
+          creditsResetAt: new Date(
+            Date.now() +
+              (team.billingInterval === "yearly"
+                ? 365 * 24 * 60 * 60 * 1000
+                : 30 * 24 * 60 * 60 * 1000),
+          ),
+        },
+      });
+
+      await prisma.teamCreditLog.create({
+        data: {
+          teamId: source.id,
+          userId,
+          action: "reset",
+          amount: totalCredits,
+          balance: totalCredits,
+          meta: "Team credit renewal",
+        },
+      });
+
+      return { allowed: true, remaining: totalCredits, total: totalCredits, needsPlan: false };
+    }
+
+    const baseCap = getCreditCapForUser("TEAM", team.billingInterval);
+    const total = baseCap * (team.seats ?? 1);
+    return {
+      allowed: team.credits > 0,
+      remaining: team.credits,
+      total,
+      needsPlan: false,
+    };
+  }
+
   const user = await prisma.user.findUnique({
     where: { id: userId },
     select: {
@@ -25,14 +75,12 @@ export async function checkCredits(userId: string) {
 
   if (!user) return { allowed: false, remaining: 0, total: 0, needsPlan: true };
 
-  // No free plan — must be on a paid plan
   if (!isOnPaidPlan(user.plan)) {
     return { allowed: false, remaining: 0, total: 0, needsPlan: true };
   }
 
   const total = getCreditCapForUser(user.plan, user.billingInterval);
 
-  // Auto-reset credits if reset date has passed
   if (user.creditsResetAt && new Date() > user.creditsResetAt) {
     await prisma.user.update({
       where: { id: userId },
@@ -47,7 +95,6 @@ export async function checkCredits(userId: string) {
       },
     });
 
-    // Log the reset
     await prisma.creditLog.create({
       data: {
         userId,
@@ -69,13 +116,44 @@ export async function checkCredits(userId: string) {
   };
 }
 
-/** Deduct credits after a successful AI request and log it */
 export async function deductCredits(
   userId: string,
   type: string = "chat",
   projectId?: string,
 ): Promise<number> {
   const cost = getCreditCost(type);
+  const source = await resolveCreditsSource(userId, projectId);
+
+  if (source.type === "team") {
+    const team = await prisma.team.update({
+      where: { id: source.id },
+      data: { credits: { decrement: Math.min(cost, 999999) } },
+      select: { credits: true },
+    });
+
+    const balance = Math.max(0, team.credits);
+    if (team.credits < 0) {
+      await prisma.team.update({
+        where: { id: source.id },
+        data: { credits: 0 },
+      });
+    }
+
+    await prisma.teamCreditLog.create({
+      data: {
+        teamId: source.id,
+        userId,
+        action: type,
+        amount: -cost,
+        balance,
+        projectId: projectId || null,
+        meta: `AI ${type} generation`,
+      },
+    });
+
+    return balance;
+  }
+
   const user = await prisma.user.update({
     where: { id: userId },
     data: { credits: { decrement: Math.min(cost, 999999) } },
@@ -84,7 +162,6 @@ export async function deductCredits(
 
   const balance = Math.max(0, user.credits);
 
-  // Ensure credits don't go negative
   if (user.credits < 0) {
     await prisma.user.update({
       where: { id: userId },
@@ -92,7 +169,6 @@ export async function deductCredits(
     });
   }
 
-  // Log the deduction
   await prisma.creditLog.create({
     data: {
       userId,

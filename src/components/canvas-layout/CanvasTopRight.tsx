@@ -9,6 +9,7 @@ import {
   LogOut,
   CreditCard,
   User as UserIcon,
+  Users,
   Settings,
   LayoutDashboard,
 } from "lucide-react";
@@ -143,6 +144,13 @@ export function CanvasTopRight() {
               >
                 <LayoutDashboard className="size-4" />
                 Dashboard
+              </button>
+              <button
+                onClick={() => { setProfileOpen(false); router.push("/team"); }}
+                className="flex w-full items-center gap-2.5 px-4 py-2.5 text-[13px] text-t-secondary transition-colors hover:bg-input-bg hover:text-t-primary"
+              >
+                <Users className="size-4" />
+                Team
               </button>
               <button
                 onClick={() => { setProfileOpen(false); router.push("/billing"); }}

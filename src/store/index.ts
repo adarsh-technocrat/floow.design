@@ -5,6 +5,7 @@ import projectReducer from "./slices/projectSlice";
 import agentReducer from "./slices/agentSlice";
 import userReducer from "./slices/userSlice";
 import projectsReducer from "./slices/projectsSlice";
+import teamReducer from "./slices/teamSlice";
 
 export const store = configureStore({
   reducer: {
@@ -14,6 +15,7 @@ export const store = configureStore({
     agent: agentReducer,
     user: userReducer,
     projects: projectsReducer,
+    team: teamReducer,
   },
 });
 

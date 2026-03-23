@@ -22,6 +22,19 @@ enum PlanType {
   TEAM
 }
 
+enum TeamRole {
+  OWNER
+  ADMIN
+  MEMBER
+}
+
+enum InviteStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+  EXPIRED
+}
+
 model User {
   id                   String        @id
   email                String?       @unique
@@ -40,6 +53,9 @@ model User {
   creditLogs           CreditLog[]
   apiKeys              ApiKey[]
   themes               Theme[]
+  ownedTeams           Team[]        @relation("TeamOwner")
+  teamMembers          TeamMember[]
+  sentInvites          TeamInvite[]  @relation("SentInvites")
   createdAt            DateTime      @default(now())
   updatedAt            DateTime      @updatedAt
 
@@ -61,6 +77,75 @@ model CreditLog {
   @@index([userId, amount, createdAt])
 }
 
+model Team {
+  id                   String          @id @default(cuid())
+  name                 String
+  ownerId              String
+  owner                User            @relation("TeamOwner", fields: [ownerId], references: [id])
+  credits              Int             @default(0)
+  creditsResetAt       DateTime?
+  stripeSubscriptionId String?
+  billingInterval      String?
+  seats                Int             @default(1)
+  members              TeamMember[]
+  projects             Project[]
+  invites              TeamInvite[]
+  creditLogs           TeamCreditLog[]
+  createdAt            DateTime        @default(now())
+  updatedAt            DateTime        @updatedAt
+
+  @@index([ownerId])
+}
+
+model TeamMember {
+  id        String   @id @default(cuid())
+  teamId    String
+  team      Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role      TeamRole @default(MEMBER)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([teamId, userId])
+  @@index([userId])
+  @@index([teamId])
+}
+
+model TeamInvite {
+  id        String       @id @default(cuid())
+  teamId    String
+  team      Team         @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  email     String
+  role      TeamRole     @default(MEMBER)
+  status    InviteStatus @default(PENDING)
+  invitedBy String
+  inviter   User         @relation("SentInvites", fields: [invitedBy], references: [id])
+  token     String       @unique @default(cuid())
+  expiresAt DateTime
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  @@index([teamId])
+  @@index([email, status])
+  @@index([token])
+}
+
+model TeamCreditLog {
+  id        String   @id @default(cuid())
+  teamId    String
+  team      Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  userId    String
+  action    String
+  amount    Int
+  balance   Int
+  projectId String?
+  meta      String?
+  createdAt DateTime @default(now())
+
+  @@index([teamId, createdAt(sort: Desc)])
+}
+
 model Project {
   id           String        @id @default(cuid())
   name         String        @default("Untitled Project")
@@ -68,6 +153,9 @@ model Project {
   isTemplate   Boolean       @default(false)
   templateTag  String?
   trashedAt    DateTime?
+  ownerId      String?
+  teamId       String?
+  team         Team?         @relation(fields: [teamId], references: [id])
   chatSessions ChatSession[]
   frames       Frame[]
   createdAt    DateTime      @default(now())
@@ -76,6 +164,8 @@ model Project {
   @@index([trashedAt, isTemplate])
   @@index([updatedAt])
   @@index([isTemplate])
+  @@index([ownerId])
+  @@index([teamId])
 }
 
 model ChatSession {
