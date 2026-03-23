@@ -10,6 +10,8 @@
  *   npx tsx scripts/generate-blogs.ts 3              # generates 3 blogs
  *   npx tsx scripts/generate-blogs.ts 5 --dry-run    # preview without DB write
  *   npx tsx scripts/generate-blogs.ts 2 --time "week" --location "US"
+ *   npx tsx scripts/generate-blogs.ts 1 --topic "Figma vs Framer in 2026"
+ *   npx tsx scripts/generate-blogs.ts 3 --topic "vibe coding,AI prototyping tools,design tokens"
  */
 
 import { GoogleGenAI } from "@google/genai";
@@ -41,6 +43,8 @@ const DEFAULTS = {
 /*  Parse CLI args                                                     */
 /* ------------------------------------------------------------------ */
 
+const BOOLEAN_FLAGS = new Set(["dry-run"]);
+
 function parseArgs() {
   const args = process.argv.slice(2);
   const flags: Record<string, string> = {};
@@ -49,17 +53,31 @@ function parseArgs() {
   for (let i = 0; i < args.length; i++) {
     if (args[i].startsWith("--")) {
       const key = args[i].replace(/^--/, "");
-      flags[key] = args[i + 1] ?? "true";
-      i++;
+      if (BOOLEAN_FLAGS.has(key)) {
+        flags[key] = "true";
+      } else {
+        flags[key] = args[i + 1] ?? "true";
+        i++;
+      }
     } else {
       positional.push(args[i]);
     }
   }
 
+  // Parse topics: comma-separated string → array
+  const rawTopics = flags.topic || flags.topics || "";
+  const topics = rawTopics
+    ? rawTopics
+        .split(",")
+        .map((t: string) => t.trim())
+        .filter(Boolean)
+    : [];
+
   return {
     count: parseInt(positional[0] || String(DEFAULTS.count), 10),
     time: flags.time || DEFAULTS.time,
     location: flags.location || DEFAULTS.location,
+    topics,
     dryRun: "dry-run" in flags,
   };
 }
@@ -131,15 +149,20 @@ async function generateBlogContent(
   time: string,
   location: string,
   existingSlugs: string[],
+  topic?: string,
 ): Promise<BlogContent> {
   const avoidList =
     existingSlugs.length > 0
       ? `\n\nIMPORTANT: Do NOT write about topics covered by these existing slugs — pick a DIFFERENT story:\n${existingSlugs.map((s) => `- ${s}`).join("\n")}`
       : "";
 
+  const topicDirective = topic
+    ? `Write a concise, SEO-optimized article specifically about: "${topic}". Search the web for the latest news, developments, and insights from the past ${time} on this topic. Ground the article in real, recent facts and sources.`
+    : `Search the web for news from the past ${time} in the ${location} related to ${PRODUCT.niche}. Pick the single strongest, most relevant story and write a concise, SEO-optimized news article about it.`;
+
   const prompt = `You are a senior tech journalist writing for ${PRODUCT.name} (${PRODUCT.url}), an ${PRODUCT.description}.
 
-Search the web for news from the past ${time} in the ${location} related to ${PRODUCT.niche}. Pick the single strongest, most relevant story and write a concise, SEO-optimized news article about it.${avoidList}
+${topicDirective}${avoidList}
 
 Return a valid JSON object with EXACTLY this structure (no markdown fencing, no extra text):
 {
@@ -175,15 +198,18 @@ Return a valid JSON object with EXACTLY this structure (no markdown fencing, no 
     }
     parsed = JSON.parse(jsonMatch[1].trim()) as BlogContent;
   } catch {
-    // Strategy 2: Ask Gemini to fix the JSON
+    // Strategy 2: Ask Gemini to regenerate as clean JSON
     console.log(`  Retrying with JSON repair...`);
     const fixResponse = await ai.models.generateContent({
       model: "gemini-2.5-flash",
-      contents: `Fix this broken JSON and return ONLY valid JSON, nothing else. Do not wrap in markdown fences:\n\n${text}`,
+      contents: `The following text contains a blog article as broken/incomplete JSON. Extract the content and return it as a single valid JSON object. Do NOT wrap in markdown fences. Do NOT truncate the mdxContent field — include the full article. Return ONLY the JSON:\n\n${text.slice(0, 30000)}`,
       config: { temperature: 0 },
     });
     const fixedText = fixResponse.text ?? "";
-    const fixedMatch = fixedText.match(/(\{[\s\S]*\})/);
+    // Try extracting from markdown fences first, then raw
+    const fixedMatch =
+      fixedText.match(/```(?:json)?\s*([\s\S]*?)```/) ||
+      fixedText.match(/(\{[\s\S]*\})/);
     if (!fixedMatch) {
       throw new Error(
         `Failed to extract JSON after repair:\n${fixedText.slice(0, 300)}`,
@@ -337,7 +363,7 @@ async function seedToDatabase(
 /* ------------------------------------------------------------------ */
 
 async function main() {
-  const { count, time, location, dryRun } = parseArgs();
+  const { count, time, location, topics, dryRun } = parseArgs();
 
   console.log(`\n╔════════════════════════════════════════════╗`);
   console.log(`║  floow.design Blog Generation Pipeline     ║`);
@@ -345,8 +371,16 @@ async function main() {
   console.log(`║  Blogs to generate: ${String(count).padEnd(23)}║`);
   console.log(`║  Time range:        ${time.padEnd(23)}║`);
   console.log(`║  Location:          ${location.slice(0, 23).padEnd(23)}║`);
+  console.log(
+    `║  Topics:            ${(topics.length > 0 ? topics.length + " provided" : "auto-discover").padEnd(23)}║`,
+  );
   console.log(`║  Dry run:           ${String(dryRun).padEnd(23)}║`);
-  console.log(`╚════════════════════════════════════════════╝\n`);
+  console.log(`╚════════════════════════════════════════════╝`);
+  if (topics.length > 0) {
+    console.log(`\n  Topics:`);
+    topics.forEach((t, i) => console.log(`    ${i + 1}. ${t}`));
+  }
+  console.log();
 
   const ai = getGeminiClient();
   const prisma = dryRun ? (null as unknown as PrismaClient) : getPrisma();
@@ -364,15 +398,21 @@ async function main() {
 
   for (let i = 0; i < count; i++) {
     const num = i + 1;
+    // Assign topic: cycle through provided topics, or undefined for auto-discover
+    const topic = topics.length > 0 ? topics[i % topics.length] : undefined;
     console.log(`\n[${num}/${count}] Generating blog post...`);
+    if (topic) console.log(`  Topic: "${topic}"`);
 
     try {
       // Step 1: Generate content
       console.log(`  Step 1/3: Generating content with Gemini + web search...`);
-      const blog = await generateBlogContent(ai, time, location, [
-        ...existingSlugs,
-        ...generated,
-      ]);
+      const blog = await generateBlogContent(
+        ai,
+        time,
+        location,
+        [...existingSlugs, ...generated],
+        topic,
+      );
       console.log(`  Title: "${blog.title}"`);
       console.log(`  Slug:  ${blog.slug}`);
 

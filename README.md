@@ -72,7 +72,7 @@ Automated pipeline that generates SEO-optimized blog posts using Gemini with Goo
 ### Usage
 
 ```bash
-# Generate 1 blog post
+# Generate 1 blog post (auto-discovers trending topic)
 pnpm blog:generate
 
 # Generate 3 blog posts
@@ -83,7 +83,22 @@ pnpm blog:generate 2 --dry-run
 
 # Custom time range and location
 pnpm blog:generate 5 --time "month" --location "US"
+
+# Generate about a specific topic
+pnpm blog:generate 1 --topic "vibe coding trend in 2026"
+
+# Multiple topics (comma-separated) — cycles through them
+pnpm blog:generate 3 --topic "Figma vs Framer,AI prototyping tools,design tokens"
 ```
+
+### Options
+
+| Flag         | Description                                        | Default                       |
+| ------------ | -------------------------------------------------- | ----------------------------- |
+| `--topic`    | Specific topic(s) to write about (comma-separated) | Auto-discover from news       |
+| `--time`     | Time range for news search                         | `week`                        |
+| `--location` | Geographic focus                                   | `global tech/design industry` |
+| `--dry-run`  | Write MDX files but skip DB seeding                | `false`                       |
 
 ### How It Works
 
