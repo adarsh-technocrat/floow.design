@@ -11,12 +11,14 @@ import {
   updateFrame,
   setTheme,
   replaceTheme,
+  upsertStoredTheme,
 } from "@/store/slices/canvasSlice";
 import { pushAgentLog } from "@/store/slices/uiSlice";
 import {
   emitActivityHistoryLoading,
   emitChatMessagesSnapshot,
   emitChatStatus,
+  emitCreditExhausted,
   addGeneratingFrame,
   clearGeneratingFrames,
   registerChatSend,
@@ -535,6 +537,25 @@ export function ChatPanel({
     latestCanvasState.theme = theme;
   }, [frames, theme]);
 
+  const activeThemeIdRef = useRef<string | null>(null);
+  const persistThemeToDatabase = useCallback(
+    (variables: Record<string, string>, themeName?: string) => {
+      if (!chatUserId) return;
+      const themeId = activeThemeIdRef.current;
+      if (themeId) {
+        http.put("/api/themes", { id: themeId, variables }).then(({ data }) => {
+          dispatch(upsertStoredTheme({ id: data.id, name: data.name, variables: data.variables }));
+        }).catch(() => {});
+      } else {
+        http.post("/api/themes", { userId: chatUserId, name: themeName ?? "Default", variables }).then(({ data }) => {
+          activeThemeIdRef.current = data.id;
+          dispatch(upsertStoredTheme({ id: data.id, name: data.name, variables: data.variables }));
+        }).catch(() => {});
+      }
+    },
+    [chatUserId, dispatch],
+  );
+
   const chatSessionContextRef = useRef({
     projectId,
     frameId: frameSessionId,
@@ -586,6 +607,23 @@ export function ChatPanel({
       }),
   );
 
+  useEffect(() => {
+    // #region agent log
+    fetch("http://127.0.0.1:7253/ingest/bf26e32e-b221-45cd-9795-984cd7651c6f", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        runId: "pre-fix",
+        hypothesisId: "H6",
+        location: "ChatPanel.tsx:mount",
+        message: "chat panel mounted",
+        data: {},
+        timestamp: Date.now(),
+      }),
+    }).catch(() => {});
+    // #endregion
+  }, []);
+
   const { messages, setMessages, sendMessage, stop, status } = useChat({
     transport,
     onData: (dataPart) => {
@@ -628,6 +666,7 @@ export function ChatPanel({
           setMultiAgentPlanContext(spawnData.planContext ?? "");
           if (spawnData.theme && Object.keys(spawnData.theme).length > 0) {
             dispatch(replaceTheme(spawnData.theme));
+            persistThemeToDatabase(spawnData.theme);
           }
           return;
         }
@@ -684,6 +723,7 @@ export function ChatPanel({
           setMultiAgentPlanContext(output.planContext ?? "");
           if (output.theme && Object.keys(output.theme).length > 0) {
             dispatch(replaceTheme(output.theme));
+            persistThemeToDatabase(output.theme);
           }
           return;
         }
@@ -711,33 +751,39 @@ export function ChatPanel({
               }),
             );
             if (f.html && f.html.length > 0) {
-              http.post("/api/frames", {
+              http
+                .post("/api/frames", {
                   frameId: f.id,
                   html: f.html,
                   label: f.label,
                   left: f.left,
                   top: f.top,
                   projectId,
-                }).catch(() => {});
+                })
+                .catch(() => {});
             }
           } else if (f.id && f.html !== undefined) {
             dispatch(updateFrameHtml({ id: f.id, html: f.html }));
             const frame = stateRef.current.frames.find((x) => x.id === f.id);
-            http.post("/api/frames", {
+            http
+              .post("/api/frames", {
                 frameId: f.id,
                 html: f.html,
                 label: frame?.label,
                 left: frame?.left,
                 top: frame?.top,
                 projectId,
-              }).catch(() => {});
+              })
+              .catch(() => {});
           }
         }
         if (output?.themeUpdates) {
           dispatch(setTheme(output.themeUpdates));
+          persistThemeToDatabase({ ...stateRef.current.theme, ...output.themeUpdates });
         }
         if (output?.theme) {
           dispatch(replaceTheme(output.theme));
+          persistThemeToDatabase(output.theme);
         }
         const finishedStep = toolStepsRef.current.find(
           (s) => s.toolCallId === toolCallId,
@@ -774,6 +820,36 @@ export function ChatPanel({
           ),
         );
         return;
+      }
+
+      if (
+        ev.type === "text-delta" ||
+        ev.type === "reasoning-delta" ||
+        ev.type === "tool-input-start" ||
+        ev.type === "tool-output-available"
+      ) {
+        // #region agent log
+        fetch(
+          "http://127.0.0.1:7253/ingest/bf26e32e-b221-45cd-9795-984cd7651c6f",
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              runId: "pre-fix",
+              hypothesisId: "H1",
+              location: "ChatPanel.tsx:onData",
+              message: "sse event received",
+              data: {
+                type: ev.type,
+                toolCallId: toolCallId ?? null,
+                toolName: toolName ?? null,
+                hasData: Boolean(ev.data),
+              },
+              timestamp: Date.now(),
+            }),
+          },
+        ).catch(() => {});
+        // #endregion
       }
 
       if (!ev.data) return;
@@ -894,14 +970,16 @@ export function ChatPanel({
             }),
           );
           if (data.frame.html && data.frame.html.length > 0) {
-            http.post("/api/frames", {
+            http
+              .post("/api/frames", {
                 frameId: data.frame.id,
                 html: data.frame.html,
                 label: data.frame.label,
                 left: data.frame.left,
                 top: data.frame.top,
                 projectId,
-              }).catch(() => {});
+              })
+              .catch(() => {});
           }
         } else if (
           (data.toolName === "update_screen" ||
@@ -915,18 +993,22 @@ export function ChatPanel({
           const frame = stateRef.current.frames.find(
             (f) => f.id === data.frame?.id,
           );
-          http.post("/api/frames", {
+          http
+            .post("/api/frames", {
               frameId: data.frame.id,
               html: data.frame.html,
               label: frame?.label,
               left: frame?.left,
               top: frame?.top,
               projectId,
-            }).catch(() => {});
+            })
+            .catch(() => {});
         } else if (data.toolName === "update_theme" && data.themeUpdates) {
           dispatch(setTheme(data.themeUpdates));
+          persistThemeToDatabase({ ...stateRef.current.theme, ...data.themeUpdates });
         } else if (data.toolName === "build_theme" && data.theme) {
           dispatch(replaceTheme(data.theme));
+          persistThemeToDatabase(data.theme);
         }
         if (data.toolName === "read_screen") {
           const frameId =
@@ -983,6 +1065,29 @@ export function ChatPanel({
           const existingParts = (
             (lastMsg as { parts?: MessagePart[] }).parts ?? []
           ).filter((p) => p.type !== TOOL_STEP_PART_TYPE);
+          // #region agent log
+          fetch(
+            "http://127.0.0.1:7253/ingest/bf26e32e-b221-45cd-9795-984cd7651c6f",
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                runId: "pre-fix",
+                hypothesisId: "H2",
+                location: "ChatPanel.tsx:onFinish",
+                message: "persisting assistant parts",
+                data: {
+                  stepPartsCount: stepParts.length,
+                  existingPartsCount: existingParts.length,
+                  existingPartTypes: existingParts
+                    .map((p) => p.type)
+                    .slice(0, 10),
+                },
+                timestamp: Date.now(),
+              }),
+            },
+          ).catch(() => {});
+          // #endregion
           const updated = [...finishedMessages];
           updated[lastIdx] = {
             ...lastMsg,
@@ -1018,20 +1123,10 @@ export function ChatPanel({
         },
       ).catch(() => {});
       // #endregion
-      if (
-        msg.includes("402") ||
-        msg.includes("no_plan") ||
-        msg.includes("insufficient_credits")
-      ) {
-        toast.error(
-          "You need an active plan with credits to use AI features.",
-          {
-            action: {
-              label: "View Plans",
-              onClick: () => window.location.assign("/pricing"),
-            },
-          },
-        );
+      if (msg.includes("no_plan") || (msg.includes("402") && !msg.includes("insufficient_credits"))) {
+        emitCreditExhausted("no_plan");
+      } else if (msg.includes("insufficient_credits") || msg.includes("402")) {
+        emitCreditExhausted("insufficient_credits");
       } else {
         toast.error("Something went wrong. Please try again.");
       }
@@ -1053,9 +1148,43 @@ export function ChatPanel({
       frameId: frameSessionId,
       userId: chatUserId,
     });
-    http.get(`/api/chat/sessions?${q.toString()}`)
+    http
+      .get(`/api/chat/sessions?${q.toString()}`)
       .then(({ data }: { data: { messages?: UIMessage[] } }) => {
         if (lastHydrateKeyRef.current !== hydrateKey) return;
+        // #region agent log
+        fetch(
+          "http://127.0.0.1:7253/ingest/bf26e32e-b221-45cd-9795-984cd7651c6f",
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              runId: "pre-fix",
+              hypothesisId: "H3",
+              location: "ChatPanel.tsx:hydrateHistory",
+              message: "history payload received",
+              data: {
+                messageCount: data?.messages?.length ?? 0,
+                lastRole:
+                  data?.messages && data.messages.length > 0
+                    ? data.messages[data.messages.length - 1]?.role
+                    : null,
+                lastPartTypes:
+                  data?.messages && data.messages.length > 0
+                    ? ((
+                        data.messages[data.messages.length - 1] as {
+                          parts?: Array<{ type?: string }>;
+                        }
+                      ).parts
+                        ?.map((p) => p?.type ?? "unknown")
+                        ?.slice(0, 10) ?? [])
+                    : [],
+              },
+              timestamp: Date.now(),
+            }),
+          },
+        ).catch(() => {});
+        // #endregion
         if (data?.messages && data.messages.length > 0) {
           setMessages(data.messages);
         } else {
@@ -1159,6 +1288,23 @@ export function ChatPanel({
       e?.preventDefault();
       if (!inputValue.trim()) return;
       const prompt = inputValue.trim();
+      // #region agent log
+      fetch(
+        "http://127.0.0.1:7253/ingest/bf26e32e-b221-45cd-9795-984cd7651c6f",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            runId: "pre-fix",
+            hypothesisId: "H6",
+            location: "ChatPanel.tsx:handleSend",
+            message: "prompt submitted from panel",
+            data: { promptLength: prompt.length },
+            timestamp: Date.now(),
+          }),
+        },
+      ).catch(() => {});
+      // #endregion
       setInputValue("");
 
       setToolSteps([]);
@@ -1217,6 +1363,31 @@ export function ChatPanel({
   }, [sendMessage, stop, dispatch, setToolSteps]);
 
   useEffect(() => {
+    const last = messages[messages.length - 1] as
+      | { role?: string; parts?: Array<{ type?: string }>; content?: string }
+      | undefined;
+    // #region agent log
+    fetch("http://127.0.0.1:7253/ingest/bf26e32e-b221-45cd-9795-984cd7651c6f", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        runId: "pre-fix",
+        hypothesisId: "H4",
+        location: "ChatPanel.tsx:messagesEffect",
+        message: "message state changed",
+        data: {
+          status,
+          totalMessages: messages.length,
+          lastRole: last?.role ?? null,
+          lastPartTypes:
+            last?.parts?.map((p) => p?.type ?? "unknown")?.slice(0, 10) ?? [],
+          lastContentLength:
+            typeof last?.content === "string" ? last.content.length : 0,
+        },
+        timestamp: Date.now(),
+      }),
+    }).catch(() => {});
+    // #endregion
     chatThreadRef.current?.scrollTo({
       top: chatThreadRef.current.scrollHeight,
       behavior: status === "streaming" ? "auto" : "smooth",

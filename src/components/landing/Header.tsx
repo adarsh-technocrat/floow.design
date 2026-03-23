@@ -108,7 +108,7 @@ export function Header() {
                 Sign in
               </a>
               <a
-                href="/app"
+                href="/project"
                 className="inline-flex h-9 items-center px-5 rounded border-0 bg-btn-primary-bg text-[11px] font-semibold uppercase tracking-wider text-btn-primary-text hover:opacity-90 transition-colors no-underline font-mono"
               >
                 Get Started

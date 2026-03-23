@@ -25,7 +25,7 @@ const btnClass =
 export function CanvasTopRight() {
   const router = useRouter();
   const params = useParams();
-  const projectId = params?.projectId as string | undefined;
+  const projectId = (params?.id ?? params?.projectId) as string | undefined;
   const { user, signOut } = useAuth();
   const selectedFrameIds = useAppSelector((s) => s.canvas.selectedFrameIds);
   const frames = useAppSelector((s) => s.canvas.frames);
@@ -58,7 +58,7 @@ export function CanvasTopRight() {
   // Share — copy project link to clipboard
   const handleShare = () => {
     if (!projectId) return;
-    const url = `${window.location.origin}/app/${projectId}`;
+    const url = `${window.location.origin}/project/${projectId}`;
     navigator.clipboard.writeText(url);
     toast.success("Project link copied to clipboard", { position: "top-center" });
   };

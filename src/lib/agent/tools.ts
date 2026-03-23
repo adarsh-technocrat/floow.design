@@ -97,6 +97,20 @@ async function streamScreenHtmlWithDesignModel(
 const THEME_KEYS =
   "--background, --foreground, --primary, --primary-foreground, --secondary, --secondary-foreground, --muted, --muted-foreground, --card, --card-foreground, --border, --radius, --font-sans, --font-heading";
 
+function buildThemeContext(theme: ThemeVariables): string {
+  const entries = Object.entries(theme).filter(([k]) => k.startsWith("--"));
+  if (entries.length === 0) return "";
+  const vars = entries.map(([k, v]) => `  ${k}: ${v}`).join("\n");
+  return `\n\nActive theme CSS variables:\n${vars}\n\nYou MUST use Tailwind semantic theme classes that reference these variables:\n- Backgrounds: bg-background, bg-primary, bg-secondary, bg-muted, bg-card, bg-accent, bg-destructive\n- Text: text-foreground, text-primary-foreground, text-secondary-foreground, text-muted-foreground, text-card-foreground\n- Borders: border-border, border-input\n- DO NOT use arbitrary Tailwind color classes like bg-blue-500, text-gray-700, bg-slate-900 etc.\n- ONLY use the semantic theme classes above so all screens share a consistent palette.`;
+}
+
+function buildScreenContext(frames: FrameState[], currentId: string): string {
+  const siblings = frames.filter((f) => f.id !== currentId && f.html && f.html.length > 100);
+  if (siblings.length === 0) return "";
+  const summaries = siblings.map((f) => `  - "${f.label}"`).join("\n");
+  return `\n\nOther screens in this project:\n${summaries}\nMaintain visual consistency with these screens — use the same spacing patterns, typography scale, card styles, and navigation patterns.`;
+}
+
 async function generateThemeWithDesignModel(
   vertex: GoogleVertexProvider,
   modelId: string,
@@ -273,7 +287,9 @@ export function createTools(ctx: ToolContext) {
             error: "Design model is required for design_screen.",
           };
         }
-        const designPrompt = `You are a mobile UI designer. Generate the inner body HTML (no html/head/body tags) for a screen named "${frame.label}".\n\nDescription: ${description}\n\nUse Tailwind classes and HugeIcons font icons (class="hgi-stroke hgi-icon-name") where needed. Output only the complete inner body HTML, no markdown or explanation.`;
+        const themeCtx = buildThemeContext(theme);
+        const screenCtx = buildScreenContext(frames, id);
+        const designPrompt = `You are a mobile UI designer. Generate the inner body HTML (no html/head/body tags) for a screen named "${frame.label}".\n\nDescription: ${description}${themeCtx}${screenCtx}\n\nUse Tailwind classes and HugeIcons font icons (class="hgi-stroke hgi-icon-name") where needed. Output only the complete inner body HTML, no markdown or explanation.`;
         const generated = await streamScreenHtmlWithDesignModel(
           designModel.vertex,
           designModel.modelId,
@@ -357,9 +373,10 @@ export function createTools(ctx: ToolContext) {
           };
         }
         const currentBody = frame.html ? extractBodyContent(frame.html) : "";
+        const themeCtx = buildThemeContext(theme);
         const designPrompt = currentBody
-          ? `You are a mobile UI designer. Update this screen's inner body HTML according to the description below. Output the complete updated inner body HTML only, no markdown or explanation.\n\nDescription of changes: ${description}\n\nCurrent inner body HTML:\n${currentBody}`
-          : `You are a mobile UI designer. Generate the inner body HTML (no html/head/body tags) for a screen named "${frame.label}".\n\nDescription: ${description}\n\nUse Tailwind classes and HugeIcons font icons (class="hgi-stroke hgi-icon-name") where needed. Output only the complete inner body HTML, no markdown or explanation.`;
+          ? `You are a mobile UI designer. Update this screen's inner body HTML according to the description below. Output the complete updated inner body HTML only, no markdown or explanation.\n\nDescription of changes: ${description}${themeCtx}\n\nCurrent inner body HTML:\n${currentBody}`
+          : `You are a mobile UI designer. Generate the inner body HTML (no html/head/body tags) for a screen named "${frame.label}".\n\nDescription: ${description}${themeCtx}\n\nUse Tailwind classes and HugeIcons font icons (class="hgi-stroke hgi-icon-name") where needed. Output only the complete inner body HTML, no markdown or explanation.`;
         const generated = await streamScreenHtmlWithDesignModel(
           designModel.vertex,
           designModel.modelId,

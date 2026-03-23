@@ -197,7 +197,7 @@ export default function SignInPage() {
       try {
         const { data } = await http.post<{ id?: string }>("/api/projects", { name: pendingPrompt });
         if (data.id) {
-          router.push(`/app/${data.id}?prompt=${encodeURIComponent(pendingPrompt)}`);
+          router.push(`/project/${data.id}?prompt=${encodeURIComponent(pendingPrompt)}`);
           return;
         }
       } catch {

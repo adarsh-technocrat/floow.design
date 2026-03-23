@@ -683,7 +683,7 @@ export default function DashboardPage() {
           },
         ).catch(() => {});
         // #endregion
-        router.push(`/app/${result.id}${params}`);
+        router.push(`/project/${result.id}${params}`);
       }
     },
     [router, dispatch],
@@ -928,7 +928,7 @@ export default function DashboardPage() {
               projects.slice(0, 8).map((project) => (
                 <Link
                   key={project.id}
-                  href={`/app/${project.id}`}
+                  href={`/project/${project.id}`}
                   className="group flex items-center gap-2.5 rounded-lg px-3 py-2 text-[13px] text-t-primary no-underline transition-all hover:bg-input-bg"
                 >
                   <svg
@@ -1436,7 +1436,7 @@ export default function DashboardPage() {
                         >
                           <div className="relative aspect-[16/10] w-full min-h-0 border-b border-b-secondary/80 bg-surface-sunken">
                             <Link
-                              href={`/app/${project.id}`}
+                              href={`/project/${project.id}`}
                               className="relative block h-full min-h-0 w-full overflow-hidden"
                             >
                               <ProjectFramePreview
@@ -1467,7 +1467,7 @@ export default function DashboardPage() {
                             </button>
                           </div>
                           <Link
-                            href={`/app/${project.id}`}
+                            href={`/project/${project.id}`}
                             className="flex min-h-[78px] flex-col justify-center gap-1 px-4 py-3 no-underline transition-colors hover:bg-surface-sunken dark:hover:bg-white/[0.03]"
                           >
                             <p className="line-clamp-2 text-sm font-medium text-t-primary">

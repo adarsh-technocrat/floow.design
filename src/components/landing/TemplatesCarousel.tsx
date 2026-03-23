@@ -110,7 +110,7 @@ export function TemplatesCarousel() {
             {templates.map((t) => (
               <Link
                 key={t.id}
-                href={`/app/${t.id}`}
+                href={`/project/${t.id}`}
                 className="group relative flex-shrink-0 w-[170px] sm:w-[200px] md:w-[220px] no-underline"
               >
                 <div className="relative aspect-[9/16] w-full overflow-hidden rounded-lg border border-b-secondary bg-input-bg shadow-sm transition-shadow hover:shadow-md">

@@ -38,6 +38,7 @@ model User {
   chatSessions         ChatSession[]
   creditLogs           CreditLog[]
   apiKeys              ApiKey[]
+  themes               Theme[]
   createdAt            DateTime      @default(now())
   updatedAt            DateTime      @updatedAt
 
@@ -97,6 +98,8 @@ model Frame {
   id        String   @id
   projectId String   @default("default")
   project   Project  @relation(fields: [projectId], references: [id])
+  themeId   String?
+  theme     Theme?   @relation(fields: [themeId], references: [id])
   label     String   @default("Screen")
   left      Int      @default(0)
   top       Int      @default(0)
@@ -105,6 +108,20 @@ model Frame {
 
   @@index([projectId])
   @@index([projectId, updatedAt])
+  @@index([themeId])
+}
+
+model Theme {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name      String   @default("Default")
+  variables Json     @default("{}")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  frames    Frame[]
+
+  @@index([userId])
 }
 
 model ApiKey {

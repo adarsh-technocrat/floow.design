@@ -21,6 +21,13 @@ export interface FrameState {
   width?: number;
   height?: number;
   html: string;
+  themeId?: string;
+}
+
+export interface StoredTheme {
+  id: string;
+  name: string;
+  variables: ThemeVariables;
 }
 
 interface CanvasState {
@@ -28,6 +35,8 @@ interface CanvasState {
   frames: FrameState[];
   selectedFrameIds: string[];
   theme: ThemeVariables;
+  themes: StoredTheme[];
+  activeThemeId: string | null;
 }
 
 const initialState: CanvasState = {
@@ -39,6 +48,8 @@ const initialState: CanvasState = {
   },
   frames: [],
   theme: {},
+  themes: [],
+  activeThemeId: null,
 };
 
 const canvasSlice = createSlice({
@@ -134,6 +145,44 @@ const canvasSlice = createSlice({
         }
       }
     },
+    loadThemes: (state, action: { payload: StoredTheme[] }) => {
+      state.themes = action.payload;
+      if (action.payload.length > 0 && !state.activeThemeId) {
+        state.activeThemeId = action.payload[0].id;
+        state.theme = { ...action.payload[0].variables };
+      }
+    },
+    setActiveThemeId: (state, action: { payload: string }) => {
+      state.activeThemeId = action.payload;
+      const found = state.themes.find((t) => t.id === action.payload);
+      if (found) {
+        state.theme = { ...found.variables };
+      }
+    },
+    upsertStoredTheme: (state, action: { payload: StoredTheme }) => {
+      const idx = state.themes.findIndex((t) => t.id === action.payload.id);
+      if (idx >= 0) {
+        state.themes[idx] = action.payload;
+      } else {
+        state.themes.push(action.payload);
+      }
+      if (state.activeThemeId === action.payload.id) {
+        state.theme = { ...action.payload.variables };
+      }
+    },
+    assignThemeToFrame: (state, action: { payload: { frameId: string; themeId: string } }) => {
+      const frame = state.frames.find((f) => f.id === action.payload.frameId);
+      if (frame) {
+        frame.themeId = action.payload.themeId;
+        const themeData = state.themes.find((t) => t.id === action.payload.themeId);
+        if (themeData) {
+          const bodyContent = extractBodyContent(frame.html);
+          if (bodyContent) {
+            frame.html = wrapScreenBody(bodyContent, themeData.variables);
+          }
+        }
+      }
+    },
     reorderFrames: (state, action: { payload: string[] }) => {
       const order = action.payload;
       state.frames.sort((a, b) => order.indexOf(a.id) - order.indexOf(b.id));
@@ -150,6 +199,7 @@ const canvasSlice = createSlice({
           left?: number;
           top?: number;
           html?: string;
+          themeId?: string;
         }>;
       },
     ) => {
@@ -159,6 +209,7 @@ const canvasSlice = createSlice({
         left: f.left ?? 0,
         top: f.top ?? 0,
         html: f.html ?? "",
+        themeId: f.themeId,
       }));
     },
     toggleFrameInSelection: (state, action: { payload: string }) => {
@@ -188,6 +239,10 @@ export const {
   updateFrameHtml,
   setTheme,
   replaceTheme,
+  loadThemes,
+  setActiveThemeId,
+  upsertStoredTheme,
+  assignThemeToFrame,
 } = canvasSlice.actions;
 
 export default canvasSlice.reducer;

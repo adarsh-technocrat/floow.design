@@ -11,7 +11,7 @@ export interface FramePayload {
 export async function setFrame(
   frameId: string,
   html: string,
-  meta?: { label?: string; left?: number; top?: number; projectId?: string },
+  meta?: { label?: string; left?: number; top?: number; projectId?: string; themeId?: string },
 ) {
   const projectId = meta?.projectId;
   if (!projectId) throw new Error("projectId is required");
@@ -25,12 +25,14 @@ export async function setFrame(
       left: meta?.left ?? 0,
       top: meta?.top ?? 0,
       html,
+      ...(meta?.themeId && { themeId: meta.themeId }),
     },
     update: {
       html,
       ...(meta?.label !== undefined && { label: meta.label }),
       ...(meta?.left !== undefined && { left: meta.left }),
       ...(meta?.top !== undefined && { top: meta.top }),
+      ...(meta?.themeId !== undefined && { themeId: meta.themeId }),
     },
   });
 }

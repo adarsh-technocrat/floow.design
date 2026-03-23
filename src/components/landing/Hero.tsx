@@ -39,7 +39,7 @@ export function Hero() {
     try {
       const { data } = await http.post<{ id?: string }>("/api/projects", { name: text });
       if (data.id) {
-        router.push(`/app/${data.id}?prompt=${encodeURIComponent(text)}`);
+        router.push(`/project/${data.id}?prompt=${encodeURIComponent(text)}`);
       }
     } catch {
       setCreating(false);

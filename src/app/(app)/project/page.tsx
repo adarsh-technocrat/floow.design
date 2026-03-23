@@ -4,19 +4,17 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import http from "@/lib/http";
 
-export default function AppPage() {
+export default function NewProjectPage() {
   const router = useRouter();
 
   useEffect(() => {
-    // Create a new project and redirect to it
     http.post<{ id?: string }>("/api/projects", { name: "Untitled Project" })
       .then(({ data }) => {
         if (data.id) {
-          router.replace(`/app/${data.id}`);
+          router.replace(`/project/${data.id}`);
         }
       })
       .catch(() => {
-        // Fallback: go to dashboard
         router.replace("/dashboard");
       });
   }, [router]);

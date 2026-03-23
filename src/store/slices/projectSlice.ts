@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import { loadFrames } from "./canvasSlice";
+import { loadFrames, loadThemes, type StoredTheme } from "./canvasSlice";
 import http from "@/lib/http";
 
 export interface ProjectState {
@@ -27,8 +27,9 @@ export const fetchProject = createAsyncThunk(
     const name = typeof res?.name === "string" ? res.name : "Untitled Project";
     const frames = Array.isArray(res?.frames) ? res.frames : [];
     const messages = Array.isArray(res?.messages) ? res.messages : [];
-    // Always dispatch loadFrames — clears stale frames from previous project
+    const themes = Array.isArray(res?.themes) ? (res.themes as StoredTheme[]) : [];
     dispatch(loadFrames(frames));
+    dispatch(loadThemes(themes));
     return { projectId, name, messages };
   },
 );

@@ -4,13 +4,14 @@ import { setFrame, deleteFrame } from "./store";
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { frameId, html, label, left, top, projectId } = body as {
+    const { frameId, html, label, left, top, projectId, themeId } = body as {
       frameId?: string;
       html?: string;
       label?: string;
       left?: number;
       top?: number;
       projectId?: string;
+      themeId?: string;
     };
     if (!frameId || typeof html !== "string") {
       return NextResponse.json(
@@ -18,7 +19,7 @@ export async function POST(req: NextRequest) {
         { status: 400 },
       );
     }
-    await setFrame(frameId, html, { label, left, top, projectId });
+    await setFrame(frameId, html, { label, left, top, projectId, themeId });
     return NextResponse.json({ ok: true });
   } catch (e) {
     return NextResponse.json(

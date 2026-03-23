@@ -11,7 +11,7 @@ import { useAuth } from "@/contexts/AuthContext";
 export function ProjectLoader({ children }: { children: ReactNode }) {
   const dispatch = useAppDispatch();
   const params = useParams();
-  const projectId = params?.projectId as string | undefined;
+  const projectId = (params?.id ?? params?.projectId) as string | undefined;
   const { user, loading } = useAuth();
   const userId = user?.uid;
   const projectsFetched = useAppSelector((s) => s.projects.fetched);

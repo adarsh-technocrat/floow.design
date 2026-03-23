@@ -3,8 +3,10 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
-import { useAppDispatch } from "@/store/hooks";
-import { createCheckoutSession } from "@/store/slices/userSlice";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import { createCheckoutSession, openStripePortal } from "@/store/slices/userSlice";
+
+const PLAN_ORDER = ["FREE", "LITE", "STARTER", "PRO", "TEAM"];
 
 const plans = [
   {
@@ -88,6 +90,17 @@ const plans = [
   },
 ];
 
+function formatResetDate(iso: string | null): string | null {
+  if (!iso) return null;
+  const d = new Date(iso);
+  const diff = d.getTime() - Date.now();
+  if (diff < 0) return "soon";
+  const days = Math.ceil(diff / 86_400_000);
+  if (days <= 1) return "tomorrow";
+  if (days < 7) return `in ${days} days`;
+  return d.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+}
+
 interface PricingDialogProps {
   open: boolean;
   onClose: () => void;
@@ -98,15 +111,38 @@ export function PricingDialog({ open, onClose, reason }: PricingDialogProps) {
   const { user } = useAuth();
   const router = useRouter();
   const dispatch = useAppDispatch();
+  const userPlan = useAppSelector((s) => s.user.plan);
   const [billing, setBilling] = useState<"monthly" | "yearly">("monthly");
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
 
   if (!open) return null;
 
+  const currentPlanName = userPlan?.plan?.toUpperCase() ?? "FREE";
+  const currentPlanIdx = PLAN_ORDER.indexOf(currentPlanName);
+  const isExhausted = reason === "insufficient_credits";
+  const resetDate = isExhausted ? formatResetDate(userPlan?.creditsResetAt ?? null) : null;
+
+  const getPlanRelation = (planName: string): "current" | "upgrade" | "downgrade" => {
+    const idx = PLAN_ORDER.indexOf(planName.toUpperCase());
+    if (idx === currentPlanIdx) return "current";
+    return idx > currentPlanIdx ? "upgrade" : "downgrade";
+  };
+
   const handleSelect = async (planName: string) => {
     if (!user) {
       router.push("/signin?redirect=/pricing");
       onClose();
+      return;
+    }
+
+    const relation = getPlanRelation(planName);
+
+    if (relation === "current") {
+      setLoadingPlan(planName);
+      try {
+        await dispatch(openStripePortal(user.uid)).unwrap();
+      } catch { /* silent */ }
+      setLoadingPlan(null);
       return;
     }
 
@@ -126,15 +162,32 @@ export function PricingDialog({ open, onClose, reason }: PricingDialogProps) {
     }
   };
 
+  const getButtonLabel = (planName: string) => {
+    if (loadingPlan === planName) return null;
+    const relation = getPlanRelation(planName);
+    if (relation === "current") return "Manage Plan";
+    if (relation === "downgrade") return `Downgrade to ${planName}`;
+    return `Upgrade to ${planName}`;
+  };
+
+  const getButtonStyle = (planName: string, popular: boolean) => {
+    const relation = getPlanRelation(planName);
+    if (relation === "current") {
+      return "border border-emerald-500/40 text-emerald-500 bg-emerald-500/10 hover:bg-emerald-500/15";
+    }
+    if (popular) {
+      return "bg-btn-primary-bg text-btn-primary-text hover:opacity-90";
+    }
+    return "border border-b-secondary text-t-primary hover:bg-input-bg";
+  };
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      {/* Backdrop */}
       <div
         className="absolute inset-0 bg-black/60 backdrop-blur-sm"
         onClick={onClose}
       />
 
-      {/* Dialog */}
       <div className="relative z-10 w-full max-w-5xl max-h-[90vh] rounded-2xl border border-b-secondary bg-surface-elevated shadow-2xl overflow-y-auto">
         {/* Header */}
         <div className="sticky top-0 z-20 flex items-center justify-between px-6 py-5 border-b border-b-secondary bg-surface-elevated/95 backdrop-blur-sm">
@@ -145,30 +198,31 @@ export function PricingDialog({ open, onClose, reason }: PricingDialogProps) {
                 fontFamily: "var(--font-logo), 'Space Grotesk', sans-serif",
               }}
             >
-              {reason === "insufficient_credits"
+              {isExhausted
                 ? "You've used all your credits"
                 : "Choose a plan to get started"}
             </h2>
             <p className="text-sm text-t-secondary mt-1">
-              {reason === "insufficient_credits"
-                ? "Upgrade your plan or wait for your credits to refresh."
+              {isExhausted
+                ? resetDate
+                  ? `Your credits will refresh ${resetDate}. Upgrade for more credits now.`
+                  : "Upgrade your plan for more credits, or wait for your allowance to refresh."
                 : "A subscription is required to use AI design features."}
             </p>
+            {isExhausted && currentPlanName !== "FREE" && (
+              <p className="mt-2 text-xs text-t-tertiary">
+                Current plan: <span className="font-medium text-t-secondary">{currentPlanName.charAt(0) + currentPlanName.slice(1).toLowerCase()}</span>
+                {userPlan && (
+                  <> &middot; {userPlan.credits}/{userPlan.creditCap} credits remaining</>
+                )}
+              </p>
+            )}
           </div>
           <button
             onClick={onClose}
             className="flex size-9 items-center justify-center rounded-lg text-t-tertiary hover:bg-input-bg hover:text-t-primary transition-colors"
           >
-            <svg
-              width="18"
-              height="18"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <line x1="18" y1="6" x2="6" y2="18" />
               <line x1="6" y1="6" x2="18" y2="18" />
             </svg>
@@ -210,22 +264,29 @@ export function PricingDialog({ open, onClose, reason }: PricingDialogProps) {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 p-6">
           {plans.map((plan) => {
             const tier = plan[billing];
+            const relation = getPlanRelation(plan.name);
             return (
               <div
                 key={plan.name}
                 className={`relative flex flex-col rounded-xl border p-5 transition-colors ${
-                  plan.popular
-                    ? "border-btn-primary-bg bg-btn-primary-bg/5 shadow-md"
-                    : "border-b-secondary hover:border-b-strong"
+                  relation === "current"
+                    ? "border-emerald-500/40 bg-emerald-500/5 ring-1 ring-emerald-500/20"
+                    : plan.popular
+                      ? "border-btn-primary-bg bg-btn-primary-bg/5 shadow-md"
+                      : "border-b-secondary hover:border-b-strong"
                 }`}
               >
-                {plan.popular && (
+                {relation === "current" && (
+                  <span className="absolute -top-2.5 left-4 rounded bg-emerald-500 px-2.5 py-0.5 text-[11px] font-mono font-semibold uppercase tracking-wider text-white">
+                    Current Plan
+                  </span>
+                )}
+                {plan.popular && relation !== "current" && (
                   <span className="absolute -top-2.5 left-4 rounded bg-btn-primary-bg px-2.5 py-0.5 text-[11px] font-mono font-semibold uppercase tracking-wider text-btn-primary-text">
                     Most Popular
                   </span>
                 )}
 
-                {/* Plan name & badge */}
                 <div className="flex items-center gap-2 mb-1">
                   <p
                     className="text-base font-semibold text-t-primary"
@@ -244,7 +305,6 @@ export function PricingDialog({ open, onClose, reason }: PricingDialogProps) {
                   {plan.description}
                 </p>
 
-                {/* Price */}
                 <div className="flex items-baseline gap-0.5 mb-0.5">
                   <span className="text-[28px] font-light font-mono text-t-primary leading-none">
                     ${tier.price.toFixed(2)}
@@ -262,24 +322,18 @@ export function PricingDialog({ open, onClose, reason }: PricingDialogProps) {
                   billed {billing}
                 </p>
 
-                {/* CTA */}
                 <button
                   onClick={() => handleSelect(plan.name)}
                   disabled={loadingPlan === plan.name}
-                  className={`flex h-10 w-full items-center justify-center rounded-lg text-[11px] font-mono font-semibold uppercase tracking-wider transition-colors disabled:opacity-50 mb-5 ${
-                    plan.popular
-                      ? "bg-btn-primary-bg text-btn-primary-text hover:opacity-90"
-                      : "border border-b-secondary text-t-primary hover:bg-input-bg"
-                  }`}
+                  className={`flex h-10 w-full items-center justify-center rounded-lg text-[11px] font-mono font-semibold uppercase tracking-wider transition-colors disabled:opacity-50 mb-5 ${getButtonStyle(plan.name, plan.popular)}`}
                 >
                   {loadingPlan === plan.name ? (
                     <div className="size-3.5 rounded-full border-2 border-current/30 border-t-transparent animate-spin" />
                   ) : (
-                    plan.cta
+                    getButtonLabel(plan.name)
                   )}
                 </button>
 
-                {/* Credits */}
                 <p className="text-sm font-medium text-t-primary">
                   {plan.credits[billing].toLocaleString()} AI credits
                 </p>
@@ -288,7 +342,6 @@ export function PricingDialog({ open, onClose, reason }: PricingDialogProps) {
                   {billing === "monthly" ? "month" : "year"}
                 </p>
 
-                {/* Features */}
                 <span className="text-[11px] font-mono uppercase tracking-widest text-t-tertiary mb-2">
                   Includes
                 </span>

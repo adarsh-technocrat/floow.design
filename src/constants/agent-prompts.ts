@@ -252,7 +252,7 @@ export function getSystemPrompt(
     left?: number;
     top?: number;
   }> = [],
-  _theme: Record<
+  theme: Record<
     string,
     string | number | boolean | null | undefined
   > | null = null,
@@ -263,6 +263,16 @@ export function getSystemPrompt(
   const planSection = planContext
     ? `\n<planning_context>\n${planContext}\n</planning_context>\n`
     : "";
+
+  const themeSection = (() => {
+    if (!theme || typeof theme !== "object") return "";
+    const entries = Object.entries(theme).filter(
+      ([k, v]) => k.startsWith("--") && v != null,
+    );
+    if (entries.length === 0) return "";
+    const vars = entries.map(([k, v]) => `    ${k}: ${v}`).join("\n");
+    return `\n<active_theme>\n  The following CSS variables are set as the project theme. When calling design_screen,\n  include these in your description so the design model uses the correct palette.\n  Always reference semantic Tailwind classes (bg-primary, text-foreground, etc.) — never arbitrary colors.\n\n${vars}\n</active_theme>\n`;
+  })();
 
   const instructions = isInitialPrompt(frames)
     ? INITIAL_INSTRUCTIONS
@@ -295,6 +305,7 @@ export function getSystemPrompt(
   return [
     ROLE,
     buildBackground(frames),
+    themeSection,
     agentScope,
     orchestrationInstruction,
     planSection,

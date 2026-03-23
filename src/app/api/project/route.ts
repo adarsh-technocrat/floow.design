@@ -24,7 +24,15 @@ export async function GET(req: NextRequest) {
         select: {
           name: true,
           frames: {
-            select: { id: true, label: true, left: true, top: true, html: true },
+            select: {
+              id: true,
+              label: true,
+              left: true,
+              top: true,
+              html: true,
+              themeId: true,
+              theme: { select: { id: true, name: true, variables: true } },
+            },
           },
         },
       }),
@@ -46,7 +54,38 @@ export async function GET(req: NextRequest) {
       (chatSession?.messages as ChatSessionMessageRecord[]) ?? [];
     const messages = recordsToUiMessages(records);
 
-    return NextResponse.json({ name: project.name, frames: project.frames, messages });
+    const frames = project.frames.map((f) => ({
+      id: f.id,
+      label: f.label,
+      left: f.left,
+      top: f.top,
+      html: f.html,
+      themeId: f.themeId,
+      theme: f.theme ? (f.theme.variables as Record<string, string>) : null,
+    }));
+
+    const allThemes = project.frames
+      .filter((f) => f.theme)
+      .reduce(
+        (acc, f) => {
+          if (f.theme && !acc[f.theme.id]) {
+            acc[f.theme.id] = {
+              id: f.theme.id,
+              name: f.theme.name,
+              variables: f.theme.variables as Record<string, string>,
+            };
+          }
+          return acc;
+        },
+        {} as Record<string, { id: string; name: string; variables: Record<string, string> }>,
+      );
+
+    return NextResponse.json({
+      name: project.name,
+      frames,
+      messages,
+      themes: Object.values(allThemes),
+    });
   } catch (e) {
     return NextResponse.json(
       { error: e instanceof Error ? e.message : "Unknown error" },

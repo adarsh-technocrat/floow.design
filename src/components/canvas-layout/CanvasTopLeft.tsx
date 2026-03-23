@@ -13,7 +13,7 @@ export function CanvasTopLeft() {
   const router = useRouter();
   const dispatch = useAppDispatch();
   const { user } = useAuth();
-  const currentProjectId = params?.projectId as string | undefined;
+  const currentProjectId = (params?.id ?? params?.projectId) as string | undefined;
   const projects = useAppSelector((s) => s.projects.list);
   const listLoading = useAppSelector((s) => s.projects.listLoading);
   const currentProjectName = useAppSelector((s) => {
@@ -46,7 +46,7 @@ export function CanvasTopLeft() {
   const handleSwitch = (projectId: string) => {
     setOpen(false);
     if (projectId !== currentProjectId) {
-      router.push(`/app/${projectId}`);
+      router.push(`/project/${projectId}`);
     }
   };
 
@@ -54,7 +54,7 @@ export function CanvasTopLeft() {
     setOpen(false);
     const result = await dispatch(createProject("Untitled Project")).unwrap();
     if (result.id) {
-      router.push(`/app/${result.id}`);
+      router.push(`/project/${result.id}`);
     }
   };
 
