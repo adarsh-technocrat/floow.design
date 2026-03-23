@@ -236,56 +236,119 @@ Return a valid JSON object with EXACTLY this structure (no markdown fencing, no 
 }
 
 /* ------------------------------------------------------------------ */
-/*  Step 2: Generate banner image via Gemini Imagen                    */
+/*  Step 2: Generate banner image via Imagen / Gemini                  */
 /* ------------------------------------------------------------------ */
+
+// Imagen models to try in order (newest first)
+const IMAGEN_MODELS = [
+  "imagen-4.0-generate-001",
+  "imagen-3.0-generate-002",
+  "imagen-3.0-generate-001",
+];
+
+async function tryImagen(
+  ai: GoogleGenAI,
+  prompt: string,
+): Promise<{ imageBytes: string; mimeType: string } | null> {
+  for (const model of IMAGEN_MODELS) {
+    try {
+      console.log(`    Trying ${model}...`);
+      const response = await ai.models.generateImages({
+        model,
+        prompt,
+        config: {
+          numberOfImages: 1,
+          aspectRatio: "16:9",
+        },
+      });
+
+      const image = response.generatedImages?.[0];
+      if (image?.image?.imageBytes) {
+        console.log(`    Success with ${model}`);
+        return {
+          imageBytes: image.image.imageBytes,
+          mimeType: image.image.mimeType || "image/png",
+        };
+      }
+    } catch (err) {
+      console.log(
+        `    ${model} failed: ${(err as Error).message?.slice(0, 100)}`,
+      );
+    }
+  }
+  return null;
+}
+
+async function tryGeminiInlineImage(
+  ai: GoogleGenAI,
+  prompt: string,
+): Promise<{ imageBytes: string; mimeType: string } | null> {
+  try {
+    console.log(`    Trying Gemini 2.0 Flash inline image generation...`);
+    const response = await ai.models.generateContent({
+      model: "gemini-2.0-flash-exp",
+      contents: `Generate a single photorealistic image: ${prompt}`,
+      config: {
+        responseModalities: ["image", "text"],
+      },
+    });
+
+    const parts = response.candidates?.[0]?.content?.parts;
+    if (!parts) return null;
+
+    for (const part of parts) {
+      const p = part as Record<string, unknown>;
+      const inlineData = p.inlineData as
+        | { data?: string; mimeType?: string }
+        | undefined;
+      if (inlineData?.data && inlineData?.mimeType?.startsWith("image/")) {
+        console.log(`    Success with Gemini inline image`);
+        return {
+          imageBytes: inlineData.data,
+          mimeType: inlineData.mimeType,
+        };
+      }
+    }
+  } catch (err) {
+    console.log(
+      `    Gemini inline failed: ${(err as Error).message?.slice(0, 100)}`,
+    );
+  }
+  return null;
+}
 
 async function generateBannerImage(
   ai: GoogleGenAI,
   bannerPrompt: string,
   slug: string,
 ): Promise<string> {
-  // Try Gemini native image generation (generates images inline)
-  try {
-    const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
-      contents: `Generate a single photorealistic image: ${bannerPrompt}`,
-      config: {
-        responseModalities: ["image", "text"],
-      },
-    });
+  // Strategy 1: Imagen API (dedicated image generation)
+  let result = await tryImagen(ai, bannerPrompt);
 
-    // Look for inline image parts in the response
-    const parts = response.candidates?.[0]?.content?.parts;
-    const imagePart = parts?.find(
-      (p: Record<string, unknown>) =>
-        p.inlineData &&
-        (p.inlineData as Record<string, string>).mimeType?.startsWith("image/"),
-    );
+  // Strategy 2: Gemini inline image generation
+  if (!result) {
+    result = await tryGeminiInlineImage(ai, bannerPrompt);
+  }
 
-    if (
-      imagePart &&
-      (imagePart as Record<string, Record<string, string>>).inlineData?.data
-    ) {
-      const data = (imagePart as Record<string, Record<string, string>>)
-        .inlineData;
-      const buffer = Buffer.from(data.data, "base64");
-      const ext = data.mimeType === "image/jpeg" ? "jpg" : "png";
+  // Upload to Vercel Blob if we got an image
+  if (result) {
+    try {
+      const buffer = Buffer.from(result.imageBytes, "base64");
+      const ext = result.mimeType.includes("jpeg") ? "jpg" : "png";
       const blob = await put(`blog-banners/${slug}.${ext}`, buffer, {
         access: "public",
-        contentType: data.mimeType,
+        contentType: result.mimeType,
       });
       console.log(`  Banner uploaded: ${blob.url}`);
       return blob.url;
+    } catch (err) {
+      console.warn(`  Blob upload failed: ${(err as Error).message}`);
     }
-
-    throw new Error("No image generated in response");
-  } catch (err) {
-    console.warn(
-      `  Banner generation failed, using Unsplash fallback: ${(err as Error).message}`,
-    );
-    // Fallback to a relevant Unsplash image
-    return `https://images.unsplash.com/photo-1581291518633-83b4ebd1d83e?w=1200&auto=format&fit=crop`;
   }
+
+  // Strategy 3: Unsplash fallback
+  console.warn(`  All image generation failed, using Unsplash fallback`);
+  return `https://images.unsplash.com/photo-1581291518633-83b4ebd1d83e?w=1200&auto=format&fit=crop`;
 }
 
 /* ------------------------------------------------------------------ */
