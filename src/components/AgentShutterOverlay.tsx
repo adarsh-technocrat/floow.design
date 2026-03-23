@@ -251,14 +251,6 @@ export function AgentShutterOverlays() {
               height={entry.height}
               color={entry.color}
             />
-          ) : entry.type === "design" ? (
-            <DesignOverlay
-              left={entry.left}
-              top={entry.top}
-              width={entry.width}
-              height={entry.height}
-              label={entry.label}
-            />
           ) : null}
         </div>
       ))}

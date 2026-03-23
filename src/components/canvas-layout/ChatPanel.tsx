@@ -540,14 +540,36 @@ export function ChatPanel({
       if (!chatUserId) return;
       const themeId = activeThemeIdRef.current;
       if (themeId) {
-        http.put("/api/themes", { id: themeId, variables }).then(({ data }) => {
-          dispatch(upsertStoredTheme({ id: data.id, name: data.name, variables: data.variables }));
-        }).catch(() => {});
+        http
+          .put("/api/themes", { id: themeId, variables })
+          .then(({ data }) => {
+            dispatch(
+              upsertStoredTheme({
+                id: data.id,
+                name: data.name,
+                variables: data.variables,
+              }),
+            );
+          })
+          .catch(() => {});
       } else {
-        http.post("/api/themes", { userId: chatUserId, name: themeName ?? "Default", variables }).then(({ data }) => {
-          activeThemeIdRef.current = data.id;
-          dispatch(upsertStoredTheme({ id: data.id, name: data.name, variables: data.variables }));
-        }).catch(() => {});
+        http
+          .post("/api/themes", {
+            userId: chatUserId,
+            name: themeName ?? "Default",
+            variables,
+          })
+          .then(({ data }) => {
+            activeThemeIdRef.current = data.id;
+            dispatch(
+              upsertStoredTheme({
+                id: data.id,
+                name: data.name,
+                variables: data.variables,
+              }),
+            );
+          })
+          .catch(() => {});
       }
     },
     [chatUserId, dispatch],
@@ -596,23 +618,6 @@ export function ChatPanel({
         }),
       }),
   );
-
-  useEffect(() => {
-    // #region agent log
-    fetch("http://127.0.0.1:7253/ingest/bf26e32e-b221-45cd-9795-984cd7651c6f", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        runId: "pre-fix",
-        hypothesisId: "H6",
-        location: "ChatPanel.tsx:mount",
-        message: "chat panel mounted",
-        data: {},
-        timestamp: Date.now(),
-      }),
-    }).catch(() => {});
-    // #endregion
-  }, []);
 
   const { messages, setMessages, sendMessage, stop, status } = useChat({
     transport,
@@ -676,7 +681,29 @@ export function ChatPanel({
           false,
         );
         dispatch(pushAgentLog({ type: "status", text: label }));
-        if (toolName === "design_screen" || toolName === "read_screen") {
+        if (
+          toolName === "design_screen" ||
+          toolName === "update_screen" ||
+          toolName === "edit_design" ||
+          toolName === "read_screen"
+        ) {
+          // #region agent log
+          fetch(
+            "http://127.0.0.1:7253/ingest/bf26e32e-b221-45cd-9795-984cd7651c6f",
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                location: "ChatPanel.tsx:tool-input-start",
+                message: "calling cursor.working before input known",
+                data: { toolCallId, toolName },
+                timestamp: Date.now(),
+                runId: "pre-fix",
+                hypothesisId: "H1",
+              }),
+            },
+          ).catch(() => {});
+          // #endregion
           cursor.working(cursor.MAIN);
         }
         return;
@@ -769,7 +796,10 @@ export function ChatPanel({
         }
         if (output?.themeUpdates) {
           dispatch(setTheme(output.themeUpdates));
-          persistThemeToDatabase({ ...stateRef.current.theme, ...output.themeUpdates });
+          persistThemeToDatabase({
+            ...stateRef.current.theme,
+            ...output.themeUpdates,
+          });
         }
         if (output?.theme) {
           dispatch(replaceTheme(output.theme));
@@ -783,7 +813,12 @@ export function ChatPanel({
           finishedStep?.input?.id
         ) {
           cursor.scan(cursor.MAIN, finishedStep.input.id);
-        } else if (finishedStep?.toolName !== "read_screen") {
+        } else if (
+          finishedStep?.toolName !== "read_screen" &&
+          finishedStep?.toolName !== "design_screen" &&
+          finishedStep?.toolName !== "update_screen" &&
+          finishedStep?.toolName !== "edit_design"
+        ) {
           cursor.hide(cursor.MAIN);
         }
         return;
@@ -793,8 +828,32 @@ export function ChatPanel({
         const step = toolStepsRef.current.find(
           (s) => s.toolCallId === ev.toolCallId,
         );
+        // #region agent log
+        fetch(
+          "http://127.0.0.1:7253/ingest/bf26e32e-b221-45cd-9795-984cd7651c6f",
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              location: "ChatPanel.tsx:tool-input-available",
+              message: "tool input available",
+              data: {
+                toolCallId: ev.toolCallId,
+                inputId: input.id ?? null,
+                stepToolName: step?.toolName ?? null,
+              },
+              timestamp: Date.now(),
+              runId: "pre-fix",
+              hypothesisId: "H1",
+            }),
+          },
+        ).catch(() => {});
+        // #endregion
         if (input.id && step) {
-          if (step.toolName === "design_screen") {
+          if (
+            step.toolName === "design_screen" ||
+            step.toolName === "update_screen"
+          ) {
             cursor.design(cursor.MAIN, input.id);
           } else if (step.toolName === "read_screen") {
             cursor.scan(cursor.MAIN, input.id);
@@ -812,36 +871,6 @@ export function ChatPanel({
         return;
       }
 
-      if (
-        ev.type === "text-delta" ||
-        ev.type === "reasoning-delta" ||
-        ev.type === "tool-input-start" ||
-        ev.type === "tool-output-available"
-      ) {
-        // #region agent log
-        fetch(
-          "http://127.0.0.1:7253/ingest/bf26e32e-b221-45cd-9795-984cd7651c6f",
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              runId: "pre-fix",
-              hypothesisId: "H1",
-              location: "ChatPanel.tsx:onData",
-              message: "sse event received",
-              data: {
-                type: ev.type,
-                toolCallId: toolCallId ?? null,
-                toolName: toolName ?? null,
-                hasData: Boolean(ev.data),
-              },
-              timestamp: Date.now(),
-            }),
-          },
-        ).catch(() => {});
-        // #endregion
-      }
-
       if (!ev.data) return;
       const { data } = ev;
 
@@ -853,7 +882,32 @@ export function ChatPanel({
             state: "running",
           }),
         );
-        if (data.toolName === "read_screen") {
+        if (
+          data.toolName === "design_screen" ||
+          data.toolName === "update_screen" ||
+          data.toolName === "edit_design" ||
+          data.toolName === "read_screen"
+        ) {
+          // #region agent log
+          fetch(
+            "http://127.0.0.1:7253/ingest/bf26e32e-b221-45cd-9795-984cd7651c6f",
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                location: "ChatPanel.tsx:data-tool-call-start",
+                message: "calling cursor.working on data-tool-call-start",
+                data: {
+                  toolCallId: data.toolCallId,
+                  toolName: data.toolName,
+                },
+                timestamp: Date.now(),
+                runId: "pre-fix",
+                hypothesisId: "H4",
+              }),
+            },
+          ).catch(() => {});
+          // #endregion
           cursor.working(cursor.MAIN);
         }
         return;
@@ -861,6 +915,34 @@ export function ChatPanel({
 
       if (ev.type === "data-tool-call-delta") {
         const dataWithArgs = data as { args?: { id?: string }; id?: string };
+        if (
+          data.toolName === "design_screen" ||
+          data.toolName === "update_screen"
+        ) {
+          // #region agent log
+          fetch(
+            "http://127.0.0.1:7253/ingest/bf26e32e-b221-45cd-9795-984cd7651c6f",
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                location: "ChatPanel.tsx:data-tool-call-delta",
+                message: "design/update delta",
+                data: {
+                  toolCallId: data.toolCallId,
+                  toolName: data.toolName,
+                  hasFrame: Boolean(data.frame),
+                  frameId: data.frame?.id ?? null,
+                  hasHtml: data.frame?.html !== undefined,
+                },
+                timestamp: Date.now(),
+                runId: "pre-fix",
+                hypothesisId: "H3",
+              }),
+            },
+          ).catch(() => {});
+          // #endregion
+        }
         if (
           data.toolName === "read_screen" &&
           (dataWithArgs.id ?? dataWithArgs.args?.id)
@@ -878,6 +960,9 @@ export function ChatPanel({
           if (data.frame.html !== undefined) {
             cpEnqueueHtml(data.frame.id, data.frame.html);
           }
+          if (data.frame.id) {
+            cursor.design(cursor.MAIN, data.frame.id);
+          }
           if (data.frame.label !== undefined) {
             dispatch(
               updateFrame({
@@ -894,12 +979,11 @@ export function ChatPanel({
             );
           }
         } else if (
-          (data.toolName === "update_screen" ||
-            data.toolName === "design_screen") &&
+          data.toolName === "update_screen" &&
           data.frame?.html !== undefined
         ) {
           cpEnqueueHtml(data.frame.id, data.frame.html);
-          if (data.toolName === "design_screen" && data.frame.id) {
+          if (data.frame.id) {
             cursor.design(cursor.MAIN, data.frame.id);
           }
         }
@@ -995,7 +1079,10 @@ export function ChatPanel({
             .catch(() => {});
         } else if (data.toolName === "update_theme" && data.themeUpdates) {
           dispatch(setTheme(data.themeUpdates));
-          persistThemeToDatabase({ ...stateRef.current.theme, ...data.themeUpdates });
+          persistThemeToDatabase({
+            ...stateRef.current.theme,
+            ...data.themeUpdates,
+          });
         } else if (data.toolName === "build_theme" && data.theme) {
           dispatch(replaceTheme(data.theme));
           persistThemeToDatabase(data.theme);
@@ -1007,13 +1094,21 @@ export function ChatPanel({
           if (frameId) {
             cursor.scan(cursor.MAIN, frameId);
           }
-        } else {
+        } else if (
+          data.toolName !== "design_screen" &&
+          data.toolName !== "update_screen" &&
+          data.toolName !== "edit_design" &&
+          data.toolName !== "build_theme" &&
+          data.toolName !== "update_theme" &&
+          data.toolName !== "create_all_screens"
+        ) {
           cursor.hide(cursor.MAIN);
         }
         return;
       }
     },
     onFinish: ({ messages: finishedMessages, isAbort, isError }) => {
+      cursor.hide(cursor.MAIN);
       if (!isAbort && !isError) {
         const last = finishedMessages[finishedMessages.length - 1];
         const textContent =
@@ -1113,7 +1208,10 @@ export function ChatPanel({
         },
       ).catch(() => {});
       // #endregion
-      if (msg.includes("no_plan") || (msg.includes("402") && !msg.includes("insufficient_credits"))) {
+      if (
+        msg.includes("no_plan") ||
+        (msg.includes("402") && !msg.includes("insufficient_credits"))
+      ) {
         emitCreditExhausted("no_plan");
       } else if (msg.includes("insufficient_credits") || msg.includes("402")) {
         emitCreditExhausted("insufficient_credits");
