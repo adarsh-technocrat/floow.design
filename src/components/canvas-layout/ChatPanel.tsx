@@ -21,6 +21,8 @@ import {
   clearGeneratingFrames,
   registerChatSend,
   unregisterChatSend,
+  registerChatStop,
+  unregisterChatStop,
 } from "@/lib/chat-bridge";
 import { cursor, initCursor } from "@/lib/cursor";
 import { Brain, ChevronDown, X, Zap } from "lucide-react";
@@ -587,7 +589,7 @@ export function ChatPanel({
       }),
   );
 
-  const { messages, setMessages, sendMessage, status } = useChat({
+  const { messages, setMessages, sendMessage, stop, status } = useChat({
     transport,
     onData: (dataPart) => {
       interface DataPartEvent {
@@ -1142,8 +1144,12 @@ export function ChatPanel({
       sendMessage({ text });
     };
     registerChatSend(bridgeSend);
-    return () => unregisterChatSend();
-  }, [sendMessage, dispatch, setToolSteps]);
+    registerChatStop(stop);
+    return () => {
+      unregisterChatSend();
+      unregisterChatStop();
+    };
+  }, [sendMessage, stop, dispatch, setToolSteps]);
 
   useEffect(() => {
     chatThreadRef.current?.scrollTo({

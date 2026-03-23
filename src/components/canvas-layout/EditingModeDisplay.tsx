@@ -1,17 +1,28 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useAppDispatch } from "@/store/hooks";
 import { setAgentLogVisible } from "@/store/slices/uiSlice";
 import { StyleGuideIcon } from "@/lib/svg-icons";
-import { sendChatMessage } from "@/lib/chat-bridge";
+import {
+  sendChatMessage,
+  stopChatGeneration,
+  subscribeChatStatus,
+} from "@/lib/chat-bridge";
 import { ChatPanel } from "./ChatPanel";
 
 export function EditingModeDisplay() {
   const dispatch = useAppDispatch();
   const [styleGuideOpen, setStyleGuideOpen] = useState(false);
   const [inputValue, setInputValue] = useState("");
+  const [agentWorking, setAgentWorking] = useState(false);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+
+  useEffect(() => {
+    return subscribeChatStatus((s) => {
+      setAgentWorking(s === "submitted" || s === "streaming");
+    });
+  }, []);
 
   const handleSubmit = () => {
     if (!inputValue.trim()) return;
@@ -76,28 +87,43 @@ export function EditingModeDisplay() {
             </div>
 
             <div className="flex items-center gap-2">
-              <span className="text-[11px] font-mono text-t-tertiary border border-b-secondary rounded px-1.5 py-0.5 hidden sm:inline bg-input-bg">
-                ⌘ Enter
-              </span>
-              <button
-                type="button"
-                onClick={handleSubmit}
-                disabled={!inputValue.trim()}
-                className="inline-flex size-8 items-center justify-center rounded-lg bg-btn-primary-bg text-btn-primary-text transition-all hover:opacity-90 disabled:opacity-20 disabled:pointer-events-none active:scale-95"
-              >
-                <svg
-                  width="14"
-                  height="14"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
+              {agentWorking ? (
+                <button
+                  type="button"
+                  onClick={stopChatGeneration}
+                  className="inline-flex h-8 items-center gap-1.5 rounded-lg bg-red-500/15 px-3 text-xs font-medium text-red-500 transition-all hover:bg-red-500/25 active:scale-95"
                 >
-                  <path d="M5 12h14M12 5l7 7-7 7" />
-                </svg>
-              </button>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                    <rect x="4" y="4" width="16" height="16" rx="2" />
+                  </svg>
+                  Stop
+                </button>
+              ) : (
+                <>
+                  <span className="text-[11px] font-mono text-t-tertiary border border-b-secondary rounded px-1.5 py-0.5 hidden sm:inline bg-input-bg">
+                    ⌘ Enter
+                  </span>
+                  <button
+                    type="button"
+                    onClick={handleSubmit}
+                    disabled={!inputValue.trim()}
+                    className="inline-flex size-8 items-center justify-center rounded-lg bg-btn-primary-bg text-btn-primary-text transition-all hover:opacity-90 disabled:opacity-20 disabled:pointer-events-none active:scale-95"
+                  >
+                    <svg
+                      width="14"
+                      height="14"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="M5 12h14M12 5l7 7-7 7" />
+                    </svg>
+                  </button>
+                </>
+              )}
             </div>
           </div>
         </div>

@@ -10,6 +10,7 @@ import {
   subscribeActivityHistoryLoading,
   subscribeChatMessages,
   subscribeChatStatus,
+  stopChatGeneration,
 } from "@/lib/chat-bridge";
 import ReactMarkdown from "react-markdown";
 
@@ -400,13 +401,27 @@ export function CanvasBottomLeft() {
             <span className="text-[11px] font-mono font-medium uppercase tracking-wider text-t-tertiary">
               Activity
             </span>
-            <button
-              type="button"
-              onClick={() => dispatch(toggleAgentLogVisible())}
-              className="size-5 flex items-center justify-center rounded text-t-tertiary hover:text-t-secondary transition-colors"
-            >
-              <X className="size-3" />
-            </button>
+            <div className="flex items-center gap-1">
+              {(chatStatus === "submitted" || chatStatus === "streaming") && (
+                <button
+                  type="button"
+                  onClick={stopChatGeneration}
+                  className="flex items-center gap-1 rounded-md bg-red-500/10 px-2 py-1 text-[11px] font-medium text-red-500 transition-colors hover:bg-red-500/20"
+                >
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor">
+                    <rect x="4" y="4" width="16" height="16" rx="2" />
+                  </svg>
+                  Stop
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={() => dispatch(toggleAgentLogVisible())}
+                className="size-5 flex items-center justify-center rounded text-t-tertiary hover:text-t-secondary transition-colors"
+              >
+                <X className="size-3" />
+              </button>
+            </div>
           </div>
 
           {/* Messages */}

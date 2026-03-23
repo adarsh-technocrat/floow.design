@@ -37,6 +37,21 @@ export function isChatBridgeReady(): boolean {
   return _sendFn !== null;
 }
 
+// Stop function bridge
+let _stopFn: (() => void) | null = null;
+
+export function registerChatStop(fn: () => void) {
+  _stopFn = fn;
+}
+
+export function unregisterChatStop() {
+  _stopFn = null;
+}
+
+export function stopChatGeneration() {
+  if (_stopFn) _stopFn();
+}
+
 // Chat status bridge — lets Activity panel know if the agent is working
 type ChatStatus = "ready" | "submitted" | "streaming" | "error";
 type ChatStatusListener = (status: ChatStatus) => void;
