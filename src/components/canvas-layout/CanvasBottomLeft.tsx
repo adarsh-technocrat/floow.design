@@ -1,7 +1,7 @@
 "use client";
 
 import type React from "react";
-import { Fragment, useEffect, useRef, useState } from "react";
+import { Fragment, useCallback, useEffect, useRef, useState } from "react";
 import { Brain, ChevronDown, MessageSquareText, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
@@ -43,15 +43,18 @@ function getToolLabel(
   toolName: string,
   input?: { id?: string; name?: string; description?: string; screens?: Array<{ name?: string }> },
   done?: boolean,
+  frameLookup?: (id: string) => string | undefined,
 ): string {
   const toTitle = (s: string) => s.replace(/\b\w/g, (c) => c.toUpperCase());
-  // Try to extract screen name from various input shapes
+  // Try to extract screen name: from input.name, or look up frame label by id
   const screenName =
     input?.name
       ? toTitle(input.name)
       : input?.screens?.[0]?.name
         ? toTitle(input.screens[0].name)
-        : undefined;
+        : input?.id && frameLookup
+          ? frameLookup(input.id)
+          : undefined;
 
   if (toolName === "design_screen")
     return done
@@ -89,13 +92,14 @@ function getToolLabel(
   return done ? base : `${base}…`;
 }
 
-function ToolStep({ part }: { part: MessagePart }) {
+function ToolStep({ part, frameLookup }: { part: MessagePart; frameLookup: (id: string) => string | undefined }) {
   const done = part.state === "done" || part.state === "output-available";
   const label = getToolLabel(
     part.toolName ??
       (part.type?.startsWith("tool-") ? part.type.slice(5) : "tool"),
     part.input as { id?: string; name?: string; description?: string; screens?: Array<{ name?: string }> } | undefined,
     done,
+    frameLookup,
   );
   return (
     <div className="flex items-center gap-2 py-0.5">
@@ -259,7 +263,7 @@ function isHiddenTool(toolName: string | undefined): boolean {
   );
 }
 
-function AssistantBubble({ msg }: { msg: ChatMessage }) {
+function AssistantBubble({ msg, frameLookup }: { msg: ChatMessage; frameLookup: (id: string) => string | undefined }) {
   const parts = msg.parts ?? [];
 
   // Filter out noise and hidden planning tools, deduplicate by toolCallId
@@ -311,7 +315,7 @@ function AssistantBubble({ msg }: { msg: ChatMessage }) {
       {toolParts.length > 0 && (
         <div className="rounded-lg border border-b-secondary bg-input-bg/40 px-3 py-2">
           {toolParts.map((p, i) => (
-            <ToolStep key={p.toolCallId ?? i} part={p} />
+            <ToolStep key={p.toolCallId ?? i} part={p} frameLookup={frameLookup} />
           ))}
         </div>
       )}
@@ -342,6 +346,11 @@ export function CanvasBottomLeft() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [historyLoading, setHistoryLoading] = useState(true);
   const [chatStatus, setChatStatus] = useState<string>("ready");
+  const frames = useAppSelector((s) => s.canvas.frames);
+  const frameLookup = useCallback(
+    (id: string) => frames.find((f) => f.id === id)?.label,
+    [frames],
+  );
 
   useEffect(() => {
     return subscribeActivityHistoryLoading(setHistoryLoading);
@@ -447,7 +456,7 @@ export function CanvasBottomLeft() {
                         ) : msg.role === "assistant" ? (
                           <div className="flex justify-start">
                             <div className="max-w-[95%]">
-                              <AssistantBubble msg={msg} />
+                              <AssistantBubble msg={msg} frameLookup={frameLookup} />
                             </div>
                           </div>
                         ) : null}
