@@ -13,6 +13,8 @@ import {
   signOut,
   type User,
 } from "@/lib/firebase/auth";
+import { store } from "@/store";
+import { syncUser } from "@/store/slices/userSlice";
 
 interface AuthContextValue {
   user: User | null;
@@ -37,12 +39,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(firebaseUser);
       setLoading(false);
 
-      // Sync user to database
+      // Sync user to database via Redux thunk
       if (firebaseUser) {
-        fetch("/api/auth/sync", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
+        store.dispatch(
+          syncUser({
             uid: firebaseUser.uid,
             email: firebaseUser.email,
             displayName: firebaseUser.displayName,
@@ -50,16 +50,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             phoneNumber: firebaseUser.phoneNumber,
             provider: firebaseUser.providerData?.[0]?.providerId || null,
           }),
-        })
-          .then(async (res) => {
-            if (!res.ok) {
-              const data = await res.json().catch(() => ({}));
-              console.error("[auth-sync] failed:", res.status, data);
-            }
-          })
-          .catch((err) => {
-            console.error("[auth-sync] network error:", err);
-          });
+        );
       }
     });
     return unsubscribe;

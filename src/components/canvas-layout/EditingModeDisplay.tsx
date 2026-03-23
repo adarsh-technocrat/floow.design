@@ -48,8 +48,8 @@ export function EditingModeDisplay() {
       {/* ChatPanel — invisible but runs useChat hook and processes agent logic */}
       <ChatPanel isVisible={false} onClose={() => {}} />
 
-      {/* Top center — AI input box */}
-      <div className="absolute top-4 left-1/2 z-20 -translate-x-1/2 w-full max-w-[600px] px-4">
+      {/* Bottom center — AI input box */}
+      <div className="absolute bottom-4 left-1/2 z-20 -translate-x-1/2 w-full max-w-[600px] px-4">
         <div className="rounded-2xl border border-b-secondary bg-surface-elevated/95 backdrop-blur-2xl transition-all focus-within:border-b-secondary">
           <div className="px-4 pt-4 pb-2">
             <textarea

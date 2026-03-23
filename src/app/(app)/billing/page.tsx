@@ -1,8 +1,15 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import {
+  fetchUserPlan,
+  fetchDailyUsage,
+  fetchCreditLogs,
+  openStripePortal,
+} from "@/store/slices/userSlice";
 import {
   BarChart,
   Bar,
@@ -213,69 +220,31 @@ function UsageBarChart({ data }: { data: DailyUsage[] }) {
 
 export default function BillingPage() {
   const { user } = useAuth();
-  const [plan, setPlan] = useState<PlanInfo | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [portalLoading, setPortalLoading] = useState(false);
-  const [dailyUsage, setDailyUsage] = useState<DailyUsage[]>([]);
-  const [logs, setLogs] = useState<CreditLogEntry[]>([]);
-  const [logsTotal, setLogsTotal] = useState(0);
-  const [logsOffset, setLogsOffset] = useState(0);
+  const dispatch = useAppDispatch();
+  const plan = useAppSelector((s) => s.user.plan);
+  const loading = useAppSelector((s) => s.user.planLoading);
+  const dailyUsage = useAppSelector((s) => s.user.dailyUsage);
+  const logs = useAppSelector((s) => s.user.creditLogs);
+  const logsTotal = useAppSelector((s) => s.user.creditLogsTotal);
+  const logsOffset = useAppSelector((s) => s.user.creditLogsOffset);
   const logsLimit = 15;
 
   useEffect(() => {
     if (!user) return;
-    Promise.all([
-      fetch(`/api/user/plan?userId=${user.uid}`).then((r) => r.json()),
-      fetch(`/api/user/credits/daily?userId=${user.uid}&days=180`).then((r) => r.json()),
-      fetch(`/api/user/credits?userId=${user.uid}&limit=${logsLimit}&offset=0`).then((r) => r.json()),
-    ])
-      .then(([planData, usageData, logsData]) => {
-        setPlan(planData as PlanInfo);
-        if (Array.isArray(usageData?.days)) setDailyUsage(usageData.days);
-        if (Array.isArray(logsData?.logs)) {
-          setLogs(logsData.logs);
-          setLogsTotal(logsData.total ?? 0);
-        }
-      })
-      .catch(() => {})
-      .finally(() => setLoading(false));
-  }, [user]);
+    dispatch(fetchUserPlan(user.uid));
+    dispatch(fetchDailyUsage({ userId: user.uid }));
+    dispatch(fetchCreditLogs({ userId: user.uid, limit: logsLimit }));
+  }, [user, dispatch]);
 
-  const fetchLogs = useCallback(
-    async (offset: number) => {
-      if (!user) return;
-      const res = await fetch(
-        `/api/user/credits?userId=${user.uid}&limit=${logsLimit}&offset=${offset}`,
-      );
-      const data = await res.json();
-      if (Array.isArray(data?.logs)) {
-        setLogs(data.logs);
-        setLogsTotal(data.total ?? 0);
-        setLogsOffset(offset);
-      }
-    },
-    [user],
-  );
-
-  const openPortal = useCallback(async () => {
+  const handleFetchLogs = (offset: number) => {
     if (!user) return;
-    setPortalLoading(true);
-    try {
-      const res = await fetch("/api/stripe/portal", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId: user.uid }),
-      });
-      const data: { url?: string } = await res.json();
-      if (data.url) {
-        window.location.href = data.url;
-      }
-    } catch {
-      // silent
-    } finally {
-      setPortalLoading(false);
-    }
-  }, [user]);
+    dispatch(fetchCreditLogs({ userId: user.uid, limit: logsLimit, offset }));
+  };
+
+  const handleOpenPortal = () => {
+    if (!user) return;
+    dispatch(openStripePortal(user.uid));
+  };
 
   return (
     <div className="h-screen w-full bg-surface text-t-primary p-3">
@@ -516,7 +485,7 @@ export default function BillingPage() {
                           <div className="flex gap-2">
                             <button
                               onClick={() =>
-                                fetchLogs(Math.max(0, logsOffset - logsLimit))
+                                handleFetchLogs(Math.max(0, logsOffset - logsLimit))
                               }
                               disabled={logsOffset === 0}
                               className="rounded-md border border-b-secondary px-3 py-1.5 text-xs text-t-secondary hover:bg-input-bg disabled:opacity-30 disabled:pointer-events-none"
@@ -524,7 +493,7 @@ export default function BillingPage() {
                               Prev
                             </button>
                             <button
-                              onClick={() => fetchLogs(logsOffset + logsLimit)}
+                              onClick={() => handleFetchLogs(logsOffset + logsLimit)}
                               disabled={logsOffset + logsLimit >= logsTotal}
                               className="rounded-md border border-b-secondary px-3 py-1.5 text-xs text-t-secondary hover:bg-input-bg disabled:opacity-30 disabled:pointer-events-none"
                             >
@@ -551,11 +520,11 @@ export default function BillingPage() {
                       {plan.hasStripeAccount && (
                         <button
                           type="button"
-                          onClick={openPortal}
-                          disabled={portalLoading}
+                          onClick={handleOpenPortal}
+                          disabled={false}
                           className="flex h-10 items-center justify-center rounded-lg border border-b-secondary bg-surface-elevated text-sm font-medium text-t-primary shadow-xs transition-colors hover:bg-surface-sunken dark:hover:bg-white/6 active:scale-[0.99] disabled:pointer-events-none disabled:opacity-50"
                         >
-                          {portalLoading ? "Opening..." : "Manage subscription"}
+                          Manage subscription
                         </button>
                       )}
                       <Link

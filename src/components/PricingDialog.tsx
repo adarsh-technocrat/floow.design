@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
+import { useAppDispatch } from "@/store/hooks";
+import { createCheckoutSession } from "@/store/slices/userSlice";
 
 const plans = [
   {
@@ -95,6 +97,7 @@ interface PricingDialogProps {
 export function PricingDialog({ open, onClose, reason }: PricingDialogProps) {
   const { user } = useAuth();
   const router = useRouter();
+  const dispatch = useAppDispatch();
   const [billing, setBilling] = useState<"monthly" | "yearly">("monthly");
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
 
@@ -109,19 +112,13 @@ export function PricingDialog({ open, onClose, reason }: PricingDialogProps) {
 
     setLoadingPlan(planName);
     try {
-      const res = await fetch("/api/stripe/checkout", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
+      await dispatch(
+        createCheckoutSession({
           userId: user.uid,
           plan: planName,
           interval: billing,
         }),
-      });
-      const data: { url?: string } = await res.json();
-      if (data.url) {
-        window.location.href = data.url;
-      }
+      ).unwrap();
     } catch {
       // silent
     } finally {

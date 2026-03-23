@@ -17,6 +17,7 @@ export function TemplatesCarousel() {
   const [templates, setTemplates] = useState<Template[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // Landing page — no Redux store, direct fetch is appropriate
   useEffect(() => {
     fetch("/api/templates")
       .then((r) => r.json())

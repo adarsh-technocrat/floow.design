@@ -5,6 +5,16 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import {
+  fetchProjects,
+  createProject as createProjectThunk,
+  trashProject as trashProjectThunk,
+  fetchTrashedProjects,
+  restoreProject as restoreProjectThunk,
+  permanentlyDeleteProject,
+} from "@/store/slices/projectsSlice";
+import { fetchUserPlan } from "@/store/slices/userSlice";
 import { ThemeToggleCompact } from "@/components/ThemeToggle";
 import { Avatar } from "@/components/ui/Avatar";
 import { PricingDialog } from "@/components/PricingDialog";
@@ -259,18 +269,19 @@ function StreamingPlaceholder() {
 
 export default function DashboardPage() {
   const router = useRouter();
+  const dispatch = useAppDispatch();
   const { user, loading: authLoading, signOut } = useAuth();
+  const projects = useAppSelector((s) => s.projects.list);
+  const loading = useAppSelector((s) => s.projects.listLoading);
+  const trashedProjects = useAppSelector((s) => s.projects.trashed);
+  const trashLoading = useAppSelector((s) => s.projects.trashLoading);
+  const planSummary = useAppSelector((s) => s.user.plan);
+  const planLoading = useAppSelector((s) => s.user.planLoading);
   const [inputValue, setInputValue] = useState("");
   const [activeView, setActiveView] = useState<"home" | "projects" | "trash">(
     "home",
   );
-  const [projects, setProjects] = useState<Project[]>([]);
-  const [trashedProjects, setTrashedProjects] = useState<TrashedProject[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [trashLoading, setTrashLoading] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
-  const [planSummary, setPlanSummary] = useState<UserPlanSummary | null>(null);
-  const [planLoading, setPlanLoading] = useState(true);
   const [pricingDialogOpen, setPricingDialogOpen] = useState(false);
   const [pricingDialogReason, setPricingDialogReason] = useState<
     "no_plan" | "insufficient_credits"
@@ -337,70 +348,33 @@ export default function DashboardPage() {
     [],
   );
 
-  // Fetch projects
+  // Fetch projects + plan via Redux thunks
   useEffect(() => {
     if (!user) return;
-    fetch("/api/projects")
-      .then((r) => r.json())
-      .then((data: { projects?: Project[] }) => {
-        if (data.projects) setProjects(data.projects);
-      })
-      .catch(() => {})
-      .finally(() => setLoading(false));
-  }, [user]);
+    dispatch(fetchProjects());
+    dispatch(fetchUserPlan(user.uid));
 
-  // Plan + credits (silent refresh when tab becomes visible — no polling, no skeleton flicker)
-  useEffect(() => {
-    if (!user) return;
-    const loadPlan = (opts?: { silent?: boolean }) => {
-      const silent = opts?.silent === true;
-      if (!silent) setPlanLoading(true);
-      fetch(`/api/user/plan?userId=${encodeURIComponent(user.uid)}`)
-        .then((r) => r.json())
-        .then((data: UserPlanSummary & { error?: string }) => {
-          if (data.error || typeof data.creditCap !== "number") {
-            if (!silent) setPlanSummary(null);
-            return;
-          }
-          setPlanSummary({
-            plan: data.plan,
-            billingInterval: data.billingInterval,
-            credits: data.credits,
-            creditCap: data.creditCap,
-            creditsResetAt: data.creditsResetAt,
-          });
-        })
-        .catch(() => {
-          if (!silent) setPlanSummary(null);
-        })
-        .finally(() => {
-          if (!silent) setPlanLoading(false);
-        });
-    };
-    loadPlan();
+    // Silent refresh on tab visibility
     const onVis = () => {
-      if (document.visibilityState === "visible") loadPlan({ silent: true });
+      if (document.visibilityState === "visible" && user) {
+        dispatch(fetchUserPlan(user.uid));
+      }
     };
     document.addEventListener("visibilitychange", onVis);
     return () => document.removeEventListener("visibilitychange", onVis);
-  }, [user]);
+  }, [user, dispatch]);
 
   // Create new project and navigate with prompt
   const createProject = useCallback(
     async (name?: string) => {
       const prompt = name || "Untitled Project";
-      const res = await fetch("/api/projects", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: prompt }),
-      });
-      const data: { id?: string } = await res.json();
-      if (data.id) {
+      const result = await dispatch(createProjectThunk(prompt)).unwrap();
+      if (result.id) {
         const params = name ? `?prompt=${encodeURIComponent(name)}` : "";
-        router.push(`/app/${data.id}${params}`);
+        router.push(`/app/${result.id}${params}`);
       }
     },
-    [router],
+    [router, dispatch],
   );
 
   const handleSubmit = () => {
@@ -419,53 +393,31 @@ export default function DashboardPage() {
     createProject(inputValue.trim());
   };
 
-  // Fetch trashed projects
-  const fetchTrash = useCallback(async () => {
-    setTrashLoading(true);
-    try {
-      const res = await fetch("/api/projects/trash");
-      const data: { projects?: TrashedProject[] } = await res.json();
-      if (data.projects) setTrashedProjects(data.projects);
-    } catch {
-      // silent
-    } finally {
-      setTrashLoading(false);
-    }
-  }, []);
+  // All project operations via Redux thunks
+  const fetchTrash = useCallback(() => {
+    dispatch(fetchTrashedProjects());
+  }, [dispatch]);
 
-  // Trash a project (soft delete)
-  const trashProject = useCallback(async (id: string) => {
-    await fetch("/api/projects", {
-      method: "DELETE",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id }),
-    });
-    setProjects((prev) => prev.filter((p) => p.id !== id));
-  }, []);
+  const trashProject = useCallback(
+    (id: string) => {
+      dispatch(trashProjectThunk(id));
+    },
+    [dispatch],
+  );
 
-  // Restore a trashed project
-  const restoreProject = useCallback(async (id: string) => {
-    await fetch("/api/projects/trash", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id }),
-    });
-    setTrashedProjects((prev) => prev.filter((p) => p.id !== id));
-    // Refresh active projects
-    const res = await fetch("/api/projects");
-    const data: { projects?: Project[] } = await res.json();
-    if (data.projects) setProjects(data.projects);
-  }, []);
+  const restoreProject = useCallback(
+    (id: string) => {
+      dispatch(restoreProjectThunk(id));
+    },
+    [dispatch],
+  );
 
-  // Permanently delete a project
-  const permanentlyDelete = useCallback(async (id: string) => {
-    await fetch("/api/projects/trash", {
-      method: "DELETE",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id }),
-    });
-    setTrashedProjects((prev) => prev.filter((p) => p.id !== id));
-  }, []);
+  const permanentlyDelete = useCallback(
+    (id: string) => {
+      dispatch(permanentlyDeleteProject(id));
+    },
+    [dispatch],
+  );
 
   const sidebarNav = [
     {

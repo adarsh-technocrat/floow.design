@@ -3,6 +3,8 @@ import canvasReducer from "./slices/canvasSlice";
 import uiReducer from "./slices/uiSlice";
 import projectReducer from "./slices/projectSlice";
 import agentReducer from "./slices/agentSlice";
+import userReducer from "./slices/userSlice";
+import projectsReducer from "./slices/projectsSlice";
 
 export const store = configureStore({
   reducer: {
@@ -10,6 +12,8 @@ export const store = configureStore({
     ui: uiReducer,
     project: projectReducer,
     agent: agentReducer,
+    user: userReducer,
+    projects: projectsReducer,
   },
 });
 
