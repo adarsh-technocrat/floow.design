@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { sendWelcomeEmail } from "@/lib/email/send";
 
 const providerMap: Record<string, string> = {
   "google.com": "GOOGLE",
@@ -45,6 +46,9 @@ export async function POST(req: NextRequest) {
       });
     }
 
+    const existingUser = await prisma.user.findUnique({ where: { id: uid }, select: { id: true } });
+    const isNewUser = !existingUser;
+
     await prisma.user.upsert({
       where: { id: uid },
       create: {
@@ -63,6 +67,10 @@ export async function POST(req: NextRequest) {
         provider: mappedProvider,
       },
     });
+
+    if (isNewUser && email) {
+      sendWelcomeEmail(email, displayName || "").catch(() => {});
+    }
 
     return NextResponse.json({ ok: true });
   } catch (e) {

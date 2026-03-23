@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/db";
 import { getCreditCapForUser, isOnPaidPlan } from "@/lib/plan-credits";
 import { resolveCreditsSource } from "@/lib/team-auth";
+import { sendCreditsExhaustedEmail } from "@/lib/email/send";
 
 const CREDITS_PER_REQUEST: Record<string, number> = {
   chat: 30,
@@ -179,6 +180,24 @@ export async function deductCredits(
       meta: `AI ${type} generation`,
     },
   });
+
+  if (balance <= 0) {
+    const fullUser = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { email: true, displayName: true, plan: true, creditsResetAt: true },
+    });
+    if (fullUser?.email) {
+      const resetDate = fullUser.creditsResetAt
+        ? fullUser.creditsResetAt.toLocaleDateString("en-US", { month: "long", day: "numeric" })
+        : null;
+      sendCreditsExhaustedEmail(
+        fullUser.email,
+        fullUser.displayName || "",
+        fullUser.plan,
+        resetDate,
+      ).catch(() => {});
+    }
+  }
 
   return balance;
 }

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { stripe, PLAN_CREDITS } from "@/lib/stripe";
+import { sendPlanUpgradeEmail } from "@/lib/email/send";
 
 // Use string literals instead of importing PlanType enum (Turbopack compat)
 type PlanString = "FREE" | "LITE" | "STARTER" | "PRO" | "TEAM";
@@ -45,12 +46,30 @@ export async function POST(req: NextRequest) {
           | "yearly"
           | undefined;
         const seats = Math.max(1, parseInt(session.metadata?.seats || "1", 10));
+        const previousSubscriptionId = session.metadata?.previousSubscriptionId;
+        const previousCredits = parseInt(session.metadata?.previousCredits || "0", 10);
+        const isUpgrade = session.metadata?.isUpgrade === "true";
+        const previousPlan = session.metadata?.previousPlan;
 
         if (userId && plan && session.subscription) {
           const planEnum = toPlan(plan);
           const isTeam = planEnum === "TEAM";
           const baseCredits = PLAN_CREDITS[plan]?.[interval || "monthly"] || 0;
-          const totalCredits = isTeam ? baseCredits * seats : baseCredits;
+          const newPlanCredits = isTeam ? baseCredits * seats : baseCredits;
+
+          const finalCredits = isUpgrade
+            ? Math.max(0, previousCredits) + newPlanCredits
+            : newPlanCredits;
+
+          if (previousSubscriptionId) {
+            try {
+              await stripe.subscriptions.cancel(previousSubscriptionId, {
+                prorate: true,
+              });
+            } catch {
+              // Old subscription may already be cancelled
+            }
+          }
 
           await prisma.user.update({
             where: { id: userId },
@@ -59,7 +78,7 @@ export async function POST(req: NextRequest) {
               billingInterval: interval || "monthly",
               seats: isTeam ? seats : 1,
               stripeSubscriptionId: session.subscription as string,
-              credits: totalCredits,
+              credits: finalCredits,
               creditsResetAt: new Date(
                 Date.now() +
                   (interval === "yearly"
@@ -68,6 +87,38 @@ export async function POST(req: NextRequest) {
               ),
             },
           });
+
+          if (previousPlan && previousPlan !== plan) {
+            await prisma.creditLog.create({
+              data: {
+                userId,
+                action: "plan_change",
+                amount: finalCredits - previousCredits,
+                balance: finalCredits,
+                meta: JSON.stringify({
+                  from: previousPlan,
+                  to: planEnum,
+                  interval,
+                  seats,
+                  isUpgrade,
+                  previousCredits,
+                }),
+              },
+            });
+          }
+
+          const upgradedUser = await prisma.user.findUnique({
+            where: { id: userId },
+            select: { email: true, displayName: true },
+          });
+          if (upgradedUser?.email) {
+            sendPlanUpgradeEmail(
+              upgradedUser.email,
+              upgradedUser.displayName || "",
+              planEnum,
+              finalCredits,
+            ).catch(() => {});
+          }
         }
         break;
       }

@@ -8,6 +8,7 @@ import React, {
   useState,
 } from "react";
 import { useIframeBridge } from "@/hooks/useIframeBridge";
+import { useAppSelector } from "@/store/hooks";
 import {
   injectFrameScripts,
   injectElementInspectorScript,
@@ -51,6 +52,7 @@ export const FramePreview = React.forwardRef<
   },
   ref,
 ) {
+  const projectId = useAppSelector((s) => s.project.projectId) ?? "";
   const isStreaming = html.length < LOADING_THRESHOLD;
   const [_loadKey, setLoadKey] = useState(0);
   const [inspectorScript, setInspectorScript] = useState("");
@@ -89,7 +91,7 @@ export const FramePreview = React.forwardRef<
     if (postTimeoutRef.current) clearTimeout(postTimeoutRef.current);
     postTimeoutRef.current = setTimeout(() => {
       postTimeoutRef.current = null;
-      http.post("/api/frames", { frameId, html, label, left, top })
+      http.post("/api/frames", { frameId, html, label, left, top, projectId })
         .then(() => setLoadKey((k) => k + 1))
         .catch(() => {});
     }, POST_DEBOUNCE_MS);

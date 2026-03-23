@@ -19,6 +19,12 @@ export async function POST(req: NextRequest) {
         { status: 400 },
       );
     }
+    if (!projectId) {
+      return NextResponse.json(
+        { error: "projectId is required" },
+        { status: 400 },
+      );
+    }
     await setFrame(frameId, html, { label, left, top, projectId, themeId });
     return NextResponse.json({ ok: true });
   } catch (e) {

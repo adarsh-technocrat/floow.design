@@ -6,6 +6,14 @@ export const PLAN_CREDITS: Record<string, { monthly: number; yearly: number }> =
     TEAM: { monthly: 30000, yearly: 360000 },
   };
 
+export const PLAN_PRICES_CENTS: Record<string, { monthly: number; yearly: number }> =
+  {
+    LITE: { monthly: 999, yearly: 799 * 12 },
+    STARTER: { monthly: 1749, yearly: 1399 * 12 },
+    PRO: { monthly: 4999, yearly: 3999 * 12 },
+    TEAM: { monthly: 6999, yearly: 5599 * 12 },
+  };
+
 export function isOnPaidPlan(plan: string): boolean {
   const normalized = plan?.toUpperCase() ?? "FREE";
   return normalized !== "FREE" && normalized in PLAN_CREDITS;

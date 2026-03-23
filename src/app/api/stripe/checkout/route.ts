@@ -1,8 +1,35 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { stripe, PLAN_PRICE_IDS, PLAN_CREDITS } from "@/lib/stripe";
+import { stripe, PLAN_PRICE_IDS } from "@/lib/stripe";
+import { PLAN_PRICES_CENTS } from "@/lib/plan-credits";
+import { getCreditCapForUser } from "@/lib/plan-credits";
 
 const PLAN_ORDER = ["FREE", "LITE", "STARTER", "PRO", "TEAM"];
+
+function calculateCreditBasedRefundCents(
+  currentPlan: string,
+  billingInterval: string | null,
+  remainingCredits: number,
+  seats: number,
+): number {
+  const planKey = currentPlan.toUpperCase();
+  if (planKey === "FREE") return 0;
+
+  const prices = PLAN_PRICES_CENTS[planKey];
+  if (!prices) return 0;
+
+  const interval = billingInterval === "yearly" ? "yearly" : "monthly";
+  const pricePerSeatCents = prices[interval];
+  const totalPaidCents = planKey === "TEAM" ? pricePerSeatCents * seats : pricePerSeatCents;
+
+  const creditCap = getCreditCapForUser(planKey, billingInterval);
+  const totalCreditCap = planKey === "TEAM" ? creditCap * seats : creditCap;
+
+  if (totalCreditCap <= 0) return 0;
+
+  const usedRatio = Math.max(0, Math.min(1, remainingCredits / totalCreditCap));
+  return Math.round(totalPaidCents * usedRatio);
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -31,10 +58,7 @@ export async function POST(req: NextRequest) {
 
     const priceId = prices[interval];
     if (!priceId) {
-      return NextResponse.json(
-        { error: "Invalid interval" },
-        { status: 400 },
-      );
+      return NextResponse.json({ error: "Invalid interval" }, { status: 400 });
     }
 
     const user = await prisma.user.findUnique({ where: { id: userId } });
@@ -44,8 +68,9 @@ export async function POST(req: NextRequest) {
 
     const isTeamPlan = planKey === "TEAM";
     const quantity = isTeamPlan ? seats : 1;
-    const baseCredits = PLAN_CREDITS[planKey]?.[interval] || 0;
-    const totalCredits = isTeamPlan ? baseCredits * seats : baseCredits;
+    const currentPlanIdx = PLAN_ORDER.indexOf(user.plan);
+    const targetPlanIdx = PLAN_ORDER.indexOf(planKey);
+    const isUpgrade = targetPlanIdx > currentPlanIdx;
 
     let customerId = user.stripeCustomerId;
 
@@ -62,93 +87,75 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    if (user.stripeSubscriptionId) {
-      const currentPlanIdx = PLAN_ORDER.indexOf(user.plan);
-      const targetPlanIdx = PLAN_ORDER.indexOf(planKey);
-      const isUpgrade = targetPlanIdx > currentPlanIdx;
-      const isSeatChange = planKey === user.plan && isTeamPlan && seats !== user.seats;
+    const metadata = {
+      userId,
+      plan: planKey,
+      interval,
+      seats: String(seats),
+      previousPlan: user.plan,
+      previousCredits: String(user.credits),
+      isUpgrade: String(isUpgrade),
+    };
 
-      const subscription = await stripe.subscriptions.retrieve(
-        user.stripeSubscriptionId,
+    let creditAppliedCents = 0;
+
+    if (user.stripeSubscriptionId && user.plan !== "FREE") {
+      const refundCents = calculateCreditBasedRefundCents(
+        user.plan,
+        user.billingInterval,
+        Math.max(0, user.credits),
+        user.seats,
       );
 
-      if (subscription.status === "active" || subscription.status === "trialing") {
-        const currentItem = subscription.items.data[0];
+      try {
+        const existingSub = await stripe.subscriptions.retrieve(
+          user.stripeSubscriptionId,
+        );
 
-        await stripe.subscriptions.update(user.stripeSubscriptionId, {
-          items: [
-            {
-              id: currentItem.id,
-              price: priceId,
-              quantity,
-            },
-          ],
-          proration_behavior: "create_prorations",
-          metadata: { userId, plan: planKey, interval, seats: String(seats) },
-        });
-
-        const currentCredits = Math.max(0, user.credits);
-        let finalCredits: number;
-
-        if (isSeatChange) {
-          const creditPerSeat = baseCredits;
-          const addedSeats = seats - user.seats;
-          finalCredits = currentCredits + (addedSeats > 0 ? addedSeats * creditPerSeat : 0);
-        } else if (isUpgrade) {
-          finalCredits = currentCredits + totalCredits;
-        } else {
-          finalCredits = totalCredits;
+        if (
+          existingSub.status === "active" ||
+          existingSub.status === "trialing"
+        ) {
+          await stripe.subscriptions.cancel(user.stripeSubscriptionId, {
+            prorate: false,
+          });
         }
-
-        await prisma.user.update({
-          where: { id: userId },
-          data: {
-            plan: planKey as "FREE" | "LITE" | "STARTER" | "PRO" | "TEAM",
-            billingInterval: interval,
-            seats: isTeamPlan ? seats : 1,
-            credits: finalCredits,
-            creditsResetAt: new Date(
-              Date.now() +
-                (interval === "yearly"
-                  ? 365 * 24 * 60 * 60 * 1000
-                  : 30 * 24 * 60 * 60 * 1000),
-            ),
-          },
-        });
-
-        await prisma.creditLog.create({
-          data: {
-            userId,
-            action: isSeatChange ? "seat_change" : "plan_change",
-            amount: finalCredits - currentCredits,
-            balance: finalCredits,
-            meta: JSON.stringify({
-              from: user.plan,
-              to: planKey,
-              interval,
-              seats,
-              previousSeats: user.seats,
-              prorated: true,
-            }),
-          },
-        });
-
-        return NextResponse.json({
-          url: `${req.nextUrl.origin}/dashboard?checkout=success&upgraded=true`,
-        });
+      } catch {
+        // Old subscription may already be cancelled
       }
+
+      if (refundCents > 0) {
+        await stripe.customers.update(customerId, {
+          balance: -refundCents,
+        });
+        creditAppliedCents = refundCents;
+      }
+
+      await prisma.user.update({
+        where: { id: userId },
+        data: { stripeSubscriptionId: null },
+      });
     }
+
+    const creditMessage =
+      creditAppliedCents > 0
+        ? `$${(creditAppliedCents / 100).toFixed(2)} credit from unused ${user.plan} credits applied to this payment.`
+        : user.plan !== "FREE"
+          ? `Your ${user.plan} plan has been cancelled.`
+          : "";
 
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
       mode: "subscription",
       line_items: [{ price: priceId, quantity }],
-      success_url: `${req.nextUrl.origin}/dashboard?checkout=success`,
+      success_url: `${req.nextUrl.origin}/dashboard?checkout=success&plan=${planKey}`,
       cancel_url: `${req.nextUrl.origin}/pricing?checkout=cancelled`,
-      metadata: { userId, plan: planKey, interval, seats: String(seats) },
-      subscription_data: {
-        metadata: { userId, plan: planKey, interval, seats: String(seats) },
-      },
+      metadata: { ...metadata, creditAppliedCents: String(creditAppliedCents) },
+      subscription_data: { metadata },
+      allow_promotion_codes: true,
+      ...(creditMessage
+        ? { custom_text: { submit: { message: creditMessage } } }
+        : {}),
     });
 
     return NextResponse.json({ url: session.url });

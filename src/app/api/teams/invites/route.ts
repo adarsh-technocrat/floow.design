@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { sendTeamMemberJoinedEmail } from "@/lib/email/send";
 
 export async function GET(req: NextRequest) {
   const userId = req.nextUrl.searchParams.get("userId");
@@ -87,6 +88,26 @@ export async function POST(req: NextRequest) {
       data: { status: "ACCEPTED" },
     }),
   ]);
+
+  const [joiningUser, teamOwner] = await Promise.all([
+    prisma.user.findUnique({ where: { id: userId }, select: { displayName: true, email: true } }),
+    prisma.user.findUnique({ where: { id: invite.team.id }, select: { displayName: true, email: true } })
+      .catch(() => null),
+  ]);
+
+  const ownerMember = await prisma.teamMember.findFirst({
+    where: { teamId: invite.teamId, role: "OWNER" },
+    include: { user: { select: { email: true, displayName: true } } },
+  });
+
+  if (ownerMember?.user?.email) {
+    sendTeamMemberJoinedEmail(
+      ownerMember.user.email,
+      ownerMember.user.displayName || "",
+      joiningUser?.displayName || joiningUser?.email || "A new member",
+      invite.team.name,
+    ).catch(() => {});
+  }
 
   return NextResponse.json({ ok: true, teamId: invite.teamId, teamName: invite.team.name });
 }

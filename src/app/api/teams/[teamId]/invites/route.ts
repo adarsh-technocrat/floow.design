@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { requireTeamMembership } from "@/lib/team-auth";
+import { sendTeamInviteEmail } from "@/lib/email/send";
 
 export async function GET(
   req: NextRequest,
@@ -62,15 +63,26 @@ export async function POST(
     return NextResponse.json({ error: "Invite already sent to this email" }, { status: 400 });
   }
 
-  const invite = await prisma.teamInvite.create({
-    data: {
-      teamId,
-      email: email.trim().toLowerCase(),
-      role: role === "ADMIN" ? "ADMIN" : "MEMBER",
-      invitedBy: userId,
-      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-    },
-  });
+  const [invite, inviterUser, team] = await Promise.all([
+    prisma.teamInvite.create({
+      data: {
+        teamId,
+        email: email.trim().toLowerCase(),
+        role: role === "ADMIN" ? "ADMIN" : "MEMBER",
+        invitedBy: userId,
+        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+      },
+    }),
+    prisma.user.findUnique({ where: { id: userId }, select: { displayName: true, email: true } }),
+    prisma.team.findUnique({ where: { id: teamId }, select: { name: true } }),
+  ]);
+
+  sendTeamInviteEmail(
+    email.trim().toLowerCase(),
+    inviterUser?.displayName || inviterUser?.email || "A teammate",
+    team?.name || "a team",
+    invite.token,
+  ).catch(() => {});
 
   return NextResponse.json({
     id: invite.id,
