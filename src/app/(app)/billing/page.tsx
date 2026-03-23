@@ -38,18 +38,27 @@ interface CreditLogEntry {
   createdAt: string;
 }
 
-const actionLabels: Record<string, string> = {
-  design: "AI Design",
-  chat: "AI Chat",
-  reset: "Credits Refreshed",
+const actionConfig: Record<string, { label: string; icon: string; color: string }> = {
+  design: { label: "AI Design Generation", icon: "🎨", color: "bg-purple-500/15 text-purple-500" },
+  chat: { label: "AI Chat", icon: "💬", color: "bg-blue-500/15 text-blue-500" },
+  reset: { label: "Credits Refreshed", icon: "🔄", color: "bg-emerald-500/15 text-emerald-500" },
 };
 
 function formatLogDate(iso: string): string {
-  return new Date(iso).toLocaleDateString("en-US", {
+  const d = new Date(iso);
+  const now = new Date();
+  const diffMs = now.getTime() - d.getTime();
+  const diffMins = Math.floor(diffMs / 60000);
+  if (diffMins < 1) return "Just now";
+  if (diffMins < 60) return `${diffMins}m ago`;
+  const diffHrs = Math.floor(diffMins / 60);
+  if (diffHrs < 24) return `${diffHrs}h ago`;
+  const diffDays = Math.floor(diffHrs / 24);
+  if (diffDays < 7) return `${diffDays}d ago`;
+  return d.toLocaleDateString("en-US", {
     month: "short",
     day: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
+    year: d.getFullYear() !== now.getFullYear() ? "numeric" : undefined,
   });
 }
 
@@ -309,9 +318,56 @@ export default function BillingPage() {
             </h1>
 
             {loading ? (
-              <div className="flex items-center gap-2 text-sm text-t-tertiary">
-                <div className="size-2 rounded-full bg-t-tertiary animate-pulse" />
-                Loading...
+              <div className="flex flex-col gap-6 animate-pulse">
+                {/* Plan card shimmer */}
+                <div className="rounded-xl border border-b-secondary bg-surface-elevated p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <div>
+                      <div className="h-3 w-20 rounded bg-input-bg mb-2" />
+                      <div className="h-6 w-28 rounded bg-input-bg" />
+                    </div>
+                    <div className="h-7 w-16 rounded-full bg-input-bg" />
+                  </div>
+                  <div className="pt-4 border-t border-b-secondary flex gap-6">
+                    <div>
+                      <div className="h-3 w-16 rounded bg-input-bg mb-1" />
+                      <div className="h-5 w-20 rounded bg-input-bg" />
+                    </div>
+                    <div>
+                      <div className="h-3 w-12 rounded bg-input-bg mb-1" />
+                      <div className="h-5 w-24 rounded bg-input-bg" />
+                    </div>
+                  </div>
+                </div>
+                {/* Chart shimmer */}
+                <div className="rounded-xl border border-b-secondary bg-surface-elevated p-6">
+                  <div className="h-4 w-32 rounded bg-input-bg mb-5" />
+                  <div className="flex items-end gap-3 h-[180px]">
+                    {Array.from({ length: 12 }).map((_, i) => (
+                      <div
+                        key={i}
+                        className="flex-1 rounded-t bg-input-bg"
+                        style={{ height: `${20 + Math.random() * 60}%` }}
+                      />
+                    ))}
+                  </div>
+                </div>
+                {/* Logs shimmer */}
+                <div className="rounded-xl border border-b-secondary bg-surface-elevated p-6">
+                  <div className="h-4 w-28 rounded bg-input-bg mb-4" />
+                  <div className="space-y-3">
+                    {Array.from({ length: 5 }).map((_, i) => (
+                      <div key={i} className="flex items-center gap-3">
+                        <div className="size-8 rounded-full bg-input-bg shrink-0" />
+                        <div className="flex-1">
+                          <div className="h-3 w-24 rounded bg-input-bg mb-1.5" />
+                          <div className="h-2.5 w-16 rounded bg-input-bg" />
+                        </div>
+                        <div className="h-3 w-12 rounded bg-input-bg" />
+                      </div>
+                    ))}
+                  </div>
+                </div>
               </div>
             ) : plan ? (
               <div className="flex flex-col gap-6">
@@ -403,80 +459,74 @@ export default function BillingPage() {
                     </p>
                   ) : (
                     <>
-                      <div className="overflow-hidden rounded-lg border border-b-secondary">
-                        <table className="w-full">
-                          <thead>
-                            <tr className="border-b border-b-secondary bg-input-bg/50">
-                              <th className="text-left px-4 py-2.5 text-[11px] font-mono font-medium uppercase tracking-wider text-t-tertiary">
-                                Date
-                              </th>
-                              <th className="text-left px-4 py-2.5 text-[11px] font-mono font-medium uppercase tracking-wider text-t-tertiary">
-                                Action
-                              </th>
-                              <th className="text-right px-4 py-2.5 text-[11px] font-mono font-medium uppercase tracking-wider text-t-tertiary">
-                                Credits
-                              </th>
-                              <th className="text-right px-4 py-2.5 text-[11px] font-mono font-medium uppercase tracking-wider text-t-tertiary">
-                                Balance
-                              </th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {logs.map((log) => (
-                              <tr
-                                key={log.id}
-                                className="border-b border-b-secondary last:border-b-0"
+                      <div className="divide-y divide-b-secondary">
+                        {logs.map((log) => {
+                          const cfg = actionConfig[log.action] ?? {
+                            label: log.action,
+                            icon: "⚡",
+                            color: "bg-input-bg text-t-secondary",
+                          };
+                          return (
+                            <div
+                              key={log.id}
+                              className="flex items-center gap-3 py-3 first:pt-0 last:pb-0"
+                            >
+                              <div
+                                className={`size-9 rounded-full flex items-center justify-center text-base shrink-0 ${cfg.color}`}
                               >
-                                <td className="px-4 py-3 text-xs text-t-secondary">
+                                {cfg.icon}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-[13px] font-medium text-t-primary truncate">
+                                  {cfg.label}
+                                </p>
+                                <p className="text-xs text-t-tertiary">
                                   {formatLogDate(log.createdAt)}
-                                </td>
-                                <td className="px-4 py-3">
-                                  <span className="text-xs text-t-primary">
-                                    {actionLabels[log.action] || log.action}
-                                  </span>
-                                  {log.meta && (
-                                    <p className="text-[11px] text-t-tertiary mt-0.5">
-                                      {log.meta}
-                                    </p>
-                                  )}
-                                </td>
-                                <td className="px-4 py-3 text-right">
-                                  <span
-                                    className={`text-xs font-mono font-medium ${
-                                      log.amount > 0
-                                        ? "text-emerald-600 dark:text-emerald-400"
-                                        : "text-t-secondary"
-                                    }`}
-                                  >
-                                    {log.amount > 0 ? "+" : ""}
-                                    {log.amount.toLocaleString()}
-                                  </span>
-                                </td>
-                                <td className="px-4 py-3 text-right text-xs font-mono text-t-tertiary">
-                                  {log.balance.toLocaleString()}
-                                </td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
+                                  {log.meta && log.meta !== `AI ${log.action} generation`
+                                    ? ` · ${log.meta}`
+                                    : ""}
+                                </p>
+                              </div>
+                              <div className="text-right shrink-0">
+                                <p
+                                  className={`text-[13px] font-semibold font-mono ${
+                                    log.amount > 0
+                                      ? "text-emerald-600 dark:text-emerald-400"
+                                      : "text-t-primary"
+                                  }`}
+                                >
+                                  {log.amount > 0 ? "+" : ""}
+                                  {log.amount.toLocaleString()}
+                                </p>
+                                <p className="text-[11px] font-mono text-t-tertiary">
+                                  bal {log.balance.toLocaleString()}
+                                </p>
+                              </div>
+                            </div>
+                          );
+                        })}
                       </div>
                       {logsTotal > logsLimit && (
-                        <div className="flex items-center justify-between mt-3">
-                          <p className="text-[11px] text-t-tertiary">
-                            {logsOffset + 1}–{Math.min(logsOffset + logsLimit, logsTotal)} of {logsTotal}
+                        <div className="flex items-center justify-between mt-4 pt-4 border-t border-b-secondary">
+                          <p className="text-xs text-t-tertiary">
+                            {logsOffset + 1}–
+                            {Math.min(logsOffset + logsLimit, logsTotal)} of{" "}
+                            {logsTotal}
                           </p>
                           <div className="flex gap-2">
                             <button
-                              onClick={() => fetchLogs(Math.max(0, logsOffset - logsLimit))}
+                              onClick={() =>
+                                fetchLogs(Math.max(0, logsOffset - logsLimit))
+                              }
                               disabled={logsOffset === 0}
-                              className="rounded-md border border-b-secondary px-3 py-1.5 text-[11px] font-mono uppercase tracking-wider text-t-secondary hover:bg-input-bg disabled:opacity-30 disabled:pointer-events-none"
+                              className="rounded-md border border-b-secondary px-3 py-1.5 text-xs text-t-secondary hover:bg-input-bg disabled:opacity-30 disabled:pointer-events-none"
                             >
                               Prev
                             </button>
                             <button
                               onClick={() => fetchLogs(logsOffset + logsLimit)}
                               disabled={logsOffset + logsLimit >= logsTotal}
-                              className="rounded-md border border-b-secondary px-3 py-1.5 text-[11px] font-mono uppercase tracking-wider text-t-secondary hover:bg-input-bg disabled:opacity-30 disabled:pointer-events-none"
+                              className="rounded-md border border-b-secondary px-3 py-1.5 text-xs text-t-secondary hover:bg-input-bg disabled:opacity-30 disabled:pointer-events-none"
                             >
                               Next
                             </button>
