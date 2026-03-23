@@ -89,9 +89,7 @@ function getToolLabel(
   return done ? base : `${base}…`;
 }
 
-const NEON_GREEN = "#39FF14";
-
-function ToolChip({ part }: { part: MessagePart }) {
+function ToolStep({ part }: { part: MessagePart }) {
   const done = part.state === "done" || part.state === "output-available";
   const label = getToolLabel(
     part.toolName ??
@@ -100,33 +98,19 @@ function ToolChip({ part }: { part: MessagePart }) {
     done,
   );
   return (
-    <div
-      className="flex items-center gap-1.5 rounded-md border px-2 py-1"
-      style={{
-        borderColor: done ? `${NEON_GREEN}40` : `${NEON_GREEN}25`,
-        backgroundColor: done ? `${NEON_GREEN}08` : `${NEON_GREEN}05`,
-      }}
-    >
+    <div className="flex items-center gap-2 py-0.5">
       {done ? (
-        <svg
-          width="10"
-          height="10"
-          viewBox="0 0 256 256"
-          fill={NEON_GREEN}
-          className="shrink-0"
-        >
-          <path d="M229.66,77.66l-128,128a8,8,0,0,1-11.32,0l-56-56a8,8,0,0,1,11.32-11.32L96,188.69,218.34,66.34a8,8,0,0,1,11.32,11.32Z" />
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" className="shrink-0">
+          <circle cx="12" cy="12" r="10" fill="#22c55e" fillOpacity="0.15" />
+          <path d="M8 12.5l2.5 2.5 5-5" stroke="#22c55e" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
       ) : (
-        <span
-          className="size-2 shrink-0 rounded-full animate-pulse"
-          style={{ backgroundColor: NEON_GREEN }}
-        />
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" className="shrink-0 animate-spin" style={{ animationDuration: "1.5s" }}>
+          <circle cx="12" cy="12" r="10" stroke="#22c55e" strokeOpacity="0.2" strokeWidth="2" />
+          <path d="M12 2a10 10 0 0 1 10 10" stroke="#22c55e" strokeWidth="2" strokeLinecap="round" />
+        </svg>
       )}
-      <span
-        className="font-mono text-[11px] uppercase tracking-wider"
-        style={{ color: NEON_GREEN }}
-      >
+      <span className={`text-xs ${done ? "text-t-secondary" : "text-t-primary"}`}>
         {label}
       </span>
     </div>
@@ -315,7 +299,7 @@ function AssistantBubble({ msg }: { msg: ChatMessage }) {
     return null;
 
   return (
-    <div className="flex flex-col gap-1.5">
+    <div className="flex flex-col gap-2">
       {reasoningParts.length > 0 && (
         <ExpandableReasoningBlock
           key={`reasoning-${msg.id}`}
@@ -325,9 +309,9 @@ function AssistantBubble({ msg }: { msg: ChatMessage }) {
         />
       )}
       {toolParts.length > 0 && (
-        <div className="flex flex-wrap gap-1">
+        <div className="rounded-lg border border-b-secondary bg-input-bg/40 px-3 py-2">
           {toolParts.map((p, i) => (
-            <ToolChip key={p.toolCallId ?? i} part={p} />
+            <ToolStep key={p.toolCallId ?? i} part={p} />
           ))}
         </div>
       )}
@@ -387,7 +371,7 @@ export function CanvasBottomLeft() {
     <div className="absolute bottom-4 left-4 z-10 flex flex-col items-start gap-2">
       {/* Log panel */}
       {logVisible && (
-        <div className="w-[260px] max-h-[560px] flex flex-col rounded-xl border border-b-secondary bg-surface-elevated/90 backdrop-blur-xl overflow-hidden">
+        <div className="w-[300px] max-h-[560px] flex flex-col rounded-xl border border-b-secondary bg-surface-elevated/90 backdrop-blur-xl overflow-hidden">
           {/* Header */}
           <div className="flex items-center justify-between px-3 py-2 flex-shrink-0">
             <span className="text-[11px] font-mono font-medium uppercase tracking-wider text-t-tertiary">
