@@ -172,7 +172,7 @@ Return a valid JSON object with EXACTLY this structure (no markdown fencing, no 
   "tldr": "One sentence summary of the key takeaway",
   "category": "One of: Industry News, AI Tools, Design Trends, Product Updates, Tutorial",
   "tags": ["tag1", "tag2", "tag3", "tag4", "tag5"],
-  "mdxContent": "The full article body in MDX/Markdown format with ## headings, bullet lists, bold text, links to sources. Include a ## Sources section at the end with linked citations. Naturally mention ${PRODUCT.name} once in the closing paragraph as context — not an ad. Write 800-1200 words. Make it tight and factual. No fluff.",
+  "mdxContent": "The full article body in MDX/Markdown format with ## headings, bullet lists, bold text. Naturally mention ${PRODUCT.name} once in the closing paragraph as context — not an ad. Write 800-1200 words. Make it tight and factual. No fluff. Do NOT include a Sources or References section — we handle attribution separately. Do NOT include any vertexaisearch.cloud.google.com grounding redirect URLs anywhere in the content.",
   "bannerPrompt": "A detailed prompt for generating a photorealistic banner image for this article. Describe a clean, modern tech/design scene relevant to the article topic. No text in the image. 16:9 aspect ratio. Professional photography style."
 }`;
 
@@ -231,6 +231,19 @@ Return a valid JSON object with EXACTLY this structure (no markdown fencing, no 
     .replace(/[^a-z0-9-]/g, "-")
     .replace(/-+/g, "-")
     .replace(/^-|-$/g, "");
+
+  // Strip Vertex grounding redirect URLs and any Sources section with them
+  parsed.mdxContent = parsed.mdxContent
+    // Remove lines with grounding redirect URLs
+    .replace(
+      /\[.*?\]\(https?:\/\/vertexaisearch\.cloud\.google\.com[^\)]*\)/g,
+      "",
+    )
+    // Remove empty Sources/References sections left behind
+    .replace(/##\s*(Sources|References)\s*\n(\s*[\*\-]\s*\n)*/gi, "")
+    // Clean up excessive blank lines
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
 
   return parsed;
 }
