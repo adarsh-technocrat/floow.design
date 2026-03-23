@@ -166,27 +166,6 @@ const activityMarkdownComponents: React.ComponentProps<
   ),
 };
 
-function ActivityHistoryShimmer() {
-  return (
-    <div className="flex flex-col gap-3 px-3 py-4">
-      <div className="flex justify-end">
-        <div className="activity-shimmer-bar h-7 w-[58%]" />
-      </div>
-      <div className="flex flex-col gap-2">
-        <div className="activity-shimmer-bar h-3.5 w-[42%]" />
-        <div className="activity-shimmer-bar h-3.5 w-[78%]" />
-        <div className="activity-shimmer-bar h-3.5 w-[56%]" />
-      </div>
-      <div className="flex justify-end">
-        <div className="activity-shimmer-bar h-7 w-[52%]" />
-      </div>
-      <div className="flex flex-col gap-2">
-        <div className="activity-shimmer-bar h-3.5 w-[64%]" />
-        <div className="activity-shimmer-bar h-3.5 w-[38%]" />
-      </div>
-    </div>
-  );
-}
 
 function ExpandableReasoningBlock({
   text,
@@ -426,12 +405,11 @@ export function CanvasBottomLeft() {
 
           {/* Messages */}
           {historyLoading ? (
-            <div className="relative">
-              <div className="pointer-events-none absolute left-0 right-0 top-0 z-10 h-4 bg-gradient-to-b from-surface-elevated to-transparent" />
-              <div className="max-h-[min(480px,calc(560px-2.75rem))] overflow-hidden">
-                <ActivityHistoryShimmer />
+            <div className="flex items-center justify-center py-10 px-4">
+              <div className="flex items-center gap-2 text-xs text-t-tertiary">
+                <div className="size-1.5 rounded-full bg-t-tertiary animate-pulse" />
+                Loading...
               </div>
-              <div className="pointer-events-none absolute bottom-0 left-0 right-0 z-10 h-4 bg-gradient-to-t from-surface-elevated to-transparent" />
             </div>
           ) : visibleMessages.length === 0 ? (
             <div className="flex items-center justify-center py-10 px-4">

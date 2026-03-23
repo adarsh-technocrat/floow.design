@@ -1016,13 +1016,37 @@ export function ChatPanel({
     },
     onError: (error) => {
       const msg = error?.message || "";
-      if (msg.includes("402") || msg.includes("no_plan") || msg.includes("insufficient_credits")) {
-        toast.error("You need an active plan with credits to use AI features.", {
-          action: {
-            label: "View Plans",
-            onClick: () => window.location.assign("/pricing"),
+      // #region agent log
+      fetch(
+        "http://127.0.0.1:7253/ingest/bf26e32e-b221-45cd-9795-984cd7651c6f",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            runId: "pre-fix",
+            hypothesisId: "H5",
+            location: "ChatPanel.tsx:onError",
+            message: "chat request error surfaced",
+            data: { messagePreview: msg.slice(0, 140) },
+            timestamp: Date.now(),
+          }),
+        },
+      ).catch(() => {});
+      // #endregion
+      if (
+        msg.includes("402") ||
+        msg.includes("no_plan") ||
+        msg.includes("insufficient_credits")
+      ) {
+        toast.error(
+          "You need an active plan with credits to use AI features.",
+          {
+            action: {
+              label: "View Plans",
+              onClick: () => window.location.assign("/pricing"),
+            },
           },
-        });
+        );
       } else {
         toast.error("Something went wrong. Please try again.");
       }
@@ -1062,7 +1086,26 @@ export function ChatPanel({
 
   // Emit chat status to bridge so Activity panel can show thinking indicator
   useEffect(() => {
-    const s = status === "streaming" ? "streaming" : status === "submitted" ? "submitted" : "ready";
+    const s =
+      status === "streaming"
+        ? "streaming"
+        : status === "submitted"
+          ? "submitted"
+          : "ready";
+    // #region agent log
+    fetch("http://127.0.0.1:7253/ingest/bf26e32e-b221-45cd-9795-984cd7651c6f", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        runId: "pre-fix",
+        hypothesisId: "H4",
+        location: "ChatPanel.tsx:statusEffect",
+        message: "chat status changed",
+        data: { status: s },
+        timestamp: Date.now(),
+      }),
+    }).catch(() => {});
+    // #endregion
     emitChatStatus(s);
     if (s === "ready") clearGeneratingFrames();
   }, [status]);
@@ -1138,11 +1181,42 @@ export function ChatPanel({
   // Register send function for the bottom input box
   useEffect(() => {
     const bridgeSend = (text: string) => {
+      // #region agent log
+      fetch(
+        "http://127.0.0.1:7253/ingest/bf26e32e-b221-45cd-9795-984cd7651c6f",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            runId: "pre-fix",
+            hypothesisId: "H4",
+            location: "ChatPanel.tsx:bridgeSend",
+            message: "bridge send invoked",
+            data: { textLength: text.trim().length },
+            timestamp: Date.now(),
+          }),
+        },
+      ).catch(() => {});
+      // #endregion
       setToolSteps([]);
       setLastMessageToolSteps([]);
       dispatch(pushAgentLog({ type: "user", text }));
       sendMessage({ text });
     };
+    // #region agent log
+    fetch("http://127.0.0.1:7253/ingest/bf26e32e-b221-45cd-9795-984cd7651c6f", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        runId: "pre-fix",
+        hypothesisId: "H4",
+        location: "ChatPanel.tsx:registerBridge",
+        message: "chat bridge handlers registered",
+        data: {},
+        timestamp: Date.now(),
+      }),
+    }).catch(() => {});
+    // #endregion
     registerChatSend(bridgeSend);
     registerChatStop(stop);
     return () => {
