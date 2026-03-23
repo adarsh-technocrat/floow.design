@@ -36,11 +36,15 @@ export async function generateMetadata({
       authors: [fm.author],
       tags: fm.tags,
       siteName: "floow.design",
+      ...(fm.coverImage && {
+        images: [{ url: fm.coverImage, width: 1200, height: 630 }],
+      }),
     },
     twitter: {
       card: "summary_large_image",
       title: fm.title,
       description: fm.description,
+      ...(fm.coverImage && { images: [fm.coverImage] }),
     },
     alternates: {
       canonical: `/blog/${slug}`,
@@ -67,6 +71,7 @@ export default async function BlogPostPage({ params }: PageProps) {
     headline: fm.title,
     description: fm.description,
     datePublished: fm.date,
+    ...(fm.coverImage && { image: fm.coverImage }),
     author: {
       "@type": "Person",
       name: fm.author,
@@ -112,11 +117,22 @@ export default async function BlogPostPage({ params }: PageProps) {
           </span>
         </nav>
 
+        {/* Cover image */}
+        {fm.coverImage && (
+          <div className="border-b border-b-secondary">
+            <img
+              src={fm.coverImage}
+              alt={fm.title}
+              className="w-full h-[240px] sm:h-[320px] md:h-[420px] object-cover"
+            />
+          </div>
+        )}
+
         {/* Article header */}
         <header className="border-b border-b-secondary">
           <div className="px-4 py-8 sm:px-6 sm:py-12 md:px-16 md:py-16 max-w-3xl mx-auto">
             <div className="flex flex-wrap items-center gap-3 mb-6">
-              <span className="rounded-md bg-input-bg px-2 py-0.5 text-[11px] font-mono uppercase tracking-wider text-t-secondary">
+              <span className="rounded-md bg-input-bg px-2.5 py-1 text-[11px] font-mono uppercase tracking-wider text-t-secondary border border-b-secondary">
                 {fm.category}
               </span>
               <span className="text-[11px] text-t-tertiary font-mono">
@@ -124,7 +140,7 @@ export default async function BlogPostPage({ params }: PageProps) {
               </span>
               <span className="text-[11px] text-t-tertiary font-mono">·</span>
               <span className="text-[11px] text-t-tertiary font-mono">
-                {post.wordCount} words
+                {post.wordCount.toLocaleString()} words
               </span>
             </div>
 
@@ -145,14 +161,14 @@ export default async function BlogPostPage({ params }: PageProps) {
               {fm.tags.map((tag) => (
                 <span
                   key={tag}
-                  className="rounded-full bg-input-bg px-2 py-0.5 text-[11px] font-mono uppercase tracking-wider text-t-tertiary"
+                  className="rounded-full bg-input-bg px-2.5 py-0.5 text-[11px] font-mono uppercase tracking-wider text-t-tertiary border border-b-secondary"
                 >
                   #{tag}
                 </span>
               ))}
             </div>
 
-            <div className="mt-8 flex items-center gap-3 pt-6">
+            <div className="mt-8 flex items-center gap-3 pt-6 border-t border-b-secondary">
               <Avatar name={fm.author} size={40} />
               <div>
                 <p className="text-sm font-medium text-t-primary">
@@ -186,7 +202,7 @@ export default async function BlogPostPage({ params }: PageProps) {
           <BlogPromptCTA />
         </div>
 
-        {/* Article content — full-bleed top rule meets border-x */}
+        {/* Article content */}
         <div className="border-t border-b-secondary">
           <article className="mx-auto max-w-3xl px-4 pb-8 pt-6 sm:px-6 sm:pb-10 sm:pt-8 md:px-16 md:pb-14 md:pt-10">
             <MdxRenderer source={post.content} />

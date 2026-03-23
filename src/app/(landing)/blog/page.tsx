@@ -59,72 +59,87 @@ export default async function BlogPage() {
                 key={post.slug}
                 href={`/blog/${post.slug}`}
                 className={cn(
-                  "group flex flex-col gap-4 p-6 md:p-8 transition-colors hover:bg-input-bg/80 no-underline border-b border-b-secondary",
+                  "group flex flex-col gap-0 transition-colors hover:bg-input-bg/80 no-underline border-b border-b-secondary overflow-hidden",
                   isLastMobile && "max-md:border-b-0",
                   isLastRowMd && "md:border-b-0",
                 )}
               >
-                <div className="flex items-center gap-3">
-                  <span className="rounded-md bg-input-bg px-2 py-0.5 text-[11px] font-mono uppercase tracking-wider text-t-secondary">
-                    {post.frontmatter.category}
-                  </span>
-                  <span className="text-[11px] text-t-tertiary font-mono">
-                    {post.readingTime}
-                  </span>
-                </div>
-
-                <h2
-                  className="text-lg md:text-xl font-semibold text-t-primary group-hover:text-t-primary transition-colors leading-snug"
-                  style={{
-                    fontFamily: "var(--font-logo), 'Space Grotesk', sans-serif",
-                  }}
-                >
-                  {post.frontmatter.title}
-                </h2>
-
-                <p className="text-sm text-t-secondary leading-relaxed">
-                  {post.frontmatter.description}
-                </p>
-
-                <div className="flex flex-wrap gap-1.5 mt-1">
-                  {post.frontmatter.tags.slice(0, 3).map((tag) => (
-                    <span
-                      key={tag}
-                      className="rounded-full bg-input-bg px-2 py-0.5 text-[11px] font-mono uppercase tracking-wider text-t-tertiary"
-                    >
-                      #{tag}
-                    </span>
-                  ))}
-                </div>
-
-                <div className="mt-auto flex items-center justify-between pt-4">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-medium text-t-secondary">
-                      {post.frontmatter.author}
-                    </span>
-                    <span className="text-t-tertiary">·</span>
-                    <time
-                      className="text-[11px] text-t-tertiary font-mono"
-                      dateTime={post.frontmatter.date}
-                    >
-                      {new Date(post.frontmatter.date).toLocaleDateString(
-                        "en-US",
-                        { month: "short", day: "numeric", year: "numeric" },
-                      )}
-                    </time>
+                {/* Cover image */}
+                {post.frontmatter.coverImage && (
+                  <div className="overflow-hidden">
+                    <img
+                      src={post.frontmatter.coverImage}
+                      alt={post.frontmatter.title}
+                      className="w-full h-[180px] md:h-[200px] object-cover transition-transform duration-300 group-hover:scale-[1.02]"
+                      loading="lazy"
+                    />
                   </div>
-                  <svg
-                    width="16"
-                    height="16"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="1.5"
-                    strokeLinecap="round"
-                    className="text-t-tertiary group-hover:text-t-secondary transition-colors"
+                )}
+
+                <div className="flex flex-col gap-4 p-6 md:p-8">
+                  <div className="flex items-center gap-3">
+                    <span className="rounded-md bg-input-bg px-2.5 py-1 text-[11px] font-mono uppercase tracking-wider text-t-secondary border border-b-secondary">
+                      {post.frontmatter.category}
+                    </span>
+                    <span className="text-[11px] text-t-tertiary font-mono">
+                      {post.readingTime}
+                    </span>
+                  </div>
+
+                  <h2
+                    className="text-lg md:text-xl font-semibold text-t-primary group-hover:text-t-primary transition-colors leading-snug"
+                    style={{
+                      fontFamily:
+                        "var(--font-logo), 'Space Grotesk', sans-serif",
+                    }}
                   >
-                    <path d="M5 12h14M12 5l7 7-7 7" />
-                  </svg>
+                    {post.frontmatter.title}
+                  </h2>
+
+                  <p className="text-sm text-t-secondary leading-relaxed line-clamp-3">
+                    {post.frontmatter.description}
+                  </p>
+
+                  <div className="flex flex-wrap gap-1.5 mt-1">
+                    {post.frontmatter.tags.slice(0, 3).map((tag) => (
+                      <span
+                        key={tag}
+                        className="rounded-full bg-input-bg px-2 py-0.5 text-[11px] font-mono uppercase tracking-wider text-t-tertiary"
+                      >
+                        #{tag}
+                      </span>
+                    ))}
+                  </div>
+
+                  <div className="mt-auto flex items-center justify-between pt-4 border-t border-b-secondary">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-medium text-t-secondary">
+                        {post.frontmatter.author}
+                      </span>
+                      <span className="text-t-tertiary">·</span>
+                      <time
+                        className="text-[11px] text-t-tertiary font-mono"
+                        dateTime={post.frontmatter.date}
+                      >
+                        {new Date(post.frontmatter.date).toLocaleDateString(
+                          "en-US",
+                          { month: "short", day: "numeric", year: "numeric" },
+                        )}
+                      </time>
+                    </div>
+                    <svg
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.5"
+                      strokeLinecap="round"
+                      className="text-t-tertiary group-hover:text-t-secondary transition-colors"
+                    >
+                      <path d="M5 12h14M12 5l7 7-7 7" />
+                    </svg>
+                  </div>
                 </div>
               </Link>
             );

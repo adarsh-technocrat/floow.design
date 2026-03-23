@@ -44,6 +44,7 @@ export async function POST(req: NextRequest) {
       description,
       content,
       tldr,
+      coverImage,
       category,
       tags,
       author,
@@ -55,6 +56,7 @@ export async function POST(req: NextRequest) {
       description: string;
       content: string;
       tldr?: string;
+      coverImage?: string;
       category: string;
       tags?: string[];
       author: string;
@@ -77,6 +79,7 @@ export async function POST(req: NextRequest) {
         description: description || "",
         content,
         tldr: tldr || null,
+        coverImage: coverImage || null,
         category: category || "General",
         tags: tags || [],
         author: author || "floow.design",
@@ -88,6 +91,7 @@ export async function POST(req: NextRequest) {
         description: description || "",
         content,
         tldr: tldr || null,
+        coverImage: coverImage || null,
         category: category || "General",
         tags: tags || [],
         author: author || "floow.design",

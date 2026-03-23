@@ -12,6 +12,7 @@ export interface BlogPost {
     category: string;
     tags: string[];
     tldr: string | null;
+    coverImage?: string;
     published: boolean;
   };
   content: string;
@@ -25,6 +26,7 @@ function toBlogPost(row: {
   description: string;
   content: string;
   tldr: string | null;
+  coverImage: string | null;
   category: string;
   tags: string[];
   author: string;
@@ -44,6 +46,7 @@ function toBlogPost(row: {
       category: row.category,
       tags: row.tags,
       tldr: row.tldr,
+      coverImage: row.coverImage ?? undefined,
       published: row.published,
     },
     content: row.content,
@@ -60,7 +63,9 @@ export async function getAllPosts(): Promise<BlogPost[]> {
   return rows.map(toBlogPost);
 }
 
-export async function getPostBySlug(slug: string): Promise<BlogPost | undefined> {
+export async function getPostBySlug(
+  slug: string,
+): Promise<BlogPost | undefined> {
   const row = await prisma.blogPost.findUnique({ where: { slug } });
   if (!row || !row.published) return undefined;
   return toBlogPost(row);
@@ -74,7 +79,10 @@ export async function getAllSlugs(): Promise<string[]> {
   return rows.map((r) => r.slug);
 }
 
-export async function getRelatedPosts(currentSlug: string, limit = 3): Promise<BlogPost[]> {
+export async function getRelatedPosts(
+  currentSlug: string,
+  limit = 3,
+): Promise<BlogPost[]> {
   const current = await prisma.blogPost.findUnique({
     where: { slug: currentSlug },
     select: { tags: true },
@@ -86,8 +94,12 @@ export async function getRelatedPosts(currentSlug: string, limit = 3): Promise<B
   return all
     .filter((p) => p.slug !== currentSlug)
     .sort((a, b) => {
-      const aMatch = a.frontmatter.tags.filter((t) => current.tags.includes(t)).length;
-      const bMatch = b.frontmatter.tags.filter((t) => current.tags.includes(t)).length;
+      const aMatch = a.frontmatter.tags.filter((t) =>
+        current.tags.includes(t),
+      ).length;
+      const bMatch = b.frontmatter.tags.filter((t) =>
+        current.tags.includes(t),
+      ).length;
       return bMatch - aMatch;
     })
     .slice(0, limit);

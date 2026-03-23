@@ -235,6 +235,7 @@ model BlogPost {
   description String   @db.Text
   content     String   @db.Text
   tldr        String?  @db.Text
+  coverImage  String?
   category    String
   tags        String[]
   author      String

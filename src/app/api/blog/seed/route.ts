@@ -4,7 +4,7 @@ import fs from "fs";
 import path from "path";
 import matter from "gray-matter";
 
-// POST /api/blog/seed — seed blog posts from MDX files into DB
+// POST /api/blog/seed — flush all blog posts and seed from MDX files
 export async function POST() {
   try {
     const blogDir = path.join(process.cwd(), "src/content/blog");
@@ -15,6 +15,9 @@ export async function POST() {
       );
     }
 
+    // Flush all existing blog posts
+    const deleted = await prisma.blogPost.deleteMany({});
+
     const files = fs.readdirSync(blogDir).filter((f) => f.endsWith(".mdx"));
     const results: string[] = [];
 
@@ -23,25 +26,14 @@ export async function POST() {
       const raw = fs.readFileSync(path.join(blogDir, file), "utf-8");
       const { data, content } = matter(raw);
 
-      await prisma.blogPost.upsert({
-        where: { slug },
-        create: {
+      await prisma.blogPost.create({
+        data: {
           slug,
           title: data.title || slug,
           description: data.description || "",
           content,
           tldr: data.tldr || null,
-          category: data.category || "General",
-          tags: Array.isArray(data.tags) ? data.tags : [],
-          author: data.author || "floow.design",
-          authorRole: data.authorRole || null,
-          published: data.published !== false,
-        },
-        update: {
-          title: data.title || slug,
-          description: data.description || "",
-          content,
-          tldr: data.tldr || null,
+          coverImage: data.coverImage || null,
           category: data.category || "General",
           tags: Array.isArray(data.tags) ? data.tags : [],
           author: data.author || "floow.design",
@@ -53,7 +45,11 @@ export async function POST() {
       results.push(slug);
     }
 
-    return NextResponse.json({ seeded: results.length, slugs: results });
+    return NextResponse.json({
+      flushed: deleted.count,
+      seeded: results.length,
+      slugs: results,
+    });
   } catch (e) {
     return NextResponse.json(
       { error: e instanceof Error ? e.message : "Unknown error" },
