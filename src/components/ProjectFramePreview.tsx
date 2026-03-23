@@ -88,21 +88,26 @@ export function ProjectFramePreview({
         backgroundSize: "14px 14px",
       }}
     >
+      {thumbnail ? (
+        <img
+          src={thumbnail}
+          alt=""
+          className={cn(
+            "absolute inset-0 h-full w-full object-cover object-center",
+            dimmed &&
+              "opacity-[0.68] grayscale-[0.45] transition-[opacity,filter] duration-300 group-hover:opacity-[0.82] group-hover:grayscale-[0.15]",
+          )}
+        />
+      ) : (
       <div
         className={cn(
-          "relative w-full max-w-[min(220px,78%)] overflow-hidden rounded-[11px] border border-b-secondary bg-surface-elevated shadow-[0_2px_16px_-2px_rgba(0,0,0,0.18)] dark:shadow-[0_4px_28px_-4px_rgba(0,0,0,0.55)] sm:max-w-[min(260px,82%)]",
+          "relative w-full max-w-[min(200px,75%)] overflow-hidden rounded-[11px] border border-b-secondary bg-surface-elevated shadow-[0_2px_16px_-2px_rgba(0,0,0,0.18)] dark:shadow-[0_4px_28px_-4px_rgba(0,0,0,0.55)] sm:max-w-[min(240px,80%)]",
           "aspect-[420/927]",
           dimmed &&
             "opacity-[0.68] grayscale-[0.45] transition-[opacity,filter] duration-300 group-hover:opacity-[0.82] group-hover:grayscale-[0.15]",
         )}
       >
-        {thumbnail ? (
-          <img
-            src={thumbnail}
-            alt=""
-            className="absolute inset-0 h-full w-full object-cover object-top"
-          />
-        ) : firstFrameHtml ? (
+        {firstFrameHtml ? (
           <HtmlFramePreview
             srcDoc={firstFrameHtml}
             title={`${title} preview`}
@@ -115,6 +120,7 @@ export function ProjectFramePreview({
           </div>
         )}
       </div>
+      )}
     </div>
   );
 }

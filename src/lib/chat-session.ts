@@ -1,8 +1,5 @@
 import type { UIMessage } from "ai";
 
-/** When no single frame is selected, chat is scoped to the whole canvas. */
-export const CANVAS_CHAT_FRAME_ID = "__project__";
-
 export type ChatSessionMessageRecord = {
   id: string;
   role: "user" | "assistant" | "system";

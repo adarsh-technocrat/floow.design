@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import {
-  CANVAS_CHAT_FRAME_ID,
   recordsToUiMessages,
   type ChatSessionMessageRecord,
 } from "@/lib/chat-session";
@@ -37,7 +36,7 @@ export async function GET(req: NextRequest) {
         },
       }),
       prisma.chatSession.findUnique({
-        where: { projectId_frameId_userId: { projectId, frameId: CANVAS_CHAT_FRAME_ID, userId } },
+        where: { projectId_userId: { projectId, userId } },
         select: { messages: true },
       }),
     ]);

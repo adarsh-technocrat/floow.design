@@ -369,8 +369,35 @@ export default function BillingPage() {
               </div>
             ) : plan ? (
               <div className="flex flex-col gap-6">
+                {/* Credits exhausted banner */}
+                {plan.plan !== "FREE" && plan.credits <= 0 && (
+                  <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-5">
+                    <div className="flex items-start gap-3">
+                      <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-amber-500/20 text-lg">
+                        ⚡
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-sm font-semibold text-t-primary">
+                          Your credits are exhausted
+                        </p>
+                        <p className="mt-1 text-xs text-t-secondary">
+                          {plan.creditsResetAt
+                            ? `Credits will refresh on ${new Date(plan.creditsResetAt).toLocaleDateString("en-US", { month: "long", day: "numeric" })}. Upgrade now for more credits instantly.`
+                            : "Upgrade your plan for more AI credits."}
+                        </p>
+                        <Link
+                          href="/pricing"
+                          className="mt-3 inline-flex h-9 items-center gap-2 rounded-lg bg-amber-500 px-4 text-[11px] font-mono font-semibold uppercase tracking-wider text-black transition-colors hover:bg-amber-400 no-underline"
+                        >
+                          Upgrade Plan
+                        </Link>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 {/* Current plan card */}
-                <div className="rounded-xl border border-b-secondary bg-surface-elevated p-6">
+                <div className={`rounded-xl border bg-surface-elevated p-6 ${plan.plan !== "FREE" && plan.credits <= 0 ? "border-amber-500/20" : "border-b-secondary"}`}>
                   <div className="flex items-center justify-between mb-4">
                     <div>
                       <p className="text-[11px] font-mono uppercase tracking-wider text-t-tertiary mb-1">
@@ -384,10 +411,12 @@ export default function BillingPage() {
                       className={`rounded-full px-3 py-1 text-[11px] font-mono uppercase tracking-wider font-semibold ${
                         plan.plan === "FREE"
                           ? "bg-surface-sunken text-t-secondary dark:bg-white/8 dark:text-t-tertiary"
-                          : "bg-btn-primary-bg text-btn-primary-text"
+                          : plan.credits <= 0
+                            ? "bg-amber-500/15 text-amber-600 dark:text-amber-400"
+                            : "bg-btn-primary-bg text-btn-primary-text"
                       }`}
                     >
-                      {plan.plan === "FREE" ? "Free tier" : "Active"}
+                      {plan.plan === "FREE" ? "Free tier" : plan.credits <= 0 ? "Credits exhausted" : "Active"}
                     </span>
                   </div>
 
@@ -398,32 +427,41 @@ export default function BillingPage() {
                   )}
 
                   {plan.plan !== "FREE" && (
-                    <div className="flex items-center justify-between gap-4 pt-4 border-t border-b-secondary">
-                      <div className="flex items-center gap-4">
-                        <div>
-                          <p className="text-[11px] font-mono uppercase tracking-wider text-t-tertiary mb-0.5">
-                            AI Credits
-                          </p>
-                          <p className="text-lg font-semibold text-t-primary font-mono">
-                            {plan.credits.toLocaleString()}
-                          </p>
-                        </div>
+                    <div className="pt-4 border-t border-b-secondary">
+                      <div className="flex items-center justify-between mb-2">
+                        <p className="text-[11px] font-mono uppercase tracking-wider text-t-tertiary">
+                          AI Credits
+                        </p>
+                        <p className="text-xs font-mono text-t-secondary">
+                          {Math.max(0, plan.credits).toLocaleString()} / {plan.creditCap.toLocaleString()}
+                        </p>
+                      </div>
+                      <div className="h-2.5 w-full overflow-hidden rounded-full bg-input-bg">
+                        <div
+                          className={`h-full rounded-full transition-all duration-700 ${
+                            plan.credits <= 0
+                              ? "bg-amber-500/60"
+                              : plan.credits / plan.creditCap < 0.15
+                                ? "bg-orange-500/60"
+                                : plan.credits / plan.creditCap < 0.4
+                                  ? "bg-amber-500/50"
+                                  : "bg-emerald-500/50"
+                          }`}
+                          style={{ width: `${Math.max(plan.credits <= 0 ? 0 : 3, (Math.max(0, plan.credits) / plan.creditCap) * 100)}%` }}
+                        />
+                      </div>
+                      <div className="flex items-center justify-between mt-2">
+                        <p className="text-xs text-t-tertiary">
+                          {plan.credits <= 0
+                            ? "No credits remaining"
+                            : plan.credits / plan.creditCap < 0.15
+                              ? "Running low"
+                              : "Comfortable headroom"}
+                        </p>
                         {plan.creditsResetAt && (
-                          <div>
-                            <p className="text-[11px] font-mono uppercase tracking-wider text-t-tertiary mb-0.5">
-                              Resets
-                            </p>
-                            <p className="text-xs text-t-secondary">
-                              {new Date(plan.creditsResetAt).toLocaleDateString(
-                                "en-US",
-                                {
-                                  month: "short",
-                                  day: "numeric",
-                                  year: "numeric",
-                                },
-                              )}
-                            </p>
-                          </div>
+                          <p className="text-xs text-t-tertiary">
+                            Resets {new Date(plan.creditsResetAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                          </p>
                         )}
                       </div>
                     </div>
@@ -558,22 +596,31 @@ export default function BillingPage() {
                     </Link>
                   ) : (
                     <>
+                      {plan.credits <= 0 && (
+                        <Link
+                          href="/pricing"
+                          className="flex h-10 items-center justify-center rounded-lg bg-btn-primary-bg text-sm font-semibold text-btn-primary-text transition-colors hover:opacity-90 no-underline"
+                        >
+                          Upgrade for more credits
+                        </Link>
+                      )}
                       {plan.hasStripeAccount && (
                         <button
                           type="button"
                           onClick={handleOpenPortal}
-                          disabled={false}
-                          className="flex h-10 items-center justify-center rounded-lg border border-b-secondary bg-surface-elevated text-sm font-medium text-t-primary shadow-xs transition-colors hover:bg-surface-sunken dark:hover:bg-white/6 active:scale-[0.99] disabled:pointer-events-none disabled:opacity-50"
+                          className="flex h-10 items-center justify-center rounded-lg border border-b-secondary bg-surface-elevated text-sm font-medium text-t-primary shadow-xs transition-colors hover:bg-surface-sunken dark:hover:bg-white/6 active:scale-[0.99]"
                         >
                           Manage subscription
                         </button>
                       )}
-                      <Link
-                        href="/pricing"
-                        className="flex h-10 items-center justify-center rounded-lg border border-b-secondary bg-surface-elevated text-sm font-medium text-t-secondary shadow-xs transition-colors hover:bg-surface-sunken hover:text-t-primary dark:hover:bg-white/6 no-underline"
-                      >
-                        Change plan
-                      </Link>
+                      {plan.credits > 0 && (
+                        <Link
+                          href="/pricing"
+                          className="flex h-10 items-center justify-center rounded-lg border border-b-secondary bg-surface-elevated text-sm font-medium text-t-secondary shadow-xs transition-colors hover:bg-surface-sunken hover:text-t-primary dark:hover:bg-white/6 no-underline"
+                        >
+                          Change plan
+                        </Link>
+                      )}
                     </>
                   )}
                 </div>

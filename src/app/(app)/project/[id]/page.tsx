@@ -11,6 +11,7 @@ import {
   CanvasTopRight,
   EditingModeDisplay,
 } from "@/components/canvas-layout";
+import { CellProgressLoader } from "@/components/CellProgressLoader";
 import { useCanvasThumbnail } from "@/hooks/useCanvasThumbnail";
 import { sendChatMessage, isChatBridgeReady } from "@/lib/chat-bridge";
 import { setAgentLogVisible } from "@/store/slices/uiSlice";
@@ -108,6 +109,14 @@ export default function ProjectCanvasPage() {
       clearTimeout(timeout);
     };
   }, [projectLoaded, searchParams, dispatch]);
+
+  if (!projectLoaded) {
+    return (
+      <div className="flex h-screen w-full items-center justify-center bg-canvas-bg">
+        <CellProgressLoader />
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-screen w-full flex-col bg-canvas-bg">

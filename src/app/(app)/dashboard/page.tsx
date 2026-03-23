@@ -1428,11 +1428,11 @@ export default function DashboardPage() {
                       </button>
                     </div>
                   ) : (
-                    <div className="grid grid-cols-1 gap-4 p-5 sm:grid-cols-2 sm:gap-5 xl:grid-cols-3 xl:gap-4">
+                    <div className="grid grid-cols-2 gap-3 p-5 sm:grid-cols-3 sm:gap-4 xl:grid-cols-4 xl:gap-3">
                       {projects.map((project) => (
                         <article
                           key={project.id}
-                          className="group flex h-full flex-col overflow-hidden rounded-2xl border border-b-secondary bg-surface-elevated shadow-xs transition-all hover:-translate-y-0.5 hover:border-b-primary/25 hover:shadow-sm dark:hover:bg-white/[0.04]"
+                          className="group flex h-full flex-col overflow-hidden rounded-xl border border-b-secondary bg-surface-elevated shadow-xs transition-all hover:-translate-y-0.5 hover:border-b-strong hover:shadow-md"
                         >
                           <div className="relative aspect-[16/10] w-full min-h-0 border-b border-b-secondary/80 bg-surface-sunken">
                             <Link
@@ -1447,13 +1447,13 @@ export default function DashboardPage() {
                             </Link>
                             <button
                               type="button"
-                              className="absolute right-2 top-2 z-10 flex size-8 items-center justify-center rounded-lg border border-b-secondary bg-surface/90 text-t-tertiary opacity-100 shadow-sm backdrop-blur-sm transition-all hover:border-red-500/30 hover:bg-red-500/10 hover:text-red-500 md:opacity-0 md:group-hover:opacity-100"
+                              className="absolute right-1.5 top-1.5 z-10 flex size-7 items-center justify-center rounded-md border border-b-secondary bg-surface/90 text-t-tertiary shadow-sm backdrop-blur-sm transition-all hover:border-red-500/30 hover:bg-red-500/10 hover:text-red-500 opacity-0 group-hover:opacity-100"
                               title="Move to trash"
                               onClick={() => trashProject(project.id)}
                             >
                               <svg
-                                width="14"
-                                height="14"
+                                width="12"
+                                height="12"
                                 viewBox="0 0 24 24"
                                 fill="none"
                                 stroke="currentColor"
@@ -1468,14 +1468,13 @@ export default function DashboardPage() {
                           </div>
                           <Link
                             href={`/project/${project.id}`}
-                            className="flex min-h-[78px] flex-col justify-center gap-1 px-4 py-3 no-underline transition-colors hover:bg-surface-sunken dark:hover:bg-white/[0.03]"
+                            className="flex flex-col justify-center gap-0.5 px-3 py-2.5 no-underline"
                           >
-                            <p className="line-clamp-2 text-sm font-medium text-t-primary">
+                            <p className="line-clamp-1 text-[13px] font-medium text-t-primary">
                               {project.name}
                             </p>
-                            <p className="text-[11px] font-mono text-t-tertiary">
-                              {project.screens} screens ·{" "}
-                              {timeAgo(project.updatedAt)}
+                            <p className="text-[10px] font-mono text-t-tertiary">
+                              {project.screens} screens · {timeAgo(project.updatedAt)}
                             </p>
                           </Link>
                         </article>

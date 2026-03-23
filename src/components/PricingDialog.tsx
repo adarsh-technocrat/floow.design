@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { createCheckoutSession, openStripePortal } from "@/store/slices/userSlice";
+import NumberFlow from "@number-flow/react";
 
 const PLAN_ORDER = ["FREE", "LITE", "STARTER", "PRO", "TEAM"];
 
@@ -306,16 +307,22 @@ export function PricingDialog({ open, onClose, reason }: PricingDialogProps) {
                 </p>
 
                 <div className="flex items-baseline gap-0.5 mb-0.5">
-                  <span className="text-[28px] font-light font-mono text-t-primary leading-none">
-                    ${tier.price.toFixed(2)}
-                  </span>
+                  <NumberFlow
+                    value={tier.price}
+                    format={{ style: "currency", currency: "USD", minimumFractionDigits: 2 }}
+                    className="text-[28px] font-light font-mono text-t-primary leading-none"
+                  />
                   <span className="text-xs text-t-tertiary font-mono">
                     {tier.period}
                   </span>
                 </div>
                 {tier.original && (
                   <span className="text-xs text-t-tertiary line-through font-mono">
-                    ${tier.original.toFixed(2)}/mo
+                    <NumberFlow
+                      value={tier.original}
+                      format={{ style: "currency", currency: "USD", minimumFractionDigits: 2 }}
+                    />
+                    /mo
                   </span>
                 )}
                 <p className="text-[11px] text-t-tertiary font-mono mt-1 mb-4">
@@ -335,7 +342,11 @@ export function PricingDialog({ open, onClose, reason }: PricingDialogProps) {
                 </button>
 
                 <p className="text-sm font-medium text-t-primary">
-                  {plan.credits[billing].toLocaleString()} AI credits
+                  <NumberFlow
+                    value={plan.credits[billing]}
+                    format={{ useGrouping: true }}
+                  />{" "}
+                  AI credits
                 </p>
                 <p className="text-[11px] text-t-tertiary mb-4">
                   {plan.screens[billing]} /{" "}

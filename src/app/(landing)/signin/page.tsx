@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { Suspense, useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import { Logo } from "@/components/landing/Logo";
@@ -179,7 +179,7 @@ function CanvasPanel() {
   );
 }
 
-export default function SignInPage() {
+function SignInPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user, loading, signInWithGoogle } = useAuth();
@@ -411,5 +411,13 @@ export default function SignInPage() {
         <CanvasPanel />
       </div>
     </div>
+  );
+}
+
+export default function SignInPage() {
+  return (
+    <Suspense>
+      <SignInPageContent />
+    </Suspense>
   );
 }

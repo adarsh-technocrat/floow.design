@@ -33,7 +33,6 @@ import ReactMarkdown from "react-markdown";
 import { ImageIcon } from "@/lib/svg-icons";
 import { PageMentionInput } from "./PageMentionInput";
 import { useAuth } from "@/contexts/AuthContext";
-import { CANVAS_CHAT_FRAME_ID } from "@/lib/chat-session";
 import http from "@/lib/http";
 
 const CP_THROTTLE_MS = 100;
@@ -505,8 +504,6 @@ export function ChatPanel({
   const chatUserId = user?.uid ?? "";
   const selectedFrameIds = useAppSelector((s) => s.canvas.selectedFrameIds);
   const projectId = useAppSelector((s) => s.project.projectId) ?? "";
-  const frameSessionId =
-    selectedFrameIds.length === 1 ? selectedFrameIds[0] : CANVAS_CHAT_FRAME_ID;
   const frames = useAppSelector((s) => s.canvas.frames);
   const theme = useAppSelector((s) => s.canvas.theme);
   const activeFrameLabel =
@@ -558,24 +555,17 @@ export function ChatPanel({
 
   const chatSessionContextRef = useRef({
     projectId,
-    frameId: frameSessionId,
     userId: chatUserId,
   });
   chatSessionContextRef.current = {
     projectId,
-    frameId: frameSessionId,
     userId: chatUserId,
   };
 
   const postChatSession = useCallback((messagesPayload: UIMessage[]) => {
-    const {
-      projectId: pid,
-      frameId: fid,
-      userId: uid,
-    } = chatSessionContextRef.current;
+    const { projectId: pid, userId: uid } = chatSessionContextRef.current;
     return http.post("/api/chat/sessions", {
       projectId: pid,
-      frameId: fid,
       userId: uid,
       isActive: true,
       messages: messagesPayload,
@@ -1145,7 +1135,6 @@ export function ChatPanel({
     setIsLoadingHistory(true);
     const q = new URLSearchParams({
       projectId,
-      frameId: frameSessionId,
       userId: chatUserId,
     });
     http
@@ -1197,7 +1186,7 @@ export function ChatPanel({
           setIsLoadingHistory(false);
         }
       });
-  }, [setMessages, projectId, frameSessionId, chatUserId]);
+  }, [setMessages, projectId, chatUserId]);
 
   useEffect(() => {
     if (isLoadingHistory) return;
