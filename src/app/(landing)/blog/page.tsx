@@ -6,7 +6,8 @@ import Link from "next/link";
 
 export const metadata = {
   title: "Blog – floow.design",
-  description: "Latest updates, tips, and stories from floow.design",
+  description:
+    "Updates, tutorials, and insights on designing mobile apps with AI",
 };
 
 export const dynamic = "force-dynamic";
@@ -37,7 +38,7 @@ export default async function BlogPage() {
               Blog
             </h1>
             <p className="text-t-secondary text-sm sm:text-base md:text-lg leading-relaxed max-w-xl">
-              Updates, tutorials, and insights on building Flutter apps with AI.
+              Updates, tutorials, and insights on designing mobile apps with AI.
             </p>
           </div>
         </div>

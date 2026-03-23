@@ -22,8 +22,12 @@ const spaceGrotesk = Space_Grotesk({
 });
 
 export const metadata: Metadata = {
-  title: "floow.design – Idea to Flutter app, in seconds",
-  description: "Turn your app ideas into beautiful designs and production-ready Flutter code in seconds",
+  title: "floow.design – Design mobile apps with AI",
+  description:
+    "Turn your app ideas into beautiful, high-fidelity mobile designs in seconds",
+  icons: {
+    icon: "/icon.svg",
+  },
 };
 
 export const viewport: Viewport = {
@@ -43,7 +47,9 @@ export default function RootLayout({
       <body
         className={`${dmSans.variable} ${geistMono.variable} ${spaceGrotesk.variable} font-sans antialiased`}
       >
-        <ThemeProvider><AuthProvider>{children}</AuthProvider></ThemeProvider>
+        <ThemeProvider>
+          <AuthProvider>{children}</AuthProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

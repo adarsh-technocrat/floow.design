@@ -27,7 +27,7 @@ const plans = [
     screens: { monthly: "≈ 30 screens", yearly: "≈ 360 screens" },
     features: [
       "2 projects",
-      "Unlimited code exports",
+      "Unlimited design exports",
       "Unlimited Figma exports",
       "Export to AI builders",
     ],
@@ -44,7 +44,7 @@ const plans = [
     screens: { monthly: "≈ 100 screens", yearly: "≈ 1,200 screens" },
     features: [
       "5 projects",
-      "Unlimited code exports",
+      "Unlimited design exports",
       "Unlimited Figma exports",
       "Export to AI builders",
       "Share preview links",
@@ -63,7 +63,7 @@ const plans = [
     features: [
       "Unlimited projects",
       "Purchase additional credits",
-      "Unlimited code exports",
+      "Unlimited design exports",
       "Unlimited Figma exports",
       "Export to AI builders",
       "Share preview links",
@@ -125,11 +125,18 @@ export default function PricingPage() {
 
   // Fetch user's current plan
   useEffect(() => {
-    if (!user?.uid) { setUserPlan(null); return; }
-    http.get(`/api/user/plan?userId=${encodeURIComponent(user.uid)}`)
+    if (!user?.uid) {
+      setUserPlan(null);
+      return;
+    }
+    http
+      .get(`/api/user/plan?userId=${encodeURIComponent(user.uid)}`)
       .then(({ data }) => {
         if (data && !data.error) {
-          setUserPlan({ plan: data.plan, billingInterval: data.billingInterval });
+          setUserPlan({
+            plan: data.plan,
+            billingInterval: data.billingInterval,
+          });
         }
       })
       .catch(() => {});
@@ -155,20 +162,28 @@ export default function PricingPage() {
     // If current plan, open billing portal to manage
     if (isCurrentPlan(planName)) {
       try {
-        const { data } = await http.post<{ url?: string }>("/api/stripe/portal", { userId: user.uid });
+        const { data } = await http.post<{ url?: string }>(
+          "/api/stripe/portal",
+          { userId: user.uid },
+        );
         if (data.url) window.location.href = data.url;
-      } catch { /* silent */ }
+      } catch {
+        /* silent */
+      }
       return;
     }
 
     setCheckoutLoading(planName);
     try {
-      const { data } = await http.post<{ url?: string }>("/api/stripe/checkout", {
-        userId: user.uid,
-        plan: planName,
-        interval: billing,
-        ...(planName.toUpperCase() === "TEAM" ? { seats: teamSeats } : {}),
-      });
+      const { data } = await http.post<{ url?: string }>(
+        "/api/stripe/checkout",
+        {
+          userId: user.uid,
+          plan: planName,
+          interval: billing,
+          ...(planName.toUpperCase() === "TEAM" ? { seats: teamSeats } : {}),
+        },
+      );
       if (data.url) {
         window.location.href = data.url;
       }
@@ -289,13 +304,18 @@ export default function PricingPage() {
 
                 {plan.name === "Team" && (
                   <div className="mb-3">
-                    <SeatPicker seats={teamSeats} onSeatsChange={setTeamSeats} />
+                    <SeatPicker
+                      seats={teamSeats}
+                      onSeatsChange={setTeamSeats}
+                    />
                   </div>
                 )}
 
                 <div className="flex items-baseline gap-0.5 mb-1">
                   <NumberFlow
-                    value={plan.name === "Team" ? tier.price * teamSeats : tier.price}
+                    value={
+                      plan.name === "Team" ? tier.price * teamSeats : tier.price
+                    }
                     format={{
                       style: "currency",
                       currency: "USD",
@@ -310,7 +330,11 @@ export default function PricingPage() {
                 {tier.original && (
                   <span className="text-xs text-t-tertiary line-through font-mono">
                     <NumberFlow
-                      value={plan.name === "Team" ? tier.original * teamSeats : tier.original}
+                      value={
+                        plan.name === "Team"
+                          ? tier.original * teamSeats
+                          : tier.original
+                      }
                       format={{
                         style: "currency",
                         currency: "USD",
@@ -328,7 +352,9 @@ export default function PricingPage() {
 
                 <button
                   onClick={() => handleUpgrade(plan.name)}
-                  disabled={checkoutLoading === plan.name || isCurrentPlan(plan.name)}
+                  disabled={
+                    checkoutLoading === plan.name || isCurrentPlan(plan.name)
+                  }
                   className={`flex h-10 w-full items-center justify-center rounded text-[11px] font-mono font-semibold uppercase tracking-wider transition-colors mb-4 disabled:opacity-50 ${getButtonStyle(plan)}`}
                 >
                   {getButtonLabel(plan)}
@@ -336,7 +362,11 @@ export default function PricingPage() {
 
                 <p className="text-sm font-medium text-t-primary">
                   <NumberFlow
-                    value={plan.name === "Team" ? plan.credits[billing] * teamSeats : plan.credits[billing]}
+                    value={
+                      plan.name === "Team"
+                        ? plan.credits[billing] * teamSeats
+                        : plan.credits[billing]
+                    }
                     format={{ useGrouping: true }}
                   />{" "}
                   AI credits / {billing === "monthly" ? "month" : "year"}
@@ -417,7 +447,10 @@ export default function PricingPage() {
                   <p className="text-xs text-t-secondary">{plan.description}</p>
                   {plan.name === "Team" && (
                     <div className="mt-3">
-                      <SeatPicker seats={teamSeats} onSeatsChange={setTeamSeats} />
+                      <SeatPicker
+                        seats={teamSeats}
+                        onSeatsChange={setTeamSeats}
+                      />
                     </div>
                   )}
                 </Cell>
@@ -432,7 +465,11 @@ export default function PricingPage() {
                   <Cell key={plan.name} columnDivider={i > 0} className="py-6">
                     <div className="flex items-baseline gap-0.5">
                       <NumberFlow
-                        value={plan.name === "Team" ? tier.price * teamSeats : tier.price}
+                        value={
+                          plan.name === "Team"
+                            ? tier.price * teamSeats
+                            : tier.price
+                        }
                         format={{
                           style: "currency",
                           currency: "USD",
@@ -448,7 +485,11 @@ export default function PricingPage() {
                       <div className="mt-1">
                         <span className="text-xs text-t-tertiary line-through font-mono">
                           <NumberFlow
-                            value={plan.name === "Team" ? tier.original * teamSeats : tier.original}
+                            value={
+                              plan.name === "Team"
+                                ? tier.original * teamSeats
+                                : tier.original
+                            }
                             format={{
                               style: "currency",
                               currency: "USD",
@@ -475,7 +516,9 @@ export default function PricingPage() {
                 <Cell key={plan.name} columnDivider={i > 0}>
                   <button
                     onClick={() => handleUpgrade(plan.name)}
-                    disabled={checkoutLoading === plan.name || isCurrentPlan(plan.name)}
+                    disabled={
+                      checkoutLoading === plan.name || isCurrentPlan(plan.name)
+                    }
                     className={`flex h-10 w-full items-center justify-center rounded text-[11px] font-mono font-semibold uppercase tracking-wider transition-colors disabled:opacity-50 ${getButtonStyle(plan)}`}
                   >
                     {getButtonLabel(plan)}
@@ -490,7 +533,11 @@ export default function PricingPage() {
                 <Cell key={plan.name} columnDivider={i > 0}>
                   <p className="text-sm font-medium text-t-primary">
                     <NumberFlow
-                      value={plan.name === "Team" ? plan.credits[billing] * teamSeats : plan.credits[billing]}
+                      value={
+                        plan.name === "Team"
+                          ? plan.credits[billing] * teamSeats
+                          : plan.credits[billing]
+                      }
                       format={{ useGrouping: true }}
                     />{" "}
                     AI credits / {billing === "monthly" ? "month" : "year"}

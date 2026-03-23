@@ -11,15 +11,15 @@ const features = [
     label: "Design",
   },
   {
-    title: "Export Flutter code",
-    description: "Clean Dart widgets, Material & Cupertino. Copy and run.",
-    label: "Code",
+    title: "Export anywhere",
+    description: "Export to Figma, AI builders, or share preview links.",
+    label: "Export",
   },
   {
-    title: "Ship everywhere",
+    title: "iOS & Android ready",
     description:
-      "One Flutter codebase deploys to iOS, Android, web, and desktop.",
-    label: "Deploy",
+      "Pixel-perfect designs for both platforms — Material & Cupertino.",
+    label: "Platforms",
   },
   {
     title: "Multi-screen flows",
@@ -28,8 +28,7 @@ const features = [
   },
   {
     title: "Custom themes",
-    description:
-      "Generate code with your brand colors, fonts, and design tokens.",
+    description: "Design with your brand colors, fonts, and design tokens.",
     label: "Theming",
   },
 ];
@@ -56,8 +55,8 @@ export function FeaturesGrid() {
             Everything you need to build
           </h2>
           <p className="max-w-md text-sm text-t-secondary">
-            From idea to deployed Flutter app — design, code, and export in one
-            place.
+            From idea to polished mobile design — create, iterate, and export in
+            one place.
           </p>
         </div>
 
@@ -83,7 +82,7 @@ export function FeaturesGrid() {
         <div className="grid grid-cols-3 gap-px border-t border-b-secondary bg-b-secondary">
           {[
             { value: "10x", label: "Faster than manual" },
-            { value: "100+", label: "Widgets supported" },
+            { value: "100+", label: "Components supported" },
             { value: "50k+", label: "Apps designed" },
           ].map((s) => (
             <div

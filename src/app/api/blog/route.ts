@@ -38,7 +38,18 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { slug, title, description, content, tldr, category, tags, author, authorRole, published } = body as {
+    const {
+      slug,
+      title,
+      description,
+      content,
+      tldr,
+      category,
+      tags,
+      author,
+      authorRole,
+      published,
+    } = body as {
       slug: string;
       title: string;
       description: string;
@@ -52,7 +63,10 @@ export async function POST(req: NextRequest) {
     };
 
     if (!slug || !title || !content) {
-      return NextResponse.json({ error: "slug, title, and content are required" }, { status: 400 });
+      return NextResponse.json(
+        { error: "slug, title, and content are required" },
+        { status: 400 },
+      );
     }
 
     const post = await prisma.blogPost.upsert({
@@ -65,7 +79,7 @@ export async function POST(req: NextRequest) {
         tldr: tldr || null,
         category: category || "General",
         tags: tags || [],
-        author: author || "Launchpad AI",
+        author: author || "floow.design",
         authorRole: authorRole || null,
         published: published ?? false,
       },
@@ -76,7 +90,7 @@ export async function POST(req: NextRequest) {
         tldr: tldr || null,
         category: category || "General",
         tags: tags || [],
-        author: author || "Launchpad AI",
+        author: author || "floow.design",
         authorRole: authorRole || null,
         published: published ?? false,
       },

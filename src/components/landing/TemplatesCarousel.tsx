@@ -20,7 +20,8 @@ export function TemplatesCarousel() {
 
   // Landing page — no Redux store, direct call is appropriate
   useEffect(() => {
-    http.get<{ templates?: Template[] }>("/api/templates")
+    http
+      .get<{ templates?: Template[] }>("/api/templates")
       .then(({ data }) => {
         if (data.templates) setTemplates(data.templates);
       })
@@ -90,7 +91,7 @@ export function TemplatesCarousel() {
           Start from a template
         </h2>
         <p className="text-sm text-t-secondary mb-8 max-w-md">
-          Every template exports production-ready Flutter code.
+          Beautiful, ready-to-use mobile app designs you can customize.
         </p>
 
         {loading ? (

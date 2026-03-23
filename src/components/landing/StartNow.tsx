@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 export function StartNow() {
   return (
     <section
@@ -32,29 +34,29 @@ export function StartNow() {
                 fontFamily: "var(--font-logo), 'Space Grotesk', sans-serif",
               }}
             >
-              Ready to build your
+              Ready to design your
               <br />
-              <span className="text-t-secondary">next app?</span>
+              <span className="text-t-secondary">next mobile app?</span>
             </h2>
 
             <p className="mt-5 text-sm md:text-base text-t-secondary max-w-sm mx-auto leading-relaxed">
-              Join thousands of developers shipping Flutter apps faster with
-              Launchpad AI.
+              Join thousands of designers and teams creating beautiful mobile
+              apps with floow.design.
             </p>
 
             <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
-              <a
+              <Link
                 href="/project"
                 className="inline-flex h-10 items-center px-6 rounded border-0 bg-btn-primary-bg text-[11px] font-semibold uppercase tracking-wider text-btn-primary-text hover:opacity-90 transition-colors no-underline font-mono"
               >
-                Start building free
-              </a>
-              <a
+                Start designing free
+              </Link>
+              <Link
                 href="/pricing"
                 className="inline-flex h-10 items-center px-6 rounded border border-b-secondary text-[11px] font-semibold uppercase tracking-wider text-t-secondary hover:text-t-primary transition-colors no-underline font-mono"
               >
                 View pricing
-              </a>
+              </Link>
             </div>
 
             <p className="mt-6 text-[11px] font-mono text-t-tertiary uppercase tracking-wider">

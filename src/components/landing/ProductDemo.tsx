@@ -6,10 +6,7 @@ export function ProductDemo() {
   const [isPlaying, setIsPlaying] = useState(false);
 
   return (
-    <section
-      id="demo"
-      className="scroll-mt-14 border-t border-b-secondary"
-    >
+    <section id="demo" className="scroll-mt-14 border-t border-b-secondary">
       <div className="flex items-center gap-3 px-5 py-4">
         <span className="shrink-0 text-[11px] font-mono font-semibold uppercase tracking-wider text-t-tertiary">
           See it in action
@@ -29,11 +26,9 @@ export function ProductDemo() {
             <br />
             <span className="text-t-secondary">in under a minute</span>
           </h2>
-          <p
-            className="mt-4 text-sm md:text-base text-t-secondary max-w-md mx-auto leading-relaxed"
-          >
-            Watch how floow.design turns a simple description into a
-            fully-designed Flutter app with exportable code.
+          <p className="mt-4 text-sm md:text-base text-t-secondary max-w-md mx-auto leading-relaxed">
+            Watch how floow.design turns a simple description into beautiful,
+            high-fidelity mobile app designs.
           </p>
         </div>
 
@@ -105,7 +100,7 @@ export function ProductDemo() {
               </div>
               <div className="h-3 w-px bg-input-bg" />
               <span className="text-[11px] font-mono text-t-tertiary">
-                Prompt → Design → Flutter code
+                Prompt → Design → Export
               </span>
             </div>
           </div>
@@ -115,7 +110,7 @@ export function ProductDemo() {
         <div className="mx-auto mt-8 sm:mt-10 grid max-w-2xl grid-cols-3 gap-3 sm:gap-4">
           {[
             { value: "< 60s", label: "Average generation time" },
-            { value: "100%", label: "Production-ready Flutter" },
+            { value: "100%", label: "High-fidelity designs" },
             { value: "10+", label: "Screen types supported" },
           ].map((stat) => (
             <div key={stat.label} className="text-center">

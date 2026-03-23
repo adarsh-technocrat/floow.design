@@ -5,24 +5,24 @@ import { AnimatePresence, motion } from "framer-motion";
 
 const faqs = [
   {
-    q: "What is Launchpad AI?",
-    a: "An AI-powered platform that turns your ideas into beautiful mobile app designs with production-ready Flutter code.",
+    q: "What is floow.design?",
+    a: "An AI-powered platform that turns your ideas into beautiful, high-fidelity mobile app designs in seconds.",
   },
   {
     q: "Is it free to use?",
-    a: "Yes. Free with a daily credit system that resets every day. Premium plans coming soon.",
+    a: "Yes. Free with a daily credit system that resets every day. Premium plans available for more credits.",
   },
   {
-    q: "What platforms does the code support?",
-    a: "Flutter runs on iOS, Android, web, and desktop — all from one codebase.",
+    q: "What platforms can I design for?",
+    a: "Design for iOS and Android — with support for both Material and Cupertino design languages.",
   },
   {
-    q: "Can I export the code directly?",
-    a: "Yes. Copy the generated Dart & Flutter widget code into your project. Standard patterns — StatelessWidget, StatefulWidget, Material, Cupertino.",
+    q: "Can I export my designs?",
+    a: "Yes. Export to Figma, share preview links, or export to AI builders to continue building.",
   },
   {
-    q: "Is the code production-ready?",
-    a: "Yes. Clean Dart with proper widget composition, theming, and responsive layouts.",
+    q: "Are the designs high-fidelity?",
+    a: "Yes. Pixel-perfect layouts with proper spacing, typography, theming, and responsive design.",
   },
   {
     q: "Material and Cupertino support?",

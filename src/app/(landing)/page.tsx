@@ -9,9 +9,9 @@ import { FAQ } from "@/components/landing/FAQ";
 import { Footer } from "@/components/landing/Footer";
 
 export const metadata = {
-  title: "floow.design – Idea to Flutter app, in seconds",
+  title: "floow.design – Design mobile apps with AI",
   description:
-    "Turn your app ideas into beautiful designs and production-ready Flutter code in seconds",
+    "Turn your app ideas into beautiful, high-fidelity mobile designs in seconds",
 };
 
 export default function LandingPage() {

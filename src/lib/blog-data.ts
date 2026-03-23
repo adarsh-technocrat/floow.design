@@ -12,52 +12,56 @@ export interface BlogPost {
 
 export const posts: BlogPost[] = [
   {
-    slug: "introducing-launchpad-ai",
-    title: "Introducing Launchpad AI: Design to Flutter Code with AI",
-    excerpt: "Describe your app idea, get beautiful designs and production-ready Flutter code in seconds.",
+    slug: "introducing-floow-design",
+    title: "Introducing floow.design: AI-Powered Mobile App Design",
+    excerpt:
+      "Describe your app idea and get beautiful, high-fidelity mobile designs in seconds.",
     date: "Mar 15, 2026",
     category: "Announcement",
     readTime: "4 min",
     author: "Adarsh Kumar",
-    image: "https://lh3.googleusercontent.com/CwGQkERZQIadMhpEphW3k58HmhCs02NQRYpR9L_GIhU7qHIDfQlJp-ykadYDGA-x6_Bkq_Ea2r-fFr3rv4kW8Xw9A1DgJuD9hlE5Fw",
-    content: `We're excited to announce Launchpad AI — a platform that turns your app ideas into beautiful designs and production-ready Flutter code in seconds.
+    image:
+      "https://lh3.googleusercontent.com/CwGQkERZQIadMhpEphW3k58HmhCs02NQRYpR9L_GIhU7qHIDfQlJp-ykadYDGA-x6_Bkq_Ea2r-fFr3rv4kW8Xw9A1DgJuD9hlE5Fw",
+    content: `We're excited to announce floow.design — a platform that turns your app ideas into beautiful, high-fidelity mobile designs in seconds.
 
 ## The Problem
 
-Building mobile apps has always been a two-step process: first design, then code. Designers create mockups in Figma, then hand them off to developers who rebuild everything from scratch in Flutter or React Native. This disconnect leads to wasted time, mismatched implementations, and endless back-and-forth.
+Designing mobile apps is slow and expensive. Creating pixel-perfect mockups requires skilled designers, expensive tools, and weeks of iteration. Most teams struggle to go from idea to polished design quickly.
 
 ## Our Solution
 
-Launchpad AI bridges this gap entirely. Describe your app in plain English, and our AI generates both the visual design and the clean Dart/Flutter code simultaneously. No handoff needed.
+floow.design changes everything. Describe your app in plain English, and our AI generates complete, high-fidelity mobile designs instantly. No design skills required.
 
 ### How It Works
 
 1. **Describe your app** — Type what you want in natural language
 2. **AI generates designs** — Complete mobile screens with proper layout, spacing, and typography
-3. **Export Flutter code** — Clean StatelessWidget and StatefulWidget code, ready to run
-4. **Ship everywhere** — One codebase deploys to iOS, Android, web, and desktop
+3. **Customize & iterate** — Refine colors, layouts, and components to match your vision
+4. **Export anywhere** — Export to Figma, share preview links, or send to AI builders
 
 ## What Makes Us Different
 
-- **Flutter-first** — We generate real Flutter widgets, not just images
-- **Production-ready** — Proper widget composition, theming, and responsive layouts
-- **Material & Cupertino** — Support for both design languages
-- **Multi-screen flows** — Complete app flows with navigation
+- **Design-first** — We create pixel-perfect, high-fidelity mobile designs
+- **Production-quality** — Proper spacing, typography, theming, and responsive layouts
+- **Material & Cupertino** — Support for both iOS and Android design languages
+- **Multi-screen flows** — Complete app flows with navigation and transitions
 
 ## Getting Started
 
-Launchpad AI is now in public beta. Sign up for free and start building your next app today.`,
+floow.design is now in public beta. Sign up for free and start designing your next app today.`,
   },
   {
     slug: "design-systems-mobile",
-    title: "Building Design Systems for Flutter Apps",
-    excerpt: "Create consistent, scalable design systems with tokens, components, and patterns for Flutter.",
+    title: "Building Design Systems for Mobile Apps",
+    excerpt:
+      "Create consistent, scalable design systems with tokens, components, and patterns for mobile apps.",
     date: "Mar 10, 2026",
     category: "Tutorial",
     readTime: "7 min",
     author: "Adarsh Kumar",
-    image: "https://lh3.googleusercontent.com/-MMEDlQhYVE8CLSReq5dD_9s_mXvDaJUB8HaM-gKSh4LUsgjpQOK3ov7qdaH7hsVFDF0rc3L6Hi1ppWlaWx-rYMhK8IAViAM-Gk",
-    content: `A well-crafted design system is the foundation of any scalable mobile application. In this guide, we'll walk through building a design system for Flutter apps using Launchpad AI.
+    image:
+      "https://lh3.googleusercontent.com/-MMEDlQhYVE8CLSReq5dD_9s_mXvDaJUB8HaM-gKSh4LUsgjpQOK3ov7qdaH7hsVFDF0rc3L6Hi1ppWlaWx-rYMhK8IAViAM-Gk",
+    content: `A well-crafted design system is the foundation of any scalable mobile application. In this guide, we'll walk through building a design system for mobile apps using floow.design.
 
 ## Why Design Systems Matter
 
@@ -78,7 +82,7 @@ Define your color palette as a set of semantic tokens:
 
 ### Typography Scale
 
-Establish a clear hierarchy with consistent font sizes and weights. Flutter's Material theme makes this straightforward with \`TextTheme\`.
+Establish a clear hierarchy with consistent font sizes and weights. Material Design's type system makes this straightforward.
 
 ## Component Library
 
@@ -89,19 +93,21 @@ Build your components on top of your tokens. Start with the basics:
 - **Cards** — Content containers with consistent padding
 - **Navigation** — Bottom nav, app bar, drawer
 
-## Using Launchpad AI
+## Using floow.design
 
-When you generate screens with Launchpad AI, you can specify your design system. The AI will use your tokens and patterns to generate consistent code across all screens.`,
+When you generate screens with floow.design, you can specify your design system. The AI will use your tokens and patterns to generate consistent designs across all screens.`,
   },
   {
     slug: "ai-design-workflow",
     title: "How AI is Changing the Mobile Design Workflow",
-    excerpt: "From wireframes to high-fidelity mockups, AI tools are transforming how designers work.",
+    excerpt:
+      "From wireframes to high-fidelity mockups, AI tools are transforming how designers work.",
     date: "Mar 5, 2026",
     category: "Insights",
     readTime: "5 min",
     author: "Adarsh Kumar",
-    image: "https://lh3.googleusercontent.com/D6d1SQF0r3pePXE2e02y5nuvncVNFlQTMLmJm8ycWnjxC0Re9wQdvjQWHgcYYpduzGd7_QrfUTjC-OBUjDHOf_vWQ7fkMSRyEwhJ",
+    image:
+      "https://lh3.googleusercontent.com/D6d1SQF0r3pePXE2e02y5nuvncVNFlQTMLmJm8ycWnjxC0Re9wQdvjQWHgcYYpduzGd7_QrfUTjC-OBUjDHOf_vWQ7fkMSRyEwhJ",
     content: `The mobile design workflow is undergoing a fundamental shift. AI tools are no longer just assistants — they're becoming co-creators.
 
 ## The Traditional Workflow
@@ -129,27 +135,29 @@ AI doesn't replace designers — it amplifies them. Instead of spending hours on
 
 ## The Future
 
-We believe the future of mobile design is collaborative — humans providing creative direction, AI handling the production work. Launchpad AI is built for this future.`,
+We believe the future of mobile design is collaborative — humans providing creative direction, AI handling the production work. floow.design is built for this future.`,
   },
   {
-    slug: "flutter-export-guide",
-    title: "From Design to Flutter: Exporting Production-Ready Code",
-    excerpt: "Step-by-step guide on exporting clean Dart & Flutter widget code from Launchpad AI.",
+    slug: "design-export-guide",
+    title: "Exporting Your Designs: A Complete Guide",
+    excerpt:
+      "Step-by-step guide on exporting your mobile designs from floow.design to Figma and beyond.",
     date: "Feb 28, 2026",
     category: "Tutorial",
     readTime: "6 min",
     author: "Adarsh Kumar",
-    image: "https://lh3.googleusercontent.com/7zm0iGoJpEdqqpo4GoqcLdOn0k-s9ZEMVy4MYn6Ia_3_FLlOzKHpb2iLlq7mVaLN7E4_5raueLuya7-MuvUyWFILPxBSdhTTz1XN",
-    content: `One of the most powerful features of Launchpad AI is the ability to export production-ready Flutter code. Here's how to make the most of it.
+    image:
+      "https://lh3.googleusercontent.com/7zm0iGoJpEdqqpo4GoqcLdOn0k-s9ZEMVy4MYn6Ia_3_FLlOzKHpb2iLlq7mVaLN7E4_5raueLuya7-MuvUyWFILPxBSdhTTz1XN",
+    content: `One of the most powerful features of floow.design is the ability to export your designs anywhere. Here's how to make the most of it.
 
-## Understanding the Export
+## Understanding the Export Options
 
-When you export from Launchpad AI, you get:
+When you export from floow.design, you get:
 
-- **Clean Dart code** — Properly formatted, following Dart conventions
-- **Widget composition** — Logical widget tree structure
-- **Responsive layouts** — MediaQuery-aware sizing
-- **Theme integration** — Uses ThemeData for colors and typography
+- **Figma export** — Editable designs ready for your design tool
+- **Preview links** — Shareable links for stakeholder review
+- **AI builder export** — Send designs to AI coding tools to build your app
+- **High-fidelity assets** — Pixel-perfect screens with proper spacing and typography
 
 ## Step-by-Step Guide
 
@@ -157,34 +165,36 @@ When you export from Launchpad AI, you get:
 
 Use the canvas to design your app screens. The AI will generate the visual design based on your description.
 
-### 2. Review the Code
+### 2. Review the Design
 
-Click the code export button to see the generated Dart code. Review the widget structure and make sure it matches your expectations.
+Check the layout, spacing, typography, and colors. Make sure it matches your expectations.
 
-### 3. Copy to Your Project
+### 3. Export to Figma
 
-Copy the generated code into your Flutter project. The code is self-contained — just paste it into a new file.
+Export your designs to Figma for further refinement or developer handoff.
 
-### 4. Customize
+### 4. Share & Iterate
 
-The generated code is a starting point. Customize colors, add business logic, connect to your backend.
+Share preview links with stakeholders, gather feedback, and iterate on your designs.
 
 ## Best Practices
 
 - **Start with a clear description** — The better your prompt, the better the output
 - **Use design systems** — Specify your brand colors and typography
 - **Iterate** — Generate, review, refine, repeat
-- **Combine screens** — Export multiple screens and connect them with navigation`,
+- **Combine screens** — Design multiple screens and connect them into complete flows`,
   },
   {
     slug: "mobile-ux-patterns",
     title: "10 Mobile UX Patterns Every Designer Should Know",
-    excerpt: "Essential mobile UX patterns — from navigation to gestures — that make apps feel intuitive.",
+    excerpt:
+      "Essential mobile UX patterns — from navigation to gestures — that make apps feel intuitive.",
     date: "Feb 20, 2026",
     category: "Design",
     readTime: "8 min",
     author: "Adarsh Kumar",
-    image: "https://lh3.googleusercontent.com/CwGQkERZQIadMhpEphW3k58HmhCs02NQRYpR9L_GIhU7qHIDfQlJp-ykadYDGA-x6_Bkq_Ea2r-fFr3rv4kW8Xw9A1DgJuD9hlE5Fw",
+    image:
+      "https://lh3.googleusercontent.com/CwGQkERZQIadMhpEphW3k58HmhCs02NQRYpR9L_GIhU7qHIDfQlJp-ykadYDGA-x6_Bkq_Ea2r-fFr3rv4kW8Xw9A1DgJuD9hlE5Fw",
     content: `Great mobile apps feel intuitive because they follow established UX patterns. Here are 10 patterns every designer should know.
 
 ## 1. Bottom Navigation
@@ -228,19 +238,21 @@ Design meaningful empty states with illustrations and clear calls to action. Nev
 Support standard gestures — swipe back, pinch to zoom, long press for context menus. Follow platform conventions.`,
   },
   {
-    slug: "flutter-code-tips",
-    title: "Flutter Code Generation: Best Practices and Tips",
-    excerpt: "Tips for getting the most out of Launchpad AI's Flutter code export.",
+    slug: "ai-design-tips",
+    title: "AI Mobile Design: Best Practices and Tips",
+    excerpt:
+      "Tips for getting the most out of floow.design's AI-powered mobile design.",
     date: "Feb 12, 2026",
     category: "Engineering",
     readTime: "6 min",
     author: "Adarsh Kumar",
-    image: "https://lh3.googleusercontent.com/kpKlgqVM9HpnzkABysl_zNiUI-dgwj1kzHnRnh1qkwyxedx6b7dqHkTnNa8cvACvifn2lIHWb95KStpEgveKsl621OibIwFtkky-Ng=w1200",
-    content: `Getting the most out of AI-generated Flutter code requires understanding how to prompt effectively and how to integrate the output into your project.
+    image:
+      "https://lh3.googleusercontent.com/kpKlgqVM9HpnzkABysl_zNiUI-dgwj1kzHnRnh1qkwyxedx6b7dqHkTnNa8cvACvifn2lIHWb95KStpEgveKsl621OibIwFtkky-Ng=w1200",
+    content: `Getting the most out of AI-generated mobile designs requires understanding how to prompt effectively and how to refine the output.
 
 ## Writing Effective Prompts
 
-The quality of generated code depends heavily on your prompt. Here are some tips:
+The quality of generated designs depends heavily on your prompt. Here are some tips:
 
 ### Be Specific
 
@@ -248,32 +260,32 @@ Instead of "make a login screen", try "a login screen with email and password fi
 
 ### Mention Components
 
-Reference specific Flutter components: "use a BottomNavigationBar with 4 tabs", "include a SliverAppBar with a hero image".
+Reference specific UI components: "use a bottom navigation bar with 4 tabs", "include a collapsible header with a hero image".
 
 ### Specify Layout
 
-Describe the layout structure: "a Column with a header image, title, description, and a row of action buttons at the bottom".
+Describe the layout structure: "a header image at the top, title, description below, and a row of action buttons at the bottom".
 
-## Code Quality Tips
+## Design Quality Tips
 
-### Widget Extraction
+### Consistency
 
-The AI generates complete widget trees. Extract reusable widgets into separate classes for better maintainability.
+The AI generates complete screen designs. Ensure consistent spacing, colors, and typography across all screens.
 
-### State Management
+### Theme Customization
 
-Generated code uses StatelessWidget where possible and StatefulWidget where state is needed. For complex apps, consider integrating with Provider, Riverpod, or BLoC.
+Specify your brand colors, fonts, and design tokens. The AI will apply them consistently across all generated screens.
 
-### Theme Integration
+### Responsive Design
 
-Generated code uses ThemeData. Customize the theme to match your brand — the generated widgets will automatically pick up the changes.
+Generated designs follow responsive principles. Review how layouts adapt to different screen sizes.
 
-## Common Patterns
+## Common Screen Types
 
-- **List screens** — Use ListView.builder for dynamic content
-- **Detail screens** — CustomScrollView with SliverAppBar
-- **Form screens** — Form widget with TextFormField validation
-- **Dashboard screens** — GridView with card-based layout`,
+- **List screens** — Scrollable content with cards or list items
+- **Detail screens** — Hero image with collapsible header and content
+- **Form screens** — Input fields with validation states
+- **Dashboard screens** — Grid-based layout with metric cards`,
   },
 ];
 

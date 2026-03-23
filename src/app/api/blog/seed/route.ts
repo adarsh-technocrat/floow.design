@@ -9,7 +9,10 @@ export async function POST() {
   try {
     const blogDir = path.join(process.cwd(), "src/content/blog");
     if (!fs.existsSync(blogDir)) {
-      return NextResponse.json({ error: "No blog content directory found" }, { status: 404 });
+      return NextResponse.json(
+        { error: "No blog content directory found" },
+        { status: 404 },
+      );
     }
 
     const files = fs.readdirSync(blogDir).filter((f) => f.endsWith(".mdx"));
@@ -30,7 +33,7 @@ export async function POST() {
           tldr: data.tldr || null,
           category: data.category || "General",
           tags: Array.isArray(data.tags) ? data.tags : [],
-          author: data.author || "Launchpad AI",
+          author: data.author || "floow.design",
           authorRole: data.authorRole || null,
           published: data.published !== false,
         },
@@ -41,7 +44,7 @@ export async function POST() {
           tldr: data.tldr || null,
           category: data.category || "General",
           tags: Array.isArray(data.tags) ? data.tags : [],
-          author: data.author || "Launchpad AI",
+          author: data.author || "floow.design",
           authorRole: data.authorRole || null,
           published: data.published !== false,
         },

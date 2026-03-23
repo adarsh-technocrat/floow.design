@@ -4,7 +4,7 @@ import { Avatar } from "@/components/ui/Avatar";
 const testimonials = [
   {
     quote:
-      "I described a fitness app and had pixel-perfect screens in 30 seconds. The Flutter code just worked. This is genuinely magical.",
+      "I described a fitness app and had pixel-perfect screens in 30 seconds. The designs were spot-on. This is genuinely magical.",
     name: "Sarah Chen",
     role: "Mobile Developer",
     company: "Freelance",
@@ -23,9 +23,9 @@ const testimonials = [
   },
   {
     quote:
-      "I'm a backend engineer who needed a frontend fast. floow.design let me skip the design phase entirely and go straight to working Flutter code.",
+      "I'm a product manager with no design skills. floow.design let me create professional mobile mockups in minutes instead of waiting weeks.",
     name: "Jake Morrison",
-    role: "Backend Engineer",
+    role: "Product Manager",
     company: "Cloud Systems Co",
     email: "jake@demo.com",
     colSpan: 1,
@@ -102,7 +102,9 @@ export function Testimonials() {
             <div
               key={t.name}
               className={`group relative overflow-hidden rounded-2xl border border-b-secondary p-6 transition-colors ${
-                t.colSpan === 2 ? "sm:col-span-2 md:col-span-2" : "md:col-span-1"
+                t.colSpan === 2
+                  ? "sm:col-span-2 md:col-span-2"
+                  : "md:col-span-1"
               } ${
                 t.highlight
                   ? "bg-btn-primary-bg text-btn-primary-text"

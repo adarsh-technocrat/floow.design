@@ -37,7 +37,9 @@ export function Hero() {
 
     setCreating(true);
     try {
-      const { data } = await http.post<{ id?: string }>("/api/projects", { name: text });
+      const { data } = await http.post<{ id?: string }>("/api/projects", {
+        name: text,
+      });
       if (data.id) {
         router.push(`/project/${data.id}?prompt=${encodeURIComponent(text)}`);
       }
@@ -145,9 +147,9 @@ export function Hero() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1, duration: 0.6 }}
         >
-          Idea to Flutter app,
+          Design mobile apps
           <br />
-          <span className="text-t-secondary">in seconds</span>
+          <span className="text-t-secondary">with AI, in seconds</span>
         </motion.h1>
 
         <motion.p
@@ -156,8 +158,8 @@ export function Hero() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2, duration: 0.6 }}
         >
-          Describe your app, get beautiful designs and production-ready Flutter
-          code — instantly.
+          Describe your app idea and get beautiful, high-fidelity mobile designs
+          — instantly.
         </motion.p>
 
         {/* Prompt box */}
@@ -242,7 +244,7 @@ export function Hero() {
           </div>
           <p className="text-xs text-t-tertiary">
             <span className="font-semibold text-t-secondary">1,000+</span>{" "}
-            developers ship with Launchpad AI
+            designers & teams use floow.design
           </p>
         </motion.div>
       </div>

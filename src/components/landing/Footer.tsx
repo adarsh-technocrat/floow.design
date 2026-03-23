@@ -44,7 +44,7 @@ export function Footer() {
           <div className="max-w-[220px]">
             <Logo />
             <p className="mt-3 text-xs text-t-tertiary leading-relaxed">
-              Design to Flutter code, powered by AI.
+              AI-powered mobile app design.
             </p>
             {/* Status */}
             <div className="mt-4 flex items-center gap-2">
@@ -82,7 +82,7 @@ export function Footer() {
 
         <div className="mt-10 flex items-center justify-between pt-6">
           <p className="text-[11px] text-t-tertiary">
-            &copy; 2026 Launchpad AI
+            &copy; 2026 floow.design
           </p>
           <div className="flex items-center gap-3">
             <a
