@@ -368,9 +368,37 @@ export default function DashboardPage() {
   const createProject = useCallback(
     async (name?: string) => {
       const prompt = name || "Untitled Project";
+      // #region agent log
+      fetch("http://127.0.0.1:7253/ingest/bf26e32e-b221-45cd-9795-984cd7651c6f", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          runId: "pre-fix",
+          hypothesisId: "H1",
+          location: "dashboard/page.tsx:createProject:start",
+          message: "createProject invoked",
+          data: { hasName: Boolean(name), promptLength: prompt.length },
+          timestamp: Date.now(),
+        }),
+      }).catch(() => {});
+      // #endregion
       const result = await dispatch(createProjectThunk(prompt)).unwrap();
       if (result.id) {
         const params = name ? `?prompt=${encodeURIComponent(name)}` : "";
+        // #region agent log
+        fetch("http://127.0.0.1:7253/ingest/bf26e32e-b221-45cd-9795-984cd7651c6f", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            runId: "pre-fix",
+            hypothesisId: "H1",
+            location: "dashboard/page.tsx:createProject:success",
+            message: "project created and navigating",
+            data: { hasProjectId: Boolean(result.id), params },
+            timestamp: Date.now(),
+          }),
+        }).catch(() => {});
+        // #endregion
         router.push(`/app/${result.id}${params}`);
       }
     },
@@ -378,6 +406,25 @@ export default function DashboardPage() {
   );
 
   const handleSubmit = () => {
+    // #region agent log
+    fetch("http://127.0.0.1:7253/ingest/bf26e32e-b221-45cd-9795-984cd7651c6f", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        runId: "pre-fix",
+        hypothesisId: "H2",
+        location: "dashboard/page.tsx:handleSubmit",
+        message: "dashboard submit attempted",
+        data: {
+          inputLength: inputValue.trim().length,
+          hasPlan: Boolean(planSummary),
+          plan: planSummary?.plan ?? null,
+          credits: planSummary?.credits ?? null,
+        },
+        timestamp: Date.now(),
+      }),
+    }).catch(() => {});
+    // #endregion
     if (!inputValue.trim()) return;
     // Gate: must be on a paid plan
     if (!planSummary || planSummary.plan === "FREE") {
