@@ -6,6 +6,13 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { createCheckoutSession, openStripePortal } from "@/store/slices/userSlice";
 import NumberFlow from "@number-flow/react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogClose,
+} from "@/components/ui/dialog";
 
 const PLAN_ORDER = ["FREE", "LITE", "STARTER", "PRO", "TEAM"];
 
@@ -116,8 +123,6 @@ export function PricingDialog({ open, onClose, reason }: PricingDialogProps) {
   const [billing, setBilling] = useState<"monthly" | "yearly">("monthly");
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
 
-  if (!open) return null;
-
   const currentPlanName = userPlan?.plan?.toUpperCase() ?? "FREE";
   const currentPlanIdx = PLAN_ORDER.indexOf(currentPlanName);
   const isExhausted = reason === "insufficient_credits";
@@ -183,26 +188,18 @@ export function PricingDialog({ open, onClose, reason }: PricingDialogProps) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div
-        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
-        onClick={onClose}
-      />
-
-      <div className="relative z-10 w-full max-w-5xl max-h-[90vh] rounded-2xl border border-b-secondary bg-surface-elevated shadow-2xl overflow-y-auto">
-        {/* Header */}
-        <div className="sticky top-0 z-20 flex items-center justify-between px-6 py-5 border-b border-b-secondary bg-surface-elevated/95 backdrop-blur-sm">
+    <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
+      <DialogContent showCloseButton={false} className="flex max-h-[90vh] min-h-0 flex-col overflow-hidden p-0 sm:max-w-5xl">
+        <DialogHeader className="sticky top-0 z-20 flex shrink-0 flex-row items-start justify-between gap-4 space-y-0 px-6 py-5 border-b border-b-secondary bg-surface-elevated/95 backdrop-blur-sm">
           <div>
-            <h2
+            <DialogTitle
               className="text-xl md:text-2xl font-semibold text-t-primary"
-              style={{
-                fontFamily: "var(--font-logo), 'Space Grotesk', sans-serif",
-              }}
+              style={{ fontFamily: "var(--font-logo), 'Space Grotesk', sans-serif" }}
             >
               {isExhausted
                 ? "You've used all your credits"
                 : "Choose a plan to get started"}
-            </h2>
+            </DialogTitle>
             <p className="text-sm text-t-secondary mt-1">
               {isExhausted
                 ? resetDate
@@ -219,16 +216,15 @@ export function PricingDialog({ open, onClose, reason }: PricingDialogProps) {
               </p>
             )}
           </div>
-          <button
-            onClick={onClose}
-            className="flex size-9 items-center justify-center rounded-lg text-t-tertiary hover:bg-input-bg hover:text-t-primary transition-colors"
-          >
+          <DialogClose className="flex size-9 shrink-0 items-center justify-center rounded-lg text-t-tertiary transition-colors hover:bg-input-bg hover:text-t-primary">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <line x1="18" y1="6" x2="6" y2="18" />
               <line x1="6" y1="6" x2="18" y2="18" />
             </svg>
-          </button>
-        </div>
+          </DialogClose>
+        </DialogHeader>
+
+        <div className="flex-1 overflow-y-auto">
 
         {/* Billing toggle */}
         <div className="flex items-center justify-center border-b border-b-secondary px-6 py-4">
@@ -398,7 +394,8 @@ export function PricingDialog({ open, onClose, reason }: PricingDialogProps) {
             Full comparison →
           </button>
         </div>
-      </div>
-    </div>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }

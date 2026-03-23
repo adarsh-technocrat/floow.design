@@ -21,7 +21,7 @@ function DialogOverlay({
   return (
     <DialogPrimitive.Overlay
       className={cn(
-        "fixed inset-0 z-9999 bg-black/40 backdrop-blur-sm transition-opacity duration-200 data-[state=closed]:opacity-0 data-[state=open]:opacity-100 pointer-events-auto dark:bg-black/70",
+        "fixed inset-0 z-[60] bg-black/60 backdrop-blur-sm transition-opacity duration-200 data-[state=closed]:opacity-0 data-[state=open]:opacity-100 pointer-events-auto",
         className,
       )}
       {...props}
@@ -37,24 +37,37 @@ function DialogContent({
 }: React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content> & {
   showCloseButton?: boolean;
 }) {
+  const stopEventPropagation = (e: React.SyntheticEvent) => {
+    e.stopPropagation();
+  };
+
   return (
     <DialogPortal>
-      <DialogOverlay />
-      <DialogPrimitive.Content
-        className={cn(
-          "fixed left-[50%] top-[50%] z-10000 grid w-full max-w-[calc(100%-2rem)] translate-x-[-50%] translate-y-[-50%] gap-4 p-6 shadow-2xl duration-200 transition-[opacity,transform] data-[state=closed]:opacity-0 data-[state=closed]:scale-95 data-[state=open]:opacity-100 data-[state=open]:scale-100 sm:max-w-lg md:max-w-[min(calc(100%-2rem),var(--container-5xl))]",
-          className,
-        )}
-        {...props}
+      <div
+        className="fixed inset-0 z-[60]"
+        onPointerDown={stopEventPropagation}
+        onPointerMove={stopEventPropagation}
+        onPointerUp={stopEventPropagation}
+        onClick={stopEventPropagation}
+        onWheel={stopEventPropagation}
       >
-        {children}
-        {showCloseButton ? (
-          <DialogPrimitive.Close className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none">
-            <X className="size-4" />
-            <span className="sr-only">Close</span>
-          </DialogPrimitive.Close>
-        ) : null}
-      </DialogPrimitive.Content>
+        <DialogOverlay className="z-0" />
+        <DialogPrimitive.Content
+          className={cn(
+            "fixed left-[50%] top-[50%] z-[1] grid w-full max-w-[calc(100%-2rem)] translate-x-[-50%] translate-y-[-50%] gap-4 rounded-2xl border border-b-secondary bg-surface-elevated p-6 shadow-2xl duration-200 transition-[opacity,transform] data-[state=closed]:opacity-0 data-[state=closed]:scale-95 data-[state=open]:opacity-100 data-[state=open]:scale-100 sm:max-w-lg md:max-w-[min(calc(100%-2rem),var(--container-5xl))]",
+            className,
+          )}
+          {...props}
+        >
+          {children}
+          {showCloseButton ? (
+            <DialogPrimitive.Close className="absolute right-4 top-4 flex size-9 items-center justify-center rounded-lg text-t-tertiary transition-colors hover:bg-input-bg hover:text-t-primary">
+              <X className="size-4" />
+              <span className="sr-only">Close</span>
+            </DialogPrimitive.Close>
+          ) : null}
+        </DialogPrimitive.Content>
+      </div>
     </DialogPortal>
   );
 }
