@@ -2,7 +2,7 @@
 
 import type React from "react";
 import { Fragment, useEffect, useRef, useState } from "react";
-import { ChevronDown, MessageSquareText, X } from "lucide-react";
+import { Brain, ChevronDown, MessageSquareText, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { toggleAgentLogVisible } from "@/store/slices/uiSlice";
@@ -41,61 +41,91 @@ function getUserText(msg: ChatMessage): string | null {
 
 function getToolLabel(
   toolName: string,
-  input?: { id?: string; name?: string },
+  input?: { id?: string; name?: string; description?: string; screens?: Array<{ name?: string }> },
   done?: boolean,
 ): string {
   const toTitle = (s: string) => s.replace(/\b\w/g, (c) => c.toUpperCase());
-  const name = input?.name ? toTitle(input.name) : undefined;
-  const map: Record<string, [string, string]> = {
-    classifyIntent: ["Understanding intent…", "Understood intent"],
-    planScreens: ["Planning screens…", "Planned screens"],
-    planStyle: ["Defining visual style…", "Defined visual style"],
-    build_theme: ["Creating theme…", "Created theme"],
-    update_theme: ["Updating theme…", "Updated theme"],
-    create_all_screens: ["Creating all screens…", "Created all screens"],
-  };
-  if (map[toolName]) return done ? map[toolName][1] : map[toolName][0];
+  // Try to extract screen name from various input shapes
+  const screenName =
+    input?.name
+      ? toTitle(input.name)
+      : input?.screens?.[0]?.name
+        ? toTitle(input.screens[0].name)
+        : undefined;
+
   if (toolName === "design_screen")
     return done
-      ? `Designed ${name ?? "screen"}`
-      : `Designing ${name ?? "screen"}…`;
+      ? `Designed ${screenName ?? "screen"}`
+      : `Designing ${screenName ?? "screen"}…`;
+  if (toolName === "create_all_screens") {
+    const count = input?.screens?.length;
+    const names = input?.screens?.map((s) => s.name).filter(Boolean);
+    if (names && names.length > 0) {
+      return done
+        ? `Created ${names.join(", ")}`
+        : `Creating ${names.join(", ")}…`;
+    }
+    return done
+      ? `Created ${count ?? ""} screens`
+      : `Creating ${count ?? ""} screens…`;
+  }
   if (toolName === "update_screen")
     return done
-      ? `Updated ${name ?? "screen"}`
-      : `Updating ${name ?? "screen"}…`;
+      ? `Updated ${screenName ?? "screen"}`
+      : `Updating ${screenName ?? "screen"}…`;
   if (toolName === "edit_design")
-    return done ? `Edited ${name ?? "screen"}` : `Editing ${name ?? "screen"}…`;
+    return done
+      ? `Edited ${screenName ?? "screen"}`
+      : `Editing ${screenName ?? "screen"}…`;
   if (toolName === "read_screen")
-    return done ? `Read ${name ?? "screen"}` : `Reading ${name ?? "screen"}…`;
+    return done
+      ? `Read ${screenName ?? "screen"}`
+      : `Reading ${screenName ?? "screen"}…`;
+  if (toolName === "build_theme")
+    return done ? "Built theme" : "Building theme…";
+  if (toolName === "update_theme")
+    return done ? "Updated theme" : "Updating theme…";
   const base = toTitle(toolName.replace(/_/g, " "));
   return done ? base : `${base}…`;
 }
+
+const NEON_GREEN = "#39FF14";
 
 function ToolChip({ part }: { part: MessagePart }) {
   const done = part.state === "done" || part.state === "output-available";
   const label = getToolLabel(
     part.toolName ??
       (part.type?.startsWith("tool-") ? part.type.slice(5) : "tool"),
-    part.input as { id?: string; name?: string } | undefined,
+    part.input as { id?: string; name?: string; description?: string; screens?: Array<{ name?: string }> } | undefined,
     done,
   );
   return (
-    <div className="flex items-center gap-1.5 rounded-md border border-b-secondary bg-input-bg px-2 py-1">
+    <div
+      className="flex items-center gap-1.5 rounded-md border px-2 py-1"
+      style={{
+        borderColor: done ? `${NEON_GREEN}40` : `${NEON_GREEN}25`,
+        backgroundColor: done ? `${NEON_GREEN}08` : `${NEON_GREEN}05`,
+      }}
+    >
       {done ? (
         <svg
           width="10"
           height="10"
           viewBox="0 0 256 256"
-          fill="currentColor"
-          className="text-t-secondary shrink-0"
+          fill={NEON_GREEN}
+          className="shrink-0"
         >
           <path d="M229.66,77.66l-128,128a8,8,0,0,1-11.32,0l-56-56a8,8,0,0,1,11.32-11.32L96,188.69,218.34,66.34a8,8,0,0,1,11.32,11.32Z" />
         </svg>
       ) : (
-        <span className="size-2.5 shrink-0 animate-pulse rounded-full bg-t-secondary" />
+        <span
+          className="size-2 shrink-0 rounded-full animate-pulse"
+          style={{ backgroundColor: NEON_GREEN }}
+        />
       )}
       <span
-        className={`font-mono text-[11px] uppercase tracking-wider ${done ? "text-t-secondary" : "text-t-secondary"}`}
+        className="font-mono text-[11px] uppercase tracking-wider"
+        style={{ color: NEON_GREEN }}
       >
         {label}
       </span>
@@ -183,37 +213,20 @@ function ExpandableReasoningBlock({
     if (streaming) setOpen(true);
   }, [streaming]);
 
-  const flat = text.replace(/\s+/g, " ").trim();
-  const preview = flat.slice(0, 88);
-  const truncated = flat.length > 88;
-
   return (
     <div className="overflow-hidden rounded-md border border-b-secondary bg-input-bg">
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="flex w-full items-center gap-2 px-2 py-1.5 text-left transition-colors hover:bg-surface-sunken/80"
+        className="flex w-full items-center gap-2 px-2.5 py-2 text-left transition-colors hover:bg-surface-sunken/80"
         aria-expanded={open}
         aria-controls={`reasoning-body-${instanceKey}`}
         id={`reasoning-trigger-${instanceKey}`}
       >
-        <div className="min-w-0 flex-1">
-          <span className="font-mono text-[11px] font-medium uppercase tracking-wider text-t-tertiary">
-            Reasoning
-          </span>
-          {!open && (
-            <p className="mt-0.5 line-clamp-2 text-[11px] leading-snug text-t-secondary">
-              {preview}
-              {truncated ? "…" : ""}
-            </p>
-          )}
-        </div>
-        {streaming ? (
-          <span
-            className="size-1.5 shrink-0 animate-pulse rounded-full bg-t-secondary"
-            title="Streaming"
-          />
-        ) : null}
+        <Brain className="size-3.5 shrink-0 text-t-tertiary" />
+        <span className="flex-1 text-xs font-medium text-t-secondary">
+          {streaming ? "Reasoning…" : "Reasoning"}
+        </span>
         <ChevronDown
           className={cn(
             "size-3.5 shrink-0 text-t-tertiary transition-transform",
@@ -458,17 +471,14 @@ export function CanvasBottomLeft() {
                     );
                   })}
 
-                  {/* Thinking indicator */}
+                  {/* Thinking indicator — blue shimmer text */}
                   {(chatStatus === "submitted" || chatStatus === "streaming") && (
                     <div className="flex justify-start">
-                      <div className="flex items-center gap-2 rounded-lg bg-input-bg/60 px-3 py-2">
-                        <div className="flex gap-1">
-                          <span className="size-1.5 rounded-full bg-t-tertiary animate-bounce" style={{ animationDelay: "0ms" }} />
-                          <span className="size-1.5 rounded-full bg-t-tertiary animate-bounce" style={{ animationDelay: "150ms" }} />
-                          <span className="size-1.5 rounded-full bg-t-tertiary animate-bounce" style={{ animationDelay: "300ms" }} />
-                        </div>
-                        <span className="text-xs text-t-tertiary">
-                          {chatStatus === "submitted" ? "Thinking..." : "Generating..."}
+                      <div className="rounded-lg bg-input-bg/60 px-3 py-2">
+                        <span className="shimmer-text text-xs font-medium">
+                          {chatStatus === "submitted"
+                            ? "Thinking..."
+                            : "Generating screens..."}
                         </span>
                       </div>
                     </div>
