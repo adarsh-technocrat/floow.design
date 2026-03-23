@@ -296,7 +296,7 @@ async function tryNanoBanana(
 
       const response = await ai.models.generateContent({
         model,
-        contents: `Generate a single banner image in a fun, hand-drawn doodle illustration style. Use black ink line art doodles on a clean white or light pastel background. The doodles should be playful sketches of tech/design related objects (phones, screens, cursors, lightbulbs, gears, pencils, code brackets, UI wireframes). Keep it minimal, whimsical, and charming — like notebook margin doodles. No text, no watermarks. 16:9 aspect ratio.\n\nTopic context for the doodle elements: ${prompt}`,
+        contents: `Generate a vibrant, eye-catching blog banner image. Style: modern 3D isometric illustration with bold gradients (electric purple, neon blue, hot coral, golden yellow). Show a dynamic composition of floating tech objects — glowing smartphone screens showing app UIs, holographic wireframes, AI neural network nodes with light trails, stylized cursors, colorful UI component cards floating in space, abstract geometric shapes. The scene should feel futuristic, energetic, and premium — like a top-tier tech blog hero image. Soft ambient lighting with subtle glows and reflections. Absolutely NO text, NO letters, NO words, NO watermarks. 16:9 aspect ratio.\n\nObjects to feature based on article topic: ${prompt}`,
         config: {
           responseModalities: ["TEXT", "IMAGE"],
         },
