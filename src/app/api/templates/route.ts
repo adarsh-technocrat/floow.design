@@ -7,7 +7,11 @@ export async function GET() {
     const templates = await prisma.project.findMany({
       where: { isTemplate: true, trashedAt: null },
       orderBy: { createdAt: "asc" },
-      include: {
+      select: {
+        id: true,
+        name: true,
+        templateTag: true,
+        thumbnail: true,
         _count: { select: { frames: true } },
         frames: {
           orderBy: { updatedAt: "asc" },

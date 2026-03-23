@@ -45,9 +45,9 @@
   --border-secondary: #ededf0;
   --border-strong: #d4d4d8;
   --canvas-bg: #f4f4f5;
-  --canvas-dot: rgba(9, 9, 11, 0.16);
-  --canvas-panel-bg: #ffffff;
-  --canvas-panel-border: #e4e4e7;
+  --canvas-dot: rgba(9, 9, 11, 0.28);
+  --canvas-panel-bg: rgba(255, 255, 255, 0.92);
+  --canvas-panel-border: #d4d4d8;
   --input-bg: #f4f4f5;
   --input-border: #d4d4d8;
   --input-placeholder: #a1a1aa;
@@ -59,14 +59,12 @@
   --mention-chip-bg: #e4e4e7;
   --mention-chip-border: #d4d4d8;
   --mention-chip-text: #18181b;
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
-  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.06);
-  --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.08);
-  /* Landing: large prompt card (Hero) — soft lift on light backgrounds */
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08);
+  --shadow-md: 0 4px 14px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.12);
   --shadow-prompt-card:
     0 1px 2px rgba(0, 0, 0, 0.04),
     0 10px 40px -6px rgba(0, 0, 0, 0.08);
-  /* Landing: fields + compact floating prompts */
   --shadow-landing-input:
     0 1px 2px rgba(0, 0, 0, 0.05),
     0 2px 8px -2px rgba(0, 0, 0, 0.06);
@@ -271,6 +269,13 @@ body {
 .reference-mode-button {
   background: var(--input-bg);
   color: var(--text-primary);
+}
+
+/* Mention chips inside contenteditable inputs */
+.mention-chip {
+  background-color: var(--mention-chip-bg);
+  border: 1px solid var(--mention-chip-border);
+  color: var(--mention-chip-text);
 }
 
 .bg-canvas-panel {

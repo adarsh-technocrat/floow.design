@@ -1,12 +1,17 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import NumberFlow from "@number-flow/react";
 import { Header } from "@/components/landing/Header";
 import { Footer } from "@/components/landing/Footer";
 import { useAuth } from "@/contexts/AuthContext";
 import http from "@/lib/http";
+
+interface UserPlan {
+  plan: string;
+  billingInterval: string | null;
+}
 
 const plans = [
   {
@@ -112,12 +117,45 @@ function Cell({
 export default function PricingPage() {
   const [billing, setBilling] = useState<"monthly" | "yearly">("monthly");
   const [checkoutLoading, setCheckoutLoading] = useState<string | null>(null);
+  const [userPlan, setUserPlan] = useState<UserPlan | null>(null);
   const { user } = useAuth();
   const router = useRouter();
+
+  // Fetch user's current plan
+  useEffect(() => {
+    if (!user?.uid) { setUserPlan(null); return; }
+    http.get(`/api/user/plan?userId=${encodeURIComponent(user.uid)}`)
+      .then(({ data }) => {
+        if (data && !data.error) {
+          setUserPlan({ plan: data.plan, billingInterval: data.billingInterval });
+        }
+      })
+      .catch(() => {});
+  }, [user?.uid]);
+
+  const isCurrentPlan = (planName: string) => {
+    return userPlan?.plan?.toUpperCase() === planName.toUpperCase();
+  };
+
+  const isDowngrade = (planName: string) => {
+    const order = ["FREE", "LITE", "STARTER", "PRO", "TEAM"];
+    const currentIdx = order.indexOf(userPlan?.plan?.toUpperCase() ?? "FREE");
+    const targetIdx = order.indexOf(planName.toUpperCase());
+    return targetIdx < currentIdx;
+  };
 
   const handleUpgrade = async (planName: string) => {
     if (!user) {
       router.push(`/signin?redirect=/pricing`);
+      return;
+    }
+
+    // If current plan, open billing portal to manage
+    if (isCurrentPlan(planName)) {
+      try {
+        const { data } = await http.post<{ url?: string }>("/api/stripe/portal", { userId: user.uid });
+        if (data.url) window.location.href = data.url;
+      } catch { /* silent */ }
       return;
     }
 
@@ -136,6 +174,23 @@ export default function PricingPage() {
     } finally {
       setCheckoutLoading(null);
     }
+  };
+
+  const getButtonLabel = (plan: { name: string; cta: string }) => {
+    if (checkoutLoading === plan.name) return "Loading...";
+    if (isCurrentPlan(plan.name)) return "Current Plan";
+    if (isDowngrade(plan.name)) return `Downgrade to ${plan.name}`;
+    return plan.cta;
+  };
+
+  const getButtonStyle = (plan: { name: string; popular: boolean }) => {
+    if (isCurrentPlan(plan.name)) {
+      return "border border-emerald-500/40 text-emerald-500 bg-emerald-500/10 cursor-default";
+    }
+    if (plan.popular) {
+      return "bg-btn-primary-bg text-btn-primary-text hover:opacity-90";
+    }
+    return "border border-b-secondary text-t-primary hover:bg-input-bg";
   };
 
   return (
@@ -211,7 +266,12 @@ export default function PricingPage() {
                   >
                     {plan.name}
                   </span>
-                  {plan.popular && (
+                  {isCurrentPlan(plan.name) && (
+                    <span className="text-[11px] font-mono uppercase tracking-wider text-emerald-500 bg-emerald-500/10 border border-emerald-500/30 rounded px-1.5 py-0.5 font-semibold">
+                      Current
+                    </span>
+                  )}
+                  {plan.popular && !isCurrentPlan(plan.name) && (
                     <span className="text-[11px] font-mono uppercase tracking-wider text-btn-primary-text bg-btn-primary-bg rounded px-1.5 py-0.5 font-semibold">
                       Most Popular
                     </span>
@@ -259,10 +319,10 @@ export default function PricingPage() {
 
                 <button
                   onClick={() => handleUpgrade(plan.name)}
-                  disabled={checkoutLoading === plan.name}
-                  className={`flex h-10 w-full items-center justify-center rounded text-[11px] font-mono font-semibold uppercase tracking-wider transition-colors mb-4 disabled:opacity-50 ${plan.popular ? "bg-btn-primary-bg text-btn-primary-text hover:opacity-90" : "border border-b-secondary text-t-primary hover:bg-input-bg"}`}
+                  disabled={checkoutLoading === plan.name || isCurrentPlan(plan.name)}
+                  className={`flex h-10 w-full items-center justify-center rounded text-[11px] font-mono font-semibold uppercase tracking-wider transition-colors mb-4 disabled:opacity-50 ${getButtonStyle(plan)}`}
                 >
-                  {checkoutLoading === plan.name ? "Loading..." : plan.cta}
+                  {getButtonLabel(plan)}
                 </button>
 
                 <p className="text-sm font-medium text-t-primary">
@@ -329,7 +389,12 @@ export default function PricingPage() {
                     >
                       {plan.name}
                     </span>
-                    {plan.popular && (
+                    {isCurrentPlan(plan.name) && (
+                      <span className="text-[11px] font-mono uppercase tracking-wider text-emerald-500 bg-emerald-500/10 border border-emerald-500/30 rounded px-1.5 py-0.5 font-semibold">
+                        Current
+                      </span>
+                    )}
+                    {plan.popular && !isCurrentPlan(plan.name) && (
                       <span className="text-[11px] font-mono uppercase tracking-wider text-btn-primary-text bg-btn-primary-bg rounded px-1.5 py-0.5 font-semibold">
                         Most Popular
                       </span>
@@ -394,14 +459,10 @@ export default function PricingPage() {
                 <Cell key={plan.name} columnDivider={i > 0}>
                   <button
                     onClick={() => handleUpgrade(plan.name)}
-                    disabled={checkoutLoading === plan.name}
-                    className={`flex h-10 w-full items-center justify-center rounded text-[11px] font-mono font-semibold uppercase tracking-wider transition-colors disabled:opacity-50 ${
-                      plan.popular
-                        ? "bg-btn-primary-bg text-btn-primary-text hover:opacity-90"
-                        : "border border-b-secondary text-t-primary hover:bg-input-bg"
-                    }`}
+                    disabled={checkoutLoading === plan.name || isCurrentPlan(plan.name)}
+                    className={`flex h-10 w-full items-center justify-center rounded text-[11px] font-mono font-semibold uppercase tracking-wider transition-colors disabled:opacity-50 ${getButtonStyle(plan)}`}
                   >
-                    {checkoutLoading === plan.name ? "Loading..." : plan.cta}
+                    {getButtonLabel(plan)}
                   </button>
                 </Cell>
               ))}

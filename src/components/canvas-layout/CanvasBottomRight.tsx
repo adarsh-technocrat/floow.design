@@ -102,7 +102,7 @@ export function CanvasBottomRight() {
       </span>
 
       {/* Toolbar */}
-      <div className="flex items-center gap-1 rounded-lg border border-b-secondary bg-canvas-panel-bg backdrop-blur-sm px-1.5 py-1">
+      <div className="flex items-center gap-1 rounded-lg border border-b-strong bg-canvas-panel-bg shadow-md backdrop-blur-xl px-1.5 py-1">
         <ToolbarButton
           title="Select (V)"
           selected={canvasToolMode === "select"}

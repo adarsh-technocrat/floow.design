@@ -51,7 +51,10 @@ function createChipElement(label: string, id: string): HTMLSpanElement {
   span.dataset.pageId = id;
   span.dataset.pageLabel = label;
   span.className =
-    "mention-chip inline-flex items-center rounded-md bg-[rgba(255,255,255,0.7)]/30 px-1.5 py-0.5 text-xs text-[rgba(255,255,255,0.7)] font-medium mx-0.5 align-middle";
+    "mention-chip inline-flex items-center rounded-md border px-1.5 py-0.5 text-xs font-medium mx-0.5 align-middle";
+  span.style.backgroundColor = "var(--mention-chip-bg)";
+  span.style.borderColor = "var(--mention-chip-border)";
+  span.style.color = "var(--mention-chip-text)";
   span.textContent = label;
   return span;
 }

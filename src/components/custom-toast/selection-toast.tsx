@@ -15,15 +15,21 @@ export function SelectionToast({
   onDelete,
 }: SelectionToastProps) {
   const btnClass =
-    "shrink-0 inline-flex size-8 items-center justify-center rounded-md text-t-secondary transition-colors duration-200 hover:bg-input-bg hover:text-t-primary dark:text-white/70 dark:hover:bg-white/10 dark:hover:text-white/90";
+    "group shrink-0 inline-flex size-8 items-center justify-center rounded-md border border-b-strong bg-surface-elevated opacity-100 transition-colors duration-200 hover:bg-input-bg dark:border-white/15 dark:bg-white/5";
 
   return (
-    <div className="flex w-[550px] max-w-[calc(100vw-32px)] items-center justify-between gap-2 rounded-xl border border-b-secondary bg-surface-elevated p-2 shadow-lg duration-300 dark:border-transparent dark:bg-canvas-panel dark:shadow-none">
+    <div className="flex w-[550px] max-w-[calc(100vw-32px)] items-center justify-between gap-2 rounded-xl border border-b-strong bg-canvas-panel-bg p-2 shadow-lg backdrop-blur-xl duration-300 dark:border-transparent dark:shadow-none">
       <div className="flex items-center justify-start gap-2">
-        <span className="text-t-primary dark:opacity-90">
+        <span
+          className="dark:opacity-90"
+          style={{ color: "var(--text-primary)" }}
+        >
           <SectionalEditIcon color="currentColor" />
         </span>
-        <p className="text-sm font-normal text-t-primary dark:text-white/90">
+        <p
+          className="text-sm font-normal dark:text-white/90"
+          style={{ color: "var(--text-primary)" }}
+        >
           {message}
         </p>
       </div>
@@ -36,7 +42,11 @@ export function SelectionToast({
             title="Copy"
             aria-label="Copy"
           >
-            <Copy className="size-4" />
+            <Copy
+              className="size-4"
+              style={{ color: "var(--text-primary)" }}
+              strokeWidth={2.2}
+            />
           </button>
         )}
         {onDelete && (
@@ -47,7 +57,11 @@ export function SelectionToast({
             title="Delete"
             aria-label="Delete"
           >
-            <Trash2 className="size-4" />
+            <Trash2
+              className="size-4"
+              style={{ color: "var(--text-primary)" }}
+              strokeWidth={2.2}
+            />
           </button>
         )}
       </div>

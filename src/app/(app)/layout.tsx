@@ -12,7 +12,7 @@ export default function AppLayout({
     <AuthGuard>
       <StoreProvider>
         <ProjectLoader>{children}</ProjectLoader>
-        <Toaster position="top-center" richColors />
+        <Toaster position="top-center" richColors theme="system" />
       </StoreProvider>
     </AuthGuard>
   );

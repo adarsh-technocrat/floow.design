@@ -112,7 +112,7 @@ export default function ProjectCanvasPage() {
   return (
     <div className="flex h-screen w-full flex-col bg-canvas-bg">
       <div
-        className="pointer-events-none absolute left-0 right-0 top-0 z-[5] h-12 bg-gradient-to-b from-surface/60 to-transparent"
+        className="pointer-events-none absolute left-0 right-0 top-0 z-[5] h-14 bg-gradient-to-b from-canvas-bg/80 to-transparent"
         aria-hidden
       />
 

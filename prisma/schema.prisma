@@ -40,6 +40,8 @@ model User {
   apiKeys              ApiKey[]
   createdAt            DateTime      @default(now())
   updatedAt            DateTime      @updatedAt
+
+  @@index([stripeSubscriptionId])
 }
 
 model CreditLog {
@@ -54,6 +56,7 @@ model CreditLog {
   createdAt DateTime @default(now())
 
   @@index([userId, createdAt(sort: Desc)])
+  @@index([userId, amount, createdAt])
 }
 
 model Project {
@@ -67,6 +70,10 @@ model Project {
   frames       Frame[]
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
+
+  @@index([trashedAt, isTemplate])
+  @@index([updatedAt])
+  @@index([isTemplate])
 }
 
 model ChatSession {
@@ -82,6 +89,8 @@ model ChatSession {
   updatedAt DateTime @updatedAt
 
   @@unique([projectId, frameId, userId])
+  @@index([projectId])
+  @@index([userId])
 }
 
 model Frame {
@@ -93,6 +102,9 @@ model Frame {
   top       Int      @default(0)
   html      String   @db.Text
   updatedAt DateTime @updatedAt
+
+  @@index([projectId])
+  @@index([projectId, updatedAt])
 }
 
 model ApiKey {
@@ -123,4 +135,6 @@ model BlogPost {
   published   Boolean  @default(false)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+
+  @@index([published, createdAt(sort: Desc)])
 }

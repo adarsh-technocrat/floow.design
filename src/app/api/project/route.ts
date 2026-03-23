@@ -18,40 +18,35 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    const project = await prisma.project.findUnique({
-      where: { id: projectId },
-      include: {
-        frames: true,
-        chatSessions: {
-          where: { userId },
+    const [project, chatSession] = await Promise.all([
+      prisma.project.findUnique({
+        where: { id: projectId },
+        select: {
+          name: true,
+          frames: {
+            select: { id: true, label: true, left: true, top: true, html: true },
+          },
         },
-      },
-    });
+      }),
+      prisma.chatSession.findUnique({
+        where: { projectId_frameId_userId: { projectId, frameId: CANVAS_CHAT_FRAME_ID, userId } },
+        select: { messages: true },
+      }),
+    ]);
 
     if (!project) {
       return NextResponse.json({
+        name: "Untitled Project",
         frames: [],
         messages: [],
-        theme: {},
       });
     }
 
-    const frames = project.frames.map((f) => ({
-      id: f.id,
-      label: f.label,
-      left: f.left,
-      top: f.top,
-      html: f.html,
-    }));
-
-    const canvasSession = project.chatSessions.find(
-      (s) => s.frameId === CANVAS_CHAT_FRAME_ID,
-    );
     const records =
-      (canvasSession?.messages as ChatSessionMessageRecord[]) ?? [];
+      (chatSession?.messages as ChatSessionMessageRecord[]) ?? [];
     const messages = recordsToUiMessages(records);
 
-    return NextResponse.json({ name: project.name, frames, messages });
+    return NextResponse.json({ name: project.name, frames: project.frames, messages });
   } catch (e) {
     return NextResponse.json(
       { error: e instanceof Error ? e.message : "Unknown error" },

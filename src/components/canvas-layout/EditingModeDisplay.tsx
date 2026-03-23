@@ -10,6 +10,7 @@ import {
   subscribeChatStatus,
 } from "@/lib/chat-bridge";
 import { ChatPanel } from "./ChatPanel";
+import { StyleGuidePanel } from "./StyleGuidePanel";
 
 export function EditingModeDisplay() {
   const dispatch = useAppDispatch();
@@ -50,7 +51,7 @@ export function EditingModeDisplay() {
 
       {/* Bottom center — AI input box */}
       <div className="absolute bottom-4 left-1/2 z-20 -translate-x-1/2 w-full max-w-[600px] px-4">
-        <div className="rounded-2xl border border-b-secondary bg-surface-elevated/95 backdrop-blur-2xl transition-all focus-within:border-b-secondary">
+        <div className="rounded-2xl border border-b-strong bg-canvas-panel-bg shadow-lg backdrop-blur-xl transition-all focus-within:border-b-strong">
           <div className="px-4 pt-4 pb-2">
             <textarea
               ref={inputRef}
@@ -128,11 +129,11 @@ export function EditingModeDisplay() {
 
       {/* Right side tools */}
       <div className="absolute right-4 top-16 z-20 flex flex-col items-center gap-2">
-        <div className="flex flex-col items-center gap-1 rounded-lg border border-b-secondary bg-canvas-panel-bg backdrop-blur-sm p-1">
+        <div className="flex flex-col items-center gap-1 rounded-full border border-b-strong bg-canvas-panel-bg shadow-md backdrop-blur-xl p-1">
           <button
             type="button"
             onClick={() => setStyleGuideOpen((v) => !v)}
-            className={`rounded-md p-2 transition-colors ${
+            className={`rounded-full p-2 transition-colors ${
               styleGuideOpen
                 ? "bg-btn-primary-bg text-btn-primary-text"
                 : "text-t-secondary hover:bg-input-bg hover:text-t-primary"
@@ -142,6 +143,10 @@ export function EditingModeDisplay() {
             <StyleGuideIcon color="currentColor" width={18} height={18} />
           </button>
         </div>
+        <StyleGuidePanel
+          open={styleGuideOpen}
+          onClose={() => setStyleGuideOpen(false)}
+        />
       </div>
     </>
   );
