@@ -10,6 +10,7 @@ import { AgentShutterOverlays } from "@/components/AgentShutterOverlay";
 import { useCanvas } from "@/hooks/useCanvas";
 import { useCanvasInteraction } from "@/hooks/useCanvasInteraction";
 import { useAppSelector } from "@/store/hooks";
+import http from "@/lib/http";
 
 export function Canvas() {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -27,6 +28,8 @@ export function Canvas() {
     fitView,
   } = useCanvas();
 
+  const projectId = useAppSelector((s) => s.project.projectId) ?? "";
+
   const persistFramePosition = useCallback(
     (
       frameId: string,
@@ -37,19 +40,16 @@ export function Canvas() {
     ) => {
       const frame = frames.find((f) => f.id === frameId);
       if (!frame) return;
-      fetch("/api/frames", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
+      http.post("/api/frames", {
           frameId: frame.id,
           html: html ?? frame.html,
           label: label ?? frame.label,
           left: left ?? frame.left,
           top: top ?? frame.top,
-        }),
-      }).catch(() => {});
+          projectId,
+        }).catch(() => {});
     },
-    [frames],
+    [frames, projectId],
   );
 
   const prevFrameIdsRef = useRef<Set<string>>(new Set());
@@ -129,22 +129,20 @@ export function Canvas() {
               if (selectedFrameIds[0]) {
                 duplicateFrameById(selectedFrameIds[0]);
                 toast.success("Screen duplicated", {
-                  position: "bottom-center",
+                  position: "top-center",
                 });
               }
             }}
             onDelete={() => {
               const count = selectedFrameIds.length;
               selectedFrameIds.forEach((id) => {
-                fetch(`/api/frames?frameId=${encodeURIComponent(id)}`, {
-                  method: "DELETE",
-                }).catch(() => {});
+                http.delete(`/api/frames?frameId=${encodeURIComponent(id)}`).catch(() => {});
                 removeFrameFromCanvas(id);
               });
               toast.dismiss("selection");
               toast.success(
                 count === 1 ? "Screen deleted" : `${count} screens deleted`,
-                { position: "bottom-center" },
+                { position: "top-center" },
               );
             }}
           />
@@ -152,7 +150,7 @@ export function Canvas() {
         {
           id: "selection",
           duration: Infinity,
-          position: "bottom-center",
+          position: "top-center",
           closeButton: false,
         },
       );
@@ -249,15 +247,17 @@ export function Canvas() {
         }}
       >
         {marqueeStartRef.current && marqueeEnd && (
-          <div
-            className="pointer-events-none absolute z-50 border-2 border-[#8A87F8]/55 bg-[#8A87F8]/12"
+          <svg
+            className="pointer-events-none absolute z-50"
             style={{
               left: Math.min(marqueeStartRef.current.contentX, marqueeEnd.x),
               top: Math.min(marqueeStartRef.current.contentY, marqueeEnd.y),
               width: Math.abs(marqueeEnd.x - marqueeStartRef.current.contentX),
               height: Math.abs(marqueeEnd.y - marqueeStartRef.current.contentY),
             }}
-          />
+          >
+            <rect x="1.5" y="1.5" width="calc(100% - 3px)" height="calc(100% - 3px)" fill="rgba(138,135,248,0.12)" stroke="#8B7CFF" strokeOpacity="0.55" strokeWidth="3" strokeDasharray="10 7" rx="0" />
+          </svg>
         )}
         {frames.map((frame) => (
           <Frame

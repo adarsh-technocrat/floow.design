@@ -1,4 +1,5 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
+import http from "@/lib/http";
 
 export interface ProjectListItem {
   id: string;
@@ -33,6 +34,7 @@ export interface TemplateItem {
 interface ProjectsState {
   list: ProjectListItem[];
   listLoading: boolean;
+  fetched: boolean;
   trashed: TrashedProject[];
   trashLoading: boolean;
   templates: TemplateItem[];
@@ -41,19 +43,19 @@ interface ProjectsState {
 
 const initialState: ProjectsState = {
   list: [],
-  listLoading: true,
+  listLoading: false,
+  fetched: false,
   trashed: [],
   trashLoading: false,
   templates: [],
-  templatesLoading: true,
+  templatesLoading: false,
 };
 
 // Fetch all active projects
 export const fetchProjects = createAsyncThunk(
   "projects/fetchAll",
   async () => {
-    const res = await fetch("/api/projects");
-    const data = await res.json();
+    const { data } = await http.get("/api/projects");
     return (data.projects ?? []) as ProjectListItem[];
   },
 );
@@ -62,13 +64,8 @@ export const fetchProjects = createAsyncThunk(
 export const createProject = createAsyncThunk(
   "projects/create",
   async (name: string) => {
-    const res = await fetch("/api/projects", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name }),
-    });
-    const data: { id?: string } = await res.json();
-    return data;
+    const { data } = await http.post("/api/projects", { name });
+    return data as { id?: string };
   },
 );
 
@@ -76,11 +73,7 @@ export const createProject = createAsyncThunk(
 export const trashProject = createAsyncThunk(
   "projects/trash",
   async (id: string) => {
-    await fetch("/api/projects", {
-      method: "DELETE",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id }),
-    });
+    await http.delete("/api/projects", { data: { id } });
     return id;
   },
 );
@@ -89,8 +82,7 @@ export const trashProject = createAsyncThunk(
 export const fetchTrashedProjects = createAsyncThunk(
   "projects/fetchTrashed",
   async () => {
-    const res = await fetch("/api/projects/trash");
-    const data = await res.json();
+    const { data } = await http.get("/api/projects/trash");
     return (data.projects ?? []) as TrashedProject[];
   },
 );
@@ -99,11 +91,7 @@ export const fetchTrashedProjects = createAsyncThunk(
 export const restoreProject = createAsyncThunk(
   "projects/restore",
   async (id: string, { dispatch }) => {
-    await fetch("/api/projects/trash", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id }),
-    });
+    await http.post("/api/projects/trash", { id });
     // Refresh both lists
     dispatch(fetchProjects());
     return id;
@@ -114,11 +102,7 @@ export const restoreProject = createAsyncThunk(
 export const permanentlyDeleteProject = createAsyncThunk(
   "projects/permanentDelete",
   async (id: string) => {
-    await fetch("/api/projects/trash", {
-      method: "DELETE",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id }),
-    });
+    await http.delete("/api/projects/trash", { data: { id } });
     return id;
   },
 );
@@ -127,8 +111,7 @@ export const permanentlyDeleteProject = createAsyncThunk(
 export const fetchTemplates = createAsyncThunk(
   "projects/fetchTemplates",
   async () => {
-    const res = await fetch("/api/templates");
-    const data = await res.json();
+    const { data } = await http.get("/api/templates");
     return (data.templates ?? []) as TemplateItem[];
   },
 );
@@ -144,11 +127,7 @@ export const persistFrame = createAsyncThunk(
     top?: number;
     projectId?: string;
   }) => {
-    await fetch("/api/frames", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
+    await http.post("/api/frames", payload);
     return payload;
   },
 );
@@ -157,9 +136,9 @@ export const persistFrame = createAsyncThunk(
 export const deleteFrameFromApi = createAsyncThunk(
   "projects/deleteFrame",
   async (frameId: string) => {
-    await fetch(`/api/frames?frameId=${encodeURIComponent(frameId)}`, {
-      method: "DELETE",
-    });
+    await http.delete(
+      `/api/frames?frameId=${encodeURIComponent(frameId)}`,
+    );
     return frameId;
   },
 );
@@ -176,9 +155,11 @@ const projectsSlice = createSlice({
       .addCase(fetchProjects.fulfilled, (state, action) => {
         state.list = action.payload;
         state.listLoading = false;
+        state.fetched = true;
       })
       .addCase(fetchProjects.rejected, (state) => {
         state.listLoading = false;
+        state.fetched = true;
       })
       .addCase(trashProject.fulfilled, (state, action) => {
         state.list = state.list.filter((p) => p.id !== action.payload);

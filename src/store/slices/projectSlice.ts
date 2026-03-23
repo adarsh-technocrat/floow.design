@@ -1,14 +1,17 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import { loadFrames } from "./canvasSlice";
+import http from "@/lib/http";
 
 export interface ProjectState {
   projectId: string | null;
+  projectName: string | null;
   messages: unknown[];
   loaded: boolean;
 }
 
 const initialState: ProjectState = {
   projectId: null,
+  projectName: null,
   messages: [],
   loaded: false,
 };
@@ -20,14 +23,13 @@ export const fetchProject = createAsyncThunk(
     { dispatch },
   ) => {
     const q = new URLSearchParams({ id: projectId, userId });
-    const res = await fetch(`/api/project?${q.toString()}`).then((r) =>
-      r.json(),
-    );
+    const { data: res } = await http.get(`/api/project?${q.toString()}`);
+    const name = typeof res?.name === "string" ? res.name : "Untitled Project";
     const frames = Array.isArray(res?.frames) ? res.frames : [];
     const messages = Array.isArray(res?.messages) ? res.messages : [];
     // Always dispatch loadFrames — clears stale frames from previous project
     dispatch(loadFrames(frames));
-    return { projectId, messages };
+    return { projectId, name, messages };
   },
 );
 
@@ -39,6 +41,7 @@ const projectSlice = createSlice({
     builder
       .addCase(fetchProject.fulfilled, (state, action) => {
         state.projectId = action.payload.projectId;
+        state.projectName = action.payload.name;
         state.messages = action.payload.messages;
         state.loaded = true;
       })

@@ -47,8 +47,7 @@ export async function POST(req: NextRequest) {
 
         if (userId && plan && session.subscription) {
           const planEnum = toPlan(plan);
-          const credits =
-            PLAN_CREDITS[plan]?.[interval || "monthly"] || 0;
+          const credits = PLAN_CREDITS[plan]?.[interval || "monthly"] || 0;
 
           await prisma.user.update({
             where: { id: userId },
@@ -72,7 +71,8 @@ export async function POST(req: NextRequest) {
       case "invoice.paid": {
         // Recurring payment — reset credits
         const invoice = event.data.object;
-        const subField = (invoice as unknown as Record<string, unknown>).subscription;
+        const subField = (invoice as unknown as Record<string, unknown>)
+          .subscription;
         const subscriptionId =
           typeof subField === "string" ? subField : String(subField ?? "");
 
@@ -81,7 +81,7 @@ export async function POST(req: NextRequest) {
             where: { stripeSubscriptionId: subscriptionId },
           });
 
-          if (user && user.plan !== "FREE" as PlanString) {
+          if (user && user.plan !== ("FREE" as PlanString)) {
             const credits =
               PLAN_CREDITS[user.plan]?.[
                 (user.billingInterval as "monthly" | "yearly") || "monthly"
@@ -147,8 +147,7 @@ export async function POST(req: NextRequest) {
         break;
       }
     }
-  } catch (e) {
-    console.error("Webhook handler error:", e);
+  } catch {
     return NextResponse.json(
       { error: "Webhook handler failed" },
       { status: 500 },

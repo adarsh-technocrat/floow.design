@@ -15,15 +15,16 @@ export function CanvasTopLeft() {
   const { user } = useAuth();
   const currentProjectId = params?.projectId as string | undefined;
   const projects = useAppSelector((s) => s.projects.list);
+  const listLoading = useAppSelector((s) => s.projects.listLoading);
   const currentProjectName = useAppSelector((s) => {
     const found = s.projects.list.find((p) => p.id === currentProjectId);
-    return found?.name ?? s.project.projectId ?? "Untitled Project";
+    return found?.name ?? s.project.projectName ?? "Untitled Project";
   });
 
   const [open, setOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
-  // Fetch projects when dropdown opens
+  // Background refresh when dropdown opens — data is already prefetched by ProjectLoader
   useEffect(() => {
     if (open && user) {
       dispatch(fetchProjects());
@@ -113,7 +114,19 @@ export function CanvasTopLeft() {
 
             {/* Project list */}
             <div className="max-h-[320px] overflow-y-auto py-1">
-              {projects.length === 0 ? (
+              {listLoading && projects.length === 0 ? (
+                <div className="space-y-1 px-3 py-2">
+                  {[0, 1, 2].map((i) => (
+                    <div key={i} className="flex items-center gap-3 py-2">
+                      <div className="size-8 shrink-0 animate-pulse rounded-md bg-t-tertiary/15" />
+                      <div className="flex-1 space-y-1.5">
+                        <div className="h-3 w-24 animate-pulse rounded bg-t-tertiary/15" />
+                        <div className="h-2.5 w-14 animate-pulse rounded bg-t-tertiary/10" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : projects.length === 0 ? (
                 <p className="px-3 py-4 text-center text-xs text-t-tertiary">
                   No projects
                 </p>

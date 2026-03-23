@@ -3,6 +3,7 @@
 import { useEffect, useRef, useCallback } from "react";
 import { useSelector } from "react-redux";
 import type { RootState } from "@/store";
+import http from "@/lib/http";
 
 /**
  * Silently captures a thumbnail of the canvas by rendering the first frame's
@@ -80,11 +81,7 @@ export function useCanvasThumbnail(projectId: string | null) {
         const dataUrl = canvas.toDataURL("image/png", 0.7);
 
         // Save silently — don't block UI
-        fetch("/api/projects/thumbnail", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ projectId, thumbnail: dataUrl }),
-        }).catch(() => {});
+        http.post("/api/projects/thumbnail", { projectId, thumbnail: dataUrl }).catch(() => {});
       }
 
       URL.revokeObjectURL(url);

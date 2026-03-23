@@ -51,7 +51,7 @@ export async function GET(req: NextRequest) {
       (canvasSession?.messages as ChatSessionMessageRecord[]) ?? [];
     const messages = recordsToUiMessages(records);
 
-    return NextResponse.json({ frames, messages });
+    return NextResponse.json({ name: project.name, frames, messages });
   } catch (e) {
     return NextResponse.json(
       { error: e instanceof Error ? e.message : "Unknown error" },

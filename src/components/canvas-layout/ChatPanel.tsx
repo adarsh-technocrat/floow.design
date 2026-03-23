@@ -32,8 +32,9 @@ import { ImageIcon } from "@/lib/svg-icons";
 import { PageMentionInput } from "./PageMentionInput";
 import { useAuth } from "@/contexts/AuthContext";
 import { CANVAS_CHAT_FRAME_ID } from "@/lib/chat-session";
+import http from "@/lib/http";
 
-const CP_THROTTLE_MS = 300;
+const CP_THROTTLE_MS = 100;
 let cpPendingHtml = new Map<string, string>();
 let cpFlushTimer: ReturnType<typeof setTimeout> | null = null;
 let cpDispatchRef: ReturnType<typeof useAppDispatch> | null = null;
@@ -551,16 +552,12 @@ export function ChatPanel({
       frameId: fid,
       userId: uid,
     } = chatSessionContextRef.current;
-    return fetch("/api/chat/sessions", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        projectId: pid,
-        frameId: fid,
-        userId: uid,
-        isActive: true,
-        messages: messagesPayload,
-      }),
+    return http.post("/api/chat/sessions", {
+      projectId: pid,
+      frameId: fid,
+      userId: uid,
+      isActive: true,
+      messages: messagesPayload,
     });
   }, []);
 
@@ -714,32 +711,26 @@ export function ChatPanel({
               }),
             );
             if (f.html && f.html.length > 0) {
-              fetch("/api/frames", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
+              http.post("/api/frames", {
                   frameId: f.id,
                   html: f.html,
                   label: f.label,
                   left: f.left,
                   top: f.top,
-                }),
-              }).catch(() => {});
+                  projectId,
+                }).catch(() => {});
             }
           } else if (f.id && f.html !== undefined) {
             dispatch(updateFrameHtml({ id: f.id, html: f.html }));
             const frame = stateRef.current.frames.find((x) => x.id === f.id);
-            fetch("/api/frames", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
+            http.post("/api/frames", {
                 frameId: f.id,
                 html: f.html,
                 label: frame?.label,
                 left: frame?.left,
                 top: frame?.top,
-              }),
-            }).catch(() => {});
+                projectId,
+              }).catch(() => {});
           }
         }
         if (output?.themeUpdates) {
@@ -903,17 +894,14 @@ export function ChatPanel({
             }),
           );
           if (data.frame.html && data.frame.html.length > 0) {
-            fetch("/api/frames", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
+            http.post("/api/frames", {
                 frameId: data.frame.id,
                 html: data.frame.html,
                 label: data.frame.label,
                 left: data.frame.left,
                 top: data.frame.top,
-              }),
-            }).catch(() => {});
+                projectId,
+              }).catch(() => {});
           }
         } else if (
           (data.toolName === "update_screen" ||
@@ -927,17 +915,14 @@ export function ChatPanel({
           const frame = stateRef.current.frames.find(
             (f) => f.id === data.frame?.id,
           );
-          fetch("/api/frames", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
+          http.post("/api/frames", {
               frameId: data.frame.id,
               html: data.frame.html,
               label: frame?.label,
               left: frame?.left,
               top: frame?.top,
-            }),
-          }).catch(() => {});
+              projectId,
+            }).catch(() => {});
         } else if (data.toolName === "update_theme" && data.themeUpdates) {
           dispatch(setTheme(data.themeUpdates));
         } else if (data.toolName === "build_theme" && data.theme) {
@@ -1068,9 +1053,8 @@ export function ChatPanel({
       frameId: frameSessionId,
       userId: chatUserId,
     });
-    fetch(`/api/chat/sessions?${q.toString()}`)
-      .then((res) => res.json())
-      .then((data: { messages?: UIMessage[] }) => {
+    http.get(`/api/chat/sessions?${q.toString()}`)
+      .then(({ data }: { data: { messages?: UIMessage[] } }) => {
         if (lastHydrateKeyRef.current !== hydrateKey) return;
         if (data?.messages && data.messages.length > 0) {
           setMessages(data.messages);
@@ -1235,9 +1219,9 @@ export function ChatPanel({
   useEffect(() => {
     chatThreadRef.current?.scrollTo({
       top: chatThreadRef.current.scrollHeight,
-      behavior: "smooth",
+      behavior: status === "streaming" ? "auto" : "smooth",
     });
-  }, [messages, toolSteps]);
+  }, [messages, toolSteps, status]);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {

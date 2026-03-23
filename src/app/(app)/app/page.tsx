@@ -2,19 +2,15 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
+import http from "@/lib/http";
 
 export default function AppPage() {
   const router = useRouter();
 
   useEffect(() => {
     // Create a new project and redirect to it
-    fetch("/api/projects", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: "Untitled Project" }),
-    })
-      .then((r) => r.json())
-      .then((data: { id?: string }) => {
+    http.post<{ id?: string }>("/api/projects", { name: "Untitled Project" })
+      .then(({ data }) => {
         if (data.id) {
           router.replace(`/app/${data.id}`);
         }

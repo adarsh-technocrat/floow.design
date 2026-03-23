@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
+import http from "@/lib/http";
 
 interface PromptCTAProps {
   /** Compact single-line input for footer, full textarea for blog/hero */
@@ -36,12 +37,7 @@ export function PromptCTA({
     // Logged in — create project and go to canvas
     setCreating(true);
     try {
-      const res = await fetch("/api/projects", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: text }),
-      });
-      const data: { id?: string } = await res.json();
+      const { data } = await http.post<{ id?: string }>("/api/projects", { name: text });
       if (data.id) {
         router.push(`/app/${data.id}?prompt=${encodeURIComponent(text)}`);
       }

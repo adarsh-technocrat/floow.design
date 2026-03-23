@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import { Logo } from "@/components/landing/Logo";
 import { useAuth } from "@/contexts/AuthContext";
+import http from "@/lib/http";
 
 const cursors = [
   { name: "Ava", color: "#f87171", x: "15%", y: "20%", delay: 0.6 },
@@ -194,12 +195,7 @@ export default function SignInPage() {
   const navigateAfterAuth = async () => {
     if (pendingPrompt) {
       try {
-        const res = await fetch("/api/projects", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ name: pendingPrompt }),
-        });
-        const data: { id?: string } = await res.json();
+        const { data } = await http.post<{ id?: string }>("/api/projects", { name: pendingPrompt });
         if (data.id) {
           router.push(`/app/${data.id}?prompt=${encodeURIComponent(pendingPrompt)}`);
           return;

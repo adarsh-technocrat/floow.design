@@ -207,8 +207,7 @@ export function useFrameElementInspection({
             return;
           }
         }
-      } catch {
-      }
+      } catch {}
       sendToIframe("SYNC_TEXT", {
         elementId: selectedElement.elementId,
         newText: html,
@@ -225,8 +224,6 @@ export function useFrameElementInspection({
       () => iframeRef.current,
       {
         retryDelay: 100,
-        onError: (err) =>
-          console.warn("Inspector iframe ready:", err?.message),
       },
     );
     const timeoutId = setTimeout(triggerIframeReady, 100);
@@ -248,23 +245,13 @@ export function useFrameElementInspection({
           if (payload) handleElementInfoReceived(payload as ElementInfo);
           break;
         case "TEXT_UPDATED":
-          if (
-            payload?.elementId != null &&
-            payload?.newText != null
-          ) {
-            handleTextUpdated(
-              payload.elementId,
-              payload.newText,
-              payload.rect,
-            );
+          if (payload?.elementId != null && payload?.newText != null) {
+            handleTextUpdated(payload.elementId, payload.newText, payload.rect);
           }
           break;
         case "CLASSES_UPDATED":
         case "ELEMENT_CLASSES":
-          if (
-            payload?.elementId != null &&
-            Array.isArray(payload?.classes)
-          ) {
+          if (payload?.elementId != null && Array.isArray(payload?.classes)) {
             handleClassesUpdated(payload.elementId, payload.classes);
           }
           break;
@@ -299,12 +286,7 @@ export function useFrameElementInspection({
 
   const handleOverlayMouseMove = useCallback(
     (e: React.MouseEvent<HTMLDivElement>) => {
-      if (
-        !enabled ||
-        !iframeReady ||
-        !overlayRef.current ||
-        !iframeRef.current
-      )
+      if (!enabled || !iframeReady || !overlayRef.current || !iframeRef.current)
         return;
       const overlayRect = overlayRef.current.getBoundingClientRect();
       const { x, y } = convertScreenToIframeCoordinates(
@@ -316,13 +298,7 @@ export function useFrameElementInspection({
       );
       requestElementInfoAtPosition(x, y);
     },
-    [
-      enabled,
-      iframeReady,
-      overlayRef,
-      iframeRef,
-      requestElementInfoAtPosition,
-    ],
+    [enabled, iframeReady, overlayRef, iframeRef, requestElementInfoAtPosition],
   );
 
   const handleOverlayMouseLeave = useCallback(() => {
@@ -332,12 +308,7 @@ export function useFrameElementInspection({
 
   const handleOverlayClick = useCallback(
     (e: React.MouseEvent<HTMLDivElement>) => {
-      if (
-        !enabled ||
-        !iframeReady ||
-        !overlayRef.current ||
-        !iframeRef.current
-      )
+      if (!enabled || !iframeReady || !overlayRef.current || !iframeRef.current)
         return;
       if (!hoveredElement) return;
       e.stopPropagation();
@@ -562,9 +533,7 @@ export function useFrameElementInspection({
       if (!selectedElement) return;
       applyStyleToElement(selectedElement.elementId, { fontFamily });
       setSelectedElement((prev) =>
-        prev
-          ? { ...prev, styles: { ...prev.styles, fontFamily } }
-          : null,
+        prev ? { ...prev, styles: { ...prev.styles, fontFamily } } : null,
       );
     },
     [selectedElement, applyStyleToElement],
@@ -578,12 +547,7 @@ export function useFrameElementInspection({
     setIsEditing(false);
     highlightElement(null);
     selectElementInIframe(null);
-  }, [
-    selectedElement,
-    deleteElement,
-    highlightElement,
-    selectElementInIframe,
-  ]);
+  }, [selectedElement, deleteElement, highlightElement, selectElementInIframe]);
 
   return {
     iframeReady,

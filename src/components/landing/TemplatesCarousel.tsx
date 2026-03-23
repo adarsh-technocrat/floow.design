@@ -2,6 +2,7 @@
 
 import { useRef, useEffect, useState } from "react";
 import Link from "next/link";
+import http from "@/lib/http";
 
 interface Template {
   id: string;
@@ -17,11 +18,10 @@ export function TemplatesCarousel() {
   const [templates, setTemplates] = useState<Template[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Landing page — no Redux store, direct fetch is appropriate
+  // Landing page — no Redux store, direct call is appropriate
   useEffect(() => {
-    fetch("/api/templates")
-      .then((r) => r.json())
-      .then((data: { templates?: Template[] }) => {
+    http.get<{ templates?: Template[] }>("/api/templates")
+      .then(({ data }) => {
         if (data.templates) setTemplates(data.templates);
       })
       .catch(() => {})

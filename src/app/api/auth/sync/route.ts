@@ -30,8 +30,8 @@ export async function POST(req: NextRequest) {
 
   // Map Firebase provider ID to our enum string value
   const mappedProvider = provider
-    ? (providerMap[provider] as "GOOGLE" | "GITHUB" | "APPLE" | "EMAIL") ??
-      null
+    ? ((providerMap[provider] as "GOOGLE" | "GITHUB" | "APPLE" | "EMAIL") ??
+      null)
     : null;
 
   try {
@@ -72,7 +72,6 @@ export async function POST(req: NextRequest) {
         : typeof e === "object" && e !== null
           ? JSON.stringify(e)
           : "Unknown error";
-    console.error("[auth-sync] error for uid", uid, ":", msg);
     return NextResponse.json({ error: msg }, { status: 500 });
   }
 }

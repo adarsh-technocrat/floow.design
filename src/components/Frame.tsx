@@ -36,43 +36,15 @@ function ResizeHandleDot({
 
   return (
     <div
-      className={`absolute z-50 size-2.5 shrink-0 rounded-sm border-2 border-t-primary/45 bg-frame-hover-border shadow-md ${position}`}
-      style={{ cursor }}
+      className={`absolute z-50 size-3 shrink-0 rounded-[1px] border-2 bg-white shadow-none ${position}`}
+      style={{
+        cursor,
+        borderColor: "#8B7CFF",
+      }}
       data-resize-handle={corner}
       onPointerDown={(e) => {
         e.stopPropagation();
         onPointerDown(e, corner);
-      }}
-      aria-hidden
-    />
-  );
-}
-
-function ResizeHandleEdge({
-  edge,
-  onPointerDown,
-}: {
-  edge: "n" | "s" | "e" | "w";
-  onPointerDown: (e: React.PointerEvent, edge: ResizeHandle) => void;
-}) {
-  const cursor = edge === "n" || edge === "s" ? "ns-resize" : "ew-resize";
-  const position =
-    edge === "n"
-      ? "left-0 right-0 top-0 -translate-y-1/2"
-      : edge === "s"
-        ? "left-0 right-0 bottom-0 translate-y-1/2"
-        : edge === "e"
-          ? "right-0 top-0 bottom-0 translate-x-1/2"
-          : "left-0 top-0 bottom-0 -translate-x-1/2";
-
-  return (
-    <div
-      className={`absolute z-50 shrink-0 rounded-sm border-2 border-t-primary/45 bg-frame-hover-border shadow-md ${position} ${edge === "n" || edge === "s" ? "h-2" : "w-2"} min-w-2 min-h-2`}
-      style={{ cursor }}
-      data-resize-handle={edge}
-      onPointerDown={(e) => {
-        e.stopPropagation();
-        onPointerDown(e, edge);
       }}
       aria-hidden
     />
@@ -273,13 +245,18 @@ export const Frame = React.memo(function Frame({
       </div>
       <div className="pointer-events-none absolute inset-0 z-40" />
 
+      {selected && !showToolbar && !isDragging && (
+        <svg className="pointer-events-none absolute -inset-[5px] z-30 size-[calc(100%+10px)]" aria-hidden>
+          <rect x="1.5" y="1.5" width="calc(100% - 3px)" height="calc(100% - 3px)" fill="none" stroke="#8B7CFF" strokeWidth="3" strokeDasharray="10 7" rx="0" />
+        </svg>
+      )}
+
       {showToolbar && (
         <>
           {!isDragging && (
-            <div
-              className="pointer-events-none absolute inset-0 z-30 rounded-none border-2 border-frame-hover-border"
-              aria-hidden
-            />
+            <svg className="pointer-events-none absolute -inset-[5px] z-30 size-[calc(100%+10px)]" aria-hidden>
+              <rect x="1.5" y="1.5" width="calc(100% - 3px)" height="calc(100% - 3px)" fill="none" stroke="#8B7CFF" strokeWidth="3" strokeDasharray="10 7" rx="0" />
+            </svg>
           )}
           <ResizeHandleDot
             corner="nw"
@@ -297,10 +274,6 @@ export const Frame = React.memo(function Frame({
             corner="se"
             onPointerDown={handleResizePointerDown}
           />
-          <ResizeHandleEdge edge="n" onPointerDown={handleResizePointerDown} />
-          <ResizeHandleEdge edge="s" onPointerDown={handleResizePointerDown} />
-          <ResizeHandleEdge edge="e" onPointerDown={handleResizePointerDown} />
-          <ResizeHandleEdge edge="w" onPointerDown={handleResizePointerDown} />
           <FrameToolbar
             label={label}
             html={html}

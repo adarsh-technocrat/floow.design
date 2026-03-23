@@ -19,8 +19,9 @@ import { ThemeToggleCompact } from "@/components/ThemeToggle";
 import { Avatar } from "@/components/ui/Avatar";
 import { PricingDialog } from "@/components/PricingDialog";
 import { ProjectFramePreview } from "@/components/ProjectFramePreview";
+import http from "@/lib/http";
 
-interface Project {
+interface _Project {
   id: string;
   name: string;
   screens: number;
@@ -30,7 +31,7 @@ interface Project {
   updatedAt: string;
 }
 
-interface TrashedProject {
+interface _TrashedProject {
   id: string;
   name: string;
   screens: number;
@@ -268,10 +269,286 @@ function StreamingPlaceholder() {
   );
 }
 
+interface ApiKeyEntry {
+  id: string;
+  name: string;
+  key: string;
+  lastUsed: string | null;
+  revoked: boolean;
+  createdAt: string;
+  revokedAt: string | null;
+}
+
+function ApiKeysView({ userId }: { userId: string }) {
+  const [keys, setKeys] = useState<ApiKeyEntry[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [creating, setCreating] = useState(false);
+  const [newKeyName, setNewKeyName] = useState("");
+  const [showCreate, setShowCreate] = useState(false);
+  const [justCreated, setJustCreated] = useState<{ id: string; key: string; name: string } | null>(null);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+
+  const fetchKeys = useCallback(async () => {
+    if (!userId) return;
+    setLoading(true);
+    try {
+      const { data } = await http.get(`/api/api-keys?userId=${encodeURIComponent(userId)}`);
+      setKeys(data.keys ?? []);
+    } finally {
+      setLoading(false);
+    }
+  }, [userId]);
+
+  useEffect(() => { fetchKeys(); }, [fetchKeys]);
+
+  const handleCreate = async () => {
+    if (!userId) return;
+    setCreating(true);
+    try {
+      const { data } = await http.post("/api/api-keys", {
+        userId,
+        name: newKeyName.trim() || "Untitled Key",
+      });
+      setJustCreated({ id: data.id, key: data.key, name: data.name });
+      setShowCreate(false);
+      setNewKeyName("");
+      fetchKeys();
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  const handleRevoke = async (id: string) => {
+    await http.delete("/api/api-keys", { data: { id, userId } });
+    fetchKeys();
+    if (justCreated?.id === id) setJustCreated(null);
+  };
+
+  const copyToClipboard = (text: string, id: string) => {
+    navigator.clipboard.writeText(text);
+    setCopiedId(id);
+    setTimeout(() => setCopiedId(null), 2000);
+  };
+
+  const activeKeys = keys.filter((k) => !k.revoked);
+  const revokedKeys = keys.filter((k) => k.revoked);
+
+  return (
+    <>
+      {/* Header */}
+      <div className="flex shrink-0 items-center justify-between border-b border-b-secondary px-5 py-4">
+        <div className="flex items-center gap-2">
+          <h2 className="text-[11px] font-mono font-semibold uppercase tracking-wider text-t-primary">
+            API Keys
+          </h2>
+          {activeKeys.length > 0 && (
+            <span className="rounded-md border border-b-secondary bg-surface-sunken px-2 py-0.5 text-[10px] font-mono tabular-nums text-t-tertiary">
+              {activeKeys.length}
+            </span>
+          )}
+        </div>
+        <button
+          type="button"
+          onClick={() => setShowCreate(true)}
+          className="inline-flex items-center gap-2 rounded-lg bg-btn-primary-bg px-4 py-2 text-[11px] font-mono font-semibold uppercase tracking-wider text-btn-primary-text transition-opacity hover:opacity-90 active:scale-[0.98]"
+        >
+          <svg width="12" height="12" viewBox="0 0 14 14" fill="none">
+            <path d="M7 1v12M1 7h12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+          </svg>
+          Create key
+        </button>
+      </div>
+
+      <div className="flex-1 overflow-y-auto">
+        {/* Just-created key banner */}
+        {justCreated && (
+          <div className="mx-5 mt-5 rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-4">
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-medium text-emerald-400">
+                  Copy your API key now
+                </p>
+                <p className="mt-1 text-xs text-t-tertiary">
+                  You won&apos;t be able to see the full key again.
+                </p>
+                <div className="mt-3 flex items-center gap-2 rounded-lg bg-surface px-3 py-2">
+                  <code className="flex-1 truncate text-xs text-t-primary font-mono">
+                    {justCreated.key}
+                  </code>
+                  <button
+                    type="button"
+                    onClick={() => copyToClipboard(justCreated.key, justCreated.id)}
+                    className="shrink-0 rounded-md px-2 py-1 text-[11px] font-medium text-t-secondary hover:bg-input-bg hover:text-t-primary transition-colors"
+                  >
+                    {copiedId === justCreated.id ? "Copied!" : "Copy"}
+                  </button>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setJustCreated(null)}
+                className="shrink-0 rounded-md p-1 text-t-tertiary hover:text-t-primary"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                  <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Create form */}
+        {showCreate && (
+          <div className="mx-5 mt-5 rounded-xl border border-b-secondary bg-surface-elevated p-4">
+            <label className="mb-2 block text-[11px] font-mono font-medium uppercase tracking-wider text-t-tertiary">
+              Key name
+            </label>
+            <input
+              type="text"
+              value={newKeyName}
+              onChange={(e) => setNewKeyName(e.target.value)}
+              placeholder="e.g. Production, Development"
+              className="w-full rounded-lg border border-b-secondary bg-input-bg px-3 py-2.5 text-sm text-t-primary placeholder:text-t-tertiary outline-none focus:border-t-secondary transition-colors"
+              autoFocus
+              onKeyDown={(e) => {
+                if (e.key === "Enter") handleCreate();
+                if (e.key === "Escape") { setShowCreate(false); setNewKeyName(""); }
+              }}
+            />
+            <div className="mt-3 flex items-center justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => { setShowCreate(false); setNewKeyName(""); }}
+                className="rounded-lg px-4 py-2 text-[11px] font-mono font-medium uppercase tracking-wider text-t-secondary hover:bg-input-bg transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleCreate}
+                disabled={creating}
+                className="rounded-lg bg-btn-primary-bg px-4 py-2 text-[11px] font-mono font-semibold uppercase tracking-wider text-btn-primary-text transition-opacity disabled:opacity-50 hover:opacity-90"
+              >
+                {creating ? "Creating..." : "Create"}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Loading */}
+        {loading && keys.length === 0 && (
+          <div className="flex items-center justify-center py-24">
+            <div className="flex items-center gap-2 text-sm text-t-tertiary">
+              <div className="size-2 rounded-full bg-t-tertiary animate-pulse" />
+              Loading keys...
+            </div>
+          </div>
+        )}
+
+        {/* Empty state */}
+        {!loading && keys.length === 0 && (
+          <div className="flex flex-col items-center justify-center px-6 py-24 text-center">
+            <div className="mb-4 flex size-14 items-center justify-center rounded-2xl border border-dashed border-b-secondary bg-surface-sunken">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-t-tertiary">
+                <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4" />
+              </svg>
+            </div>
+            <p className="text-sm font-medium text-t-secondary">No API keys yet</p>
+            <p className="mt-1 max-w-sm text-xs text-t-tertiary">
+              Create a key to access the platform API programmatically.
+            </p>
+          </div>
+        )}
+
+        {/* Active keys */}
+        {activeKeys.length > 0 && (
+          <div className="p-5">
+            <p className="mb-3 text-[11px] font-mono font-medium uppercase tracking-wider text-t-secondary">
+              Active
+            </p>
+            <div className="space-y-3">
+              {activeKeys.map((k) => (
+                <div
+                  key={k.id}
+                  className="group flex items-center justify-between rounded-xl border border-b-secondary bg-surface-elevated px-4 py-3.5 transition-all hover:-translate-y-0.5 hover:border-b-primary/25 hover:shadow-sm dark:hover:bg-white/[0.04]"
+                >
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[13px] font-medium text-t-primary">{k.name}</p>
+                    <code className="mt-1 block truncate text-xs text-t-tertiary font-mono">{k.key}</code>
+                    <p className="mt-1.5 text-[10px] text-t-tertiary/60">
+                      Created {new Date(k.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                      {k.lastUsed && (
+                        <> &middot; Last used {new Date(k.lastUsed).toLocaleDateString("en-US", { month: "short", day: "numeric" })}</>
+                      )}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-1.5 ml-4 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button
+                      type="button"
+                      onClick={() => copyToClipboard(k.key, k.id)}
+                      className="rounded-lg border border-b-secondary px-3 py-1.5 text-[11px] font-mono font-medium text-t-secondary hover:bg-input-bg hover:text-t-primary transition-colors"
+                    >
+                      {copiedId === k.id ? "Copied!" : "Copy"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleRevoke(k.id)}
+                      className="rounded-lg border border-red-500/25 bg-red-500/5 px-3 py-1.5 text-[11px] font-mono font-medium text-red-500 hover:bg-red-500/15 transition-colors"
+                    >
+                      Revoke
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Revoked keys */}
+        {revokedKeys.length > 0 && (
+          <div className="px-5 pb-5">
+            <p className="mb-3 text-[11px] font-mono font-medium uppercase tracking-wider text-t-secondary">
+              Revoked
+            </p>
+            <div className="space-y-3">
+              {revokedKeys.map((k) => (
+                <div
+                  key={k.id}
+                  className="flex items-center justify-between rounded-xl border border-b-secondary border-dashed bg-surface-sunken px-4 py-3.5 opacity-50"
+                >
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[13px] font-medium text-t-primary line-through">{k.name}</p>
+                    <code className="mt-1 block truncate text-xs text-t-tertiary font-mono">{k.key}</code>
+                    <p className="mt-1.5 text-[10px] text-t-tertiary/60">
+                      Revoked {k.revokedAt ? new Date(k.revokedAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : ""}
+                    </p>
+                  </div>
+                  <span className="ml-4 rounded-full bg-red-500/10 px-2.5 py-1 text-[10px] font-mono font-medium text-red-400">
+                    Revoked
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Footer note */}
+        {keys.length > 0 && (
+          <div className="border-t border-b-secondary px-5 py-3">
+            <p className="text-[11px] text-t-tertiary/60">
+              API keys grant full access to your account. Keep them secret and never share them publicly.
+            </p>
+          </div>
+        )}
+      </div>
+    </>
+  );
+}
+
 export default function DashboardPage() {
   const router = useRouter();
   const dispatch = useAppDispatch();
-  const { user, loading: authLoading, signOut } = useAuth();
+  const { user, loading: _authLoading, signOut } = useAuth();
   const projects = useAppSelector((s) => s.projects.list);
   const loading = useAppSelector((s) => s.projects.listLoading);
   const trashedProjects = useAppSelector((s) => s.projects.trashed);
@@ -279,7 +556,7 @@ export default function DashboardPage() {
   const planSummary = useAppSelector((s) => s.user.plan);
   const planLoading = useAppSelector((s) => s.user.planLoading);
   const [inputValue, setInputValue] = useState("");
-  const [activeView, setActiveView] = useState<"home" | "projects" | "trash">(
+  const [activeView, setActiveView] = useState<"home" | "projects" | "trash" | "api-keys">(
     "home",
   );
   const [userMenuOpen, setUserMenuOpen] = useState(false);
@@ -541,6 +818,26 @@ export default function DashboardPage() {
       },
       active: activeView === "trash",
       count: trashedProjects.length || undefined,
+    },
+    {
+      key: "api-keys",
+      label: "API Keys",
+      icon: (
+        <svg
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4" />
+        </svg>
+      ),
+      action: () => setActiveView("api-keys"),
+      active: activeView === "api-keys",
     },
   ];
 
@@ -1317,6 +1614,17 @@ export default function DashboardPage() {
                     </div>
                   )}
                 </div>
+              </motion.div>
+            ) : activeView === "api-keys" ? (
+              <motion.div
+                key="api-keys"
+                className="relative z-10 flex-1 flex flex-col overflow-hidden"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.3 }}
+              >
+                <ApiKeysView userId={user?.uid ?? ""} />
               </motion.div>
             ) : null}
           </AnimatePresence>

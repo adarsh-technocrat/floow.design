@@ -6,6 +6,7 @@ import NumberFlow from "@number-flow/react";
 import { Header } from "@/components/landing/Header";
 import { Footer } from "@/components/landing/Footer";
 import { useAuth } from "@/contexts/AuthContext";
+import http from "@/lib/http";
 
 const plans = [
   {
@@ -122,16 +123,11 @@ export default function PricingPage() {
 
     setCheckoutLoading(planName);
     try {
-      const res = await fetch("/api/stripe/checkout", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          userId: user.uid,
-          plan: planName,
-          interval: billing,
-        }),
+      const { data } = await http.post<{ url?: string }>("/api/stripe/checkout", {
+        userId: user.uid,
+        plan: planName,
+        interval: billing,
       });
-      const data: { url?: string } = await res.json();
       if (data.url) {
         window.location.href = data.url;
       }

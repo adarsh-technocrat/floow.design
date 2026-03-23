@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { Avatar } from "@/components/ui/Avatar";
 import { useAuth } from "@/contexts/AuthContext";
+import http from "@/lib/http";
 
 const cursors = [
   { name: "Ava", color: "#f87171", x: "8%", y: "22%", delay: 0.8 },
@@ -36,12 +37,7 @@ export function Hero() {
 
     setCreating(true);
     try {
-      const res = await fetch("/api/projects", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: text }),
-      });
-      const data: { id?: string } = await res.json();
+      const { data } = await http.post<{ id?: string }>("/api/projects", { name: text });
       if (data.id) {
         router.push(`/app/${data.id}?prompt=${encodeURIComponent(text)}`);
       }

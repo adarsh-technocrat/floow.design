@@ -100,7 +100,7 @@ export function ProjectFramePreview({
           <img
             src={thumbnail}
             alt=""
-            className="absolute inset-0 h-full w-full object-contain object-top"
+            className="absolute inset-0 h-full w-full object-cover object-top"
           />
         ) : firstFrameHtml ? (
           <HtmlFramePreview

@@ -14,6 +14,7 @@ import {
   truncatePartialHtml,
   looksLikeMalformedFrameContent,
 } from "@/lib/screen-utils";
+import http from "@/lib/http";
 
 const LOADING_THRESHOLD = 50;
 const POST_DEBOUNCE_MS = 2000;
@@ -88,11 +89,7 @@ export const FramePreview = React.forwardRef<
     if (postTimeoutRef.current) clearTimeout(postTimeoutRef.current);
     postTimeoutRef.current = setTimeout(() => {
       postTimeoutRef.current = null;
-      fetch("/api/frames", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ frameId, html, label, left, top }),
-      })
+      http.post("/api/frames", { frameId, html, label, left, top })
         .then(() => setLoadKey((k) => k + 1))
         .catch(() => {});
     }, POST_DEBOUNCE_MS);
