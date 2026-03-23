@@ -173,7 +173,7 @@ Return a valid JSON object with EXACTLY this structure (no markdown fencing, no 
   "category": "One of: Industry News, AI Tools, Design Trends, Product Updates, Tutorial",
   "tags": ["tag1", "tag2", "tag3", "tag4", "tag5"],
   "mdxContent": "The full article body in MDX/Markdown format with ## headings, bullet lists, bold text. Naturally mention ${PRODUCT.name} once in the closing paragraph as context — not an ad. Write 800-1200 words. Make it tight and factual. No fluff. Do NOT include a Sources or References section — we handle attribution separately. Do NOT include any vertexaisearch.cloud.google.com grounding redirect URLs anywhere in the content.",
-  "bannerPrompt": "A detailed prompt for generating a photorealistic banner image for this article. Describe a clean, modern tech/design scene relevant to the article topic. No text in the image. 16:9 aspect ratio. Professional photography style."
+  "bannerPrompt": "List 5-8 specific objects/icons related to this article's topic that would make good doodle sketches (e.g. smartphone, wireframe, AI brain, paint palette). Keep it short — just the object names."
 }`;
 
   const response = await ai.models.generateContent({
@@ -296,7 +296,7 @@ async function tryNanoBanana(
 
       const response = await ai.models.generateContent({
         model,
-        contents: `Generate a single high-quality, photorealistic banner image for a blog post. No text or watermarks in the image. 16:9 aspect ratio.\n\n${prompt}`,
+        contents: `Generate a single banner image in a fun, hand-drawn doodle illustration style. Use black ink line art doodles on a clean white or light pastel background. The doodles should be playful sketches of tech/design related objects (phones, screens, cursors, lightbulbs, gears, pencils, code brackets, UI wireframes). Keep it minimal, whimsical, and charming — like notebook margin doodles. No text, no watermarks. 16:9 aspect ratio.\n\nTopic context for the doodle elements: ${prompt}`,
         config: {
           responseModalities: ["TEXT", "IMAGE"],
         },

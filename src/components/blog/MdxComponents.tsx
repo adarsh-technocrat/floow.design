@@ -1,6 +1,23 @@
 import type { ReactNode } from "react";
 import { CollapsibleTLDR } from "./CollapsibleTLDR";
 
+function nodeToPlainText(node: ReactNode): string {
+  if (node == null || typeof node === "boolean") return "";
+  if (typeof node === "string" || typeof node === "number") return String(node);
+  if (Array.isArray(node)) return node.map(nodeToPlainText).join("");
+  if (
+    typeof node === "object" &&
+    node !== null &&
+    "props" in node &&
+    (node as { props?: { children?: ReactNode } }).props?.children != null
+  ) {
+    return nodeToPlainText(
+      (node as { props: { children: ReactNode } }).props.children,
+    );
+  }
+  return "";
+}
+
 function Heading2({ children, id }: { children?: ReactNode; id?: string }) {
   return (
     <h2
@@ -59,35 +76,62 @@ export const mdxComponents = {
     </p>
   ),
   ul: ({ children }: { children?: ReactNode }) => (
-    <ul className="mb-5 flex flex-col gap-2 pl-1">{children}</ul>
+    <ul className="mb-6 space-y-4 pl-0 list-none wrap-anywhere">{children}</ul>
   ),
   ol: ({ children }: { children?: ReactNode }) => (
-    <ol className="mb-5 flex flex-col gap-2 pl-1 list-decimal list-inside">
+    <ol className="mb-6 space-y-4 pl-5 list-decimal marker:font-mono marker:text-sm marker:text-t-tertiary wrap-anywhere">
       {children}
     </ol>
   ),
-  li: ({ children }: { children?: ReactNode }) => (
-    <li className="flex gap-2 text-[15px] text-t-secondary leading-[1.8]">
-      <span className="text-t-tertiary mt-1 shrink-0">•</span>
-      <span>{children}</span>
-    </li>
-  ),
+  li: ({ children }: { children?: ReactNode }) => {
+    const plain = nodeToPlainText(children).trimStart();
+    const isManualNumberedCitation = /^\[\d+\]/.test(plain);
+    if (isManualNumberedCitation) {
+      return (
+        <li className="text-[15px] text-t-secondary leading-[1.75] pl-0">
+          {children}
+        </li>
+      );
+    }
+    return (
+      <li className="flex gap-2.5 text-[15px] text-t-secondary leading-[1.75]">
+        <span className="text-t-tertiary mt-1.5 shrink-0 select-none">•</span>
+        <span className="min-w-0">{children}</span>
+      </li>
+    );
+  },
   strong: ({ children }: { children?: ReactNode }) => (
     <strong className="font-semibold text-t-primary">{children}</strong>
   ),
   em: ({ children }: { children?: ReactNode }) => (
     <em className="italic text-t-secondary">{children}</em>
   ),
-  a: ({ href, children }: { href?: string; children?: ReactNode }) => (
-    <a
-      href={href}
-      className="text-t-primary underline underline-offset-2 decoration-b-primary hover:decoration-t-primary transition-colors"
-      target={href?.startsWith("http") ? "_blank" : undefined}
-      rel={href?.startsWith("http") ? "noopener noreferrer" : undefined}
-    >
-      {children}
-    </a>
-  ),
+  a: ({ href, children }: { href?: string; children?: ReactNode }) => {
+    const childText = nodeToPlainText(children).trim();
+    const isVertexGrounding = Boolean(
+      href?.includes("vertexaisearch.cloud.google.com/grounding-api-redirect"),
+    );
+    const rawLongUrl =
+      Boolean(href && childText === href && href.length > 72) &&
+      !isVertexGrounding;
+    const useFriendlyLabel = isVertexGrounding || rawLongUrl;
+
+    return (
+      <a
+        href={href}
+        className={
+          useFriendlyLabel
+            ? "text-sm font-mono text-t-tertiary underline underline-offset-2 decoration-b-secondary hover:text-t-secondary hover:decoration-t-secondary transition-colors break-all"
+            : "text-t-primary underline underline-offset-2 decoration-b-primary hover:decoration-t-primary transition-colors wrap-break-word"
+        }
+        title={useFriendlyLabel && href ? href : undefined}
+        target={href?.startsWith("http") ? "_blank" : undefined}
+        rel={href?.startsWith("http") ? "noopener noreferrer" : undefined}
+      >
+        {useFriendlyLabel ? "Open source" : children}
+      </a>
+    );
+  },
   blockquote: ({ children }: { children?: ReactNode }) => (
     <blockquote className="border-l-2 pl-4 my-6 text-t-secondary italic [border-left-color:var(--border-secondary)]">
       {children}
