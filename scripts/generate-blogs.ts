@@ -385,38 +385,8 @@ async function generateBannerImage(
 }
 
 /* ------------------------------------------------------------------ */
-/*  Step 3: Write MDX file + seed to database                          */
+/*  Step 3: Seed to database                                           */
 /* ------------------------------------------------------------------ */
-
-import fs from "fs";
-import path from "path";
-
-function writeMdxFile(blog: BlogContent, coverImage: string): string {
-  const blogDir = path.join(process.cwd(), "src/content/blog");
-  if (!fs.existsSync(blogDir)) {
-    fs.mkdirSync(blogDir, { recursive: true });
-  }
-
-  const frontmatter = `---
-title: "${blog.title.replace(/"/g, '\\"')}"
-description: "${blog.description.replace(/"/g, '\\"')}"
-date: "${new Date().toISOString().split("T")[0]}"
-author: "${DEFAULTS.author}"
-authorRole: "${DEFAULTS.authorRole}"
-category: "${blog.category}"
-tags: [${blog.tags.map((t) => `"${t}"`).join(", ")}]
-tldr: "${blog.tldr.replace(/"/g, '\\"')}"
-coverImage: "${coverImage}"
-published: true
----
-
-${blog.mdxContent}`;
-
-  const filePath = path.join(blogDir, `${blog.slug}.mdx`);
-  fs.writeFileSync(filePath, frontmatter, "utf-8");
-  console.log(`  MDX written: src/content/blog/${blog.slug}.mdx`);
-  return filePath;
-}
 
 async function seedToDatabase(
   prisma: PrismaClient,
@@ -527,10 +497,8 @@ async function main() {
         );
       }
 
-      // Step 3: Write MDX + seed DB
-      console.log(`  Step 3/3: Writing MDX file and seeding database...`);
-      writeMdxFile(blog, coverImage);
-
+      // Step 3: Seed DB
+      console.log(`  Step 3/3: Seeding database...`);
       if (!dryRun) {
         await seedToDatabase(prisma, blog, coverImage);
       } else {
