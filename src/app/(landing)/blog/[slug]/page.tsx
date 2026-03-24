@@ -209,6 +209,60 @@ export default async function BlogPostPage({ params }: PageProps) {
           </article>
         </div>
 
+        {/* Product CTA — internal link for SEO */}
+        <div className="border-t border-b-secondary">
+          <div className="mx-auto max-w-3xl px-4 py-10 sm:px-6 md:px-16 text-center">
+            <p
+              className="text-lg sm:text-xl font-semibold text-t-primary mb-2"
+              style={{
+                fontFamily: "var(--font-logo), 'Space Grotesk', sans-serif",
+              }}
+            >
+              Design your mobile app with AI
+            </p>
+            <p className="text-sm text-t-secondary mb-6 max-w-md mx-auto">
+              Generate pixel-perfect iOS &amp; Android screens in seconds.
+              Export to Figma and ship faster.
+            </p>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+              <Link
+                href="/project"
+                className="inline-flex h-10 items-center px-6 rounded border-0 bg-btn-primary-bg text-[11px] font-semibold uppercase tracking-wider text-btn-primary-text hover:opacity-90 transition-colors no-underline font-mono"
+              >
+                Try floow.design free
+              </Link>
+              <Link
+                href="/pricing"
+                className="inline-flex h-10 items-center px-6 rounded border border-b-secondary text-[11px] font-semibold uppercase tracking-wider text-t-secondary hover:text-t-primary transition-colors no-underline font-mono"
+              >
+                View pricing
+              </Link>
+            </div>
+            <div className="flex items-center justify-center gap-4 mt-4 text-[11px] font-mono text-t-tertiary">
+              <Link
+                href="/#features"
+                className="hover:text-t-secondary transition-colors no-underline"
+              >
+                See features
+              </Link>
+              <span>·</span>
+              <Link
+                href="/#templates"
+                className="hover:text-t-secondary transition-colors no-underline"
+              >
+                Browse templates
+              </Link>
+              <span>·</span>
+              <Link
+                href="/#faq"
+                className="hover:text-t-secondary transition-colors no-underline"
+              >
+                FAQ
+              </Link>
+            </div>
+          </div>
+        </div>
+
         {/* Related posts */}
         {relatedPosts.length > 0 && (
           <div className="border-t border-b-secondary">

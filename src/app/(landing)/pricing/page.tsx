@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import NumberFlow from "@number-flow/react";
+import Link from "next/link";
 import { Header } from "@/components/landing/Header";
 import { Footer } from "@/components/landing/Footer";
 import { useAuth } from "@/contexts/AuthContext";
@@ -585,6 +586,41 @@ export default function PricingPage() {
             </tr>
           </tbody>
         </table>
+
+        {/* Cross-links for SEO */}
+        <div className="border-t border-b-secondary px-5 py-8 md:py-12">
+          <div className="mx-auto max-w-2xl text-center">
+            <p className="text-sm text-t-secondary mb-4">
+              Not sure yet? Explore what floow.design can do.
+            </p>
+            <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-[11px] font-mono">
+              <Link
+                href="/#features"
+                className="text-t-secondary hover:text-t-primary transition-colors no-underline uppercase tracking-wider"
+              >
+                See all features
+              </Link>
+              <Link
+                href="/#templates"
+                className="text-t-secondary hover:text-t-primary transition-colors no-underline uppercase tracking-wider"
+              >
+                Browse templates
+              </Link>
+              <Link
+                href="/blog"
+                className="text-t-secondary hover:text-t-primary transition-colors no-underline uppercase tracking-wider"
+              >
+                Read our blog
+              </Link>
+              <Link
+                href="/#faq"
+                className="text-t-secondary hover:text-t-primary transition-colors no-underline uppercase tracking-wider"
+              >
+                FAQ
+              </Link>
+            </div>
+          </div>
+        </div>
 
         <Footer />
       </div>

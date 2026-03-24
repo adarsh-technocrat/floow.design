@@ -54,6 +54,37 @@ export default async function BlogPage() {
           </div>
         </div>
 
+        {/* Cross-link banner */}
+        <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 border-b border-b-secondary px-5 py-3 text-[11px] font-mono text-t-tertiary">
+          <Link
+            href="/#features"
+            className="hover:text-t-secondary transition-colors no-underline"
+          >
+            Features
+          </Link>
+          <span className="hidden sm:inline">·</span>
+          <Link
+            href="/#templates"
+            className="hover:text-t-secondary transition-colors no-underline"
+          >
+            Templates
+          </Link>
+          <span className="hidden sm:inline">·</span>
+          <Link
+            href="/pricing"
+            className="hover:text-t-secondary transition-colors no-underline"
+          >
+            Pricing
+          </Link>
+          <span className="hidden sm:inline">·</span>
+          <Link
+            href="/project"
+            className="text-btn-primary-text bg-btn-primary-bg px-3 py-1 rounded hover:opacity-90 transition-colors no-underline"
+          >
+            Start designing free →
+          </Link>
+        </div>
+
         {/* Post grid — edge-to-edge borders + center rule (md) like pricing */}
         <div
           className={cn(
