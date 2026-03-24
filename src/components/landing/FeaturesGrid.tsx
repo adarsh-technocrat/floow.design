@@ -1,35 +1,43 @@
+import Link from "next/link";
+
 const features = [
   {
     title: "Describe your app",
     description: "Type what you want in plain English — screens, flows, style.",
     label: "Input",
+    slug: "ai-mobile-app-design",
   },
   {
     title: "AI generates designs",
     description:
       "Complete mobile screens with proper layout, spacing, typography.",
     label: "Design",
+    slug: "ai-screen-generator",
   },
   {
     title: "Export anywhere",
     description: "Export to Figma, AI builders, or share preview links.",
     label: "Export",
+    slug: "export-to-figma",
   },
   {
     title: "iOS & Android ready",
     description:
       "Pixel-perfect designs for both platforms — Material & Cupertino.",
     label: "Platforms",
+    slug: "ios-android-design",
   },
   {
     title: "Multi-screen flows",
     description: "Complete app flows with navigation, transitions, and state.",
     label: "Flows",
+    slug: "multi-screen-app-flows",
   },
   {
     title: "Custom themes",
     description: "Design with your brand colors, fonts, and design tokens.",
     label: "Theming",
+    slug: "custom-design-themes",
   },
 ];
 
@@ -41,6 +49,12 @@ export function FeaturesGrid() {
           Features
         </span>
         <span aria-hidden className="h-px min-w-8 flex-1 bg-b-secondary" />
+        <Link
+          href="/features"
+          className="shrink-0 text-[11px] font-mono font-medium text-t-tertiary hover:text-t-secondary transition-colors no-underline"
+        >
+          View all →
+        </Link>
       </div>
 
       {/* One frame: intro + feature grid + stats share the same width so column lines line up; avoids double borders between blocks */}
@@ -62,9 +76,10 @@ export function FeaturesGrid() {
 
         <div className="grid grid-cols-1 gap-px border-t border-b-secondary bg-b-secondary md:grid-cols-2 lg:grid-cols-3">
           {features.map((f) => (
-            <div
+            <Link
               key={f.title}
-              className="flex flex-col bg-surface px-4 py-8 md:px-6 md:py-10 lg:px-8 lg:py-12"
+              href={`/features/${f.slug}`}
+              className="group flex flex-col bg-surface px-4 py-8 md:px-6 md:py-10 lg:px-8 lg:py-12 transition-colors hover:bg-input-bg/80 no-underline"
             >
               <span className="mb-3 text-[11px] font-mono font-semibold uppercase tracking-widest text-t-tertiary">
                 {f.label}
@@ -75,7 +90,10 @@ export function FeaturesGrid() {
               <p className="text-sm leading-relaxed text-t-secondary">
                 {f.description}
               </p>
-            </div>
+              <span className="mt-4 text-[11px] font-mono text-t-tertiary group-hover:text-t-secondary transition-colors">
+                Learn more →
+              </span>
+            </Link>
           ))}
         </div>
 

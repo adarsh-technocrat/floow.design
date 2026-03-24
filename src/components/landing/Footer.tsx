@@ -6,19 +6,29 @@ import { PromptCTA } from "./PromptCTA";
 
 const links = {
   Product: [
-    { label: "Features", href: "/#features" },
+    { label: "Features", href: "/features" },
     { label: "Templates", href: "/#templates" },
     { label: "Pricing", href: "/pricing" },
     { label: "Get Started", href: "/project" },
   ],
+  Features: [
+    { label: "AI App Design", href: "/features/ai-mobile-app-design" },
+    { label: "AI Screen Generator", href: "/features/ai-screen-generator" },
+    { label: "Export to Figma", href: "/features/export-to-figma" },
+    { label: "iOS & Android", href: "/features/ios-android-design" },
+    { label: "App Flows", href: "/features/multi-screen-app-flows" },
+    { label: "Custom Themes", href: "/features/custom-design-themes" },
+  ],
   Resources: [
     { label: "Blog", href: "/blog" },
+    { label: "Compare", href: "/compare" },
     { label: "FAQ", href: "/#faq" },
   ],
-  "Use Cases": [
-    { label: "AI App Design", href: "/blog" },
-    { label: "AI Wireframe Generator", href: "/#features" },
-    { label: "Figma AI Alternative", href: "/#templates" },
+  Compare: [
+    { label: "floow vs Uizard", href: "/compare/floow-vs-uizard" },
+    { label: "floow vs Figma", href: "/compare/floow-vs-figma" },
+    { label: "floow vs Visily", href: "/compare/floow-vs-visily" },
+    { label: "floow vs FlutterFlow", href: "/compare/floow-vs-flutterflow" },
   ],
   Legal: [
     { label: "Privacy Policy", href: "/privacy" },
@@ -58,7 +68,7 @@ export function Footer() {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-6 sm:gap-8">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-6 sm:gap-8">
             {Object.entries(links).map(([group, items]) => (
               <div key={group}>
                 <p className="text-[11px] font-mono font-semibold uppercase tracking-widest text-t-tertiary mb-3">
