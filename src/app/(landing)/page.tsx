@@ -8,10 +8,22 @@ import { StartNow } from "@/components/landing/StartNow";
 import { FAQ } from "@/components/landing/FAQ";
 import { Footer } from "@/components/landing/Footer";
 
-export const metadata = {
+import type { Metadata } from "next";
+
+const pageDescription =
+  "Design mobile apps with AI in seconds. Generate pixel-perfect iOS & Android screens, export to Figma, and ship faster. Used by 1,000+ designers & teams.";
+
+export const metadata: Metadata = {
   title: "floow.design – Design mobile apps with AI",
-  description:
-    "Turn your app ideas into beautiful, high-fidelity mobile designs in seconds",
+  description: pageDescription,
+  alternates: {
+    canonical: "https://www.floow.design",
+  },
+  openGraph: {
+    title: "floow.design – Design mobile apps with AI, in seconds",
+    description: pageDescription,
+    url: "https://www.floow.design",
+  },
 };
 
 export default function LandingPage() {

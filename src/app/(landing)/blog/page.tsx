@@ -4,10 +4,21 @@ import { getAllPosts } from "@/lib/blog";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 
-export const metadata = {
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
   title: "Blog – floow.design",
   description:
     "Updates, tutorials, and insights on designing mobile apps with AI",
+  alternates: {
+    canonical: "https://www.floow.design/blog",
+  },
+  openGraph: {
+    title: "Blog – floow.design",
+    description:
+      "Updates, tutorials, and insights on designing mobile apps with AI",
+    url: "https://www.floow.design/blog",
+  },
 };
 
 export const dynamic = "force-dynamic";
