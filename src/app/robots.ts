@@ -9,6 +9,10 @@ export default function robots(): MetadataRoute.Robots {
         disallow: ["/api/", "/dashboard/", "/project/", "/team/", "/billing/"],
       },
     ],
-    sitemap: "https://www.floow.design/sitemap.xml",
+    sitemap: [
+      "https://www.floow.design/sitemap.xml",
+      "https://www.floow.design/sitemap/pages",
+      "https://www.floow.design/sitemap/blog",
+    ],
   };
 }
