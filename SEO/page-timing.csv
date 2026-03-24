@@ -1,0 +1,10 @@
+Metric,Value (ms),Status
+Time to Interactive,897,Fast
+DOM Complete,1343,Fast
+Largest Contentful Paint,0,Excellent
+First Input Delay,0,Excellent
+Connection Time,96,Good
+Time to Secure Connection,18,Fast
+Waiting Time (TTFB),13,Excellent
+Download Time,696,Good
+Total Duration,1343,Fast

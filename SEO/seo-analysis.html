@@ -1,0 +1,1344 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SEO Analysis Report — floow.design</title>
+    <style>
+      :root {
+        --bg: #0f172a;
+        --surface: #1e293b;
+        --border: #334155;
+        --text: #e2e8f0;
+        --muted: #94a3b8;
+        --accent: #3b82f6;
+        --green: #22c55e;
+        --yellow: #eab308;
+        --red: #ef4444;
+        --orange: #f97316;
+      }
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        line-height: 1.6;
+        padding: 2rem;
+      }
+      .container {
+        max-width: 1200px;
+        margin: 0 auto;
+      }
+      header {
+        text-align: center;
+        padding: 3rem 0;
+        border-bottom: 1px solid var(--border);
+        margin-bottom: 3rem;
+      }
+      header h1 {
+        font-size: 2.5rem;
+        margin-bottom: 0.5rem;
+      }
+      header .subtitle {
+        color: var(--muted);
+        font-size: 1.1rem;
+      }
+      header .date {
+        color: var(--muted);
+        font-size: 0.9rem;
+        margin-top: 0.5rem;
+      }
+
+      .score-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 3rem;
+      }
+      .score-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 1.5rem;
+        text-align: center;
+      }
+      .score-card .score {
+        font-size: 3rem;
+        font-weight: 700;
+        line-height: 1;
+        margin: 0.5rem 0;
+      }
+      .score-card .label {
+        color: var(--muted);
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+      }
+      .score-card .rating {
+        font-size: 0.8rem;
+        margin-top: 0.5rem;
+        padding: 0.25rem 0.75rem;
+        border-radius: 9999px;
+        display: inline-block;
+      }
+      .excellent {
+        color: var(--green);
+      }
+      .excellent-bg {
+        background: rgba(34, 197, 94, 0.15);
+        color: var(--green);
+      }
+      .good {
+        color: var(--yellow);
+      }
+      .good-bg {
+        background: rgba(234, 179, 8, 0.15);
+        color: var(--yellow);
+      }
+      .poor {
+        color: var(--red);
+      }
+      .poor-bg {
+        background: rgba(239, 68, 68, 0.15);
+        color: var(--red);
+      }
+
+      section {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+      }
+      section h2 {
+        font-size: 1.4rem;
+        margin-bottom: 1.5rem;
+        padding-bottom: 0.75rem;
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+      section h3 {
+        font-size: 1.1rem;
+        margin: 1.5rem 0 0.75rem;
+        color: var(--accent);
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 1rem 0;
+      }
+      th,
+      td {
+        padding: 0.75rem 1rem;
+        text-align: left;
+        border-bottom: 1px solid var(--border);
+        font-size: 0.9rem;
+      }
+      th {
+        color: var(--muted);
+        font-weight: 600;
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+      }
+      tr:last-child td {
+        border-bottom: none;
+      }
+      tr:hover td {
+        background: rgba(59, 130, 246, 0.05);
+      }
+
+      .tag {
+        display: inline-block;
+        padding: 0.2rem 0.6rem;
+        border-radius: 6px;
+        font-size: 0.75rem;
+        font-weight: 600;
+      }
+      .tag-high {
+        background: rgba(239, 68, 68, 0.15);
+        color: var(--red);
+      }
+      .tag-medium {
+        background: rgba(234, 179, 8, 0.15);
+        color: var(--yellow);
+      }
+      .tag-low {
+        background: rgba(34, 197, 94, 0.15);
+        color: var(--green);
+      }
+
+      .metric-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 0.75rem 0;
+        border-bottom: 1px solid var(--border);
+      }
+      .metric-row:last-child {
+        border-bottom: none;
+      }
+      .metric-label {
+        color: var(--muted);
+      }
+      .metric-value {
+        font-weight: 600;
+      }
+
+      .bar-chart {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        margin: 0.5rem 0;
+      }
+      .bar-label {
+        min-width: 180px;
+        font-size: 0.85rem;
+        color: var(--muted);
+      }
+      .bar-track {
+        flex: 1;
+        height: 24px;
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 6px;
+        overflow: hidden;
+        position: relative;
+      }
+      .bar-fill {
+        height: 100%;
+        border-radius: 6px;
+        transition: width 0.5s ease;
+        display: flex;
+        align-items: center;
+        padding-left: 8px;
+        font-size: 0.75rem;
+        font-weight: 600;
+      }
+
+      .recommendations {
+        list-style: none;
+        padding: 0;
+      }
+      .recommendations li {
+        padding: 1rem;
+        border-left: 3px solid var(--accent);
+        margin-bottom: 0.75rem;
+        background: rgba(59, 130, 246, 0.05);
+        border-radius: 0 8px 8px 0;
+      }
+      .recommendations li strong {
+        display: block;
+        margin-bottom: 0.25rem;
+      }
+      .recommendations li .priority {
+        font-size: 0.75rem;
+        margin-top: 0.5rem;
+      }
+
+      .competitor-rank {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 28px;
+        height: 28px;
+        border-radius: 6px;
+        font-size: 0.8rem;
+        font-weight: 700;
+      }
+      .rank-top3 {
+        background: rgba(34, 197, 94, 0.2);
+        color: var(--green);
+      }
+      .rank-top10 {
+        background: rgba(234, 179, 8, 0.2);
+        color: var(--yellow);
+      }
+      .rank-top20 {
+        background: rgba(249, 115, 22, 0.2);
+        color: var(--orange);
+      }
+      .rank-low {
+        background: rgba(239, 68, 68, 0.1);
+        color: var(--red);
+      }
+
+      .summary-box {
+        background: rgba(59, 130, 246, 0.1);
+        border: 1px solid rgba(59, 130, 246, 0.3);
+        border-radius: 10px;
+        padding: 1.5rem;
+        margin: 1rem 0;
+      }
+      .summary-box p {
+        margin-bottom: 0.5rem;
+      }
+      .summary-box p:last-child {
+        margin-bottom: 0;
+      }
+
+      footer {
+        text-align: center;
+        color: var(--muted);
+        padding: 2rem 0;
+        font-size: 0.85rem;
+        border-top: 1px solid var(--border);
+        margin-top: 2rem;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <h1>SEO Analysis Report</h1>
+        <div class="subtitle">floow.design — Design mobile apps with AI</div>
+        <div class="date">
+          Generated: March 24, 2026 | Data Source: DataForSEO
+        </div>
+      </header>
+
+      <!-- Score Cards -->
+      <div class="score-grid">
+        <div class="score-card">
+          <div class="label">Performance</div>
+          <div class="score excellent">99</div>
+          <span class="rating excellent-bg">Excellent</span>
+        </div>
+        <div class="score-card">
+          <div class="label">SEO Score</div>
+          <div class="score excellent">100</div>
+          <span class="rating excellent-bg">Perfect</span>
+        </div>
+        <div class="score-card">
+          <div class="label">Best Practices</div>
+          <div class="score excellent">100</div>
+          <span class="rating excellent-bg">Perfect</span>
+        </div>
+        <div class="score-card">
+          <div class="label">Accessibility</div>
+          <div class="score good">91</div>
+          <span class="rating good-bg">Good</span>
+        </div>
+        <div class="score-card">
+          <div class="label">On-Page Score</div>
+          <div class="score excellent">100</div>
+          <span class="rating excellent-bg">Perfect</span>
+        </div>
+      </div>
+
+      <!-- Executive Summary -->
+      <section>
+        <h2>Executive Summary</h2>
+        <div class="summary-box">
+          <p>
+            <strong>floow.design</strong> is technically outstanding — scoring
+            99-100 across Performance, SEO, and Best Practices in Lighthouse.
+            The site loads in under 1 second, uses Brotli compression on Vercel,
+            and has perfect on-page SEO with proper meta tags, Open Graph,
+            Twitter cards, and canonical URLs.
+          </p>
+          <p>
+            However, the site currently has
+            <strong>zero ranked keywords</strong> and
+            <strong>zero organic search traffic</strong> in Google US results.
+            The domain is new and hasn't yet built the backlink authority or
+            content depth needed to rank for its target keywords.
+          </p>
+          <p>
+            The expanded keyword research reveals a
+            <strong>~2,500+ monthly search addressable market</strong> across
+            65+ keywords in 6 categories. The biggest opportunities are "figma
+            ai design" (480/mo, +238% YoY), "ai wireframe generator" (480/mo),
+            and "ai ui design tool" (110/mo). Many high-value variants have LOW
+            competition and keyword difficulty under 30.
+          </p>
+          <p>
+            The competitive landscape is dominated by
+            <strong>Google Stitch, Uizard, Figma, and UXPilot</strong>. Breaking
+            into this space will require a focused content marketing and
+            link-building strategy targeting the Figma AI and wireframe
+            generator keyword clusters first.
+          </p>
+        </div>
+      </section>
+
+      <!-- Core Web Vitals -->
+      <section>
+        <h2>Core Web Vitals & Performance</h2>
+        <div class="bar-chart">
+          <span class="bar-label">First Contentful Paint</span>
+          <div class="bar-track">
+            <div class="bar-fill" style="width: 14%; background: var(--green)">
+              429ms
+            </div>
+          </div>
+        </div>
+        <div class="bar-chart">
+          <span class="bar-label">Largest Contentful Paint</span>
+          <div class="bar-track">
+            <div class="bar-fill" style="width: 19%; background: var(--green)">
+              950ms
+            </div>
+          </div>
+        </div>
+        <div class="bar-chart">
+          <span class="bar-label">Speed Index</span>
+          <div class="bar-track">
+            <div class="bar-fill" style="width: 13%; background: var(--green)">
+              670ms
+            </div>
+          </div>
+        </div>
+        <div class="bar-chart">
+          <span class="bar-label">Time to Interactive</span>
+          <div class="bar-track">
+            <div class="bar-fill" style="width: 19%; background: var(--green)">
+              955ms
+            </div>
+          </div>
+        </div>
+        <div class="bar-chart">
+          <span class="bar-label">Cumulative Layout Shift</span>
+          <div class="bar-track">
+            <div class="bar-fill" style="width: 3%; background: var(--green)">
+              0.031
+            </div>
+          </div>
+        </div>
+        <div class="bar-chart">
+          <span class="bar-label">Server Response (TTFB)</span>
+          <div class="bar-track">
+            <div class="bar-fill" style="width: 3%; background: var(--green)">
+              13ms
+            </div>
+          </div>
+        </div>
+
+        <h3>Additional Metrics</h3>
+        <div class="metric-row">
+          <span class="metric-label">Total Page Size</span>
+          <span class="metric-value">529 KB</span>
+        </div>
+        <div class="metric-row">
+          <span class="metric-label">DOM Elements</span>
+          <span class="metric-value">460</span>
+        </div>
+        <div class="metric-row">
+          <span class="metric-label">Main Thread Work</span>
+          <span class="metric-value">627ms</span>
+        </div>
+        <div class="metric-row">
+          <span class="metric-label">Boot-up Time</span>
+          <span class="metric-value">201ms</span>
+        </div>
+        <div class="metric-row">
+          <span class="metric-label">Content Encoding</span>
+          <span class="metric-value">Brotli (br)</span>
+        </div>
+        <div class="metric-row">
+          <span class="metric-label">Hosting</span>
+          <span class="metric-value">Vercel</span>
+        </div>
+      </section>
+
+      <!-- On-Page SEO -->
+      <section>
+        <h2>On-Page SEO Audit</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Check</th>
+              <th>Status</th>
+              <th>Details</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Title Tag</td>
+              <td class="excellent">Pass</td>
+              <td>
+                56 chars — "floow.design – Design mobile apps with AI |
+                floow.design"
+              </td>
+            </tr>
+            <tr>
+              <td>Meta Description</td>
+              <td class="excellent">Pass</td>
+              <td>152 chars — within optimal 150-160 range</td>
+            </tr>
+            <tr>
+              <td>Canonical URL</td>
+              <td class="excellent">Pass</td>
+              <td>Self-referencing canonical set</td>
+            </tr>
+            <tr>
+              <td>H1 Tag</td>
+              <td class="excellent">Pass</td>
+              <td>"Design mobile apps with AI, in seconds"</td>
+            </tr>
+            <tr>
+              <td>HTTPS</td>
+              <td class="excellent">Pass</td>
+              <td>SSL enabled</td>
+            </tr>
+            <tr>
+              <td>Open Graph Tags</td>
+              <td class="excellent">Pass</td>
+              <td>og:title, og:description, og:url set</td>
+            </tr>
+            <tr>
+              <td>Twitter Cards</td>
+              <td class="excellent">Pass</td>
+              <td>summary_large_image with title, desc, image</td>
+            </tr>
+            <tr>
+              <td>Meta Keywords</td>
+              <td class="excellent">Pass</td>
+              <td>10 target keywords set</td>
+            </tr>
+            <tr>
+              <td>URL Structure</td>
+              <td class="excellent">Pass</td>
+              <td>Clean, SEO-friendly</td>
+            </tr>
+            <tr>
+              <td>Title-Content Match</td>
+              <td class="excellent">1.00</td>
+              <td>Perfect consistency</td>
+            </tr>
+            <tr>
+              <td>Description-Content Match</td>
+              <td class="excellent">0.96</td>
+              <td>Excellent consistency</td>
+            </tr>
+            <tr>
+              <td>Keywords-Content Match</td>
+              <td class="good">0.67</td>
+              <td>Could improve keyword integration in content</td>
+            </tr>
+            <tr>
+              <td>Content Rate</td>
+              <td class="good">Low (1.2%)</td>
+              <td>Text-to-HTML ratio is low — add more content</td>
+            </tr>
+            <tr>
+              <td>Internal Links</td>
+              <td class="good">6</td>
+              <td>Consider adding more internal links</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <!-- Heading Structure -->
+      <section>
+        <h2>Content & Heading Structure</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Tag</th>
+              <th>Content</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="tag tag-low">H1</span></td>
+              <td>Design mobile apps with AI, in seconds</td>
+            </tr>
+            <tr>
+              <td><span class="tag tag-medium">H2</span></td>
+              <td>Everything you need to build</td>
+            </tr>
+            <tr>
+              <td><span class="tag tag-medium">H2</span></td>
+              <td>From prompt to production in under a minute</td>
+            </tr>
+            <tr>
+              <td><span class="tag tag-medium">H2</span></td>
+              <td>Loved by developers and designers</td>
+            </tr>
+            <tr>
+              <td><span class="tag tag-medium">H2</span></td>
+              <td>Ready to design your next mobile app?</td>
+            </tr>
+            <tr>
+              <td><span class="tag tag-medium">H2</span></td>
+              <td>Questions</td>
+            </tr>
+            <tr>
+              <td><span class="tag tag-high">H3</span></td>
+              <td>Describe your app</td>
+            </tr>
+            <tr>
+              <td><span class="tag tag-high">H3</span></td>
+              <td>AI generates designs</td>
+            </tr>
+            <tr>
+              <td><span class="tag tag-high">H3</span></td>
+              <td>Export anywhere</td>
+            </tr>
+            <tr>
+              <td><span class="tag tag-high">H3</span></td>
+              <td>iOS & Android ready</td>
+            </tr>
+            <tr>
+              <td><span class="tag tag-high">H3</span></td>
+              <td>Multi-screen flows</td>
+            </tr>
+            <tr>
+              <td><span class="tag tag-high">H3</span></td>
+              <td>Custom themes</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>Readability Scores</h3>
+        <div class="metric-row">
+          <span class="metric-label">Flesch-Kincaid (higher = easier)</span>
+          <span class="metric-value">50.8 — Fairly Difficult</span>
+        </div>
+        <div class="metric-row">
+          <span class="metric-label">SMOG Index (grade level)</span>
+          <span class="metric-value">10.7 — 11th Grade</span>
+        </div>
+        <div class="metric-row">
+          <span class="metric-label">Automated Readability Index</span>
+          <span class="metric-value">8.2 — 8th Grade</span>
+        </div>
+      </section>
+
+      <!-- Keyword Opportunities -->
+      <section>
+        <h2>Target Keyword Opportunities (65+ Keywords Found)</h2>
+        <p style="color: var(--muted); margin-bottom: 1rem">
+          Expanded keyword universe across 6 categories. Currently floow.design
+          ranks for <strong>none</strong> of these — massive opportunity.
+        </p>
+
+        <h3 style="color: var(--green)">
+          HIGH VOLUME — Figma AI Keywords (170-480/mo)
+        </h3>
+        <p
+          style="
+            color: var(--muted);
+            font-size: 0.85rem;
+            margin-bottom: 0.75rem;
+          "
+        >
+          Trending up 238-2400% YoY. Huge opportunity as Figma AI gains
+          awareness.
+        </p>
+        <table>
+          <thead>
+            <tr>
+              <th>Keyword</th>
+              <th>Volume</th>
+              <th>CPC</th>
+              <th>Competition</th>
+              <th>KD</th>
+              <th>Trend YoY</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>figma ai design</td>
+              <td><strong>480</strong></td>
+              <td>$3.70</td>
+              <td><span class="tag tag-medium">MED</span></td>
+              <td>35</td>
+              <td class="excellent">+238%</td>
+            </tr>
+            <tr>
+              <td>figma ai design tool</td>
+              <td><strong>170</strong></td>
+              <td>$2.92</td>
+              <td><span class="tag tag-low">LOW</span></td>
+              <td>29</td>
+              <td class="excellent">+2400%</td>
+            </tr>
+            <tr>
+              <td>figma ai design generator</td>
+              <td><strong>110</strong></td>
+              <td>$4.66</td>
+              <td><span class="tag tag-low">LOW</span></td>
+              <td>24</td>
+              <td class="excellent">+189%</td>
+            </tr>
+            <tr>
+              <td>figma design ai</td>
+              <td><strong>110</strong></td>
+              <td>$6.76</td>
+              <td><span class="tag tag-medium">MED</span></td>
+              <td>35</td>
+              <td class="excellent">+325%</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3 style="color: var(--green)">HIGH VOLUME — AI Wireframe (480/mo)</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Keyword</th>
+              <th>Volume</th>
+              <th>CPC</th>
+              <th>Competition</th>
+              <th>KD</th>
+              <th>Trend YoY</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>ai wireframe generator</td>
+              <td><strong>480</strong></td>
+              <td>$11.79</td>
+              <td><span class="tag tag-high">HIGH</span></td>
+              <td>33</td>
+              <td>-71%</td>
+            </tr>
+            <tr>
+              <td>ai wireframe generator free</td>
+              <td>20</td>
+              <td>$5.96</td>
+              <td><span class="tag tag-high">HIGH</span></td>
+              <td>—</td>
+              <td>—</td>
+            </tr>
+            <tr>
+              <td>wireframe generator ai</td>
+              <td>20</td>
+              <td>$11.79</td>
+              <td><span class="tag tag-high">HIGH</span></td>
+              <td>33</td>
+              <td>—</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>MEDIUM VOLUME — AI UI/UX Design Tools (50-110/mo)</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Keyword</th>
+              <th>Volume</th>
+              <th>CPC</th>
+              <th>Competition</th>
+              <th>KD</th>
+              <th>Trend YoY</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>ai ui design tool</td>
+              <td><strong>110</strong></td>
+              <td>$12.14</td>
+              <td><span class="tag tag-medium">MED</span></td>
+              <td>71</td>
+              <td>-22%</td>
+            </tr>
+            <tr>
+              <td>google stitch ai ui design tool</td>
+              <td><strong>110</strong></td>
+              <td>$9.73</td>
+              <td><span class="tag tag-low">LOW</span></td>
+              <td>22</td>
+              <td>—</td>
+            </tr>
+            <tr>
+              <td>ai tool for ui ux design</td>
+              <td>70</td>
+              <td>$6.74</td>
+              <td><span class="tag tag-medium">MED</span></td>
+              <td>19</td>
+              <td>+25%</td>
+            </tr>
+            <tr>
+              <td>ai tool for ui design</td>
+              <td>70</td>
+              <td>$8.50</td>
+              <td><span class="tag tag-medium">MED</span></td>
+              <td>41</td>
+              <td>+33%</td>
+            </tr>
+            <tr>
+              <td>best ai tool for ui design</td>
+              <td>50</td>
+              <td>$8.46</td>
+              <td><span class="tag tag-high">HIGH</span></td>
+              <td>14</td>
+              <td class="excellent">+67%</td>
+            </tr>
+            <tr>
+              <td>ui design ai tool</td>
+              <td>50</td>
+              <td>$10.28</td>
+              <td><span class="tag tag-high">HIGH</span></td>
+              <td>41</td>
+              <td>—</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>Figma AI — Lower Volume but Rising (20-40/mo)</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Keyword</th>
+              <th>Volume</th>
+              <th>CPC</th>
+              <th>Competition</th>
+              <th>Trend YoY</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>generate figma design with ai</td>
+              <td>40</td>
+              <td>$7.94</td>
+              <td><span class="tag tag-medium">MED</span></td>
+              <td>-40%</td>
+            </tr>
+            <tr>
+              <td>ai figma design generator</td>
+              <td>40</td>
+              <td>$9.12</td>
+              <td><span class="tag tag-high">HIGH</span></td>
+              <td>-25%</td>
+            </tr>
+            <tr>
+              <td>ai generated figma design</td>
+              <td>30</td>
+              <td>$9.63</td>
+              <td><span class="tag tag-medium">MED</span></td>
+              <td>-33%</td>
+            </tr>
+            <tr>
+              <td>figma ai ui design</td>
+              <td>20</td>
+              <td>$10.03</td>
+              <td><span class="tag tag-low">LOW</span></td>
+              <td class="excellent">+100%</td>
+            </tr>
+            <tr>
+              <td>figma ai website design</td>
+              <td>20</td>
+              <td>$7.87</td>
+              <td><span class="tag tag-low">LOW</span></td>
+              <td class="excellent">+300%</td>
+            </tr>
+            <tr>
+              <td>figma ai app design</td>
+              <td>20</td>
+              <td>—</td>
+              <td><span class="tag tag-medium">MED</span></td>
+              <td>—</td>
+            </tr>
+            <tr>
+              <td>how to use figma ai to design</td>
+              <td>20</td>
+              <td>$1.39</td>
+              <td><span class="tag tag-low">LOW</span></td>
+              <td>—</td>
+            </tr>
+            <tr>
+              <td>figma ai design system</td>
+              <td>20</td>
+              <td>—</td>
+              <td><span class="tag tag-low">LOW</span></td>
+              <td class="excellent">+100%</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>Mobile App Design, Mockup & Prototype (10-30/mo)</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Keyword</th>
+              <th>Volume</th>
+              <th>CPC</th>
+              <th>Competition</th>
+              <th>Intent</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>mobile app design ai</td>
+              <td>30</td>
+              <td>$11.05</td>
+              <td><span class="tag tag-high">HIGH</span></td>
+              <td>Commercial</td>
+            </tr>
+            <tr>
+              <td>ai mobile app design</td>
+              <td>20</td>
+              <td>$11.59</td>
+              <td><span class="tag tag-medium">MED</span></td>
+              <td>Commercial</td>
+            </tr>
+            <tr>
+              <td>ai app design tool</td>
+              <td>20</td>
+              <td>$7.99</td>
+              <td><span class="tag tag-medium">MED</span></td>
+              <td>Commercial</td>
+            </tr>
+            <tr>
+              <td>ai app mockup generator</td>
+              <td>20</td>
+              <td>$20.07</td>
+              <td><span class="tag tag-medium">MED</span></td>
+              <td>Commercial</td>
+            </tr>
+            <tr>
+              <td>ai mobile app design generator</td>
+              <td>10</td>
+              <td>$29.82</td>
+              <td><span class="tag tag-high">HIGH</span></td>
+              <td>Commercial</td>
+            </tr>
+            <tr>
+              <td>ai for mobile app design</td>
+              <td>10</td>
+              <td>$40.16</td>
+              <td><span class="tag tag-medium">MED</span></td>
+              <td>Commercial</td>
+            </tr>
+            <tr>
+              <td>ai tool for mobile app design</td>
+              <td>10</td>
+              <td>$16.23</td>
+              <td><span class="tag tag-low">LOW</span></td>
+              <td>Commercial</td>
+            </tr>
+            <tr>
+              <td>ai design prototype</td>
+              <td>10</td>
+              <td>$24.94</td>
+              <td><span class="tag tag-medium">MED</span></td>
+              <td>Commercial</td>
+            </tr>
+            <tr>
+              <td>ai prototype design generator</td>
+              <td>10</td>
+              <td>$15.24</td>
+              <td><span class="tag tag-high">HIGH</span></td>
+              <td>Transactional</td>
+            </tr>
+            <tr>
+              <td>text to ui design ai</td>
+              <td>10</td>
+              <td>$10.13</td>
+              <td><span class="tag tag-medium">MED</span></td>
+              <td>Informational</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="summary-box" style="margin-top: 1.5rem">
+          <p>
+            <strong>Key Insight:</strong> The total addressable keyword universe
+            is <strong>~2,500+ monthly searches</strong> across 65+ keywords.
+            The biggest opportunities are:
+          </p>
+          <p>
+            1. <strong>"figma ai design" cluster (480/mo, +238% YoY)</strong> —
+            exploding demand, LOW competition on many variants
+          </p>
+          <p>
+            2. <strong>"ai wireframe generator" (480/mo)</strong> — high volume,
+            moderate difficulty (KD 33)
+          </p>
+          <p>
+            3. <strong>"ai ui design tool" cluster (110-70/mo)</strong> — core
+            product keywords, KD 19-41
+          </p>
+          <p>
+            4. <strong>High CPC signals</strong>: Keywords like "ai for mobile
+            app design" ($40 CPC) and "ai mobile app design generator" ($30 CPC)
+            indicate advertisers are paying premium for this traffic.
+          </p>
+        </div>
+      </section>
+
+      <!-- Competitor Analysis -->
+      <section>
+        <h2>SERP Competitor Landscape</h2>
+        <p style="color: var(--muted); margin-bottom: 1rem">
+          Top domains ranking for AI mobile app design keywords. floow.design is
+          <strong>not yet ranking</strong> for any of these terms.
+        </p>
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Domain</th>
+              <th>Avg Pos</th>
+              <th>Est. Traffic</th>
+              <th>Rating</th>
+              <th>Keywords</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>1</td>
+              <td><strong>figma.com</strong></td>
+              <td><span class="competitor-rank rank-top3">3.8</span></td>
+              <td>163</td>
+              <td>385</td>
+              <td>4</td>
+            </tr>
+            <tr>
+              <td>2</td>
+              <td><strong>uxpilot.ai</strong></td>
+              <td><span class="competitor-rank rank-top3">4.3</span></td>
+              <td>36</td>
+              <td>383</td>
+              <td>4</td>
+            </tr>
+            <tr>
+              <td>3</td>
+              <td><strong>reddit.com</strong></td>
+              <td><span class="competitor-rank rank-top10">6.8</span></td>
+              <td>30</td>
+              <td>373</td>
+              <td>4</td>
+            </tr>
+            <tr>
+              <td>4</td>
+              <td><strong>stitch.withgoogle.com</strong></td>
+              <td><span class="competitor-rank rank-top3">2.0</span></td>
+              <td>52</td>
+              <td>294</td>
+              <td>3</td>
+            </tr>
+            <tr>
+              <td>5</td>
+              <td><strong>uizard.io</strong></td>
+              <td><span class="competitor-rank rank-top3">1.7</span></td>
+              <td>77</td>
+              <td>295</td>
+              <td>3</td>
+            </tr>
+            <tr>
+              <td>6</td>
+              <td><strong>banani.co</strong></td>
+              <td><span class="competitor-rank rank-top10">9.8</span></td>
+              <td>17</td>
+              <td>361</td>
+              <td>4</td>
+            </tr>
+            <tr>
+              <td>7</td>
+              <td><strong>motiff.com</strong></td>
+              <td><span class="competitor-rank rank-top10">10</span></td>
+              <td>8</td>
+              <td>270</td>
+              <td>3</td>
+            </tr>
+            <tr>
+              <td>8</td>
+              <td><strong>miro.com</strong></td>
+              <td><span class="competitor-rank rank-top10">7.5</span></td>
+              <td>11</td>
+              <td>185</td>
+              <td>2</td>
+            </tr>
+            <tr>
+              <td>9</td>
+              <td><strong>visily.ai</strong></td>
+              <td><span class="competitor-rank rank-top20">18.5</span></td>
+              <td>4</td>
+              <td>326</td>
+              <td>4</td>
+            </tr>
+            <tr>
+              <td>10</td>
+              <td><strong>bubble.io</strong></td>
+              <td><span class="competitor-rank rank-top20">16.7</span></td>
+              <td>10</td>
+              <td>250</td>
+              <td>3</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>Key Competitor Positions by Keyword</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Domain</th>
+              <th>"mobile app design ai"</th>
+              <th>"app design generator"</th>
+              <th>"ai ui design"</th>
+              <th>"ai prototype generator"</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>stitch.withgoogle.com</td>
+              <td><span class="competitor-rank rank-top3">1</span></td>
+              <td><span class="competitor-rank rank-top3">2</span></td>
+              <td><span class="competitor-rank rank-top3">3</span></td>
+              <td>—</td>
+            </tr>
+            <tr>
+              <td>uizard.io</td>
+              <td><span class="competitor-rank rank-top3">2</span></td>
+              <td><span class="competitor-rank rank-top3">1</span></td>
+              <td><span class="competitor-rank rank-top3">2</span></td>
+              <td>—</td>
+            </tr>
+            <tr>
+              <td>uxpilot.ai</td>
+              <td><span class="competitor-rank rank-top3">3</span></td>
+              <td><span class="competitor-rank rank-top10">6</span></td>
+              <td><span class="competitor-rank rank-top10">5</span></td>
+              <td><span class="competitor-rank rank-top3">3</span></td>
+            </tr>
+            <tr>
+              <td>figma.com</td>
+              <td><span class="competitor-rank rank-top10">8</span></td>
+              <td><span class="competitor-rank rank-top10">5</span></td>
+              <td><span class="competitor-rank rank-top3">1</span></td>
+              <td><span class="competitor-rank rank-top3">1</span></td>
+            </tr>
+            <tr>
+              <td>reddit.com</td>
+              <td><span class="competitor-rank rank-top10">4</span></td>
+              <td><span class="competitor-rank rank-top10">9</span></td>
+              <td><span class="competitor-rank rank-top10">4</span></td>
+              <td><span class="competitor-rank rank-top10">10</span></td>
+            </tr>
+            <tr>
+              <td>banani.co</td>
+              <td><span class="competitor-rank rank-top10">9</span></td>
+              <td><span class="competitor-rank rank-top3">3</span></td>
+              <td><span class="competitor-rank rank-top10">6</span></td>
+              <td><span class="competitor-rank rank-low">21</span></td>
+            </tr>
+            <tr>
+              <td><strong>floow.design</strong></td>
+              <td><span class="competitor-rank rank-low">—</span></td>
+              <td><span class="competitor-rank rank-low">—</span></td>
+              <td><span class="competitor-rank rank-low">—</span></td>
+              <td><span class="competitor-rank rank-low">—</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <!-- Strengths & Weaknesses -->
+      <section>
+        <h2>SWOT Analysis</h2>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem">
+          <div>
+            <h3 style="color: var(--green)">Strengths</h3>
+            <ul style="padding-left: 1.25rem; color: var(--muted)">
+              <li>Perfect Lighthouse SEO score (100/100)</li>
+              <li>Blazing fast performance (99/100, sub-1s LCP)</li>
+              <li>Best Practices score 100/100</li>
+              <li>Proper meta tags, OG, Twitter cards</li>
+              <li>Clean URL structure on Vercel</li>
+              <li>Brotli compression enabled</li>
+              <li>Strong title-to-content consistency (1.0)</li>
+              <li>13ms server response time (TTFB)</li>
+            </ul>
+          </div>
+          <div>
+            <h3 style="color: var(--red)">Weaknesses</h3>
+            <ul style="padding-left: 1.25rem; color: var(--muted)">
+              <li>Zero organic keywords ranked</li>
+              <li>Zero estimated organic traffic</li>
+              <li>No backlink profile detected</li>
+              <li>Very low content rate (1.2% text-to-HTML)</li>
+              <li>Only 490 words of content on homepage</li>
+              <li>Only 6 internal links</li>
+              <li>No blog or content marketing pages</li>
+              <li>Accessibility at 91% (room to improve)</li>
+            </ul>
+          </div>
+          <div>
+            <h3 style="color: var(--accent)">Opportunities</h3>
+            <ul style="padding-left: 1.25rem; color: var(--muted)">
+              <li>High CPC keywords ($7-$40) indicate commercial value</li>
+              <li>Niche is still forming — few dominant players</li>
+              <li>Long-tail keywords have LOW competition</li>
+              <li>"ai tool for mobile app design" — LOW competition</li>
+              <li>Blog content around tutorials, comparisons</li>
+              <li>Product Hunt, Indie Hackers visibility</li>
+              <li>Figma integration as a content angle</li>
+            </ul>
+          </div>
+          <div>
+            <h3 style="color: var(--orange)">Threats</h3>
+            <ul style="padding-left: 1.25rem; color: var(--muted)">
+              <li>Google Stitch (stitch.withgoogle.com) entering the space</li>
+              <li>Figma's dominance in design tools</li>
+              <li>Uizard.io strong positioning (#1-2)</li>
+              <li>Reddit discussions competing for rankings</li>
+              <li>Low search volumes overall (niche market)</li>
+              <li>High competition on primary keywords</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <!-- Recommendations -->
+      <section>
+        <h2>Strategic Recommendations</h2>
+        <ol class="recommendations">
+          <li>
+            <strong>1. Launch a Blog / Content Hub</strong>
+            Create long-form content targeting keywords like "best ai for mobile
+            app design", "how to design mobile app with ai", and comparison
+            posts (floow vs uizard, floow vs figma ai). Target 1,500-2,000+ word
+            articles.
+            <div class="priority">
+              <span class="tag tag-high">HIGH PRIORITY</span> — Biggest gap vs.
+              competitors
+            </div>
+          </li>
+          <li>
+            <strong>2. Build Backlinks Aggressively</strong>
+            Current backlink profile: zero. Target 50+ referring domains in 3
+            months. Submit to Product Hunt, get listed on AI tool directories
+            (futurepedia.io, theresanaiforthat.com), write guest posts on
+            design/dev blogs.
+            <div class="priority">
+              <span class="tag tag-high">HIGH PRIORITY</span> — Required for
+              domain authority
+            </div>
+          </li>
+          <li>
+            <strong>3. Add More Homepage Content</strong>
+            Current text rate is only 1.2%. Add detailed feature descriptions,
+            use cases, FAQ schema, and customer testimonials. Target 1,500+
+            words while keeping the visual design clean.
+            <div class="priority">
+              <span class="tag tag-high">HIGH PRIORITY</span> — Quick win for
+              on-page SEO
+            </div>
+          </li>
+          <li>
+            <strong>4. Target Figma AI Keywords (Biggest Opportunity)</strong>
+            "figma ai design" (480/mo, +238% YoY), "figma ai design tool"
+            (170/mo, LOW competition, +2400% YoY). Create content like "Best
+            Figma AI Alternatives", "How to Design Mobile Apps Faster than Figma
+            AI". These are exploding in demand with LOW difficulty.
+            <div class="priority">
+              <span class="tag tag-high">HIGH PRIORITY</span> — Highest volume,
+              lowest competition
+            </div>
+          </li>
+          <li>
+            <strong>5. Target "AI Wireframe Generator" (480/mo)</strong>
+            Create a dedicated landing page for wireframe generation use case.
+            Keywords: "ai wireframe generator" (480/mo, KD 33), "wireframe
+            generator ai", "ai wireframe generator free". Position floow.design
+            as a wireframe-to-prototype tool.
+            <div class="priority">
+              <span class="tag tag-high">HIGH PRIORITY</span> — High volume
+              keyword cluster
+            </div>
+          </li>
+          <li>
+            <strong>6. Create Comparison & Alternative Pages</strong>
+            Build pages like "floow.design vs Uizard", "floow.design vs Google
+            Stitch", "floow.design vs Figma AI", "Top 5 AI Mobile App Design
+            Tools". These capture high-intent commercial search traffic.
+            <div class="priority">
+              <span class="tag tag-medium">MEDIUM PRIORITY</span>
+            </div>
+          </li>
+          <li>
+            <strong>7. Implement Structured Data / Schema</strong>
+            Add SoftwareApplication schema, FAQ schema for the Questions
+            section, and Organization schema. This helps Google understand your
+            product and can trigger rich snippets.
+            <div class="priority">
+              <span class="tag tag-medium">MEDIUM PRIORITY</span>
+            </div>
+          </li>
+          <li>
+            <strong>8. Increase Internal Linking</strong>
+            Only 6 internal links currently. As you add blog posts and landing
+            pages, build a strong internal link network. Each page should have
+            5-10+ contextual internal links.
+            <div class="priority"><span class="tag tag-low">ONGOING</span></div>
+          </li>
+          <li>
+            <strong>9. Improve Accessibility to 95+</strong>
+            Current score is 91/100. Audit for missing alt text, color contrast,
+            ARIA labels, and keyboard navigation. This improves both UX and SEO
+            signals.
+            <div class="priority">
+              <span class="tag tag-low">LOW PRIORITY</span>
+            </div>
+          </li>
+        </ol>
+      </section>
+
+      <!-- Ranking Roadmap -->
+      <section>
+        <h2>90-Day SEO Roadmap</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Phase</th>
+              <th>Timeline</th>
+              <th>Actions</th>
+              <th>Expected Outcome</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Phase 1: Foundation</strong></td>
+              <td>Weeks 1-4</td>
+              <td>
+                Add homepage content, implement schema markup, submit to 20+ AI
+                directories, launch blog with 4 articles
+              </td>
+              <td>Indexed for brand terms, 10+ backlinks</td>
+            </tr>
+            <tr>
+              <td><strong>Phase 2: Content</strong></td>
+              <td>Weeks 5-8</td>
+              <td>
+                Publish 8 blog posts (tutorials, comparisons), start guest
+                posting, build Product Hunt launch
+              </td>
+              <td>First keyword rankings (pos 20-50), 30+ backlinks</td>
+            </tr>
+            <tr>
+              <td><strong>Phase 3: Growth</strong></td>
+              <td>Weeks 9-12</td>
+              <td>
+                Continue content at 2/week, pursue high-DA backlinks, optimize
+                based on Search Console data
+              </td>
+              <td>
+                Top 20 for long-tail keywords, 50+ backlinks, first organic
+                traffic
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <footer>
+        <p>
+          SEO Analysis for floow.design | Generated March 24, 2026 | Data:
+          DataForSEO API
+        </p>
+        <p>CSV data files available in the /SEO directory</p>
+      </footer>
+    </div>
+  </body>
+</html>

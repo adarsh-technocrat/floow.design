@@ -1,0 +1,19 @@
+Metric,Value,Rating
+Performance Score,99/100,Excellent
+SEO Score,100/100,Perfect
+Best Practices Score,100/100,Perfect
+Accessibility Score,91/100,Good
+First Contentful Paint (ms),429.4,Fast
+Largest Contentful Paint (ms),950.5,Fast
+Speed Index (ms),670.3,Fast
+Time to Interactive (ms),954.6,Fast
+Cumulative Layout Shift,0.031,Good
+Max Potential FID (ms),17,Fast
+Server Response Time (ms),13.3,Fast
+Main Thread Work (ms),627.3,Moderate
+Boot-up Time (ms),200.9,Good
+Network RTT (ms),15.4,Fast
+Network Server Latency (ms),149.4,Good
+Total Byte Weight (bytes),542002,Moderate
+Unused JavaScript (ms),200,Good
+DOM Size (elements),460,Good

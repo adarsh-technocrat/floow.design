@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { DM_Sans, Geist_Mono, Space_Grotesk } from "next/font/google";
+import Script from "next/script";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import "./globals.css";
@@ -128,6 +129,11 @@ export default function RootLayout({
               ],
             }),
           }}
+        />
+        <Script
+          src="https://analytics.ahrefs.com/analytics.js"
+          data-key="1otq8EisxkFeCPi/ClKZuw"
+          strategy="afterInteractive"
         />
       </head>
       <body
