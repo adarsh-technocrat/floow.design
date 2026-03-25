@@ -9,7 +9,9 @@ import {
   subscribeChatStatus,
   emitCreditExhausted,
 } from "@/lib/chat-bridge";
-import http from "@/lib/http";
+import { useImageAttachments } from "./useImageAttachments";
+
+export type { AttachedImage } from "./useImageAttachments";
 
 export interface QueuedPrompt {
   id: string;
@@ -17,29 +19,26 @@ export interface QueuedPrompt {
   createdAt: number;
 }
 
-export interface AttachedImage {
-  id: string;
-  /** Local data URL for preview */
-  dataUrl: string;
-  /** Uploaded HTTPS URL (set after upload completes) */
-  url?: string;
-  name: string;
-  /** True while uploading to Vercel Blob */
-  uploading: boolean;
-  /** True if upload failed */
-  error?: boolean;
-}
-
 export function useCanvasChat() {
   const dispatch = useAppDispatch();
   const userPlan = useAppSelector((s) => s.user.plan);
   const [inputValue, setInputValue] = useState("");
-  const [attachedImages, setAttachedImages] = useState<AttachedImage[]>([]);
   const [isAgentWorking, setIsAgentWorking] = useState(false);
   const [promptQueue, setPromptQueue] = useState<QueuedPrompt[]>([]);
   const inputRef = useRef<HTMLTextAreaElement>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const processingQueueRef = useRef(false);
+
+  const {
+    attachedImages,
+    hasUploadingImages,
+    fileInputRef,
+    openFilePicker,
+    handleFileChange,
+    handlePaste,
+    removeImage,
+    clearImages,
+    getUploadedUrls,
+  } = useImageAttachments();
 
   const hasCreditsForAction = useCallback((): boolean => {
     if (!userPlan || userPlan.plan === "FREE") {
@@ -81,92 +80,6 @@ export function useCanvasChat() {
     [dispatch],
   );
 
-  /** Upload a single image to Vercel Blob immediately */
-  const uploadImage = useCallback(async (imgId: string, dataUrl: string) => {
-    try {
-      const res = await http.post("/api/chat/upload", { images: [dataUrl] });
-      const urls: string[] = res.data?.urls ?? [];
-      if (urls.length > 0) {
-        setAttachedImages((prev) =>
-          prev.map((img) =>
-            img.id === imgId ? { ...img, uploading: false, url: urls[0] } : img,
-          ),
-        );
-      } else {
-        setAttachedImages((prev) =>
-          prev.map((img) =>
-            img.id === imgId ? { ...img, uploading: false, error: true } : img,
-          ),
-        );
-      }
-    } catch {
-      setAttachedImages((prev) =>
-        prev.map((img) =>
-          img.id === imgId ? { ...img, uploading: false, error: true } : img,
-        ),
-      );
-    }
-  }, []);
-
-  /** Add image and start upload immediately */
-  const addImageAndUpload = useCallback(
-    (file: File) => {
-      if (!file.type.startsWith("image/")) return;
-      if (file.size > 10 * 1024 * 1024) return; // 10MB limit
-      const reader = new FileReader();
-      reader.onload = () => {
-        const dataUrl = reader.result as string;
-        const imgId = `img-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
-        setAttachedImages((prev) => [
-          ...prev,
-          {
-            id: imgId,
-            dataUrl,
-            name: file.name || "image.png",
-            uploading: true,
-          },
-        ]);
-        // Fire upload immediately
-        uploadImage(imgId, dataUrl);
-      };
-      reader.readAsDataURL(file);
-    },
-    [uploadImage],
-  );
-
-  const handleAttachImage = useCallback(() => {
-    fileInputRef.current?.click();
-  }, []);
-
-  const handleFileChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      const files = e.target.files;
-      if (!files) return;
-      Array.from(files).forEach((file) => addImageAndUpload(file));
-      e.target.value = "";
-    },
-    [addImageAndUpload],
-  );
-
-  const removeAttachedImage = useCallback((id: string) => {
-    setAttachedImages((prev) => prev.filter((img) => img.id !== id));
-  }, []);
-
-  const handlePaste = useCallback(
-    (e: React.ClipboardEvent) => {
-      const items = e.clipboardData?.items;
-      if (!items) return;
-      for (const item of Array.from(items)) {
-        if (!item.type.startsWith("image/")) continue;
-        e.preventDefault();
-        const file = item.getAsFile();
-        if (!file || file.size > 10 * 1024 * 1024) continue;
-        addImageAndUpload(file);
-      }
-    },
-    [addImageAndUpload],
-  );
-
   const processNextPromptFromQueue = useCallback(() => {
     setPromptQueue((currentQueue) => {
       if (currentQueue.length === 0) {
@@ -183,22 +96,15 @@ export function useCanvasChat() {
     });
   }, [dispatchMessageToChatBridge]);
 
-  /** Check if any images are still uploading */
-  const hasUploadingImages = attachedImages.some((img) => img.uploading);
-
   const submitPromptOrAddToQueue = useCallback(() => {
     const trimmedText = inputValue.trim();
     if (!trimmedText && attachedImages.length === 0) return;
-    if (hasUploadingImages) return; // Block send while uploading
+    if (hasUploadingImages) return;
     if (!hasCreditsForAction()) return;
 
-    // Collect only successfully uploaded HTTPS URLs
-    const imageUrls = attachedImages
-      .filter((img) => img.url && !img.error)
-      .map((img) => img.url!);
-
+    const imageUrls = getUploadedUrls();
     setInputValue("");
-    setAttachedImages([]);
+    clearImages();
     resetTextareaHeight();
 
     if (isAgentWorking) {
@@ -214,7 +120,7 @@ export function useCanvasChat() {
         imageUrls.length > 0 ? imageUrls : undefined,
       );
     }
-  }, [inputValue, attachedImages, hasUploadingImages, isAgentWorking, dispatchMessageToChatBridge, resetTextareaHeight, hasCreditsForAction]);
+  }, [inputValue, attachedImages, hasUploadingImages, isAgentWorking, dispatchMessageToChatBridge, resetTextareaHeight, hasCreditsForAction, getUploadedUrls, clearImages]);
 
   const forceExecuteQueuedPrompt = useCallback(
     (promptId: string) => {
@@ -264,10 +170,10 @@ export function useCanvasChat() {
     fileInputRef,
     attachedImages,
     hasUploadingImages,
-    handleAttachImage,
+    handleAttachImage: openFilePicker,
     handleFileChange,
     handlePaste,
-    removeAttachedImage,
+    removeAttachedImage: removeImage,
     isAgentWorking,
     promptQueue,
     submitPromptOrAddToQueue,

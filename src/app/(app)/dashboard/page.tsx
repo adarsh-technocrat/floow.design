@@ -20,6 +20,7 @@ import { Avatar } from "@/components/ui/Avatar";
 import { PricingDialog } from "@/components/PricingDialog";
 import { ProjectFramePreview } from "@/components/ProjectFramePreview";
 import http from "@/lib/http";
+import { useImageAttachments } from "@/hooks/useImageAttachments";
 
 interface _Project {
   id: string;
@@ -636,94 +637,20 @@ export default function DashboardPage() {
   >("no_plan");
   const userMenuRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const streamingRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  // Image attachment state
-  interface DashboardAttachedImage {
-    id: string;
-    dataUrl: string;
-    url?: string;
-    name: string;
-    uploading: boolean;
-    error?: boolean;
-  }
-  const [attachedImages, setAttachedImages] = useState<DashboardAttachedImage[]>([]);
-  const hasUploadingImages = attachedImages.some((img) => img.uploading);
-
-  const uploadImage = useCallback(async (imgId: string, dataUrl: string) => {
-    try {
-      const res = await http.post("/api/chat/upload", { images: [dataUrl] });
-      const urls: string[] = res.data?.urls ?? [];
-      if (urls.length > 0) {
-        setAttachedImages((prev) =>
-          prev.map((img) =>
-            img.id === imgId ? { ...img, uploading: false, url: urls[0] } : img,
-          ),
-        );
-      } else {
-        setAttachedImages((prev) =>
-          prev.map((img) =>
-            img.id === imgId ? { ...img, uploading: false, error: true } : img,
-          ),
-        );
-      }
-    } catch {
-      setAttachedImages((prev) =>
-        prev.map((img) =>
-          img.id === imgId ? { ...img, uploading: false, error: true } : img,
-        ),
-      );
-    }
-  }, []);
-
-  const addImageAndUpload = useCallback(
-    (file: File) => {
-      if (!file.type.startsWith("image/")) return;
-      if (file.size > 10 * 1024 * 1024) return;
-      const reader = new FileReader();
-      reader.onload = () => {
-        const dataUrl = reader.result as string;
-        const imgId = `img-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
-        setAttachedImages((prev) => [
-          ...prev,
-          { id: imgId, dataUrl, name: file.name || "image.png", uploading: true },
-        ]);
-        uploadImage(imgId, dataUrl);
-      };
-      reader.readAsDataURL(file);
-    },
-    [uploadImage],
-  );
-
-  const handleDashboardFileChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      const files = e.target.files;
-      if (!files) return;
-      Array.from(files).forEach((f) => addImageAndUpload(f));
-      e.target.value = "";
-    },
-    [addImageAndUpload],
-  );
-
-  const handleDashboardPaste = useCallback(
-    (e: React.ClipboardEvent) => {
-      const items = e.clipboardData?.items;
-      if (!items) return;
-      for (const item of Array.from(items)) {
-        if (!item.type.startsWith("image/")) continue;
-        e.preventDefault();
-        const file = item.getAsFile();
-        if (!file || file.size > 10 * 1024 * 1024) continue;
-        addImageAndUpload(file);
-      }
-    },
-    [addImageAndUpload],
-  );
-
-  const removeDashboardImage = useCallback((id: string) => {
-    setAttachedImages((prev) => prev.filter((img) => img.id !== id));
-  }, []);
+  // Image attachments — shared hook
+  const {
+    attachedImages,
+    hasUploadingImages,
+    fileInputRef,
+    openFilePicker,
+    handleFileChange: handleDashboardFileChange,
+    handlePaste: handleDashboardPaste,
+    removeImage: removeDashboardImage,
+    clearImages,
+    getUploadedUrls,
+  } = useImageAttachments();
 
   // Stream a prompt into the input box character by character
   const streamPrompt = useCallback((text: string) => {
@@ -827,13 +754,11 @@ export default function DashboardPage() {
       return;
     }
     // Store image URLs in sessionStorage for the project page to pick up
-    const imageUrls = attachedImages
-      .filter((img) => img.url && !img.error)
-      .map((img) => img.url!);
+    const imageUrls = getUploadedUrls();
     if (imageUrls.length > 0) {
       sessionStorage.setItem("pending_prompt_images", JSON.stringify(imageUrls));
     }
-    setAttachedImages([]);
+    clearImages();
     createProject(inputValue.trim() || "Attached image");
   };
 
@@ -1446,7 +1371,7 @@ export default function DashboardPage() {
                       <div className="flex items-center gap-2">
                         <button
                           type="button"
-                          onClick={() => fileInputRef.current?.click()}
+                          onClick={openFilePicker}
                           className="inline-flex size-7 items-center justify-center rounded-md text-t-tertiary hover:text-t-secondary hover:bg-surface-sunken dark:hover:bg-white/[0.06] transition-colors"
                           title="Attach image"
                         >
