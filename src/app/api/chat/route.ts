@@ -67,6 +67,33 @@ function stripBase64FromMessages(messages: ModelMessage[]): ModelMessage[] {
   ) as ModelMessage[];
 }
 
+/**
+ * Convert data: URLs in file parts to inline image parts so the AI SDK
+ * doesn't try to download them (which fails with "URL scheme must be http or https").
+ * Mutates in-place for simplicity — rawMessages are transient request data.
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function convertDataUrlFileParts(rawMessages: any[]): void {
+  for (const msg of rawMessages) {
+    if (!Array.isArray(msg?.parts)) continue;
+    for (let i = 0; i < msg.parts.length; i++) {
+      const p = msg.parts[i];
+      if (
+        p?.type === "file" &&
+        typeof p.url === "string" &&
+        p.url.startsWith("data:")
+      ) {
+        // Replace with an image part the SDK can handle inline
+        msg.parts[i] = {
+          type: "image",
+          image: p.url,
+          mimeType: p.mediaType ?? "image/png",
+        };
+      }
+    }
+  }
+}
+
 export async function POST(req: Request) {
   try {
     const body = await req.json();
@@ -186,6 +213,9 @@ export async function POST(req: Request) {
           agentCount,
           themeMode,
         );
+
+        // Pre-process: convert data: URL file parts to inline image parts
+        convertDataUrlFileParts(rawMessages);
 
         const modelMessages =
           rawMessages.length > 0 && rawMessages.some(hasParts)
