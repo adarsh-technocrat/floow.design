@@ -108,6 +108,33 @@ export function useCanvasChat() {
     setAttachedImages((prev) => prev.filter((img) => img.id !== id));
   }, []);
 
+  const handlePaste = useCallback(
+    (e: React.ClipboardEvent) => {
+      const items = e.clipboardData?.items;
+      if (!items) return;
+      for (const item of Array.from(items)) {
+        if (!item.type.startsWith("image/")) continue;
+        e.preventDefault();
+        const file = item.getAsFile();
+        if (!file || file.size > 10 * 1024 * 1024) continue;
+        const reader = new FileReader();
+        reader.onload = () => {
+          const dataUrl = reader.result as string;
+          setAttachedImages((prev) => [
+            ...prev,
+            {
+              id: `img-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+              dataUrl,
+              name: file.name || "pasted-image.png",
+            },
+          ]);
+        };
+        reader.readAsDataURL(file);
+      }
+    },
+    [],
+  );
+
   const processNextPromptFromQueue = useCallback(() => {
     setPromptQueue((currentQueue) => {
       if (currentQueue.length === 0) {
@@ -198,6 +225,7 @@ export function useCanvasChat() {
     attachedImages,
     handleAttachImage,
     handleFileChange,
+    handlePaste,
     removeAttachedImage,
     isAgentWorking,
     promptQueue,

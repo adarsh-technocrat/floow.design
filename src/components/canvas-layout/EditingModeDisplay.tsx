@@ -64,6 +64,7 @@ export function EditingModeDisplay() {
     attachedImages,
     handleAttachImage,
     handleFileChange,
+    handlePaste,
     removeAttachedImage,
     isAgentWorking,
     promptQueue,
@@ -148,6 +149,7 @@ export function EditingModeDisplay() {
               value={inputValue}
               onChange={(event) => setInputValue(event.target.value)}
               onKeyDown={handleTextareaKeyDown}
+              onPaste={handlePaste}
               placeholder={
                 isAgentWorking
                   ? "Type to queue next prompt..."
