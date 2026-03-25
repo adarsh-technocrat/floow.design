@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db";
 import { stripe, PLAN_PRICE_IDS } from "@/lib/stripe";
 import { PLAN_PRICES_CENTS } from "@/lib/plan-credits";
 import { getCreditCapForUser } from "@/lib/plan-credits";
+import { requireAuth } from "@/lib/auth";
 
 const PLAN_ORDER = ["FREE", "LITE", "STARTER", "PRO", "TEAM"];
 
@@ -20,7 +21,8 @@ function calculateCreditBasedRefundCents(
 
   const interval = billingInterval === "yearly" ? "yearly" : "monthly";
   const pricePerSeatCents = prices[interval];
-  const totalPaidCents = planKey === "TEAM" ? pricePerSeatCents * seats : pricePerSeatCents;
+  const totalPaidCents =
+    planKey === "TEAM" ? pricePerSeatCents * seats : pricePerSeatCents;
 
   const creditCap = getCreditCapForUser(planKey, billingInterval);
   const totalCreditCap = planKey === "TEAM" ? creditCap * seats : creditCap;
@@ -32,22 +34,21 @@ function calculateCreditBasedRefundCents(
 }
 
 export async function POST(req: NextRequest) {
+  const [userId, errorRes] = await requireAuth(req);
+  if (errorRes) return errorRes;
+
   try {
     const body = (await req.json()) as {
-      userId?: string;
       plan?: string;
       interval?: "monthly" | "yearly";
       seats?: number;
     };
 
-    const { userId, plan, interval = "monthly" } = body;
+    const { plan, interval = "monthly" } = body;
     const seats = Math.max(1, Math.floor(body.seats ?? 1));
 
-    if (!userId || !plan) {
-      return NextResponse.json(
-        { error: "userId and plan are required" },
-        { status: 400 },
-      );
+    if (!plan) {
+      return NextResponse.json({ error: "plan is required" }, { status: 400 });
     }
 
     const planKey = plan.toUpperCase();

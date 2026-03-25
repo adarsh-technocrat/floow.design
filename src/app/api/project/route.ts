@@ -5,17 +5,45 @@ import {
   type ChatSessionMessageRecord,
 } from "@/lib/chat-session";
 import { ensureVariantMap } from "@/lib/screen-utils";
+import { requireAuth } from "@/lib/auth";
 
 export async function GET(req: NextRequest) {
+  const [userId, errorRes] = await requireAuth(req);
+  if (errorRes) return errorRes;
+
   try {
     const projectId = req.nextUrl.searchParams.get("id") ?? "";
-    const userId = req.nextUrl.searchParams.get("userId") ?? "";
 
-    if (!projectId || !userId) {
-      return NextResponse.json(
-        { error: "id and userId are required" },
-        { status: 400 },
-      );
+    if (!projectId) {
+      return NextResponse.json({ error: "id is required" }, { status: 400 });
+    }
+
+    // Verify ownership before returning project data
+    const projectCheck = await prisma.project.findUnique({
+      where: { id: projectId },
+      select: { ownerId: true, teamId: true },
+    });
+
+    if (!projectCheck) {
+      return NextResponse.json({
+        name: "Untitled Project",
+        frames: [],
+        messages: [],
+      });
+    }
+
+    // Allow access if user owns the project or is a team member
+    if (projectCheck.ownerId !== userId) {
+      if (projectCheck.teamId) {
+        const teamMember = await prisma.teamMember.findUnique({
+          where: { teamId_userId: { teamId: projectCheck.teamId, userId } },
+        });
+        if (!teamMember) {
+          return NextResponse.json({ error: "Not found" }, { status: 404 });
+        }
+      } else {
+        return NextResponse.json({ error: "Not found" }, { status: 404 });
+      }
     }
 
     const [project, chatSession, userThemes] = await Promise.all([
@@ -60,9 +88,6 @@ export async function GET(req: NextRequest) {
     const messages = recordsToUiMessages(records);
 
     const frames = project.frames.map((f) => {
-      // Legacy compatibility: historical global frames were persisted as "light".
-      // If frame has no explicit theme assignment, treat that legacy default as unset
-      // so the frame follows the currently active variant.
       const normalizedVariantName =
         !f.themeId && f.variantName === "light"
           ? undefined

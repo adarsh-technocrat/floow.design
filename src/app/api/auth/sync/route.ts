@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { sendWelcomeEmail } from "@/lib/email/send";
+import { requireAuth } from "@/lib/auth";
 
 const providerMap: Record<string, string> = {
   "google.com": "GOOGLE",
@@ -11,6 +12,9 @@ const providerMap: Record<string, string> = {
 
 // POST /api/auth/sync — upsert user record after Firebase auth
 export async function POST(req: NextRequest) {
+  const [uid, errorRes] = await requireAuth(req);
+  if (errorRes) return errorRes;
+
   let body: Record<string, unknown> = {};
   try {
     body = await req.json();
@@ -18,16 +22,11 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
 
-  const uid = body.uid as string | undefined;
   const email = (body.email as string) || null;
   const displayName = (body.displayName as string) || null;
   const photoURL = (body.photoURL as string) || null;
   const phoneNumber = (body.phoneNumber as string) || null;
   const provider = body.provider as string | undefined;
-
-  if (!uid) {
-    return NextResponse.json({ error: "uid is required" }, { status: 400 });
-  }
 
   // Map Firebase provider ID to our enum string value
   const mappedProvider = provider
@@ -46,7 +45,10 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    const existingUser = await prisma.user.findUnique({ where: { id: uid }, select: { id: true } });
+    const existingUser = await prisma.user.findUnique({
+      where: { id: uid },
+      select: { id: true },
+    });
     const isNewUser = !existingUser;
 
     await prisma.user.upsert({

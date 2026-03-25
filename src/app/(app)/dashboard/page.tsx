@@ -280,7 +280,7 @@ interface ApiKeyEntry {
   revokedAt: string | null;
 }
 
-function ApiKeysView({ userId }: { userId: string }) {
+function ApiKeysView() {
   const [keys, setKeys] = useState<ApiKeyEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
@@ -294,28 +294,23 @@ function ApiKeysView({ userId }: { userId: string }) {
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
   const fetchKeys = useCallback(async () => {
-    if (!userId) return;
     setLoading(true);
     try {
-      const { data } = await http.get(
-        `/api/api-keys?userId=${encodeURIComponent(userId)}`,
-      );
+      const { data } = await http.get("/api/api-keys");
       setKeys(data.keys ?? []);
     } finally {
       setLoading(false);
     }
-  }, [userId]);
+  }, []);
 
   useEffect(() => {
     fetchKeys();
   }, [fetchKeys]);
 
   const handleCreate = async () => {
-    if (!userId) return;
     setCreating(true);
     try {
       const { data } = await http.post("/api/api-keys", {
-        userId,
         name: newKeyName.trim() || "Untitled Key",
       });
       setJustCreated({ id: data.id, key: data.key, name: data.name });
@@ -328,7 +323,7 @@ function ApiKeysView({ userId }: { userId: string }) {
   };
 
   const handleRevoke = async (id: string) => {
-    await http.delete("/api/api-keys", { data: { id, userId } });
+    await http.delete("/api/api-keys", { data: { id } });
     fetchKeys();
     if (justCreated?.id === id) setJustCreated(null);
   };
@@ -714,12 +709,12 @@ export default function DashboardPage() {
   useEffect(() => {
     if (!user) return;
     dispatch(fetchProjects());
-    dispatch(fetchUserPlan(user.uid));
+    dispatch(fetchUserPlan());
 
     // Silent refresh on tab visibility
     const onVis = () => {
       if (document.visibilityState === "visible" && user) {
-        dispatch(fetchUserPlan(user.uid));
+        dispatch(fetchUserPlan());
       }
     };
     document.addEventListener("visibilitychange", onVis);
@@ -756,7 +751,10 @@ export default function DashboardPage() {
     // Store image URLs in sessionStorage for the project page to pick up
     const imageUrls = getUploadedUrls();
     if (imageUrls.length > 0) {
-      sessionStorage.setItem("pending_prompt_images", JSON.stringify(imageUrls));
+      sessionStorage.setItem(
+        "pending_prompt_images",
+        JSON.stringify(imageUrls),
+      );
     }
     clearImages();
     createProject(inputValue.trim() || "Attached image");
@@ -1303,26 +1301,61 @@ export default function DashboardPage() {
                               src={img.dataUrl}
                               alt={img.name}
                               className={`size-16 rounded-lg object-cover border border-b-secondary transition-opacity ${
-                                img.uploading ? "opacity-50" : img.error ? "opacity-40" : ""
+                                img.uploading
+                                  ? "opacity-50"
+                                  : img.error
+                                    ? "opacity-40"
+                                    : ""
                               }`}
                             />
                             {img.uploading && (
                               <div className="absolute inset-0 flex items-center justify-center rounded-lg">
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" className="animate-spin text-t-secondary">
-                                  <circle cx="12" cy="12" r="9" stroke="currentColor" strokeOpacity="0.25" strokeWidth="2.5" />
-                                  <path d="M12 3a9 9 0 0 1 9 9" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
+                                <svg
+                                  width="20"
+                                  height="20"
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  className="animate-spin text-t-secondary"
+                                >
+                                  <circle
+                                    cx="12"
+                                    cy="12"
+                                    r="9"
+                                    stroke="currentColor"
+                                    strokeOpacity="0.25"
+                                    strokeWidth="2.5"
+                                  />
+                                  <path
+                                    d="M12 3a9 9 0 0 1 9 9"
+                                    stroke="currentColor"
+                                    strokeWidth="2.5"
+                                    strokeLinecap="round"
+                                  />
                                 </svg>
                               </div>
                             )}
                             {img.error && !img.uploading && (
                               <div className="absolute inset-0 flex items-center justify-center rounded-lg">
-                                <span className="text-[10px] font-medium text-red-500 bg-surface-elevated/80 rounded px-1">Failed</span>
+                                <span className="text-[10px] font-medium text-red-500 bg-surface-elevated/80 rounded px-1">
+                                  Failed
+                                </span>
                               </div>
                             )}
                             {img.url && !img.uploading && !img.error && (
                               <div className="absolute bottom-0.5 right-0.5 flex size-4 items-center justify-center rounded-full bg-emerald-500 shadow-sm">
-                                <svg width="10" height="10" viewBox="0 0 24 24" fill="none">
-                                  <path d="M8 12.5l2.5 2.5 5-5" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+                                <svg
+                                  width="10"
+                                  height="10"
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                >
+                                  <path
+                                    d="M8 12.5l2.5 2.5 5-5"
+                                    stroke="white"
+                                    strokeWidth="3"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                  />
                                 </svg>
                               </div>
                             )}
@@ -1331,7 +1364,16 @@ export default function DashboardPage() {
                               onClick={() => removeDashboardImage(img.id)}
                               className="absolute -top-1.5 -right-1.5 flex size-5 items-center justify-center rounded-full bg-surface-elevated border border-b-secondary text-t-tertiary shadow-sm opacity-0 group-hover:opacity-100 transition-opacity hover:text-t-primary"
                             >
-                              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                              <svg
+                                width="10"
+                                height="10"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2.5"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              >
                                 <path d="M18 6L6 18M6 6l12 12" />
                               </svg>
                             </button>
@@ -1385,7 +1427,14 @@ export default function DashboardPage() {
                             strokeLinecap="round"
                             strokeLinejoin="round"
                           >
-                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                            <rect
+                              x="3"
+                              y="3"
+                              width="18"
+                              height="18"
+                              rx="2"
+                              ry="2"
+                            />
                             <circle cx="8.5" cy="8.5" r="1.5" />
                             <path d="M21 15l-5-5L5 21" />
                           </svg>
@@ -1398,7 +1447,11 @@ export default function DashboardPage() {
                         <button
                           type="button"
                           onClick={handleSubmit}
-                          disabled={(!inputValue.trim() && attachedImages.length === 0) || hasUploadingImages}
+                          disabled={
+                            (!inputValue.trim() &&
+                              attachedImages.length === 0) ||
+                            hasUploadingImages
+                          }
                           className="inline-flex size-8 shrink-0 items-center justify-center rounded-full bg-btn-primary-bg text-btn-primary-text shadow-sm outline-none transition-all hover:opacity-90 disabled:pointer-events-none disabled:opacity-30 focus-visible:ring-2 focus-visible:ring-ring/50 active:scale-95"
                         >
                           <svg
@@ -1724,7 +1777,7 @@ export default function DashboardPage() {
                 exit={{ opacity: 0 }}
                 transition={{ duration: 0.3 }}
               >
-                <ApiKeysView userId={user?.uid ?? ""} />
+                <ApiKeysView />
               </motion.div>
             ) : null}
           </AnimatePresence>

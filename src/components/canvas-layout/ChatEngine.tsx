@@ -111,7 +111,7 @@ const latestCanvasState: {
 } = { frames: [], theme: {}, themeMode: "light" };
 
 /** Read by DefaultChatTransport (stable closure); updated in ChatEngine effect. */
-const latestChatRequestMeta = { userId: "", agentCount: 1 };
+const latestChatRequestMeta = { agentCount: 1 };
 
 /* ── Helpers ── */
 
@@ -208,11 +208,10 @@ export function ChatEngine() {
     latestCanvasState.themeMode = activeThemeMode;
   }, [frames, theme, activeThemeMode]);
 
-  const chatSessionContextRef = useRef({ projectId, userId: chatUserId });
+  const chatSessionContextRef = useRef({ projectId });
   useEffect(() => {
-    chatSessionContextRef.current = { projectId, userId: chatUserId };
-    latestChatRequestMeta.userId = chatUserId;
-  }, [projectId, chatUserId]);
+    chatSessionContextRef.current = { projectId };
+  }, [projectId]);
 
   const activeThemeIdRef = useRef<string | null>(null);
   const persistThemeToDatabase = useCallback(
@@ -247,7 +246,6 @@ export function ChatEngine() {
         };
         http
           .post("/api/themes", {
-            userId: chatUserId,
             name: themeName || "Untitled Theme",
             variants,
           })
@@ -268,10 +266,9 @@ export function ChatEngine() {
   );
 
   const postChatSession = useCallback((messagesPayload: UIMessage[]) => {
-    const { projectId: pid, userId: uid } = chatSessionContextRef.current;
+    const { projectId: pid } = chatSessionContextRef.current;
     return http.post("/api/chat/sessions", {
       projectId: pid,
-      userId: uid,
       isActive: true,
       messages: messagesPayload,
     });
@@ -292,7 +289,6 @@ export function ChatEngine() {
             theme: latestCanvasState.theme,
             themeMode: latestCanvasState.themeMode,
             agentCount: latestChatRequestMeta.agentCount,
-            userId: latestChatRequestMeta.userId,
           },
         }),
       }),
@@ -790,7 +786,7 @@ export function ChatEngine() {
     lastHydrateKeyRef.current = hydrateKey;
 
     queueMicrotask(() => setIsLoadingHistory(true));
-    const q = new URLSearchParams({ projectId, userId: chatUserId });
+    const q = new URLSearchParams({ projectId });
     http
       .get(`/api/chat/sessions?${q.toString()}`)
       .then(({ data }: { data: { messages?: UIMessage[] } }) => {

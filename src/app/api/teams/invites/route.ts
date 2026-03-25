@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { sendTeamMemberJoinedEmail } from "@/lib/email/send";
+import { requireAuth } from "@/lib/auth";
 
 export async function GET(req: NextRequest) {
-  const userId = req.nextUrl.searchParams.get("userId");
-  if (!userId) return NextResponse.json({ error: "userId required" }, { status: 400 });
+  const [userId, errorRes] = await requireAuth(req);
+  if (errorRes) return errorRes;
 
   const user = await prisma.user.findUnique({
     where: { id: userId },
@@ -13,7 +14,11 @@ export async function GET(req: NextRequest) {
   if (!user?.email) return NextResponse.json({ invites: [] });
 
   const invites = await prisma.teamInvite.findMany({
-    where: { email: user.email.toLowerCase(), status: "PENDING", expiresAt: { gt: new Date() } },
+    where: {
+      email: user.email.toLowerCase(),
+      status: "PENDING",
+      expiresAt: { gt: new Date() },
+    },
     orderBy: { createdAt: "desc" },
     select: {
       id: true,
@@ -30,14 +35,19 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
+  const [userId, errorRes] = await requireAuth(req);
+  if (errorRes) return errorRes;
+
   const body = await req.json();
-  const { userId, token, action } = body as {
-    userId?: string;
+  const { token, action } = body as {
     token?: string;
     action?: "accept" | "decline";
   };
-  if (!userId || !token || !action) {
-    return NextResponse.json({ error: "userId, token, and action required" }, { status: 400 });
+  if (!token || !action) {
+    return NextResponse.json(
+      { error: "token and action required" },
+      { status: 400 },
+    );
   }
 
   const invite = await prisma.teamInvite.findUnique({
@@ -46,7 +56,10 @@ export async function POST(req: NextRequest) {
   });
 
   if (!invite || invite.status !== "PENDING") {
-    return NextResponse.json({ error: "Invalid or expired invite" }, { status: 404 });
+    return NextResponse.json(
+      { error: "Invalid or expired invite" },
+      { status: 404 },
+    );
   }
   if (invite.expiresAt < new Date()) {
     await prisma.teamInvite.update({
@@ -89,11 +102,10 @@ export async function POST(req: NextRequest) {
     }),
   ]);
 
-  const [joiningUser, teamOwner] = await Promise.all([
-    prisma.user.findUnique({ where: { id: userId }, select: { displayName: true, email: true } }),
-    prisma.user.findUnique({ where: { id: invite.team.id }, select: { displayName: true, email: true } })
-      .catch(() => null),
-  ]);
+  const joiningUser = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { displayName: true, email: true },
+  });
 
   const ownerMember = await prisma.teamMember.findFirst({
     where: { teamId: invite.teamId, role: "OWNER" },
@@ -109,5 +121,9 @@ export async function POST(req: NextRequest) {
     ).catch(() => {});
   }
 
-  return NextResponse.json({ ok: true, teamId: invite.teamId, teamName: invite.team.name });
+  return NextResponse.json({
+    ok: true,
+    teamId: invite.teamId,
+    teamName: invite.team.name,
+  });
 }

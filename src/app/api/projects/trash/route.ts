@@ -1,11 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { requireAuth } from "@/lib/auth";
 
-// GET /api/projects/trash — list trashed projects
-export async function GET() {
+// GET /api/projects/trash — list trashed projects for the authenticated user
+export async function GET(req: NextRequest) {
+  const [userId, errorRes] = await requireAuth(req);
+  if (errorRes) return errorRes;
+
   try {
     const projects = await prisma.project.findMany({
-      where: { trashedAt: { not: null } },
+      where: { trashedAt: { not: null }, ownerId: userId },
       orderBy: { trashedAt: "desc" },
       select: {
         id: true,
@@ -39,10 +43,23 @@ export async function GET() {
 
 // POST /api/projects/trash — restore a trashed project
 export async function POST(req: NextRequest) {
+  const [userId, errorRes] = await requireAuth(req);
+  if (errorRes) return errorRes;
+
   try {
     const { id } = (await req.json()) as { id?: string };
     if (!id) {
       return NextResponse.json({ error: "id is required" }, { status: 400 });
+    }
+
+    // Verify ownership before restoring
+    const project = await prisma.project.findUnique({
+      where: { id },
+      select: { ownerId: true },
+    });
+
+    if (!project || project.ownerId !== userId) {
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
 
     await prisma.project.update({
@@ -61,10 +78,23 @@ export async function POST(req: NextRequest) {
 
 // DELETE /api/projects/trash — permanently delete a project and all its data
 export async function DELETE(req: NextRequest) {
+  const [userId, errorRes] = await requireAuth(req);
+  if (errorRes) return errorRes;
+
   try {
     const { id } = (await req.json()) as { id?: string };
     if (!id) {
       return NextResponse.json({ error: "id is required" }, { status: 400 });
+    }
+
+    // Verify ownership before permanent deletion
+    const project = await prisma.project.findUnique({
+      where: { id },
+      select: { ownerId: true },
+    });
+
+    if (!project || project.ownerId !== userId) {
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
 
     // Delete related records first, then the project

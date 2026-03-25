@@ -1,8 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { put } from "@vercel/blob";
 import { prisma } from "@/lib/db";
+import { requireAuth } from "@/lib/auth";
 
 export async function POST(req: NextRequest) {
+  const [userId, errorRes] = await requireAuth(req);
+  if (errorRes) return errorRes;
+
   try {
     const body = (await req.json()) as {
       projectId?: string;
@@ -15,6 +19,16 @@ export async function POST(req: NextRequest) {
         { error: "projectId and thumbnail are required" },
         { status: 400 },
       );
+    }
+
+    // Verify ownership before updating thumbnail
+    const project = await prisma.project.findUnique({
+      where: { id: projectId },
+      select: { ownerId: true },
+    });
+
+    if (!project || project.ownerId !== userId) {
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
 
     const isBase64DataUrl = thumbnail.startsWith("data:");

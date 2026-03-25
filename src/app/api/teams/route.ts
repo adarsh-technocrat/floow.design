@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { requireAuth } from "@/lib/auth";
 
 export async function GET(req: NextRequest) {
-  const userId = req.nextUrl.searchParams.get("userId");
-  if (!userId) return NextResponse.json({ error: "userId required" }, { status: 400 });
+  const [userId, errorRes] = await requireAuth(req);
+  if (errorRes) return errorRes;
 
   const memberships = await prisma.teamMember.findMany({
     where: { userId },
@@ -38,10 +39,13 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
+  const [userId, errorRes] = await requireAuth(req);
+  if (errorRes) return errorRes;
+
   const body = await req.json();
-  const { userId, name } = body as { userId?: string; name?: string };
-  if (!userId || !name?.trim()) {
-    return NextResponse.json({ error: "userId and name required" }, { status: 400 });
+  const { name } = body as { name?: string };
+  if (!name?.trim()) {
+    return NextResponse.json({ error: "name required" }, { status: 400 });
   }
 
   const team = await prisma.team.create({

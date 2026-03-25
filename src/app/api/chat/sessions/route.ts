@@ -7,22 +7,24 @@ import {
   recordsToUiMessages,
   type ChatSessionMessageRecord,
 } from "@/lib/chat-session";
+import { requireAuth } from "@/lib/auth";
 
 const postBodySchema = z.object({
   projectId: z.string().min(1),
-  userId: z.string().min(1),
   isActive: z.boolean().optional(),
   messages: z.array(z.unknown()).optional(),
 });
 
 export async function GET(req: NextRequest) {
+  const [userId, errorRes] = await requireAuth(req);
+  if (errorRes) return errorRes;
+
   try {
     const projectId = req.nextUrl.searchParams.get("projectId") ?? "";
-    const userId = req.nextUrl.searchParams.get("userId") ?? "";
 
-    if (!projectId || !userId) {
+    if (!projectId) {
       return NextResponse.json(
-        { error: "projectId and userId are required" },
+        { error: "projectId is required" },
         { status: 400 },
       );
     }
@@ -53,21 +55,19 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
+  const [userId, errorRes] = await requireAuth(req);
+  if (errorRes) return errorRes;
+
   try {
     const parsed = postBodySchema.safeParse(await req.json());
     if (!parsed.success) {
       return NextResponse.json(
-        { error: "projectId and userId are required" },
+        { error: "projectId is required" },
         { status: 400 },
       );
     }
 
-    const {
-      projectId,
-      userId,
-      isActive: bodyIsActive,
-      messages: raw,
-    } = parsed.data;
+    const { projectId, isActive: bodyIsActive, messages: raw } = parsed.data;
     const isActive = bodyIsActive ?? true;
     const messages = normalizeIncomingMessages(raw ?? []);
     const messagesJson = JSON.parse(

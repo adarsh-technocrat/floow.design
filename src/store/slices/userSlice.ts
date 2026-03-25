@@ -64,24 +64,18 @@ export const syncUser = createAsyncThunk(
 );
 
 // Fetch user plan
-export const fetchUserPlan = createAsyncThunk(
-  "user/fetchPlan",
-  async (userId: string) => {
-    const { data } = await http.get(
-      `/api/user/plan?userId=${encodeURIComponent(userId)}`,
-    );
-    if (data.error) throw new Error(data.error);
-    return data as UserPlanState;
-  },
-);
+export const fetchUserPlan = createAsyncThunk("user/fetchPlan", async () => {
+  const { data } = await http.get("/api/user/plan");
+  if (data.error) throw new Error(data.error);
+  return data as UserPlanState;
+});
 
 // Fetch daily usage
 export const fetchDailyUsage = createAsyncThunk(
   "user/fetchDailyUsage",
-  async ({ userId, days = 180 }: { userId: string; days?: number }) => {
-    const { data } = await http.get(
-      `/api/user/credits/daily?userId=${encodeURIComponent(userId)}&days=${days}`,
-    );
+  async (args?: { days?: number }) => {
+    const days = args?.days ?? 180;
+    const { data } = await http.get(`/api/user/credits/daily?days=${days}`);
     return (data.days ?? []) as DailyUsage[];
   },
 );
@@ -89,17 +83,11 @@ export const fetchDailyUsage = createAsyncThunk(
 // Fetch credit logs
 export const fetchCreditLogs = createAsyncThunk(
   "user/fetchCreditLogs",
-  async ({
-    userId,
-    limit = 15,
-    offset = 0,
-  }: {
-    userId: string;
-    limit?: number;
-    offset?: number;
-  }) => {
+  async (args?: { limit?: number; offset?: number }) => {
+    const limit = args?.limit ?? 15;
+    const offset = args?.offset ?? 0;
     const { data } = await http.get(
-      `/api/user/credits?userId=${encodeURIComponent(userId)}&limit=${limit}&offset=${offset}`,
+      `/api/user/credits?limit=${limit}&offset=${offset}`,
     );
     return {
       logs: (data.logs ?? []) as CreditLogEntry[],
@@ -112,8 +100,8 @@ export const fetchCreditLogs = createAsyncThunk(
 // Open Stripe portal
 export const openStripePortal = createAsyncThunk(
   "user/openStripePortal",
-  async (userId: string) => {
-    const { data } = await http.post("/api/stripe/portal", { userId });
+  async () => {
+    const { data } = await http.post("/api/stripe/portal", {});
     if (data.url) {
       window.location.href = data.url;
     }
@@ -125,18 +113,15 @@ export const openStripePortal = createAsyncThunk(
 export const createCheckoutSession = createAsyncThunk(
   "user/createCheckout",
   async ({
-    userId,
     plan,
     interval,
     seats,
   }: {
-    userId: string;
     plan: string;
     interval: "monthly" | "yearly";
     seats?: number;
   }) => {
     const { data } = await http.post("/api/stripe/checkout", {
-      userId,
       plan,
       interval,
       ...(seats && seats > 1 ? { seats } : {}),

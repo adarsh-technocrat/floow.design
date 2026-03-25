@@ -1,12 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { requireAuth } from "@/lib/auth";
 
-// GET /api/user/credits/daily?userId=X&days=180 — daily credit usage for heatmap
+// GET /api/user/credits/daily — daily credit usage for heatmap
 export async function GET(req: NextRequest) {
-  const userId = req.nextUrl.searchParams.get("userId");
-  if (!userId) {
-    return NextResponse.json({ error: "userId required" }, { status: 400 });
-  }
+  const [userId, errorRes] = await requireAuth(req);
+  if (errorRes) return errorRes;
 
   const days = Math.min(
     parseInt(req.nextUrl.searchParams.get("days") || "180", 10),

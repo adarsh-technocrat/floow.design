@@ -1,19 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { stripe } from "@/lib/stripe";
+import { requireAuth } from "@/lib/auth";
 
 export async function POST(req: NextRequest) {
+  const [userId, errorRes] = await requireAuth(req);
+  if (errorRes) return errorRes;
+
   try {
-    const body = (await req.json()) as { userId?: string };
-    const { userId } = body;
-
-    if (!userId) {
-      return NextResponse.json(
-        { error: "userId is required" },
-        { status: 400 },
-      );
-    }
-
     const user = await prisma.user.findUnique({ where: { id: userId } });
     if (!user?.stripeCustomerId) {
       return NextResponse.json(

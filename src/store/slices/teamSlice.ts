@@ -18,7 +18,11 @@ export interface TeamMemberItem {
   userId: string;
   role: string;
   createdAt: string;
-  user: { email: string | null; displayName: string | null; photoURL: string | null };
+  user: {
+    email: string | null;
+    displayName: string | null;
+    photoURL: string | null;
+  };
 }
 
 export interface TeamDetail {
@@ -74,36 +78,32 @@ const initialState: TeamState = {
 
 export const fetchUserTeams = createAsyncThunk(
   "team/fetchUserTeams",
-  async (userId: string) => {
-    const { data } = await http.get(`/api/teams?userId=${encodeURIComponent(userId)}`);
+  async () => {
+    const { data } = await http.get("/api/teams");
     return (data.teams ?? []) as TeamListItem[];
   },
 );
 
 export const createTeam = createAsyncThunk(
   "team/createTeam",
-  async ({ userId, name }: { userId: string; name: string }) => {
-    const { data } = await http.post("/api/teams", { userId, name });
+  async ({ name }: { name: string }) => {
+    const { data } = await http.post("/api/teams", { name });
     return data as { id: string; name: string };
   },
 );
 
 export const fetchTeamDetail = createAsyncThunk(
   "team/fetchTeamDetail",
-  async ({ teamId, userId }: { teamId: string; userId: string }) => {
-    const { data } = await http.get(
-      `/api/teams/${teamId}?userId=${encodeURIComponent(userId)}`,
-    );
+  async ({ teamId }: { teamId: string }) => {
+    const { data } = await http.get(`/api/teams/${teamId}`);
     return data.team as TeamDetail;
   },
 );
 
 export const fetchTeamInvites = createAsyncThunk(
   "team/fetchTeamInvites",
-  async ({ teamId, userId }: { teamId: string; userId: string }) => {
-    const { data } = await http.get(
-      `/api/teams/${teamId}/invites?userId=${encodeURIComponent(userId)}`,
-    );
+  async ({ teamId }: { teamId: string }) => {
+    const { data } = await http.get(`/api/teams/${teamId}/invites`);
     return (data.invites ?? []) as TeamInviteItem[];
   },
 );
@@ -112,17 +112,14 @@ export const sendTeamInvite = createAsyncThunk(
   "team/sendTeamInvite",
   async ({
     teamId,
-    userId,
     email,
     role,
   }: {
     teamId: string;
-    userId: string;
     email: string;
     role?: string;
   }) => {
     const { data } = await http.post(`/api/teams/${teamId}/invites`, {
-      userId,
       email,
       role,
     });
@@ -132,17 +129,9 @@ export const sendTeamInvite = createAsyncThunk(
 
 export const removeTeamMember = createAsyncThunk(
   "team/removeTeamMember",
-  async ({
-    teamId,
-    userId,
-    memberId,
-  }: {
-    teamId: string;
-    userId: string;
-    memberId: string;
-  }) => {
+  async ({ teamId, memberId }: { teamId: string; memberId: string }) => {
     await http.delete(`/api/teams/${teamId}/members`, {
-      data: { userId, memberId },
+      data: { memberId },
     });
     return memberId;
   },
@@ -152,17 +141,14 @@ export const updateTeamMemberRole = createAsyncThunk(
   "team/updateMemberRole",
   async ({
     teamId,
-    userId,
     memberId,
     role,
   }: {
     teamId: string;
-    userId: string;
     memberId: string;
     role: string;
   }) => {
     await http.patch(`/api/teams/${teamId}/members`, {
-      userId,
       memberId,
       role,
     });
@@ -172,10 +158,8 @@ export const updateTeamMemberRole = createAsyncThunk(
 
 export const fetchPendingInvitesForUser = createAsyncThunk(
   "team/fetchPendingInvites",
-  async (userId: string) => {
-    const { data } = await http.get(
-      `/api/teams/invites?userId=${encodeURIComponent(userId)}`,
-    );
+  async () => {
+    const { data } = await http.get("/api/teams/invites");
     return (data.invites ?? []) as PendingInviteItem[];
   },
 );
@@ -183,16 +167,13 @@ export const fetchPendingInvitesForUser = createAsyncThunk(
 export const respondToTeamInvite = createAsyncThunk(
   "team/respondToInvite",
   async ({
-    userId,
     token,
     action,
   }: {
-    userId: string;
     token: string;
     action: "accept" | "decline";
   }) => {
     const { data } = await http.post("/api/teams/invites", {
-      userId,
       token,
       action,
     });

@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { put } from "@vercel/blob";
+import { requireAuth } from "@/lib/auth";
 
 export async function POST(req: NextRequest) {
+  const [, errorRes] = await requireAuth(req);
+  if (errorRes) return errorRes;
+
   try {
     const body = (await req.json()) as { images?: string[] };
     const dataUrls = body?.images;

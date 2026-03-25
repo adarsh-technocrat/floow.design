@@ -1,17 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { requireTeamMembership } from "@/lib/team-auth";
+import { requireAuth } from "@/lib/auth";
 
 export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ teamId: string }> },
 ) {
+  const [userId, errorRes] = await requireAuth(req);
+  if (errorRes) return errorRes;
+
   const { teamId } = await params;
-  const userId = req.nextUrl.searchParams.get("userId");
-  if (!userId) return NextResponse.json({ error: "userId required" }, { status: 400 });
 
   const member = await requireTeamMembership(userId, teamId);
-  if (!member) return NextResponse.json({ error: "Not a team member" }, { status: 403 });
+  if (!member)
+    return NextResponse.json({ error: "Not a team member" }, { status: 403 });
 
   const team = await prisma.team.findUnique({
     where: { id: teamId },
@@ -40,7 +43,8 @@ export async function GET(
     },
   });
 
-  if (!team) return NextResponse.json({ error: "Team not found" }, { status: 404 });
+  if (!team)
+    return NextResponse.json({ error: "Team not found" }, { status: 404 });
 
   return NextResponse.json({ team });
 }
@@ -49,13 +53,19 @@ export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ teamId: string }> },
 ) {
+  const [userId, errorRes] = await requireAuth(req);
+  if (errorRes) return errorRes;
+
   const { teamId } = await params;
   const body = await req.json();
-  const { userId, name } = body as { userId?: string; name?: string };
-  if (!userId) return NextResponse.json({ error: "userId required" }, { status: 400 });
+  const { name } = body as { name?: string };
 
   const member = await requireTeamMembership(userId, teamId, "ADMIN");
-  if (!member) return NextResponse.json({ error: "Insufficient permissions" }, { status: 403 });
+  if (!member)
+    return NextResponse.json(
+      { error: "Insufficient permissions" },
+      { status: 403 },
+    );
 
   const updated = await prisma.team.update({
     where: { id: teamId },
@@ -69,13 +79,17 @@ export async function DELETE(
   req: NextRequest,
   { params }: { params: Promise<{ teamId: string }> },
 ) {
+  const [userId, errorRes] = await requireAuth(req);
+  if (errorRes) return errorRes;
+
   const { teamId } = await params;
-  const body = await req.json();
-  const { userId } = body as { userId?: string };
-  if (!userId) return NextResponse.json({ error: "userId required" }, { status: 400 });
 
   const member = await requireTeamMembership(userId, teamId, "OWNER");
-  if (!member) return NextResponse.json({ error: "Only the owner can delete the team" }, { status: 403 });
+  if (!member)
+    return NextResponse.json(
+      { error: "Only the owner can delete the team" },
+      { status: 403 },
+    );
 
   await prisma.$transaction([
     prisma.teamInvite.deleteMany({ where: { teamId } }),

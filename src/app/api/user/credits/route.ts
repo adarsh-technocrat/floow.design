@@ -1,12 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { requireAuth } from "@/lib/auth";
 
-// GET /api/user/credits?userId=X&limit=50&offset=0 — get credit usage logs
+// GET /api/user/credits — get credit usage logs for authenticated user
 export async function GET(req: NextRequest) {
-  const userId = req.nextUrl.searchParams.get("userId");
-  if (!userId) {
-    return NextResponse.json({ error: "userId required" }, { status: 400 });
-  }
+  const [userId, errorRes] = await requireAuth(req);
+  if (errorRes) return errorRes;
 
   const limit = Math.min(
     parseInt(req.nextUrl.searchParams.get("limit") || "50", 10),
@@ -46,7 +45,7 @@ export async function GET(req: NextRequest) {
         balance: l.balance,
         projectId: l.projectId,
         projectName: l.projectId
-          ? projectNameMap.get(l.projectId) ?? null
+          ? (projectNameMap.get(l.projectId) ?? null)
           : null,
         meta: l.meta,
         createdAt: l.createdAt.toISOString(),

@@ -20,7 +20,7 @@ export function ProjectLoader({ children }: { children: ReactNode }) {
     // Wait for auth to finish loading before fetching
     if (loading) return;
     if (!projectId || !userId) return;
-    void dispatch(fetchProject({ projectId, userId }));
+    void dispatch(fetchProject({ projectId }));
   }, [dispatch, projectId, userId, loading]);
 
   // Eagerly prefetch the projects list + user plan once auth is ready,
@@ -30,7 +30,7 @@ export function ProjectLoader({ children }: { children: ReactNode }) {
     if (!projectsFetched) {
       dispatch(fetchProjects());
     }
-    dispatch(fetchUserPlan(userId));
+    dispatch(fetchUserPlan());
   }, [dispatch, userId, loading, projectsFetched]);
 
   return <>{children}</>;

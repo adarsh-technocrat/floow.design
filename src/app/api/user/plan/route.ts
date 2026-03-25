@@ -1,13 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { getCreditCapForUser } from "@/lib/plan-credits";
+import { requireAuth } from "@/lib/auth";
 
-// GET /api/user/plan?userId=X — get user's current plan and credits
+// GET /api/user/plan — get authenticated user's current plan and credits
 export async function GET(req: NextRequest) {
-  const userId = req.nextUrl.searchParams.get("userId");
-  if (!userId) {
-    return NextResponse.json({ error: "userId required" }, { status: 400 });
-  }
+  const [userId, errorRes] = await requireAuth(req);
+  if (errorRes) return errorRes;
 
   try {
     const user = await prisma.user.findUnique({
@@ -34,7 +33,8 @@ export async function GET(req: NextRequest) {
       billingInterval: user.billingInterval,
       seats: user.seats,
       credits: user.credits,
-      creditCap: user.plan === "TEAM" ? creditCap * (user.seats ?? 1) : creditCap,
+      creditCap:
+        user.plan === "TEAM" ? creditCap * (user.seats ?? 1) : creditCap,
       creditsResetAt: user.creditsResetAt?.toISOString() || null,
       hasStripeAccount: !!user.stripeCustomerId,
       hasSubscription: !!user.stripeSubscriptionId,

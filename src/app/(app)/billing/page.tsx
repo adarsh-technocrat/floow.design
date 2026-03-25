@@ -25,7 +25,7 @@ import {
   type ChartConfig,
 } from "@/components/ui/chart";
 
-interface PlanInfo {
+interface _PlanInfo {
   plan: string;
   billingInterval: string | null;
   credits: number;
@@ -35,7 +35,7 @@ interface PlanInfo {
   hasSubscription: boolean;
 }
 
-interface CreditLogEntry {
+interface _CreditLogEntry {
   id: string;
   action: string;
   amount: number;
@@ -110,7 +110,6 @@ const planLabels: Record<string, string> = {
   PRO: "Pro",
   TEAM: "Team",
 };
-
 
 const barChartConfig: ChartConfig = {
   credits: {
@@ -260,25 +259,24 @@ export default function BillingPage() {
 
   useEffect(() => {
     if (!user) return;
-    dispatch(fetchUserPlan(user.uid));
-    dispatch(fetchDailyUsage({ userId: user.uid }));
-    dispatch(fetchCreditLogs({ userId: user.uid, limit: logsLimit }));
+    dispatch(fetchUserPlan());
+    dispatch(fetchDailyUsage());
+    dispatch(fetchCreditLogs({ limit: logsLimit }));
   }, [user, dispatch]);
 
   const handleFetchLogs = (offset: number) => {
     if (!user) return;
-    dispatch(fetchCreditLogs({ userId: user.uid, limit: logsLimit, offset }));
+    dispatch(fetchCreditLogs({ limit: logsLimit, offset }));
   };
 
   const handleOpenPortal = () => {
     if (!user) return;
-    dispatch(openStripePortal(user.uid));
+    dispatch(openStripePortal());
   };
 
   return (
     <div className="h-screen w-full bg-surface text-t-primary p-3">
       <div className="h-full w-full rounded-2xl border border-b-secondary bg-surface overflow-hidden flex flex-col relative">
-
         {/* Header */}
         <header className="relative z-10 flex h-12 items-center justify-between px-5 border-b border-b-secondary">
           <Link
@@ -345,7 +343,7 @@ export default function BillingPage() {
                       <div
                         key={i}
                         className="flex-1 rounded-t bg-input-bg"
-                        style={{ height: `${20 + Math.random() * 60}%` }}
+                        style={{ height: `${20 + ((i * 37 + 13) % 60)}%` }}
                       />
                     ))}
                   </div>
@@ -397,7 +395,9 @@ export default function BillingPage() {
                 )}
 
                 {/* Current plan card */}
-                <div className={`rounded-xl border bg-surface-elevated p-6 ${plan.plan !== "FREE" && plan.credits <= 0 ? "border-amber-500/20" : "border-b-secondary"}`}>
+                <div
+                  className={`rounded-xl border bg-surface-elevated p-6 ${plan.plan !== "FREE" && plan.credits <= 0 ? "border-amber-500/20" : "border-b-secondary"}`}
+                >
                   <div className="flex items-center justify-between mb-4">
                     <div>
                       <p className="text-[11px] font-mono uppercase tracking-wider text-t-tertiary mb-1">
@@ -416,7 +416,11 @@ export default function BillingPage() {
                             : "bg-btn-primary-bg text-btn-primary-text"
                       }`}
                     >
-                      {plan.plan === "FREE" ? "Free tier" : plan.credits <= 0 ? "Credits exhausted" : "Active"}
+                      {plan.plan === "FREE"
+                        ? "Free tier"
+                        : plan.credits <= 0
+                          ? "Credits exhausted"
+                          : "Active"}
                     </span>
                   </div>
 
@@ -433,7 +437,8 @@ export default function BillingPage() {
                           AI Credits
                         </p>
                         <p className="text-xs font-mono text-t-secondary">
-                          {Math.max(0, plan.credits).toLocaleString()} / {plan.creditCap.toLocaleString()}
+                          {Math.max(0, plan.credits).toLocaleString()} /{" "}
+                          {plan.creditCap.toLocaleString()}
                         </p>
                       </div>
                       <div className="h-2.5 w-full overflow-hidden rounded-full bg-input-bg">
@@ -447,7 +452,9 @@ export default function BillingPage() {
                                   ? "bg-amber-500/50"
                                   : "bg-emerald-500/50"
                           }`}
-                          style={{ width: `${Math.max(plan.credits <= 0 ? 0 : 3, (Math.max(0, plan.credits) / plan.creditCap) * 100)}%` }}
+                          style={{
+                            width: `${Math.max(plan.credits <= 0 ? 0 : 3, (Math.max(0, plan.credits) / plan.creditCap) * 100)}%`,
+                          }}
                         />
                       </div>
                       <div className="flex items-center justify-between mt-2">
@@ -460,7 +467,11 @@ export default function BillingPage() {
                         </p>
                         {plan.creditsResetAt && (
                           <p className="text-xs text-t-tertiary">
-                            Resets {new Date(plan.creditsResetAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                            Resets{" "}
+                            {new Date(plan.creditsResetAt).toLocaleDateString(
+                              "en-US",
+                              { month: "short", day: "numeric" },
+                            )}
                           </p>
                         )}
                       </div>
@@ -564,7 +575,9 @@ export default function BillingPage() {
                           <div className="flex gap-2">
                             <button
                               onClick={() =>
-                                handleFetchLogs(Math.max(0, logsOffset - logsLimit))
+                                handleFetchLogs(
+                                  Math.max(0, logsOffset - logsLimit),
+                                )
                               }
                               disabled={logsOffset === 0}
                               className="rounded-md border border-b-secondary px-3 py-1.5 text-xs text-t-secondary hover:bg-input-bg disabled:opacity-30 disabled:pointer-events-none"
@@ -572,7 +585,9 @@ export default function BillingPage() {
                               Prev
                             </button>
                             <button
-                              onClick={() => handleFetchLogs(logsOffset + logsLimit)}
+                              onClick={() =>
+                                handleFetchLogs(logsOffset + logsLimit)
+                              }
                               disabled={logsOffset + logsLimit >= logsTotal}
                               className="rounded-md border border-b-secondary px-3 py-1.5 text-xs text-t-secondary hover:bg-input-bg disabled:opacity-30 disabled:pointer-events-none"
                             >

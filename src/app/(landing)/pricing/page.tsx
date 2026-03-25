@@ -131,7 +131,7 @@ export default function PricingPage() {
       return;
     }
     http
-      .get(`/api/user/plan?userId=${encodeURIComponent(user.uid)}`)
+      .get("/api/user/plan")
       .then(({ data }) => {
         if (data && !data.error) {
           setUserPlan({
@@ -165,7 +165,7 @@ export default function PricingPage() {
       try {
         const { data } = await http.post<{ url?: string }>(
           "/api/stripe/portal",
-          { userId: user.uid },
+          {},
         );
         if (data.url) window.location.href = data.url;
       } catch {
@@ -179,7 +179,6 @@ export default function PricingPage() {
       const { data } = await http.post<{ url?: string }>(
         "/api/stripe/checkout",
         {
-          userId: user.uid,
           plan: planName,
           interval: billing,
           ...(planName.toUpperCase() === "TEAM" ? { seats: teamSeats } : {}),

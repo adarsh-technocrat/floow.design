@@ -155,7 +155,7 @@ export function PricingDialog({ open, onClose, reason }: PricingDialogProps) {
     if (relation === "current") {
       setLoadingPlan(planName);
       try {
-        await dispatch(openStripePortal(user.uid)).unwrap();
+        await dispatch(openStripePortal()).unwrap();
       } catch {
         /* silent */
       }
@@ -167,7 +167,6 @@ export function PricingDialog({ open, onClose, reason }: PricingDialogProps) {
     try {
       await dispatch(
         createCheckoutSession({
-          userId: user.uid,
           plan: planName,
           interval: billing,
           ...(planName.toUpperCase() === "TEAM" ? { seats: teamSeats } : {}),

@@ -1,15 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { randomBytes } from "crypto";
+import { requireAuth } from "@/lib/auth";
 
 function generateApiKey(): string {
   return "fl_" + randomBytes(28).toString("base64url");
 }
 
-// GET — list all API keys for a user (key shown masked)
+// GET — list all API keys for the authenticated user (key shown masked)
 export async function GET(req: NextRequest) {
-  const userId = req.nextUrl.searchParams.get("userId");
-  if (!userId) return NextResponse.json({ error: "userId required" }, { status: 400 });
+  const [userId, errorRes] = await requireAuth(req);
+  if (errorRes) return errorRes;
 
   const keys = await prisma.apiKey.findMany({
     where: { userId },
@@ -35,9 +36,11 @@ export async function GET(req: NextRequest) {
 
 // POST — create a new API key
 export async function POST(req: NextRequest) {
+  const [userId, errorRes] = await requireAuth(req);
+  if (errorRes) return errorRes;
+
   const body = await req.json();
-  const { userId, name } = body as { userId?: string; name?: string };
-  if (!userId) return NextResponse.json({ error: "userId required" }, { status: 400 });
+  const { name } = body as { name?: string };
 
   const keyName = name?.trim() || "Untitled Key";
   const rawKey = generateApiKey();
@@ -47,18 +50,27 @@ export async function POST(req: NextRequest) {
   });
 
   // Return the full key only on creation — user must copy it now
-  return NextResponse.json({ id: record.id, name: record.name, key: rawKey, createdAt: record.createdAt });
+  return NextResponse.json({
+    id: record.id,
+    name: record.name,
+    key: rawKey,
+    createdAt: record.createdAt,
+  });
 }
 
 // DELETE — revoke an API key
 export async function DELETE(req: NextRequest) {
-  const body = await req.json();
-  const { id, userId } = body as { id?: string; userId?: string };
-  if (!id || !userId) return NextResponse.json({ error: "id and userId required" }, { status: 400 });
+  const [userId, errorRes] = await requireAuth(req);
+  if (errorRes) return errorRes;
 
-  // Ensure the key belongs to the user
+  const body = await req.json();
+  const { id } = body as { id?: string };
+  if (!id) return NextResponse.json({ error: "id required" }, { status: 400 });
+
+  // Ensure the key belongs to the authenticated user
   const existing = await prisma.apiKey.findFirst({ where: { id, userId } });
-  if (!existing) return NextResponse.json({ error: "not found" }, { status: 404 });
+  if (!existing)
+    return NextResponse.json({ error: "not found" }, { status: 404 });
 
   await prisma.apiKey.update({
     where: { id },

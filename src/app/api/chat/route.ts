@@ -16,6 +16,7 @@ import {
 import type { ThemeVariables } from "@/lib/screen-utils";
 import { createTools, type FrameState } from "@/lib/agent/tools";
 import { runPlanningPipeline } from "@/lib/agent/planner";
+import { getAuthenticatedUserId } from "@/lib/auth";
 
 export const runtime = "nodejs";
 
@@ -96,12 +97,20 @@ function convertDataUrlFileParts(rawMessages: any[]): void {
 
 export async function POST(req: Request) {
   try {
+    // Authenticate from the Bearer token — ignore any userId in the body
+    const userId = await getAuthenticatedUserId(req);
+    if (!userId) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+
     const body = await req.json();
 
     // Credit gating — must be on a paid plan with credits
-    const userId = body?.userId as string | undefined;
     const projectId = body?.projectId as string | undefined;
-    if (userId) {
+    {
       const { checkCredits, deductCredits } = await import("@/lib/credits");
       const creditCheck = await checkCredits(userId);
       if (creditCheck.needsPlan) {
