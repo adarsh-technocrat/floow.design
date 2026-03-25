@@ -9,6 +9,7 @@ import {
   subscribeChatStatus,
   emitCreditExhausted,
 } from "@/lib/chat-bridge";
+import http from "@/lib/http";
 
 export interface QueuedPrompt {
   id: string;
@@ -18,8 +19,15 @@ export interface QueuedPrompt {
 
 export interface AttachedImage {
   id: string;
+  /** Local data URL for preview */
   dataUrl: string;
+  /** Uploaded HTTPS URL (set after upload completes) */
+  url?: string;
   name: string;
+  /** True while uploading to Vercel Blob */
+  uploading: boolean;
+  /** True if upload failed */
+  error?: boolean;
 }
 
 export function useCanvasChat() {
@@ -66,11 +74,64 @@ export function useCanvasChat() {
   }, []);
 
   const dispatchMessageToChatBridge = useCallback(
-    (text: string, imageDataUrls?: string[]) => {
-      sendChatMessage(text, imageDataUrls);
+    (text: string, imageUrls?: string[]) => {
+      sendChatMessage(text, imageUrls);
       dispatch(setAgentLogVisible(true));
     },
     [dispatch],
+  );
+
+  /** Upload a single image to Vercel Blob immediately */
+  const uploadImage = useCallback(async (imgId: string, dataUrl: string) => {
+    try {
+      const res = await http.post("/api/chat/upload", { images: [dataUrl] });
+      const urls: string[] = res.data?.urls ?? [];
+      if (urls.length > 0) {
+        setAttachedImages((prev) =>
+          prev.map((img) =>
+            img.id === imgId ? { ...img, uploading: false, url: urls[0] } : img,
+          ),
+        );
+      } else {
+        setAttachedImages((prev) =>
+          prev.map((img) =>
+            img.id === imgId ? { ...img, uploading: false, error: true } : img,
+          ),
+        );
+      }
+    } catch {
+      setAttachedImages((prev) =>
+        prev.map((img) =>
+          img.id === imgId ? { ...img, uploading: false, error: true } : img,
+        ),
+      );
+    }
+  }, []);
+
+  /** Add image and start upload immediately */
+  const addImageAndUpload = useCallback(
+    (file: File) => {
+      if (!file.type.startsWith("image/")) return;
+      if (file.size > 10 * 1024 * 1024) return; // 10MB limit
+      const reader = new FileReader();
+      reader.onload = () => {
+        const dataUrl = reader.result as string;
+        const imgId = `img-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+        setAttachedImages((prev) => [
+          ...prev,
+          {
+            id: imgId,
+            dataUrl,
+            name: file.name || "image.png",
+            uploading: true,
+          },
+        ]);
+        // Fire upload immediately
+        uploadImage(imgId, dataUrl);
+      };
+      reader.readAsDataURL(file);
+    },
+    [uploadImage],
   );
 
   const handleAttachImage = useCallback(() => {
@@ -81,27 +142,10 @@ export function useCanvasChat() {
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const files = e.target.files;
       if (!files) return;
-      Array.from(files).forEach((file) => {
-        if (!file.type.startsWith("image/")) return;
-        if (file.size > 10 * 1024 * 1024) return; // 10MB limit
-        const reader = new FileReader();
-        reader.onload = () => {
-          const dataUrl = reader.result as string;
-          setAttachedImages((prev) => [
-            ...prev,
-            {
-              id: `img-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
-              dataUrl,
-              name: file.name,
-            },
-          ]);
-        };
-        reader.readAsDataURL(file);
-      });
-      // Reset so the same file can be re-selected
+      Array.from(files).forEach((file) => addImageAndUpload(file));
       e.target.value = "";
     },
-    [],
+    [addImageAndUpload],
   );
 
   const removeAttachedImage = useCallback((id: string) => {
@@ -117,22 +161,10 @@ export function useCanvasChat() {
         e.preventDefault();
         const file = item.getAsFile();
         if (!file || file.size > 10 * 1024 * 1024) continue;
-        const reader = new FileReader();
-        reader.onload = () => {
-          const dataUrl = reader.result as string;
-          setAttachedImages((prev) => [
-            ...prev,
-            {
-              id: `img-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
-              dataUrl,
-              name: file.name || "pasted-image.png",
-            },
-          ]);
-        };
-        reader.readAsDataURL(file);
+        addImageAndUpload(file);
       }
     },
-    [],
+    [addImageAndUpload],
   );
 
   const processNextPromptFromQueue = useCallback(() => {
@@ -151,12 +183,20 @@ export function useCanvasChat() {
     });
   }, [dispatchMessageToChatBridge]);
 
+  /** Check if any images are still uploading */
+  const hasUploadingImages = attachedImages.some((img) => img.uploading);
+
   const submitPromptOrAddToQueue = useCallback(() => {
     const trimmedText = inputValue.trim();
     if (!trimmedText && attachedImages.length === 0) return;
+    if (hasUploadingImages) return; // Block send while uploading
     if (!hasCreditsForAction()) return;
 
-    const imageDataUrls = attachedImages.map((img) => img.dataUrl);
+    // Collect only successfully uploaded HTTPS URLs
+    const imageUrls = attachedImages
+      .filter((img) => img.url && !img.error)
+      .map((img) => img.url!);
+
     setInputValue("");
     setAttachedImages([]);
     resetTextareaHeight();
@@ -171,10 +211,10 @@ export function useCanvasChat() {
     } else {
       dispatchMessageToChatBridge(
         trimmedText || "Attached image",
-        imageDataUrls.length > 0 ? imageDataUrls : undefined,
+        imageUrls.length > 0 ? imageUrls : undefined,
       );
     }
-  }, [inputValue, attachedImages, isAgentWorking, dispatchMessageToChatBridge, resetTextareaHeight, hasCreditsForAction]);
+  }, [inputValue, attachedImages, hasUploadingImages, isAgentWorking, dispatchMessageToChatBridge, resetTextareaHeight, hasCreditsForAction]);
 
   const forceExecuteQueuedPrompt = useCallback(
     (promptId: string) => {
@@ -223,6 +263,7 @@ export function useCanvasChat() {
     inputRef,
     fileInputRef,
     attachedImages,
+    hasUploadingImages,
     handleAttachImage,
     handleFileChange,
     handlePaste,

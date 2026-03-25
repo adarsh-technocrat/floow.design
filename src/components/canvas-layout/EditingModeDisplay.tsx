@@ -62,6 +62,7 @@ export function EditingModeDisplay() {
     inputRef,
     fileInputRef,
     attachedImages,
+    hasUploadingImages,
     handleAttachImage,
     handleFileChange,
     handlePaste,
@@ -129,8 +130,34 @@ export function EditingModeDisplay() {
                   <img
                     src={img.dataUrl}
                     alt={img.name}
-                    className="size-16 rounded-lg object-cover border border-b-secondary"
+                    className={`size-16 rounded-lg object-cover border border-b-secondary transition-opacity ${
+                      img.uploading ? "opacity-50" : img.error ? "opacity-40" : ""
+                    }`}
                   />
+                  {/* Upload spinner overlay */}
+                  {img.uploading && (
+                    <div className="absolute inset-0 flex items-center justify-center rounded-lg">
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" className="animate-spin text-t-secondary">
+                        <circle cx="12" cy="12" r="9" stroke="currentColor" strokeOpacity="0.25" strokeWidth="2.5" />
+                        <path d="M12 3a9 9 0 0 1 9 9" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
+                      </svg>
+                    </div>
+                  )}
+                  {/* Error indicator */}
+                  {img.error && !img.uploading && (
+                    <div className="absolute inset-0 flex items-center justify-center rounded-lg">
+                      <span className="text-[10px] font-medium text-red-500 bg-surface-elevated/80 rounded px-1">Failed</span>
+                    </div>
+                  )}
+                  {/* Uploaded check */}
+                  {img.url && !img.uploading && !img.error && (
+                    <div className="absolute bottom-0.5 right-0.5 flex size-4 items-center justify-center rounded-full bg-emerald-500 shadow-sm">
+                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none">
+                        <path d="M8 12.5l2.5 2.5 5-5" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                    </div>
+                  )}
+                  {/* Remove button */}
                   <button
                     type="button"
                     onClick={() => removeAttachedImage(img.id)}
@@ -194,7 +221,7 @@ export function EditingModeDisplay() {
                 <button
                   type="button"
                   onClick={submitPromptOrAddToQueue}
-                  disabled={!inputValue.trim() && attachedImages.length === 0}
+                  disabled={(!inputValue.trim() && attachedImages.length === 0) || hasUploadingImages}
                   className="inline-flex size-8 shrink-0 items-center justify-center rounded-full bg-btn-primary-bg text-btn-primary-text shadow-sm outline-none transition-all hover:opacity-90 disabled:pointer-events-none disabled:opacity-30 focus-visible:ring-2 focus-visible:ring-ring/50 active:scale-95"
                 >
                   <svg

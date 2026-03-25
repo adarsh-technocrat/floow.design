@@ -840,34 +840,18 @@ export function ChatEngine() {
 
   // Register send/stop for the center input
   useEffect(() => {
-    const bridgeSend = async (payload: { text: string; imageDataUrls?: string[] }) => {
+    const bridgeSend = (payload: { text: string; imageDataUrls?: string[] }) => {
       setToolSteps([]);
       dispatch(pushAgentLog({ type: "user", text: payload.text }));
 
       if (payload.imageDataUrls && payload.imageDataUrls.length > 0) {
-        try {
-          // Upload images to Vercel Blob first to get HTTPS URLs
-          const res = await http.post("/api/chat/upload", {
-            images: payload.imageDataUrls,
-          });
-          const uploadedUrls: string[] = res.data?.urls ?? [];
-
-          if (uploadedUrls.length > 0) {
-            const files = uploadedUrls.map((url) => ({
-              type: "file" as const,
-              mediaType: "image/png",
-              url,
-            }));
-            sendMessage({ text: payload.text, files });
-          } else {
-            // Fallback: send text only if upload failed
-            sendMessage({ text: payload.text });
-          }
-        } catch {
-          // Upload failed — send text only
-          sendMessage({ text: payload.text });
-          toast.error("Failed to upload image. Sending text only.");
-        }
+        // Images are already uploaded HTTPS URLs from Vercel Blob
+        const files = payload.imageDataUrls.map((url) => ({
+          type: "file" as const,
+          mediaType: "image/png",
+          url,
+        }));
+        sendMessage({ text: payload.text, files });
       } else {
         sendMessage({ text: payload.text });
       }
