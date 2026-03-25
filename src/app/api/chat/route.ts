@@ -241,7 +241,7 @@ export async function POST(req: Request) {
                 }),
               );
 
-        const validMessages = modelMessages.filter(
+        const validMessages = stripBase64FromMessages(modelMessages).filter(
           (m: ModelMessage) =>
             (typeof m.content === "string" && m.content.length > 0) ||
             (Array.isArray(m.content) && m.content.length > 0),

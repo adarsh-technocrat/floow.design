@@ -269,23 +269,23 @@ model Feature {
 }
 
 model Comparison {
-  id               String   @id @default(cuid())
-  slug             String   @unique
-  competitorName   String
-  competitorLogo   String?
-  competitorUrl    String?
-  title            String
-  description      String   @db.Text
-  content          String   @db.Text
-  floowFeatures    String[]
+  id                 String   @id @default(cuid())
+  slug               String   @unique
+  competitorName     String
+  competitorLogo     String?
+  competitorUrl      String?
+  title              String
+  description        String   @db.Text
+  content            String   @db.Text
+  floowFeatures      String[]
   competitorFeatures String[]
-  floowPros        String[]
-  competitorPros   String[]
-  verdict          String   @db.Text
-  keywords         String[]
-  published        Boolean  @default(false)
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  floowPros          String[]
+  competitorPros     String[]
+  verdict            String   @db.Text
+  keywords           String[]
+  published          Boolean  @default(false)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
 
   @@index([published, competitorName])
 }

@@ -1,11 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
-import type { Prisma } from "@prisma/client";
+import { Prisma } from "@prisma/client";
+import { z } from "zod";
 import { prisma, ensureProject, ensureUser } from "@/lib/db";
 import {
   normalizeIncomingMessages,
   recordsToUiMessages,
   type ChatSessionMessageRecord,
 } from "@/lib/chat-session";
+
+const postBodySchema = z.object({
+  projectId: z.string().min(1),
+  userId: z.string().min(1),
+  isActive: z.boolean().optional(),
+  messages: z.array(z.unknown()).optional(),
+});
 
 export async function GET(req: NextRequest) {
   try {
@@ -21,10 +29,8 @@ export async function GET(req: NextRequest) {
 
     await ensureUser(userId);
 
-    const session = await prisma.chatSession.findUnique({
-      where: {
-        projectId_userId: { projectId, userId },
-      },
+    const session = await prisma.chatSession.findFirst({
+      where: { projectId, userId },
     });
 
     if (!session) {
@@ -48,24 +54,25 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json();
-    const rawMessages = Array.isArray(body?.messages) ? body.messages : [];
-    const projectId = body?.projectId ?? "";
-    const userId =
-      typeof body?.userId === "string" && body.userId.length > 0
-        ? body.userId
-        : "";
-
-    if (!projectId || !userId) {
+    const parsed = postBodySchema.safeParse(await req.json());
+    if (!parsed.success) {
       return NextResponse.json(
         { error: "projectId and userId are required" },
         { status: 400 },
       );
     }
-    const isActive = typeof body?.isActive === "boolean" ? body.isActive : true;
 
-    const messages = normalizeIncomingMessages(rawMessages);
-    const messagesJson = messages as unknown as Prisma.InputJsonValue;
+    const {
+      projectId,
+      userId,
+      isActive: bodyIsActive,
+      messages: raw,
+    } = parsed.data;
+    const isActive = bodyIsActive ?? true;
+    const messages = normalizeIncomingMessages(raw ?? []);
+    const messagesJson = JSON.parse(
+      JSON.stringify(messages),
+    ) as Prisma.InputJsonValue;
 
     await ensureProject(projectId);
     await ensureUser(userId);
@@ -85,6 +92,7 @@ export async function POST(req: NextRequest) {
         isActive,
       },
     });
+
     return NextResponse.json({ ok: true });
   } catch (e) {
     return NextResponse.json(

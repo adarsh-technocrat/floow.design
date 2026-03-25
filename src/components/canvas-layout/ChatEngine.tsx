@@ -110,6 +110,9 @@ const latestCanvasState: {
   themeMode: "light" | "dark";
 } = { frames: [], theme: {}, themeMode: "light" };
 
+/** Read by DefaultChatTransport (stable closure); updated in ChatEngine effect. */
+const latestChatRequestMeta = { userId: "", agentCount: 1 };
+
 /* ── Helpers ── */
 
 function getToolDisplayLabel(
@@ -162,47 +165,20 @@ function addStepIfNew(prev: ToolStep[], step: ToolStep): ToolStep[] {
   return [...prev, step];
 }
 
-/** Insert synthetic tool-step parts before each matching tool-* part (same toolCallId); append leftovers. Preserves stream order vs prepending all steps. */
-function mergeToolStepPartsIntoAssistantParts(
-  existingParts: MessagePart[],
-  stepParts: MessagePart[],
-): MessagePart[] {
-  const base = existingParts.filter((p) => p.type !== TOOL_STEP_PART_TYPE);
-  if (stepParts.length === 0) return base;
-  const stepById = new Map(
-    stepParts.map((sp) => [sp.toolCallId ?? "", sp] as const),
-  );
-  const inserted = new Set<string>();
-  const out: MessagePart[] = [];
-  for (const p of base) {
-    const id = p.toolCallId ?? "";
-    const isTool =
-      Boolean(p.type?.startsWith("tool-")) || p.type === "dynamic-tool";
-    if (isTool && id && stepById.has(id) && !inserted.has(id)) {
-      out.push(stepById.get(id)!);
-      inserted.add(id);
-    }
-    out.push(p);
-  }
-  for (const sp of stepParts) {
-    const id = sp.toolCallId ?? "";
-    if (id && !inserted.has(id)) {
-      out.push(sp);
-      inserted.add(id);
-    }
-  }
-  return out;
-}
-
 /* ── Component ── */
 
 export function ChatEngine() {
   const dispatch = useAppDispatch();
-  cpDispatchRef = dispatch;
+  useEffect(() => {
+    cpDispatchRef = dispatch;
+    return () => {
+      cpDispatchRef = null;
+    };
+  }, [dispatch]);
   initCursor(dispatch);
 
   const [_multiAgentPlanContext, setMultiAgentPlanContext] = useState("");
-  const [toolSteps, _setToolSteps] = useState<ToolStep[]>([]);
+  const [_toolSteps, _setToolSteps] = useState<ToolStep[]>([]);
   const [isLoadingHistory, setIsLoadingHistory] = useState(true);
   const { user } = useAuth();
   const chatUserId = user?.uid ?? "";
@@ -231,6 +207,12 @@ export function ChatEngine() {
     latestCanvasState.theme = theme;
     latestCanvasState.themeMode = activeThemeMode;
   }, [frames, theme, activeThemeMode]);
+
+  const chatSessionContextRef = useRef({ projectId, userId: chatUserId });
+  useEffect(() => {
+    chatSessionContextRef.current = { projectId, userId: chatUserId };
+    latestChatRequestMeta.userId = chatUserId;
+  }, [projectId, chatUserId]);
 
   const activeThemeIdRef = useRef<string | null>(null);
   const persistThemeToDatabase = useCallback(
@@ -285,9 +267,6 @@ export function ChatEngine() {
     [chatUserId, dispatch],
   );
 
-  const chatSessionContextRef = useRef({ projectId, userId: chatUserId });
-  chatSessionContextRef.current = { projectId, userId: chatUserId };
-
   const postChatSession = useCallback((messagesPayload: UIMessage[]) => {
     const { projectId: pid, userId: uid } = chatSessionContextRef.current;
     return http.post("/api/chat/sessions", {
@@ -297,8 +276,6 @@ export function ChatEngine() {
       messages: messagesPayload,
     });
   }, []);
-
-  const agentCountRef = useRef(1);
 
   const [transport] = useState(
     () =>
@@ -314,8 +291,8 @@ export function ChatEngine() {
             frames: latestCanvasState.frames,
             theme: latestCanvasState.theme,
             themeMode: latestCanvasState.themeMode,
-            agentCount: agentCountRef.current,
-            userId: chatSessionContextRef.current.userId,
+            agentCount: latestChatRequestMeta.agentCount,
+            userId: latestChatRequestMeta.userId,
           },
         }),
       }),
@@ -324,42 +301,41 @@ export function ChatEngine() {
   const { messages, setMessages, sendMessage, stop, status } = useChat({
     transport,
     onData: (dataPart) => {
+      interface DataPartPayload {
+        toolCallId: string;
+        toolName: string;
+        frame?: {
+          id: string;
+          label?: string;
+          left?: number;
+          top?: number;
+          html?: string;
+        };
+        theme?: Record<string, string>;
+        themeName?: string;
+        themeUpdates?: Record<string, string>;
+        orchestrationId?: string;
+        agents?: Array<{
+          id: string;
+          subTask: string;
+          assignedScreens: string[];
+          assignedFrameIds?: string[];
+          screenPositions?: Array<{ left: number; top: number }>;
+        }>;
+        planContext?: string;
+      }
       interface DataPartEvent {
         type: string;
         toolCallId?: string;
         toolName?: string;
         input?: Record<string, JsonValue>;
         output?: JsonValue;
-        data?: {
-          toolCallId: string;
-          toolName: string;
-          frame?: {
-            id: string;
-            label?: string;
-            left?: number;
-            top?: number;
-            html?: string;
-          };
-          theme?: Record<string, string>;
-          themeName?: string;
-          themeUpdates?: Record<string, string>;
-        };
+        data?: DataPartPayload;
       }
       const ev = dataPart as DataPartEvent;
 
       if (ev.type === "data-spawn-agents" && ev.data) {
-        const spawnData = ev.data as unknown as {
-          orchestrationId?: string;
-          agents?: Array<{
-            id: string;
-            subTask: string;
-            assignedScreens: string[];
-            assignedFrameIds?: string[];
-            screenPositions?: Array<{ left: number; top: number }>;
-          }>;
-          planContext?: string;
-          theme?: Record<string, string>;
-        };
+        const spawnData = ev.data;
         if (spawnData.orchestrationId && spawnData.agents) {
           setMultiAgentPlanContext(spawnData.planContext ?? "");
           if (spawnData.theme && Object.keys(spawnData.theme).length > 0) {
@@ -779,10 +755,7 @@ export function ChatEngine() {
           const updated = [...finishedMessages];
           updated[lastIdx] = {
             ...lastMsg,
-            parts: mergeToolStepPartsIntoAssistantParts(
-              existingParts,
-              stepParts,
-            ),
+            parts: [...stepParts, ...existingParts],
           } as typeof lastMsg;
           setMessages(updated);
           void postChatSession(updated).catch(() => {});
@@ -816,7 +789,7 @@ export function ChatEngine() {
     if (hydrateKey === lastHydrateKeyRef.current) return;
     lastHydrateKeyRef.current = hydrateKey;
 
-    setIsLoadingHistory(true);
+    queueMicrotask(() => setIsLoadingHistory(true));
     const q = new URLSearchParams({ projectId, userId: chatUserId });
     http
       .get(`/api/chat/sessions?${q.toString()}`)
