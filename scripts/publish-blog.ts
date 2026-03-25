@@ -148,8 +148,12 @@ function htmlToMarkdown(html: string): {
 
   // Convert FAQ details/summary to H3 + paragraph
   body = body.replace(
-    /<details>\s*<summary>([\s\S]*?)<\/summary>\s*<div class="faq-body">\s*([\s\S]*?)\s*<\/div>\s*<\/details>/gi,
-    (_m, q, a) => `### ${q.trim()}\n\n${a.trim()}`,
+    /<details>\s*<summary>([\s\S]*?)<\/summary>\s*(?:<div[^>]*>\s*)?([\s\S]*?)(?:\s*<\/div>)?\s*<\/details>/gi,
+    (_m, q, a) => {
+      const question = q.replace(/<[^>]*>/g, "").trim();
+      const answer = a.replace(/<\/?div[^>]*>/g, "").trim();
+      return `<h3>${question}</h3>\n${answer}`;
+    },
   );
 
   // Convert FAQ header
@@ -179,6 +183,57 @@ function htmlToMarkdown(html: string): {
     replacement: () => "\n",
   });
 
+  // Convert HTML tables to markdown pipe tables
+  td.addRule("table", {
+    filter: "table",
+    replacement: (_content, node) => {
+      const el = node as unknown as HTMLTableElement;
+      const rows: string[][] = [];
+      const allRows = el.querySelectorAll
+        ? Array.from(el.querySelectorAll("tr"))
+        : Array.from(el.getElementsByTagName("tr"));
+
+      for (const row of allRows) {
+        const cells = Array.from(
+          row.querySelectorAll
+            ? row.querySelectorAll("th, td")
+            : [
+                ...Array.from(row.getElementsByTagName("th")),
+                ...Array.from(row.getElementsByTagName("td")),
+              ],
+        );
+        rows.push(
+          cells.map((c) =>
+            td
+              .turndown((c as HTMLElement).innerHTML)
+              .replace(/\n/g, " ")
+              .replace(/\|/g, "\\|")
+              .trim(),
+          ),
+        );
+      }
+
+      if (rows.length === 0) return "";
+
+      const lines: string[] = [];
+      // Header row
+      lines.push("| " + rows[0].join(" | ") + " |");
+      // Separator
+      lines.push("| " + rows[0].map(() => "---").join(" | ") + " |");
+      // Body rows
+      for (let i = 1; i < rows.length; i++) {
+        lines.push("| " + rows[i].join(" | ") + " |");
+      }
+      return "\n\n" + lines.join("\n") + "\n\n";
+    },
+  });
+
+  // Prevent Turndown from also processing inner table elements
+  td.addRule("tableCell", {
+    filter: ["thead", "tbody", "tfoot", "tr", "th", "td"],
+    replacement: () => "",
+  });
+
   let markdown = td.turndown(body);
 
   // Clean up excessive newlines
@@ -199,6 +254,18 @@ interface ExtractedMeta {
   slug: string;
 }
 
+function decodeHtmlEntities(str: string): string {
+  return str
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&apos;/g, "'")
+    .replace(/&#x27;/g, "'")
+    .replace(/&nbsp;/g, " ");
+}
+
 function extractMetaFromHtml(html: string): ExtractedMeta {
   const titleMatch =
     html.match(/<h1[^>]*>([\s\S]*?)<\/h1>/i) ||
@@ -208,9 +275,9 @@ function extractMetaFromHtml(html: string): ExtractedMeta {
   );
 
   const rawTitle = titleMatch
-    ? titleMatch[1].replace(/<[^>]*>/g, "").trim()
+    ? decodeHtmlEntities(titleMatch[1].replace(/<[^>]*>/g, "").trim())
     : "Untitled Post";
-  const description = descMatch ? descMatch[1].trim() : "";
+  const description = descMatch ? decodeHtmlEntities(descMatch[1].trim()) : "";
   const slug = slugify(rawTitle);
 
   return { title: rawTitle, description, slug };
