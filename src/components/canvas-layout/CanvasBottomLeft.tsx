@@ -34,6 +34,24 @@ interface ChatMessage {
   parts?: MessagePart[];
 }
 
+/** Changes when the last message body updates (streaming); avoids skipping Activity updates when only length+id stay the same. */
+function fingerprintLastMessage(msg: ChatMessage | undefined): string {
+  if (!msg) return "";
+  if (typeof msg.content === "string" && msg.content.length > 0) {
+    return `c:${msg.content.length}`;
+  }
+  const parts = msg.parts;
+  if (!parts?.length) return "p:0";
+  let sig = 0;
+  for (const p of parts) {
+    const t = (p as { text?: string }).text;
+    if (typeof t === "string") sig += t.length;
+    const st = (p as { state?: string }).state;
+    if (typeof st === "string") sig += st.length;
+  }
+  return `p:${parts.length}:${sig}`;
+}
+
 /* ── Helpers (identical to ChatPanel) ── */
 
 function getUserText(msg: ChatMessage): string | null {
@@ -48,7 +66,9 @@ function getUserText(msg: ChatMessage): string | null {
 function getUserImages(msg: ChatMessage): string[] {
   if (!msg.parts) return [];
   return msg.parts
-    .filter((p) => (p.type === "image" && p.image) || (p.type === "file" && p.url))
+    .filter(
+      (p) => (p.type === "image" && p.image) || (p.type === "file" && p.url),
+    )
     .map((p) => p.image ?? p.url ?? "");
 }
 
@@ -236,18 +256,51 @@ function ToolStepChip({
       }`}
     >
       {finished ? (
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" className="shrink-0">
-          <path d="M8 12.5l2.5 2.5 5-5" stroke="#22c55e" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+        <svg
+          width="12"
+          height="12"
+          viewBox="0 0 24 24"
+          fill="none"
+          className="shrink-0"
+        >
+          <path
+            d="M8 12.5l2.5 2.5 5-5"
+            stroke="#22c55e"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
         </svg>
       ) : (
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" className="shrink-0 animate-spin" style={{ animationDuration: "1.5s" }}>
-          <circle cx="12" cy="12" r="9" stroke="#3b82f6" strokeOpacity="0.3" strokeWidth="2.5" />
-          <path d="M12 3a9 9 0 0 1 9 9" stroke="#3b82f6" strokeWidth="2.5" strokeLinecap="round" />
+        <svg
+          width="12"
+          height="12"
+          viewBox="0 0 24 24"
+          fill="none"
+          className="shrink-0 animate-spin"
+          style={{ animationDuration: "1.5s" }}
+        >
+          <circle
+            cx="12"
+            cy="12"
+            r="9"
+            stroke="#3b82f6"
+            strokeOpacity="0.3"
+            strokeWidth="2.5"
+          />
+          <path
+            d="M12 3a9 9 0 0 1 9 9"
+            stroke="#3b82f6"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+          />
         </svg>
       )}
       <span
         className={`text-[11px] font-medium ${
-          finished ? "text-emerald-600 dark:text-emerald-400" : "text-blue-600 dark:text-blue-400"
+          finished
+            ? "text-emerald-600 dark:text-emerald-400"
+            : "text-blue-600 dark:text-blue-400"
         }`}
       >
         {label}
@@ -303,7 +356,9 @@ function ReasoningBlock({
           className="max-h-[120px] overflow-y-auto px-2 py-1.5"
         >
           <div className="chat-markdown text-[11px] leading-relaxed">
-            <ReactMarkdown components={markdownComponents}>{text}</ReactMarkdown>
+            <ReactMarkdown components={markdownComponents}>
+              {text}
+            </ReactMarkdown>
           </div>
         </div>
       ) : null}
@@ -414,7 +469,8 @@ export function CanvasBottomLeft() {
     return subscribeChatMessages((next) => {
       if (!Array.isArray(next)) return;
       const arr = next as ChatMessage[];
-      const key = `${arr.length}:${arr[arr.length - 1]?.id ?? ""}`;
+      const last = arr[arr.length - 1];
+      const key = `${arr.length}:${last?.id ?? ""}:${fingerprintLastMessage(last)}`;
       if (key === lastMsgKeyRef.current) return;
       lastMsgKeyRef.current = key;
       setMessages(arr);
@@ -432,6 +488,9 @@ export function CanvasBottomLeft() {
 
   const isActivelyStreaming =
     chatStatus === "submitted" || chatStatus === "streaming";
+
+  // Image preview dialog
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
 
   return (
     <div className="absolute bottom-4 left-4 z-10 flex flex-col items-start gap-2">
@@ -512,12 +571,18 @@ export function CanvasBottomLeft() {
                               {getUserImages(msg).length > 0 && (
                                 <div className="flex gap-1.5 mb-1.5 flex-wrap">
                                   {getUserImages(msg).map((src, imgIdx) => (
-                                    <img
+                                    <button
                                       key={imgIdx}
-                                      src={src}
-                                      alt="Attached"
-                                      className="max-h-24 max-w-[140px] rounded-md object-cover border border-b-secondary"
-                                    />
+                                      type="button"
+                                      onClick={() => setPreviewImage(src)}
+                                      className="cursor-zoom-in"
+                                    >
+                                      <img
+                                        src={src}
+                                        alt="Attached"
+                                        className="max-h-24 max-w-[140px] rounded-md object-cover border border-b-secondary transition-opacity hover:opacity-80"
+                                      />
+                                    </button>
                                   ))}
                                 </div>
                               )}
@@ -610,6 +675,28 @@ export function CanvasBottomLeft() {
           </span>
         )}
       </button>
+
+      {/* Image Preview Dialog */}
+      {previewImage && (
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 backdrop-blur-sm"
+          onClick={() => setPreviewImage(null)}
+        >
+          <button
+            type="button"
+            onClick={() => setPreviewImage(null)}
+            className="absolute top-4 right-4 flex size-9 items-center justify-center rounded-full bg-white/10 text-white backdrop-blur-sm transition-colors hover:bg-white/20"
+          >
+            <X className="size-5" />
+          </button>
+          <img
+            src={previewImage}
+            alt="Preview"
+            className="max-h-[85vh] max-w-[90vw] rounded-lg object-contain shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          />
+        </div>
+      )}
     </div>
   );
 }

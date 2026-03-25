@@ -162,6 +162,38 @@ function addStepIfNew(prev: ToolStep[], step: ToolStep): ToolStep[] {
   return [...prev, step];
 }
 
+/** Insert synthetic tool-step parts before each matching tool-* part (same toolCallId); append leftovers. Preserves stream order vs prepending all steps. */
+function mergeToolStepPartsIntoAssistantParts(
+  existingParts: MessagePart[],
+  stepParts: MessagePart[],
+): MessagePart[] {
+  const base = existingParts.filter((p) => p.type !== TOOL_STEP_PART_TYPE);
+  if (stepParts.length === 0) return base;
+  const stepById = new Map(
+    stepParts.map((sp) => [sp.toolCallId ?? "", sp] as const),
+  );
+  const inserted = new Set<string>();
+  const out: MessagePart[] = [];
+  for (const p of base) {
+    const id = p.toolCallId ?? "";
+    const isTool =
+      Boolean(p.type?.startsWith("tool-")) || p.type === "dynamic-tool";
+    if (isTool && id && stepById.has(id) && !inserted.has(id)) {
+      out.push(stepById.get(id)!);
+      inserted.add(id);
+    }
+    out.push(p);
+  }
+  for (const sp of stepParts) {
+    const id = sp.toolCallId ?? "";
+    if (id && !inserted.has(id)) {
+      out.push(sp);
+      inserted.add(id);
+    }
+  }
+  return out;
+}
+
 /* ── Component ── */
 
 export function ChatEngine() {
@@ -747,7 +779,10 @@ export function ChatEngine() {
           const updated = [...finishedMessages];
           updated[lastIdx] = {
             ...lastMsg,
-            parts: [...stepParts, ...existingParts],
+            parts: mergeToolStepPartsIntoAssistantParts(
+              existingParts,
+              stepParts,
+            ),
           } as typeof lastMsg;
           setMessages(updated);
           void postChatSession(updated).catch(() => {});
@@ -840,7 +875,10 @@ export function ChatEngine() {
 
   // Register send/stop for the center input
   useEffect(() => {
-    const bridgeSend = (payload: { text: string; imageDataUrls?: string[] }) => {
+    const bridgeSend = (payload: {
+      text: string;
+      imageDataUrls?: string[];
+    }) => {
       setToolSteps([]);
       dispatch(pushAgentLog({ type: "user", text: payload.text }));
 
