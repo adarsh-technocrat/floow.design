@@ -226,12 +226,10 @@ export async function POST(req: Request) {
               ]
             : validMessages;
 
-        const sanitizedMessages = stripBase64FromMessages(messagesToSend);
-
         const result = streamText({
           model: vertex(CHAT_MODEL_ID),
           system,
-          messages: sanitizedMessages,
+          messages: messagesToSend,
           tools,
           stopWhen: stepCountIs(10),
           maxRetries: 2,

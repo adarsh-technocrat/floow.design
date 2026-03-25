@@ -18,6 +18,9 @@ import ReactMarkdown from "react-markdown";
 interface MessagePart {
   type: string;
   text?: string;
+  image?: string;
+  url?: string;
+  mediaType?: string;
   toolCallId?: string;
   toolName?: string;
   state?: string;
@@ -40,6 +43,13 @@ function getUserText(msg: ChatMessage): string | null {
     (x) => x.type === "text" && x.text != null && x.text.length > 0,
   );
   return p?.text ?? null;
+}
+
+function getUserImages(msg: ChatMessage): string[] {
+  if (!msg.parts) return [];
+  return msg.parts
+    .filter((p) => (p.type === "image" && p.image) || (p.type === "file" && p.url))
+    .map((p) => p.image ?? p.url ?? "");
 }
 
 function getToolDisplayLabel(
@@ -499,6 +509,18 @@ export function CanvasBottomLeft() {
                         {msg.role === "user" ? (
                           <div className="flex justify-end">
                             <div className="max-w-[90%] rounded-lg bg-input-bg px-2.5 py-1.5">
+                              {getUserImages(msg).length > 0 && (
+                                <div className="flex gap-1.5 mb-1.5 flex-wrap">
+                                  {getUserImages(msg).map((src, imgIdx) => (
+                                    <img
+                                      key={imgIdx}
+                                      src={src}
+                                      alt="Attached"
+                                      className="max-h-24 max-w-[140px] rounded-md object-cover border border-b-secondary"
+                                    />
+                                  ))}
+                                </div>
+                              )}
                               {getUserText(msg) ? (
                                 <div className="chat-markdown">
                                   <ReactMarkdown

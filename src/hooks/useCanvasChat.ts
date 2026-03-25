@@ -16,13 +16,21 @@ export interface QueuedPrompt {
   createdAt: number;
 }
 
+export interface AttachedImage {
+  id: string;
+  dataUrl: string;
+  name: string;
+}
+
 export function useCanvasChat() {
   const dispatch = useAppDispatch();
   const userPlan = useAppSelector((s) => s.user.plan);
   const [inputValue, setInputValue] = useState("");
+  const [attachedImages, setAttachedImages] = useState<AttachedImage[]>([]);
   const [isAgentWorking, setIsAgentWorking] = useState(false);
   const [promptQueue, setPromptQueue] = useState<QueuedPrompt[]>([]);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const processingQueueRef = useRef(false);
 
   const hasCreditsForAction = useCallback((): boolean => {
@@ -58,12 +66,47 @@ export function useCanvasChat() {
   }, []);
 
   const dispatchMessageToChatBridge = useCallback(
-    (text: string) => {
-      sendChatMessage(text);
+    (text: string, imageDataUrls?: string[]) => {
+      sendChatMessage(text, imageDataUrls);
       dispatch(setAgentLogVisible(true));
     },
     [dispatch],
   );
+
+  const handleAttachImage = useCallback(() => {
+    fileInputRef.current?.click();
+  }, []);
+
+  const handleFileChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const files = e.target.files;
+      if (!files) return;
+      Array.from(files).forEach((file) => {
+        if (!file.type.startsWith("image/")) return;
+        if (file.size > 10 * 1024 * 1024) return; // 10MB limit
+        const reader = new FileReader();
+        reader.onload = () => {
+          const dataUrl = reader.result as string;
+          setAttachedImages((prev) => [
+            ...prev,
+            {
+              id: `img-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+              dataUrl,
+              name: file.name,
+            },
+          ]);
+        };
+        reader.readAsDataURL(file);
+      });
+      // Reset so the same file can be re-selected
+      e.target.value = "";
+    },
+    [],
+  );
+
+  const removeAttachedImage = useCallback((id: string) => {
+    setAttachedImages((prev) => prev.filter((img) => img.id !== id));
+  }, []);
 
   const processNextPromptFromQueue = useCallback(() => {
     setPromptQueue((currentQueue) => {
@@ -83,23 +126,28 @@ export function useCanvasChat() {
 
   const submitPromptOrAddToQueue = useCallback(() => {
     const trimmedText = inputValue.trim();
-    if (!trimmedText) return;
+    if (!trimmedText && attachedImages.length === 0) return;
     if (!hasCreditsForAction()) return;
 
+    const imageDataUrls = attachedImages.map((img) => img.dataUrl);
     setInputValue("");
+    setAttachedImages([]);
     resetTextareaHeight();
 
     if (isAgentWorking) {
       const queuedPrompt: QueuedPrompt = {
         id: `q-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
-        text: trimmedText,
+        text: trimmedText || "Attached image",
         createdAt: Date.now(),
       };
       setPromptQueue((prev) => [...prev, queuedPrompt]);
     } else {
-      dispatchMessageToChatBridge(trimmedText);
+      dispatchMessageToChatBridge(
+        trimmedText || "Attached image",
+        imageDataUrls.length > 0 ? imageDataUrls : undefined,
+      );
     }
-  }, [inputValue, isAgentWorking, dispatchMessageToChatBridge, resetTextareaHeight]);
+  }, [inputValue, attachedImages, isAgentWorking, dispatchMessageToChatBridge, resetTextareaHeight, hasCreditsForAction]);
 
   const forceExecuteQueuedPrompt = useCallback(
     (promptId: string) => {
@@ -146,6 +194,11 @@ export function useCanvasChat() {
     inputValue,
     setInputValue,
     inputRef,
+    fileInputRef,
+    attachedImages,
+    handleAttachImage,
+    handleFileChange,
+    removeAttachedImage,
     isAgentWorking,
     promptQueue,
     submitPromptOrAddToQueue,

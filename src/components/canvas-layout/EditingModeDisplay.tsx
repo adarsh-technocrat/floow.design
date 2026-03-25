@@ -60,6 +60,11 @@ export function EditingModeDisplay() {
     inputValue,
     setInputValue,
     inputRef,
+    fileInputRef,
+    attachedImages,
+    handleAttachImage,
+    handleFileChange,
+    removeAttachedImage,
     isAgentWorking,
     promptQueue,
     submitPromptOrAddToQueue,
@@ -105,6 +110,38 @@ export function EditingModeDisplay() {
         )}
 
         <div className="relative z-10 rounded-2xl border border-b-strong bg-canvas-panel-bg shadow-lg backdrop-blur-xl transition-all focus-within:border-b-strong">
+          {/* Hidden file input */}
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            multiple
+            className="hidden"
+            onChange={handleFileChange}
+          />
+
+          {/* Image previews */}
+          {attachedImages.length > 0 && (
+            <div className="flex gap-2 px-4 pt-3 pb-0 overflow-x-auto">
+              {attachedImages.map((img) => (
+                <div key={img.id} className="relative shrink-0 group">
+                  <img
+                    src={img.dataUrl}
+                    alt={img.name}
+                    className="size-16 rounded-lg object-cover border border-b-secondary"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => removeAttachedImage(img.id)}
+                    className="absolute -top-1.5 -right-1.5 flex size-5 items-center justify-center rounded-full bg-surface-elevated border border-b-secondary text-t-tertiary shadow-sm opacity-0 group-hover:opacity-100 transition-opacity hover:text-t-primary"
+                  >
+                    <X className="size-3" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+
           <div className="px-4 pt-4 pb-2">
             <textarea
               ref={inputRef}
@@ -127,6 +164,7 @@ export function EditingModeDisplay() {
               <button
                 type="button"
                 aria-label="Attach image"
+                onClick={handleAttachImage}
                 className="inline-flex size-8 shrink-0 items-center justify-center rounded-lg text-t-tertiary transition-colors hover:text-t-secondary hover:bg-secondary/40"
               >
                 <ImageIcon className="size-4" />
@@ -154,7 +192,7 @@ export function EditingModeDisplay() {
                 <button
                   type="button"
                   onClick={submitPromptOrAddToQueue}
-                  disabled={!inputValue.trim()}
+                  disabled={!inputValue.trim() && attachedImages.length === 0}
                   className="inline-flex size-8 shrink-0 items-center justify-center rounded-full bg-btn-primary-bg text-btn-primary-text shadow-sm outline-none transition-all hover:opacity-90 disabled:pointer-events-none disabled:opacity-30 focus-visible:ring-2 focus-visible:ring-ring/50 active:scale-95"
                 >
                   <svg

@@ -840,10 +840,26 @@ export function ChatEngine() {
 
   // Register send/stop for the center input
   useEffect(() => {
-    const bridgeSend = (text: string) => {
+    const bridgeSend = (payload: { text: string; imageDataUrls?: string[] }) => {
       setToolSteps([]);
-      dispatch(pushAgentLog({ type: "user", text }));
-      sendMessage({ text });
+      dispatch(pushAgentLog({ type: "user", text: payload.text }));
+
+      if (payload.imageDataUrls && payload.imageDataUrls.length > 0) {
+        // Multimodal message: text + images as FileUIPart[]
+        const files = payload.imageDataUrls.map((dataUrl) => {
+          // Extract mediaType from data URL (e.g. "data:image/png;base64,...")
+          const match = dataUrl.match(/^data:(image\/[^;]+);/);
+          const mediaType = match?.[1] ?? "image/png";
+          return {
+            type: "file" as const,
+            mediaType,
+            url: dataUrl,
+          };
+        });
+        sendMessage({ text: payload.text, files });
+      } else {
+        sendMessage({ text: payload.text });
+      }
     };
     registerChatSend(bridgeSend);
     registerChatStop(stop);

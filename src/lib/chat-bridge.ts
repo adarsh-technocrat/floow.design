@@ -2,7 +2,12 @@
 // ChatPanel registers its sendMessage, EditingModeDisplay calls it.
 // Activity (CanvasBottomLeft) subscribes to live message snapshots from useChat.
 
-let _sendFn: ((text: string) => void) | null = null;
+export interface ChatMessagePayload {
+  text: string;
+  imageDataUrls?: string[];
+}
+
+let _sendFn: ((payload: ChatMessagePayload) => void) | null = null;
 
 export type ChatMessagesSnapshotListener = (messages: unknown[]) => void;
 
@@ -18,7 +23,7 @@ const _historyLoadingListeners = new Set<ActivityHistoryLoadingListener>();
 /** Last emitted value so new subscribers (e.g. after Strict Mode remount) don't miss `false` and stay on shimmer forever. */
 let _lastActivityHistoryLoading: boolean | undefined;
 
-export function registerChatSend(fn: (text: string) => void) {
+export function registerChatSend(fn: (payload: ChatMessagePayload) => void) {
   _sendFn = fn;
 }
 
@@ -26,9 +31,9 @@ export function unregisterChatSend() {
   _sendFn = null;
 }
 
-export function sendChatMessage(text: string) {
+export function sendChatMessage(text: string, imageDataUrls?: string[]) {
   if (_sendFn) {
-    _sendFn(text);
+    _sendFn({ text, imageDataUrls });
   }
 }
 
