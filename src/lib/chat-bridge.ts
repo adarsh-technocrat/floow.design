@@ -7,7 +7,7 @@ export interface ChatMessagePayload {
   imageDataUrls?: string[];
 }
 
-let _sendFn: ((payload: ChatMessagePayload) => void) | null = null;
+let _sendFn: ((payload: ChatMessagePayload) => void | Promise<void>) | null = null;
 
 export type ChatMessagesSnapshotListener = (messages: unknown[]) => void;
 
@@ -23,7 +23,7 @@ const _historyLoadingListeners = new Set<ActivityHistoryLoadingListener>();
 /** Last emitted value so new subscribers (e.g. after Strict Mode remount) don't miss `false` and stay on shimmer forever. */
 let _lastActivityHistoryLoading: boolean | undefined;
 
-export function registerChatSend(fn: (payload: ChatMessagePayload) => void) {
+export function registerChatSend(fn: (payload: ChatMessagePayload) => void | Promise<void>) {
   _sendFn = fn;
 }
 
