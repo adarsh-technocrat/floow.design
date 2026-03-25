@@ -30,6 +30,7 @@ export interface UseFrameInteractionProps {
     clientY: number;
     deltaY: number;
   }) => void;
+  selected?: boolean;
 }
 
 export function useFrameInteraction({
@@ -45,6 +46,7 @@ export function useFrameInteraction({
   onPositionChange,
   onSizeChange,
   onWheelForZoom,
+  selected = false,
 }: UseFrameInteractionProps) {
   const [isDragging, setIsDragging] = useState(false);
   const [isResizing, setIsResizing] = useState(false);
@@ -111,9 +113,10 @@ export function useFrameInteraction({
       if (e.button !== 0) return;
       if (spaceHeld) return;
       e.stopPropagation();
+      if (selected && !e.metaKey) return;
       onSelect?.(id, e.metaKey);
     },
-    [onSelect, id, spaceHeld],
+    [onSelect, id, selected, spaceHeld],
   );
 
   const handlePointerDown = useCallback(
@@ -129,13 +132,15 @@ export function useFrameInteraction({
         "[data-drag-handle]",
       );
       if (!isDragHandle) {
-        onSelect?.(id, e.metaKey);
+        if (!(selected && !e.metaKey)) {
+          onSelect?.(id, e.metaKey);
+        }
       }
       dragStart.current = { clientX: e.clientX, clientY: e.clientY, left, top };
       setIsDragging(true);
       (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
     },
-    [onSelect, id, left, top, spaceHeld],
+    [onSelect, id, left, top, selected, spaceHeld],
   );
 
   const handlePointerMove = useCallback(

@@ -10,10 +10,32 @@
   var ELEMENT_ID_ATTR = "data-uxm-element-id";
   var ID_PREFIX = "uxm-";
   var counter = 0;
+  var lastDebugAt = 0;
+
+  function debugLog(hypothesisId, message, data) {
+    var now = Date.now();
+    if (now - lastDebugAt < 120) return;
+    lastDebugAt = now;
+    // #region agent log
+    fetch("http://127.0.0.1:7253/ingest/bf26e32e-b221-45cd-9795-984cd7651c6f", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        runId: "inspector-rca",
+        hypothesisId: hypothesisId,
+        location: "element-inspector.js",
+        message: message,
+        data: data,
+        timestamp: now,
+      }),
+    }).catch(function () {});
+    // #endregion
+  }
 
   function ensureElementIds(doc) {
     var body = doc.body;
     if (!body) return;
+    var assigned = 0;
     var walk = function (el) {
       if (!el || el.nodeType !== 1) return;
       if (
@@ -25,6 +47,7 @@
       if (!el.getAttribute(ELEMENT_ID_ATTR)) {
         counter += 1;
         el.setAttribute(ELEMENT_ID_ATTR, ID_PREFIX + counter);
+        assigned += 1;
       }
       var child = el.firstElementChild;
       while (child) {
@@ -33,6 +56,11 @@
       }
     };
     walk(body);
+    debugLog("H1", "ensureElementIds executed", {
+      assigned: assigned,
+      counter: counter,
+      bodyChildren: body.children ? body.children.length : 0,
+    });
   }
 
   function getElementInfo(el) {
@@ -94,11 +122,36 @@
 
   function findElementByPoint(x, y) {
     var el = document.elementFromPoint(x, y);
+    if (
+      el &&
+      el !== document.body &&
+      el !== document.documentElement &&
+      el.tagName !== "SCRIPT" &&
+      el.tagName !== "STYLE" &&
+      el.tagName !== "HEAD"
+    ) {
+      if (!el.getAttribute(ELEMENT_ID_ATTR)) {
+        counter += 1;
+        el.setAttribute(ELEMENT_ID_ATTR, ID_PREFIX + counter);
+      }
+      return el;
+    }
     while (el && el !== document.body) {
       if (el.getAttribute(ELEMENT_ID_ATTR)) return el;
       el = el.parentElement;
     }
     return el && el.getAttribute(ELEMENT_ID_ATTR) ? el : null;
+  }
+
+  function startIdSyncObserver() {
+    if (typeof MutationObserver === "undefined") return;
+    var body = document.body;
+    if (!body) return;
+    var observer = new MutationObserver(function () {
+      // Re-tag newly rendered nodes after incremental body HTML updates.
+      ensureElementIds(document);
+    });
+    observer.observe(body, { childList: true, subtree: true });
   }
 
   window.addEventListener("message", function (event) {
@@ -119,7 +172,30 @@
         var x = payload.x;
         var y = payload.y;
         if (typeof x !== "number" || typeof y !== "number") return;
+        var raw = document.elementFromPoint(x, y);
         var target = findElementByPoint(x, y);
+        var ancestorWithId = null;
+        var scan = raw;
+        while (scan && scan !== document.body) {
+          if (scan.getAttribute && scan.getAttribute(ELEMENT_ID_ATTR)) {
+            ancestorWithId = scan;
+            break;
+          }
+          scan = scan.parentElement;
+        }
+        debugLog("H2", "hit-test resolution", {
+          x: x,
+          y: y,
+          rawTag: raw && raw.tagName ? raw.tagName.toLowerCase() : null,
+          rawHasId: !!(raw && raw.getAttribute && raw.getAttribute(ELEMENT_ID_ATTR)),
+          ancestorWithIdTag:
+            ancestorWithId && ancestorWithId.tagName
+              ? ancestorWithId.tagName.toLowerCase()
+              : null,
+          targetTag: target && target.tagName ? target.tagName.toLowerCase() : null,
+          targetId: target ? target.getAttribute(ELEMENT_ID_ATTR) : null,
+          taggedCount: document.querySelectorAll("[" + ELEMENT_ID_ATTR + "]").length,
+        });
         if (target) {
           window.parent.postMessage(
             { type: "ELEMENT_INFO", payload: getElementInfo(target) },
@@ -376,107 +452,9 @@
     }
   });
 
-  function startCursorTracker() {
-    try {
-      var fid = "";
-      try {
-        fid =
-          (window.frameElement &&
-            window.frameElement.getAttribute("data-frame-id")) ||
-          "";
-      } catch (_) {}
-      if (!fid) return;
-      function report() {
-        try {
-          var b = document.body;
-          if (!b) return;
-          var ch = b.children;
-          var t = null;
-          for (var i = ch.length - 1; i >= 0; i--) {
-            var tag = (ch[i] && ch[i].tagName) || "";
-            if (tag !== "SCRIPT" && tag !== "STYLE") {
-              t = ch[i];
-              break;
-            }
-          }
-          if (!t) return;
-          var el = t;
-          var d = 0;
-          while (el.lastElementChild && d < 6) {
-            var lt = el.lastElementChild.tagName;
-            if (lt === "SCRIPT" || lt === "STYLE") {
-              var prev = el.lastElementChild.previousElementSibling;
-              if (prev) {
-                el = prev;
-              } else break;
-            } else {
-              el = el.lastElementChild;
-            }
-            d++;
-          }
-          if (el === b || el === document.documentElement) return;
-          // Ensure element has an id for change detection
-          if (!el.getAttribute(ELEMENT_ID_ATTR)) {
-            counter += 1;
-            el.setAttribute(ELEMENT_ID_ATTR, ID_PREFIX + counter);
-          }
-          var r = el.getBoundingClientRect();
-          if (r.width < 1 && r.height < 1) return;
-          window.parent.postMessage(
-            {
-              type: "cursor-element-track",
-              frameId: fid,
-              elementId: el.getAttribute(ELEMENT_ID_ATTR) || "",
-              rect: {
-                left: r.left,
-                top: r.top,
-                width: r.width,
-                height: r.height,
-              },
-            },
-            "*",
-          );
-        } catch (_) {}
-      }
-      report();
-      if (typeof MutationObserver !== "undefined") {
-        var mo = new MutationObserver(report);
-        mo.observe(document.body, { childList: true, subtree: true });
-      }
-      setInterval(report, 150);
-    } catch (_) {}
-  }
-
-  function startCanvasZoom() {
-    try {
-      document.addEventListener(
-        "wheel",
-        function (e) {
-          if (e.ctrlKey || e.metaKey) {
-            e.preventDefault();
-            e.stopPropagation();
-            try {
-              window.parent.postMessage(
-                {
-                  type: "canvas-zoom",
-                  deltaY: e.deltaY,
-                  clientX: e.clientX,
-                  clientY: e.clientY,
-                },
-                "*",
-              );
-            } catch (_) {}
-          }
-        },
-        { passive: false, capture: true },
-      );
-    } catch (_) {}
-  }
-
   function init() {
     ensureElementIds(document);
-    startCursorTracker();
-    startCanvasZoom();
+    startIdSyncObserver();
     if (document.readyState === "complete") {
       window.parent.postMessage(
         { type: "IFRAME_READY", source: "element-inspector" },

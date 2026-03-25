@@ -20,58 +20,13 @@ let _lastActivityHistoryLoading: boolean | undefined;
 
 export function registerChatSend(fn: (text: string) => void) {
   _sendFn = fn;
-  // #region agent log
-  fetch("http://127.0.0.1:7253/ingest/bf26e32e-b221-45cd-9795-984cd7651c6f", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      runId: "pre-fix",
-      hypothesisId: "H7",
-      location: "chat-bridge.ts:registerChatSend",
-      message: "chat send bridge registered",
-      data: {},
-      timestamp: Date.now(),
-    }),
-  }).catch(() => {});
-  // #endregion
 }
 
 export function unregisterChatSend() {
   _sendFn = null;
-  // #region agent log
-  fetch("http://127.0.0.1:7253/ingest/bf26e32e-b221-45cd-9795-984cd7651c6f", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      runId: "pre-fix",
-      hypothesisId: "H7",
-      location: "chat-bridge.ts:unregisterChatSend",
-      message: "chat send bridge unregistered",
-      data: {},
-      timestamp: Date.now(),
-    }),
-  }).catch(() => {});
-  // #endregion
 }
 
 export function sendChatMessage(text: string) {
-  // #region agent log
-  fetch("http://127.0.0.1:7253/ingest/bf26e32e-b221-45cd-9795-984cd7651c6f", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      runId: "pre-fix",
-      hypothesisId: "H7",
-      location: "chat-bridge.ts:sendChatMessage",
-      message: "canvas requested chat send",
-      data: {
-        hasBridge: Boolean(_sendFn),
-        textLength: text.trim().length,
-      },
-      timestamp: Date.now(),
-    }),
-  }).catch(() => {});
-  // #endregion
   if (_sendFn) {
     _sendFn(text);
   }
@@ -196,7 +151,11 @@ export function emitCreditExhausted(reason: CreditExhaustedReason): void {
   for (const l of _creditExhaustedListeners) l(reason);
 }
 
-export function subscribeCreditExhausted(listener: CreditExhaustedListener): () => void {
+export function subscribeCreditExhausted(
+  listener: CreditExhaustedListener,
+): () => void {
   _creditExhaustedListeners.add(listener);
-  return () => { _creditExhaustedListeners.delete(listener); };
+  return () => {
+    _creditExhaustedListeners.delete(listener);
+  };
 }

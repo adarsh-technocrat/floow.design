@@ -68,7 +68,7 @@ export const FramePreview = React.forwardRef<
 
   useEffect(() => {
     if (!enableElementInspection) return;
-    fetch("/api/scripts/element-inspector")
+    fetch(`/api/scripts/element-inspector?v=${Date.now()}`)
       .then((r) => r.text())
       .then(setInspectorScript)
       .catch(() => {});
@@ -91,7 +91,8 @@ export const FramePreview = React.forwardRef<
     if (postTimeoutRef.current) clearTimeout(postTimeoutRef.current);
     postTimeoutRef.current = setTimeout(() => {
       postTimeoutRef.current = null;
-      http.post("/api/frames", { frameId, html, label, left, top, projectId })
+      http
+        .post("/api/frames", { frameId, html, label, left, top, projectId })
         .then(() => setLoadKey((k) => k + 1))
         .catch(() => {});
     }, POST_DEBOUNCE_MS);
@@ -125,7 +126,7 @@ export const FramePreview = React.forwardRef<
     const doWrite = (incremental: boolean) => {
       lastWriteTimeRef.current = Date.now();
       const htmlToWrite = latestHtmlRef.current;
-      writeContent(htmlToWrite, incremental);
+      writeContent(htmlToWrite, true);
     };
 
     const now = Date.now();
@@ -172,7 +173,7 @@ export const FramePreview = React.forwardRef<
     if (!latestHtmlRef.current) return;
     const htmlToWrite = latestHtmlRef.current;
     writeContent(htmlToWrite);
-  }, [writeContent, isStreaming]);
+  }, [frameId, writeContent]);
 
   const isMalformed = looksLikeMalformedFrameContent(html);
 
@@ -200,7 +201,9 @@ export const FramePreview = React.forwardRef<
   }
 
   const showFadeIn = !isStreaming && !hasFadedInRef.current;
-  if (showFadeIn) hasFadedInRef.current = true;
+  if (showFadeIn) {
+    hasFadedInRef.current = true;
+  }
 
   const iframeClassName = [
     "size-full border-0 bg-white scrollbar-hide",

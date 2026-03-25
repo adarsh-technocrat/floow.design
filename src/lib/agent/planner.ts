@@ -2,7 +2,7 @@ import { generateObject } from "ai";
 import { z } from "zod";
 import type { UIMessageStreamWriter } from "ai";
 import type { GoogleVertexProvider } from "@ai-sdk/google-vertex";
-import { normalizeThemeVars, type ThemeVariables } from "@/lib/screen-utils";
+import type { ThemeVariables } from "@/lib/screen-utils";
 
 const PLANNER_CLASSIFY_PROMPT =
   'Given a user request for a mobile app, determine if they want to "generate" (create new screens) or "edit" (modify existing). Reply with intent only.';
@@ -10,18 +10,21 @@ const PLANNER_CLASSIFY_PROMPT =
 const PLANNER_SCREENS_PROMPT =
   'Given a user request and that intent is "generate", list the screens to create. Each screen has name and description.';
 
-const PLANNER_STYLE_PROMPT =
-  "Given a user request and the screens to create, provide visual guidelines (colors, mood, typography) and whether to generate (true for new designs).";
+const PLANNER_STYLE_PROMPT = `\
+Given a user request and the screens to create, provide detailed visual guidelines for the app's design system.
 
-const PLANNER_THEME_PROMPT = `\
-Given visual guidelines for a mobile app, generate a complete CSS theme as a flat object.
-Every key must be a CSS variable name starting with --.
-All of these keys are required:
---background, --foreground, --primary, --primary-foreground, --secondary, --secondary-foreground,
---muted, --muted-foreground, --card, --card-foreground, --border, --radius, --font-sans, --font-heading.
+Your guidelines MUST include:
+- Color palette: primary color, background (light/dark), accent colors, text colors
+- Typography: font families (Google Fonts), heading vs body styles
+- Mood: modern, minimal, playful, corporate, etc.
+- Spacing: compact or spacious
+- Border radius: sharp, rounded, or pill-shaped
+- Any brand-specific style cues from the user's request
 
-Values should be hex colors for color tokens, rem values for --radius, and font family strings for fonts.
-Example: {"--primary":"#2563eb","--background":"#0f172a","--radius":"0.75rem","--font-sans":"'Inter', sans-serif"}`;
+Be specific with color hex values when the user implies a style (e.g. "dark theme" → dark backgrounds, "vibrant" → saturated primaries).
+If the user doesn't specify a style, infer one from the app type (e.g. finance app → professional blues, food app → warm oranges).
+
+ALWAYS set shouldGenerate to true for new app designs. Only set to false if the user is explicitly editing existing screens without style changes.`;
 
 let planCallCounter = 0;
 
@@ -62,7 +65,7 @@ export async function runPlanningPipeline(
   userPrompt: string,
   vertex: GoogleVertexProvider,
   writer: UIMessageStreamWriter,
-  theme: ThemeVariables,
+  _theme: ThemeVariables,
 ): Promise<PlanningResult> {
   const empty: PlanningResult = { planContext: "" };
   try {
@@ -109,64 +112,13 @@ export async function runPlanningPipeline(
     const { guidelines, shouldGenerate } = stylePlan.object;
     emitPlanEnd(writer, styleId, "planStyle", { guidelines, shouldGenerate });
 
-    if (shouldGenerate) {
-      const themeId = nextPlanCallId("build_theme");
-      emitPlanStart(writer, themeId, "build_theme");
-      const themePlan = await generateObject({
-        model: vertex("gemini-2.0-flash"),
-        schema: z.object({
-          variables: z
-            .record(z.string(), z.string())
-            .describe("Flat CSS variable map"),
-        }),
-        prompt: `${PLANNER_THEME_PROMPT}\n\nVisual guidelines:\n${guidelines}\n\nUser request:\n${userPrompt}`,
-      });
-      const fromVariables =
-        themePlan.object.variables &&
-        typeof themePlan.object.variables === "object"
-          ? (themePlan.object.variables as Record<string, string>)
-          : {};
-      const fromRoot =
-        Object.keys(fromVariables).length > 0
-          ? fromVariables
-          : (() => {
-              const obj = themePlan.object as Record<
-                string,
-                string | number | boolean | null | Record<string, string>
-              >;
-              const record: Record<string, string> = {};
-              for (const [k, v] of Object.entries(obj)) {
-                if (k.startsWith("--") && typeof v === "string") record[k] = v;
-              }
-              return record;
-            })();
-      const normalized = normalizeThemeVars(fromRoot);
-      const builtTheme =
-        Object.keys(normalized).length > 0
-          ? (() => {
-              for (const k of Object.keys(theme)) delete theme[k];
-              for (const [k, v] of Object.entries(normalized)) theme[k] = v;
-              return { ...theme };
-            })()
-          : { ...theme };
-      emitPlanEnd(writer, themeId, "build_theme", {
-        success: true,
-        message: "Theme built",
-        theme: builtTheme,
-      });
-      writer.write({
-        type: "data-tool-call-end",
-        data: {
-          toolCallId: themeId,
-          toolName: "build_theme",
-          theme: builtTheme,
-        },
-      });
-    }
-
-    const planContext = `## Planning (from pipeline)\n- Intent: ${intent}\n- Screens to create: ${JSON.stringify(screens, null, 2)}\n- Visual guidelines: ${guidelines}\n- Theme: ${shouldGenerate ? "built and applied" : "skipped"}\n`;
+    // For initial prompts (no frames), theme generation is always required
+    const themeRequired = intent === "generate" || shouldGenerate;
+    const planContext = `## Planning (from pipeline)\n- Intent: ${intent}\n- Screens to create: ${JSON.stringify(screens, null, 2)}\n- Visual guidelines: ${guidelines}\n- Theme generation required: ${themeRequired ? "YES — call build_theme FIRST before creating any screens" : "NO — user is editing existing screens, skip theme creation"}\n`;
     return { planContext };
-  } catch {
-    return empty;
+  } catch (err) {
+    // Planning failed — provide a minimal fallback so the agent still works
+    const fallback = `## Planning (from pipeline — fallback due to error)\n- Intent: generate\n- Screens to create: (use your best judgment based on the user's prompt)\n- Visual guidelines: (infer from the app type described in the prompt)\n- Theme generation required: YES — call build_theme FIRST before creating any screens\n`;
+    return { planContext: fallback };
   }
 }

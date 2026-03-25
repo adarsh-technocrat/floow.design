@@ -3,15 +3,19 @@ import {
   wrapScreenBody,
   extractBodyContent,
   looksLikeMalformedFrameContent,
+  resolveVariant,
+  ensureVariantMap,
+  type ThemeVariables,
+  type ThemeVariantMap,
 } from "@/lib/screen-utils";
+
+export type { ThemeVariables, ThemeVariantMap };
 
 export interface CanvasTransform {
   x: number;
   y: number;
   scale: number;
 }
-
-export type ThemeVariables = Record<string, string>;
 
 export interface FrameState {
   id: string;
@@ -22,21 +26,26 @@ export interface FrameState {
   height?: number;
   html: string;
   themeId?: string;
+  variantName?: string;
 }
 
 export interface StoredTheme {
   id: string;
   name: string;
-  variables: ThemeVariables;
+  variants: ThemeVariantMap;
 }
+
+export type ThemeMode = "light" | "dark";
 
 interface CanvasState {
   transform: CanvasTransform;
   frames: FrameState[];
   selectedFrameIds: string[];
+  /** Resolved flat variables for the active theme + active variant */
   theme: ThemeVariables;
   themes: StoredTheme[];
   activeThemeId: string | null;
+  activeThemeMode: ThemeMode;
 }
 
 const initialState: CanvasState = {
@@ -50,7 +59,43 @@ const initialState: CanvasState = {
   theme: {},
   themes: [],
   activeThemeId: null,
+  activeThemeMode: "light",
 };
+
+/** Helper: get the active StoredTheme from state */
+function getActiveTheme(state: CanvasState): StoredTheme | undefined {
+  if (!state.activeThemeId) return undefined;
+  return state.themes.find((t) => t.id === state.activeThemeId);
+}
+
+/** Helper: resolve the flat theme for the active theme+mode and set state.theme */
+function syncResolvedTheme(state: CanvasState) {
+  const active = getActiveTheme(state);
+  if (active) {
+    state.theme = resolveVariant(active.variants, state.activeThemeMode);
+  }
+}
+
+/** Helper: re-wrap frames that don't have a per-frame theme override */
+function rewrapGlobalFrames(state: CanvasState) {
+  const fullTheme = { ...state.theme };
+  for (const frame of state.frames) {
+    // Skip frames with their own theme assignment
+    if (frame.themeId && frame.themeId !== state.activeThemeId) {
+      continue;
+    }
+    const bodyContent = extractBodyContent(frame.html);
+    if (bodyContent) {
+      // If frame has a specific variant, use that; otherwise use active mode
+      const variant = frame.variantName ?? state.activeThemeMode;
+      const activeTheme = getActiveTheme(state);
+      const vars = activeTheme
+        ? resolveVariant(activeTheme.variants, variant)
+        : fullTheme;
+      frame.html = wrapScreenBody(bodyContent, vars);
+    }
+  }
+}
 
 const canvasSlice = createSlice({
   name: "canvas",
@@ -122,67 +167,211 @@ const canvasSlice = createSlice({
       const frame = state.frames.find((f) => f.id === action.payload.id);
       if (frame) frame.html = action.payload.html;
     },
+
+    /* ---- Theme reducers ---- */
+
     setTheme: (state, action: { payload: Partial<ThemeVariables> }) => {
       const updates = action.payload;
+      // Update the resolved flat theme
       for (const k of Object.keys(updates)) {
         const v = updates[k];
         if (v !== undefined) state.theme[k] = v;
       }
-      const fullTheme = { ...state.theme };
-      for (const frame of state.frames) {
-        const bodyContent = extractBodyContent(frame.html);
-        if (bodyContent) {
-          frame.html = wrapScreenBody(bodyContent, fullTheme);
-        }
-      }
-    },
-    replaceTheme: (state, action: { payload: ThemeVariables }) => {
-      state.theme = { ...action.payload };
-      for (const frame of state.frames) {
-        const bodyContent = extractBodyContent(frame.html);
-        if (bodyContent) {
-          frame.html = wrapScreenBody(bodyContent, state.theme);
-        }
-      }
-    },
-    loadThemes: (state, action: { payload: StoredTheme[] }) => {
-      state.themes = action.payload;
-      if (action.payload.length > 0 && !state.activeThemeId) {
-        state.activeThemeId = action.payload[0].id;
-        state.theme = { ...action.payload[0].variables };
-      }
-    },
-    setActiveThemeId: (state, action: { payload: string }) => {
-      state.activeThemeId = action.payload;
-      const found = state.themes.find((t) => t.id === action.payload);
-      if (found) {
-        state.theme = { ...found.variables };
-      }
-    },
-    upsertStoredTheme: (state, action: { payload: StoredTheme }) => {
-      const idx = state.themes.findIndex((t) => t.id === action.payload.id);
-      if (idx >= 0) {
-        state.themes[idx] = action.payload;
-      } else {
-        state.themes.push(action.payload);
-      }
-      if (state.activeThemeId === action.payload.id) {
-        state.theme = { ...action.payload.variables };
-      }
-    },
-    assignThemeToFrame: (state, action: { payload: { frameId: string; themeId: string } }) => {
-      const frame = state.frames.find((f) => f.id === action.payload.frameId);
-      if (frame) {
-        frame.themeId = action.payload.themeId;
-        const themeData = state.themes.find((t) => t.id === action.payload.themeId);
-        if (themeData) {
-          const bodyContent = extractBodyContent(frame.html);
-          if (bodyContent) {
-            frame.html = wrapScreenBody(bodyContent, themeData.variables);
+      // Also update the active theme's active variant in the stored themes
+      const active = getActiveTheme(state);
+      if (active) {
+        const variant = active.variants[state.activeThemeMode];
+        if (variant) {
+          for (const k of Object.keys(updates)) {
+            const v = updates[k];
+            if (v !== undefined) variant[k] = v;
           }
         }
       }
+      rewrapGlobalFrames(state);
     },
+
+    replaceTheme: (state, action: { payload: ThemeVariables }) => {
+      state.theme = { ...action.payload };
+      // Also replace the active variant in stored theme
+      const active = getActiveTheme(state);
+      if (active) {
+        active.variants[state.activeThemeMode] = { ...action.payload };
+      }
+      rewrapGlobalFrames(state);
+    },
+
+    loadThemes: (
+      state,
+      action: {
+        payload: Array<{
+          id: string;
+          name: string;
+          variants?: ThemeVariantMap;
+          variables?: ThemeVariables;
+        }>;
+      },
+    ) => {
+      // Auto-migrate old format
+      state.themes = action.payload.map((t) => ({
+        id: t.id,
+        name: t.name,
+        variants: t.variants ?? ensureVariantMap(t.variables ?? {}),
+      }));
+      if (state.themes.length === 0) {
+        state.activeThemeId = null;
+        state.theme = {};
+        return;
+      }
+
+      const hasValidActiveTheme =
+        !!state.activeThemeId &&
+        state.themes.some((t) => t.id === state.activeThemeId);
+
+      // Ensure activeThemeId always points to a theme in the current project.
+      if (!hasValidActiveTheme) {
+        state.activeThemeId = state.themes[0].id;
+      }
+
+      syncResolvedTheme(state);
+    },
+
+    setActiveThemeId: (state, action: { payload: string }) => {
+      state.activeThemeId = action.payload;
+      syncResolvedTheme(state);
+      rewrapGlobalFrames(state);
+    },
+
+    setActiveThemeMode: (state, action: { payload: ThemeMode }) => {
+      state.activeThemeMode = action.payload;
+      syncResolvedTheme(state);
+      rewrapGlobalFrames(state);
+    },
+
+    upsertStoredTheme: (
+      state,
+      action: {
+        payload: {
+          id: string;
+          name: string;
+          variants?: ThemeVariantMap;
+          variables?: ThemeVariables;
+        };
+      },
+    ) => {
+      const incoming = {
+        id: action.payload.id,
+        name: action.payload.name,
+        variants:
+          action.payload.variants ??
+          ensureVariantMap(action.payload.variables ?? {}),
+      };
+      const idx = state.themes.findIndex((t) => t.id === incoming.id);
+      if (idx >= 0) {
+        state.themes[idx] = incoming;
+      } else {
+        state.themes.push(incoming);
+      }
+      if (state.activeThemeId === incoming.id) {
+        syncResolvedTheme(state);
+      }
+    },
+
+    /** Set a single variable in a specific theme's variant */
+    setThemeVariantVariable: (
+      state,
+      action: {
+        payload: {
+          themeId: string;
+          variantName: string;
+          key: string;
+          value: string;
+        };
+      },
+    ) => {
+      const { themeId, variantName, key, value } = action.payload;
+      const theme = state.themes.find((t) => t.id === themeId);
+      if (!theme) return;
+      if (!theme.variants[variantName]) {
+        theme.variants[variantName] = {};
+      }
+      theme.variants[variantName][key] = value;
+      // If this is the active theme+variant, also update resolved theme
+      if (
+        themeId === state.activeThemeId &&
+        variantName === state.activeThemeMode
+      ) {
+        state.theme[key] = value;
+        rewrapGlobalFrames(state);
+      }
+    },
+
+    /** Assign a specific theme + variant to a single frame */
+    assignThemeToFrame: (
+      state,
+      action: {
+        payload: { frameId: string; themeId: string; variantName: string };
+      },
+    ) => {
+      const { frameId, themeId, variantName } = action.payload;
+      const frame = state.frames.find((f) => f.id === frameId);
+      if (!frame) return;
+      frame.themeId = themeId;
+      frame.variantName = variantName;
+      const themeData = state.themes.find((t) => t.id === themeId);
+      if (themeData) {
+        const vars = resolveVariant(themeData.variants, variantName);
+        const bodyContent = extractBodyContent(frame.html);
+        if (bodyContent) {
+          frame.html = wrapScreenBody(bodyContent, vars);
+        }
+      }
+    },
+
+    /** Add a new variant to a theme (e.g., "high-contrast") */
+    addThemeVariant: (
+      state,
+      action: {
+        payload: {
+          themeId: string;
+          variantName: string;
+          baseVariant?: string;
+        };
+      },
+    ) => {
+      const { themeId, variantName, baseVariant } = action.payload;
+      const theme = state.themes.find((t) => t.id === themeId);
+      if (!theme || theme.variants[variantName]) return;
+      const source = resolveVariant(theme.variants, baseVariant ?? "light");
+      theme.variants[variantName] = { ...source };
+    },
+
+    removeThemeVariant: (
+      state,
+      action: { payload: { themeId: string; variantName: string } },
+    ) => {
+      const { themeId, variantName } = action.payload;
+      if (variantName === "light") return; // Can't remove light
+      const theme = state.themes.find((t) => t.id === themeId);
+      if (!theme) return;
+      delete theme.variants[variantName];
+      // Reset any frames using this variant
+      for (const frame of state.frames) {
+        if (frame.themeId === themeId && frame.variantName === variantName) {
+          frame.variantName = "light";
+          const vars = resolveVariant(theme.variants, "light");
+          const bodyContent = extractBodyContent(frame.html);
+          if (bodyContent) {
+            frame.html = wrapScreenBody(bodyContent, vars);
+          }
+        }
+      }
+      if (state.activeThemeMode === variantName) {
+        state.activeThemeMode = "light";
+        syncResolvedTheme(state);
+      }
+    },
+
     reorderFrames: (state, action: { payload: string[] }) => {
       const order = action.payload;
       state.frames.sort((a, b) => order.indexOf(a.id) - order.indexOf(b.id));
@@ -200,10 +389,17 @@ const canvasSlice = createSlice({
           top?: number;
           html?: string;
           themeId?: string;
+          variantName?: string;
         }>;
       },
     ) => {
       state.frames = action.payload.map((f) => ({
+        // Keep explicit per-frame variant only when frame has an assigned theme.
+        // For legacy global frames, persisted "light" means "no override".
+        variantName:
+          !f.themeId && f.variantName === "light"
+            ? undefined
+            : (f.variantName ?? undefined),
         id: f.id,
         label: f.label ?? "Screen",
         left: f.left ?? 0,
@@ -243,6 +439,10 @@ export const {
   setActiveThemeId,
   upsertStoredTheme,
   assignThemeToFrame,
+  setActiveThemeMode,
+  setThemeVariantVariable,
+  addThemeVariant,
+  removeThemeVariant,
 } = canvasSlice.actions;
 
 export default canvasSlice.reducer;

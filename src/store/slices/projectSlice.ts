@@ -27,7 +27,9 @@ export const fetchProject = createAsyncThunk(
     const name = typeof res?.name === "string" ? res.name : "Untitled Project";
     const frames = Array.isArray(res?.frames) ? res.frames : [];
     const messages = Array.isArray(res?.messages) ? res.messages : [];
-    const themes = Array.isArray(res?.themes) ? (res.themes as StoredTheme[]) : [];
+    const themes = Array.isArray(res?.themes)
+      ? (res.themes as StoredTheme[])
+      : [];
     dispatch(loadFrames(frames));
     dispatch(loadThemes(themes));
     return { projectId, name, messages };

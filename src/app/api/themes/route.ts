@@ -1,5 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { ensureVariantMap, resolveVariant } from "@/lib/screen-utils";
+
+function normalizeThemeResponse(theme: {
+  id: string;
+  name: string;
+  variables: unknown;
+}) {
+  return {
+    id: theme.id,
+    name: theme.name,
+    variants: ensureVariantMap(theme.variables),
+  };
+}
 
 export async function GET(req: NextRequest) {
   const themeId = req.nextUrl.searchParams.get("id");
@@ -10,16 +23,25 @@ export async function GET(req: NextRequest) {
       where: { id: themeId },
       select: { id: true, name: true, variables: true, userId: true },
     });
-    return NextResponse.json({ theme });
+    if (!theme) return NextResponse.json({ theme: null });
+    return NextResponse.json({ theme: normalizeThemeResponse(theme) });
   }
 
   if (userId) {
     const themes = await prisma.theme.findMany({
       where: { userId },
       orderBy: { updatedAt: "desc" },
-      select: { id: true, name: true, variables: true, createdAt: true, updatedAt: true },
+      select: {
+        id: true,
+        name: true,
+        variables: true,
+        createdAt: true,
+        updatedAt: true,
+      },
     });
-    return NextResponse.json({ themes });
+    return NextResponse.json({
+      themes: themes.map(normalizeThemeResponse),
+    });
   }
 
   return NextResponse.json({ error: "id or userId required" }, { status: 400 });
@@ -27,9 +49,10 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   const body = await req.json();
-  const { userId, name, variables } = body as {
+  const { userId, name, variants, variables } = body as {
     userId?: string;
     name?: string;
+    variants?: Record<string, Record<string, string>>;
     variables?: Record<string, string>;
   };
 
@@ -37,27 +60,28 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "userId required" }, { status: 400 });
   }
 
+  // Accept either new `variants` format or old `variables` format
+  const toStore = variants ?? ensureVariantMap(variables ?? {});
+
   const theme = await prisma.theme.create({
     data: {
       userId,
-      name: name || "Default",
-      variables: variables ?? {},
+      name: name || "Untitled Theme",
+      variables: toStore,
     },
   });
 
-  return NextResponse.json({
-    id: theme.id,
-    name: theme.name,
-    variables: theme.variables,
-  });
+  return NextResponse.json(normalizeThemeResponse(theme));
 }
 
 export async function PUT(req: NextRequest) {
   const body = await req.json();
-  const { id, name, variables } = body as {
+  const { id, name, variants, variables, variantName } = body as {
     id?: string;
     name?: string;
+    variants?: Record<string, Record<string, string>>;
     variables?: Record<string, string>;
+    variantName?: string;
   };
 
   if (!id) {
@@ -66,18 +90,34 @@ export async function PUT(req: NextRequest) {
 
   const updateData: Record<string, unknown> = {};
   if (name !== undefined) updateData.name = name;
-  if (variables !== undefined) updateData.variables = variables;
+
+  if (variants !== undefined) {
+    // Full variants object replacement
+    updateData.variables = variants;
+  } else if (variables !== undefined && variantName) {
+    // Update a single variant within the existing theme
+    const existing = await prisma.theme.findUnique({
+      where: { id },
+      select: { variables: true },
+    });
+    const currentVariants = ensureVariantMap(existing?.variables);
+    const resolvedBase = resolveVariant(currentVariants, variantName);
+    currentVariants[variantName] = {
+      ...resolvedBase,
+      ...variables,
+    };
+    updateData.variables = currentVariants;
+  } else if (variables !== undefined) {
+    // Legacy: flat variables — auto-migrate
+    updateData.variables = ensureVariantMap(variables);
+  }
 
   const theme = await prisma.theme.update({
     where: { id },
     data: updateData,
   });
 
-  return NextResponse.json({
-    id: theme.id,
-    name: theme.name,
-    variables: theme.variables,
-  });
+  return NextResponse.json(normalizeThemeResponse(theme));
 }
 
 export async function DELETE(req: NextRequest) {

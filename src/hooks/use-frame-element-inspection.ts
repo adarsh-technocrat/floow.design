@@ -53,9 +53,32 @@ export function useFrameElementInspection({
 
   const requestElementInfoAtPosition = useCallback(
     (x: number, y: number) => {
+      // #region agent log
+      fetch(
+        "http://127.0.0.1:7253/ingest/bf26e32e-b221-45cd-9795-984cd7651c6f",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            runId: "inspector-rca",
+            hypothesisId: "H3",
+            location: "use-frame-element-inspection.ts",
+            message: "requestElementInfoAtPosition",
+            data: {
+              x,
+              y,
+              iframeReady,
+              iframeClientWidth: iframeRef.current?.clientWidth ?? 0,
+              iframeClientHeight: iframeRef.current?.clientHeight ?? 0,
+            },
+            timestamp: Date.now(),
+          }),
+        },
+      ).catch(() => {});
+      // #endregion
       sendToIframe("GET_ELEMENT_INFO", { x, y });
     },
-    [sendToIframe],
+    [sendToIframe, iframeReady, iframeRef],
   );
 
   const highlightElement = useCallback(

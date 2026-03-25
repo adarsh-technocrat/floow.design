@@ -4,6 +4,7 @@ import {
   recordsToUiMessages,
   type ChatSessionMessageRecord,
 } from "@/lib/chat-session";
+import { ensureVariantMap } from "@/lib/screen-utils";
 
 export async function GET(req: NextRequest) {
   try {
@@ -17,7 +18,7 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    const [project, chatSession] = await Promise.all([
+    const [project, chatSession, userThemes] = await Promise.all([
       prisma.project.findUnique({
         where: { id: projectId },
         select: {
@@ -30,6 +31,7 @@ export async function GET(req: NextRequest) {
               top: true,
               html: true,
               themeId: true,
+              variantName: true,
               theme: { select: { id: true, name: true, variables: true } },
             },
           },
@@ -38,6 +40,11 @@ export async function GET(req: NextRequest) {
       prisma.chatSession.findUnique({
         where: { projectId_userId: { projectId, userId } },
         select: { messages: true },
+      }),
+      prisma.theme.findMany({
+        where: { userId },
+        orderBy: { updatedAt: "desc" },
+        select: { id: true, name: true, variables: true },
       }),
     ]);
 
@@ -49,35 +56,46 @@ export async function GET(req: NextRequest) {
       });
     }
 
-    const records =
-      (chatSession?.messages as ChatSessionMessageRecord[]) ?? [];
+    const records = (chatSession?.messages as ChatSessionMessageRecord[]) ?? [];
     const messages = recordsToUiMessages(records);
 
-    const frames = project.frames.map((f) => ({
-      id: f.id,
-      label: f.label,
-      left: f.left,
-      top: f.top,
-      html: f.html,
-      themeId: f.themeId,
-      theme: f.theme ? (f.theme.variables as Record<string, string>) : null,
-    }));
+    const frames = project.frames.map((f) => {
+      // Legacy compatibility: historical global frames were persisted as "light".
+      // If frame has no explicit theme assignment, treat that legacy default as unset
+      // so the frame follows the currently active variant.
+      const normalizedVariantName =
+        !f.themeId && f.variantName === "light"
+          ? undefined
+          : (f.variantName ?? undefined);
+      return {
+        id: f.id,
+        label: f.label,
+        left: f.left,
+        top: f.top,
+        html: f.html,
+        themeId: f.themeId,
+        variantName: normalizedVariantName,
+      };
+    });
 
-    const allThemes = project.frames
-      .filter((f) => f.theme)
-      .reduce(
-        (acc, f) => {
-          if (f.theme && !acc[f.theme.id]) {
-            acc[f.theme.id] = {
-              id: f.theme.id,
-              name: f.theme.name,
-              variables: f.theme.variables as Record<string, string>,
-            };
-          }
-          return acc;
-        },
-        {} as Record<string, { id: string; name: string; variables: Record<string, string> }>,
-      );
+    const allThemes = userThemes.reduce(
+      (acc, t) => {
+        acc[t.id] = {
+          id: t.id,
+          name: t.name,
+          variants: ensureVariantMap(t.variables),
+        };
+        return acc;
+      },
+      {} as Record<
+        string,
+        {
+          id: string;
+          name: string;
+          variants: Record<string, Record<string, string>>;
+        }
+      >,
+    );
 
     return NextResponse.json({
       name: project.name,

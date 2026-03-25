@@ -90,7 +90,8 @@ export async function POST(req: Request) {
         return new Response(
           JSON.stringify({
             error: "insufficient_credits",
-            message: "You have run out of AI credits. Please upgrade your plan.",
+            message:
+              "You have run out of AI credits. Please upgrade your plan.",
             remaining: creditCheck.remaining,
             total: creditCheck.total,
           }),
@@ -104,6 +105,7 @@ export async function POST(req: Request) {
     const rawMessages = Array.isArray(body?.messages) ? body.messages : [];
     const initialFrames = Array.isArray(body?.frames) ? body.frames : [];
     const initialTheme = (body?.theme ?? {}) as ThemeVariables;
+    const themeMode = (body?.themeMode as "light" | "dark") ?? "light";
 
     const agentId = body?.agentId as string | undefined;
     const agentName = body?.agentName as string | undefined;
@@ -116,7 +118,8 @@ export async function POST(req: Request) {
     const assignedFrameIds = (body?.assignedFrameIds ?? []) as string[];
     const isFirstAgent = body?.isFirstAgent as boolean | undefined;
     const agentPlanContext = body?.planContext as string | undefined;
-    const agentCount = typeof body?.agentCount === "number" ? body.agentCount : 1;
+    const agentCount =
+      typeof body?.agentCount === "number" ? body.agentCount : 1;
 
     const lastMsg = rawMessages[rawMessages.length - 1];
     const userPrompt =
@@ -158,7 +161,8 @@ export async function POST(req: Request) {
           theme,
           writer,
           designModel: { vertex, modelId: DESIGN_MODEL_ID },
-          screenPositions: screenPositions.length > 0 ? screenPositions : undefined,
+          screenPositions:
+            screenPositions.length > 0 ? screenPositions : undefined,
           allowSpawnAgents: !agentId,
           excludeCreateScreen: !!agentId,
         });
@@ -174,7 +178,14 @@ export async function POST(req: Request) {
             isFirstAgent: isFirstAgent ?? false,
           });
         }
-        const system = getSystemPrompt(frames, theme, planContext, agentScope, agentCount);
+        const system = getSystemPrompt(
+          frames,
+          theme,
+          planContext,
+          agentScope,
+          agentCount,
+          themeMode,
+        );
 
         const modelMessages =
           rawMessages.length > 0 && rawMessages.some(hasParts)

@@ -99,16 +99,37 @@ const THEME_KEYS =
 
 function buildThemeContext(theme: ThemeVariables): string {
   const entries = Object.entries(theme).filter(([k]) => k.startsWith("--"));
-  if (entries.length === 0) return "";
+  if (entries.length === 0)
+    return "\n\nNO THEME EXISTS. You MUST call build_theme before designing any screen. Do NOT proceed with design_screen until a theme is created.";
   const vars = entries.map(([k, v]) => `  ${k}: ${v}`).join("\n");
-  return `\n\nActive theme CSS variables:\n${vars}\n\nYou MUST use Tailwind semantic theme classes that reference these variables:\n- Backgrounds: bg-background, bg-primary, bg-secondary, bg-muted, bg-card, bg-accent, bg-destructive\n- Text: text-foreground, text-primary-foreground, text-secondary-foreground, text-muted-foreground, text-card-foreground\n- Borders: border-border, border-input\n- DO NOT use arbitrary Tailwind color classes like bg-blue-500, text-gray-700, bg-slate-900 etc.\n- ONLY use the semantic theme classes above so all screens share a consistent palette.`;
+  const fontSans = theme["--font-sans"] ?? "system-ui, sans-serif";
+  const fontHeading = theme["--font-heading"] ?? fontSans;
+  return `\n\nACTIVE THEME — You MUST follow this exactly:
+
+CSS Variables:
+${vars}
+
+Typography:
+  Body font: ${fontSans}
+  Heading font: ${fontHeading}
+
+MANDATORY Tailwind class mapping (use ONLY these, never arbitrary colors):
+  Backgrounds: bg-background, bg-primary, bg-secondary, bg-muted, bg-card, bg-accent, bg-destructive
+  Text: text-foreground, text-primary-foreground, text-secondary-foreground, text-muted-foreground, text-card-foreground
+  Borders: border-border, border-input
+  Ring: ring-ring
+
+FORBIDDEN: bg-blue-500, text-gray-700, bg-slate-900, text-zinc-400, or ANY arbitrary Tailwind color.
+Every color must come from the theme variables above. This ensures all screens look like they belong to the same app.`;
 }
 
 function buildScreenContext(frames: FrameState[], currentId: string): string {
-  const siblings = frames.filter((f) => f.id !== currentId && f.html && f.html.length > 100);
+  const siblings = frames.filter(
+    (f) => f.id !== currentId && f.html && f.html.length > 100,
+  );
   if (siblings.length === 0) return "";
   const summaries = siblings.map((f) => `  - "${f.label}"`).join("\n");
-  return `\n\nOther screens in this project:\n${summaries}\nMaintain visual consistency with these screens — use the same spacing patterns, typography scale, card styles, and navigation patterns.`;
+  return `\n\nOther screens already designed in this project:\n${summaries}\n\nCONSISTENCY REQUIREMENTS — match these screens exactly:\n- Same navigation pattern (bottom tab bar, top app bar style)\n- Same spacing scale (padding, margins, gaps)\n- Same card style (border radius, shadow, background)\n- Same typography scale (heading sizes, body text size)\n- Same button style (height, radius, font weight)\n- Same icon style (HugeIcons stroke-rounded, consistent size)`;
 }
 
 async function generateThemeWithDesignModel(
@@ -281,6 +302,15 @@ export function createTools(ctx: ToolContext) {
         if (!frame) {
           return { success: false, error: "Frame not found" };
         }
+        // Block design if no theme exists — agent must call build_theme first
+        const hasTheme = Object.keys(theme).some((k) => k.startsWith("--"));
+        if (!hasTheme) {
+          return {
+            success: false,
+            error:
+              "No theme exists. You MUST call build_theme first to establish colors, typography, and spacing before designing any screen.",
+          };
+        }
         if (!designModel?.vertex || !designModel?.modelId) {
           return {
             success: false,
@@ -289,7 +319,7 @@ export function createTools(ctx: ToolContext) {
         }
         const themeCtx = buildThemeContext(theme);
         const screenCtx = buildScreenContext(frames, id);
-        const designPrompt = `You are a mobile UI designer. Generate the inner body HTML (no html/head/body tags) for a screen named "${frame.label}".\n\nDescription: ${description}${themeCtx}${screenCtx}\n\nUse Tailwind classes and HugeIcons font icons (class="hgi-stroke hgi-icon-name") where needed. Output only the complete inner body HTML, no markdown or explanation.`;
+        const designPrompt = `You are a mobile UI designer creating a screen for an app that already has an established design system. Generate the inner body HTML (no html/head/body tags) for a screen named "${frame.label}".\n\nDescription: ${description}${themeCtx}${screenCtx}\n\nRULES:\n- Use ONLY Tailwind semantic theme classes (bg-primary, text-foreground, etc.) — NEVER arbitrary colors\n- Use HugeIcons font icons (class="hgi-stroke hgi-icon-name")\n- Apply font-heading to h1 and h2 elements\n- Use rounded-lg or rounded-xl on cards, shadow-md on elevated surfaces\n- Minimum touch targets of 44px (min-h-11 or py-3 on buttons)\n- Output only the complete inner body HTML, no markdown or explanation`;
         const generated = await streamScreenHtmlWithDesignModel(
           designModel.vertex,
           designModel.modelId,
@@ -500,12 +530,24 @@ export function createTools(ctx: ToolContext) {
 
     update_theme: tool({
       description:
-        "Updates CSS theme variables. Example: { '--primary': '#2563EB' }",
+        'Updates CSS theme variables for a specific variant. Use variantName to target light, dark, or a custom variant. Optionally provide a new themeName if the style direction has changed significantly.',
       inputSchema: z.object({
+        themeName: z
+          .string()
+          .optional()
+          .describe(
+            'Optional new name for the theme if the style direction changed (e.g. "Warm Sunset"). Omit to keep the current name.',
+          ),
+        variantName: z
+          .string()
+          .optional()
+          .describe(
+            'Which variant to update: "light", "dark", or a custom name. Defaults to the currently active variant.',
+          ),
         updates: z
           .record(z.string(), z.string())
           .describe(
-            'Object: CSS variable name -> value, e.g. {"--primary":"#2563eb"}',
+            'Object: CSS variable name -> value, e.g. {"--primary":"#2563eb"}. Do NOT use -dark suffix — use variantName instead.',
           ),
       }),
       onInputStart: ({ toolCallId }) => {
@@ -516,9 +558,14 @@ export function createTools(ctx: ToolContext) {
         });
       },
       execute: async (
-        { updates }: { updates: Record<string, string> },
+        {
+          themeName,
+          updates,
+          variantName: inputVariantName,
+        }: { themeName?: string; updates: Record<string, string>; variantName?: string },
         { toolCallId },
       ) => {
+        const targetVariant = inputVariantName ?? "light";
         let toApply = updates;
         if (
           designModel?.vertex &&
@@ -548,13 +595,20 @@ export function createTools(ctx: ToolContext) {
             if (v !== undefined) theme[k] = String(v);
           }
         }
-        const result = { success: true, themeUpdates: { ...toApply } };
+        const result = {
+          success: true,
+          themeUpdates: { ...toApply },
+          ...(themeName && { themeName }),
+          variantName: targetVariant,
+        };
         writer?.write({
           type: "data-tool-call-end",
           data: {
             toolCallId,
             toolName: "update_theme",
             themeUpdates: result.themeUpdates,
+            ...(themeName && { themeName }),
+            variantName: targetVariant,
           },
         });
         return result;
@@ -563,9 +617,20 @@ export function createTools(ctx: ToolContext) {
 
     build_theme: tool({
       description:
-        'Creates or replaces the global theme. Pass CSS variables as a flat object, e.g. {"--primary":"#2563eb","--background":"#0f172a"}. Use for initial theme creation.',
+        'Creates or replaces a theme variant. Pass CSS variables as a flat object. Use variantName to target a specific variant (default: "light"). Always provide a creative themeName.',
       inputSchema: z.object({
+        themeName: z
+          .string()
+          .describe(
+            'A creative, descriptive name for this theme based on the app type and style (e.g. "Ocean Breeze", "Midnight Professional", "Vibrant Fitness"). Never use "Default".',
+          ),
         description: z.string().optional(),
+        variantName: z
+          .string()
+          .optional()
+          .describe(
+            'Which variant to create/replace: "light", "dark", or a custom name. Defaults to "light".',
+          ),
         variables: z
           .record(z.string(), z.string())
           .describe(
@@ -581,14 +646,19 @@ export function createTools(ctx: ToolContext) {
       },
       execute: async (
         {
+          themeName,
           description,
+          variantName: inputVariantName,
           variables = {},
         }: {
+          themeName: string;
           description?: string;
+          variantName?: string;
           variables?: Record<string, string>;
         },
         { toolCallId },
       ) => {
+        const targetVariant = inputVariantName ?? "light";
         const agentVars: Record<string, string> =
           variables && typeof variables === "object" ? variables : {};
         let varsToApply = { ...agentVars };
@@ -600,7 +670,7 @@ export function createTools(ctx: ToolContext) {
             contextParts.push(
               `Draft variables from agent (refine or keep): ${JSON.stringify(agentVars)}`,
             );
-          const designPrompt = `Generate a complete CSS theme as a flat object. Required keys: ${THEME_KEYS}. Values: hex colors, rem for --radius, font family strings for --font-sans and --font-heading.\n\n${contextParts.join("\n\n")}`;
+          const designPrompt = `Generate a complete, cohesive CSS theme for a mobile app as a flat JSON object.\n\nRequired keys: ${THEME_KEYS}\n\nRules:\n- Colors must be harmonious — primary and secondary should complement each other\n- Foreground colors must have strong contrast against their background (WCAG AA minimum)\n- --primary-foreground must be readable on --primary background\n- --card should be slightly different from --background to create depth\n- --muted should be a subtle tint of the primary or background\n- --border should be a light gray that works on both --background and --card\n- --font-sans and --font-heading should be real Google Fonts (e.g. 'Inter', 'Plus Jakarta Sans', 'DM Sans')\n- --radius should be between 0.5rem and 1rem for modern mobile apps\n- Values: hex colors, rem for --radius, quoted font family strings\n\n${contextParts.join("\n\n")}`;
           const generated = await generateThemeWithDesignModel(
             designModel.vertex,
             designModel.modelId,
@@ -624,8 +694,10 @@ export function createTools(ctx: ToolContext) {
         }
         const result = {
           success: true,
-          message: "Theme built",
+          message: `Theme "${themeName}" variant "${targetVariant}" built`,
           theme: { ...theme },
+          themeName,
+          variantName: targetVariant,
         };
         writer?.write({
           type: "data-tool-call-end",
@@ -633,6 +705,8 @@ export function createTools(ctx: ToolContext) {
             toolCallId,
             toolName: "build_theme",
             theme: result.theme,
+            themeName,
+            variantName: targetVariant,
           },
         });
         return result;

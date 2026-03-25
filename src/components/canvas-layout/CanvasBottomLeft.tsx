@@ -13,6 +13,8 @@ import {
 } from "@/lib/chat-bridge";
 import ReactMarkdown from "react-markdown";
 
+/* ── Types ── */
+
 interface MessagePart {
   type: string;
   text?: string;
@@ -29,6 +31,8 @@ interface ChatMessage {
   parts?: MessagePart[];
 }
 
+/* ── Helpers (identical to ChatPanel) ── */
+
 function getUserText(msg: ChatMessage): string | null {
   if (typeof msg.content === "string" && msg.content.length > 0)
     return msg.content;
@@ -38,102 +42,106 @@ function getUserText(msg: ChatMessage): string | null {
   return p?.text ?? null;
 }
 
-function getToolLabel(
-  toolName: string,
-  input?: { id?: string; name?: string; description?: string; screens?: Array<{ name?: string }> },
-  done?: boolean,
-  frameLookup?: (id: string) => string | undefined,
+function getToolDisplayLabel(
+  toolType: string,
+  frames: { id: string; label: string }[],
+  input?: { id?: string; name?: string },
+  isCalled?: boolean,
 ): string {
   const toTitle = (s: string) => s.replace(/\b\w/g, (c) => c.toUpperCase());
-  // Try to extract screen name: from input.name, or look up frame label by id
-  const screenName =
-    input?.name
-      ? toTitle(input.name)
-      : input?.screens?.[0]?.name
-        ? toTitle(input.screens[0].name)
-        : input?.id && frameLookup
-          ? frameLookup(input.id)
-          : undefined;
 
-  if (toolName === "design_screen")
-    return done
-      ? `Designed ${screenName ?? "screen"}`
-      : `Designing ${screenName ?? "screen"}…`;
-  if (toolName === "create_all_screens") {
-    const count = input?.screens?.length;
-    const names = input?.screens?.map((s) => s.name).filter(Boolean);
-    if (names && names.length > 0) {
-      return done
-        ? `Created ${names.join(", ")}`
-        : `Creating ${names.join(", ")}…`;
-    }
-    return done
-      ? `Created ${count ?? ""} screens`
-      : `Creating ${count ?? ""} screens…`;
+  if (toolType === "classifyIntent")
+    return isCalled ? "Understood intent" : "Understanding intent…";
+  if (toolType === "planScreens")
+    return isCalled ? "Planned screens" : "Planning screens…";
+  if (toolType === "planStyle")
+    return isCalled ? "Defined visual style" : "Defining visual style…";
+  if (toolType === "build_theme")
+    return isCalled ? "Created theme" : "Creating theme…";
+  if (toolType === "update_theme")
+    return isCalled ? "Updated theme" : "Updating theme…";
+  if (toolType === "create_all_screens")
+    return isCalled ? "Created all screens" : "Creating all screens…";
+
+  if (
+    input?.id &&
+    (toolType === "read_screen" ||
+      toolType === "update_screen" ||
+      toolType === "edit_design" ||
+      toolType === "design_screen")
+  ) {
+    const frame = frames.find((f) => f.id === input.id);
+    const label = frame?.label ?? "Screen";
+    const name = toTitle(label);
+    if (toolType === "read_screen")
+      return isCalled ? `Read ${name} screen` : `Reading ${name} screen…`;
+    if (toolType === "edit_design")
+      return isCalled ? `Edited ${name} screen` : `Editing ${name} screen…`;
+    if (toolType === "update_screen")
+      return isCalled ? `Updated ${name} screen` : `Updating ${name} screen…`;
+    if (toolType === "design_screen")
+      return isCalled ? `Designed ${name} screen` : `Designing ${name} screen…`;
   }
-  if (toolName === "update_screen")
-    return done
-      ? `Updated ${screenName ?? "screen"}`
-      : `Updating ${screenName ?? "screen"}…`;
-  if (toolName === "edit_design")
-    return done
-      ? `Edited ${screenName ?? "screen"}`
-      : `Editing ${screenName ?? "screen"}…`;
-  if (toolName === "read_screen")
-    return done
-      ? `Read ${screenName ?? "screen"}`
-      : `Reading ${screenName ?? "screen"}…`;
-  if (toolName === "build_theme")
-    return done ? "Built theme" : "Building theme…";
-  if (toolName === "update_theme")
-    return done ? "Updated theme" : "Updating theme…";
-  const base = toTitle(toolName.replace(/_/g, " "));
-  return done ? base : `${base}…`;
+
+  const base = toTitle(toolType.replace(/_/g, " "));
+  return isCalled ? base : `${base}…`;
 }
 
-function ToolChip({ part, frameLookup }: { part: MessagePart; frameLookup: (id: string) => string | undefined }) {
-  const done = part.state === "done" || part.state === "output-available";
-  const label = getToolLabel(
-    part.toolName ??
-      (part.type?.startsWith("tool-") ? part.type.slice(5) : "tool"),
-    part.input as { id?: string; name?: string; description?: string; screens?: Array<{ name?: string }> } | undefined,
-    done,
-    frameLookup,
-  );
-  return (
-    <div
-      className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 ${
-        done
-          ? "border-emerald-500/30 bg-emerald-500/8"
-          : "border-blue-500/30 bg-blue-500/8"
-      }`}
-    >
-      {done ? (
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" className="shrink-0">
-          <path d="M8 12.5l2.5 2.5 5-5" stroke="#22c55e" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-      ) : (
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" className="shrink-0 animate-spin" style={{ animationDuration: "1.5s" }}>
-          <circle cx="12" cy="12" r="9" stroke="#3b82f6" strokeOpacity="0.3" strokeWidth="2.5" />
-          <path d="M12 3a9 9 0 0 1 9 9" stroke="#3b82f6" strokeWidth="2.5" strokeLinecap="round" />
-        </svg>
-      )}
-      <span
-        className={`text-[11px] font-medium ${
-          done ? "text-emerald-600 dark:text-emerald-400" : "text-blue-600 dark:text-blue-400"
-        }`}
-      >
-        {label}
-      </span>
-    </div>
-  );
+const TOOL_STEP_PART_TYPE = "tool-step";
+
+interface ToolStep {
+  toolCallId: string;
+  toolName: string;
+  state: "running" | "done" | "error";
+  input?: { id?: string; name?: string };
 }
 
-const activityMarkdownComponents: React.ComponentProps<
+function toolStepsFromParts(
+  parts: MessagePart[] | undefined,
+): ToolStep[] | undefined {
+  if (!parts?.length) return undefined;
+  const steps: ToolStep[] = [];
+  for (const p of parts) {
+    if (p.type === TOOL_STEP_PART_TYPE) {
+      steps.push({
+        toolCallId: p.toolCallId ?? "",
+        toolName: p.toolName ?? "tool",
+        state: (p.state as ToolStep["state"]) ?? "done",
+        input: p.input as { id?: string; name?: string } | undefined,
+      });
+      continue;
+    }
+    if (p.type?.startsWith("tool-") || p.type === "dynamic-tool") {
+      const state =
+        p.state === "output-available"
+          ? ("done" as const)
+          : p.state === "output-error" || p.state === "input-error"
+            ? ("error" as const)
+            : ("running" as const);
+      const input: { id?: string; name?: string } = {};
+      const raw = p.input as { id?: string; name?: string } | undefined;
+      if (raw?.id) input.id = raw.id;
+      if (raw?.name) input.name = raw.name;
+      const toolName =
+        p.toolName ?? (p.type?.startsWith("tool-") ? p.type.slice(5) : "");
+      steps.push({
+        toolCallId: p.toolCallId ?? "",
+        toolName: toolName || "tool",
+        state,
+        input: Object.keys(input).length ? input : undefined,
+      });
+    }
+  }
+  return steps.length > 0 ? steps : undefined;
+}
+
+/* ── Markdown components (identical to ChatPanel) ── */
+
+const markdownComponents: React.ComponentProps<
   typeof ReactMarkdown
 >["components"] = {
   p: ({ children }) => (
-    <p className="mb-1.5 last:mb-0 text-[11px] leading-relaxed text-t-secondary">
+    <p className="mb-1.5 last:mb-0 text-[13px] leading-relaxed text-t-secondary">
       {children}
     </p>
   ),
@@ -144,15 +152,15 @@ const activityMarkdownComponents: React.ComponentProps<
     <ol className="mb-1.5 list-decimal space-y-0.5 pl-3">{children}</ol>
   ),
   li: ({ children }) => (
-    <li className="text-[11px] leading-relaxed text-t-secondary">{children}</li>
+    <li className="text-[13px] leading-relaxed text-t-secondary">{children}</li>
   ),
   code: ({ children }) => (
-    <code className="rounded bg-muted/80 px-1 py-0.5 font-mono text-[11px] text-t-primary">
+    <code className="rounded bg-muted/80 px-1 py-0.5 font-mono text-[12px] text-t-primary">
       {children}
     </code>
   ),
   pre: ({ children }) => (
-    <pre className="mb-1.5 max-w-full overflow-x-auto rounded-md bg-muted/80 p-2 font-mono text-[11px] text-t-secondary">
+    <pre className="mb-1.5 max-w-full overflow-x-auto rounded-md bg-muted/80 p-2 font-mono text-[12px] text-t-secondary">
       {children}
     </pre>
   ),
@@ -161,17 +169,17 @@ const activityMarkdownComponents: React.ComponentProps<
   ),
   em: ({ children }) => <em className="italic text-t-secondary">{children}</em>,
   h1: ({ children }) => (
-    <h1 className="mb-1 mt-2 text-[13px] font-semibold text-t-primary first:mt-0">
+    <h1 className="mb-1 mt-2 text-[15px] font-semibold text-t-primary first:mt-0">
       {children}
     </h1>
   ),
   h2: ({ children }) => (
-    <h2 className="mb-1 mt-2 text-[12px] font-semibold text-t-primary first:mt-0">
+    <h2 className="mb-1 mt-2 text-[13px] font-semibold text-t-primary first:mt-0">
       {children}
     </h2>
   ),
   h3: ({ children }) => (
-    <h3 className="mb-1 mt-1.5 text-[11px] font-medium text-t-primary first:mt-0">
+    <h3 className="mb-1 mt-1.5 text-[13px] font-medium text-t-primary first:mt-0">
       {children}
     </h3>
   ),
@@ -192,17 +200,64 @@ const activityMarkdownComponents: React.ComponentProps<
   ),
 };
 
+/* ── UI components (identical to ChatPanel) ── */
 
-function ExpandableReasoningBlock({
+function ToolStepChip({
+  step,
+  frames,
+}: {
+  step: ToolStep;
+  frames: { id: string; label: string }[];
+}) {
+  const label = getToolDisplayLabel(
+    step.toolName,
+    frames,
+    step.input,
+    step.state === "done",
+  );
+  const finished = step.state === "done";
+
+  return (
+    <div
+      className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 ${
+        finished
+          ? "border-emerald-500/30 bg-emerald-500/8"
+          : "border-blue-500/30 bg-blue-500/8"
+      }`}
+    >
+      {finished ? (
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" className="shrink-0">
+          <path d="M8 12.5l2.5 2.5 5-5" stroke="#22c55e" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      ) : (
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" className="shrink-0 animate-spin" style={{ animationDuration: "1.5s" }}>
+          <circle cx="12" cy="12" r="9" stroke="#3b82f6" strokeOpacity="0.3" strokeWidth="2.5" />
+          <path d="M12 3a9 9 0 0 1 9 9" stroke="#3b82f6" strokeWidth="2.5" strokeLinecap="round" />
+        </svg>
+      )}
+      <span
+        className={`text-[11px] font-medium ${
+          finished ? "text-emerald-600 dark:text-emerald-400" : "text-blue-600 dark:text-blue-400"
+        }`}
+      >
+        {label}
+      </span>
+    </div>
+  );
+}
+
+function ReasoningBlock({
   text,
-  partState,
+  isStreaming,
+  isComplete,
   instanceKey,
 }: {
   text: string;
-  partState?: string;
+  isStreaming?: boolean;
+  isComplete?: boolean;
   instanceKey: string;
 }) {
-  const streaming = partState === "streaming";
+  const streaming = !!isStreaming && !isComplete;
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
@@ -216,8 +271,8 @@ function ExpandableReasoningBlock({
         onClick={() => setOpen((v) => !v)}
         className="flex w-full items-center gap-2 px-2.5 py-2 text-left transition-colors hover:bg-surface-sunken/80"
         aria-expanded={open}
-        aria-controls={`reasoning-body-${instanceKey}`}
-        id={`reasoning-trigger-${instanceKey}`}
+        aria-controls={`act-reasoning-body-${instanceKey}`}
+        id={`act-reasoning-trigger-${instanceKey}`}
       >
         <Brain className="size-3.5 shrink-0 text-t-tertiary" />
         <span className="flex-1 text-xs font-medium text-t-secondary">
@@ -232,15 +287,13 @@ function ExpandableReasoningBlock({
       </button>
       {open ? (
         <div
-          id={`reasoning-body-${instanceKey}`}
+          id={`act-reasoning-body-${instanceKey}`}
           role="region"
-          aria-labelledby={`reasoning-trigger-${instanceKey}`}
+          aria-labelledby={`act-reasoning-trigger-${instanceKey}`}
           className="max-h-[120px] overflow-y-auto px-2 py-1.5"
         >
           <div className="chat-markdown text-[11px] leading-relaxed">
-            <ReactMarkdown components={activityMarkdownComponents}>
-              {text}
-            </ReactMarkdown>
+            <ReactMarkdown components={markdownComponents}>{text}</ReactMarkdown>
           </div>
         </div>
       ) : null}
@@ -248,104 +301,86 @@ function ExpandableReasoningBlock({
   );
 }
 
-// Planning/internal tools that should be hidden from the activity feed
-const HIDDEN_TOOL_PREFIXES = [
-  "classifyIntent",
-  "planScreens",
-  "planStyle",
-  "build_theme",
-];
+type StreamOrderItem =
+  | { kind: "tool"; toolCallId: string }
+  | { kind: "reasoning"; text: string }
+  | { kind: "text"; text: string };
 
-// Part types that are streaming noise — skip them
-const NOISE_PART_TYPES = new Set([
-  "step-start",
-  "data-tool-call-start",
-  "data-tool-call-delta",
-  "data-tool-call-end",
-]);
-
-function isHiddenTool(toolName: string | undefined): boolean {
-  if (!toolName) return false;
-  return HIDDEN_TOOL_PREFIXES.some(
-    (prefix) => toolName === prefix || toolName.startsWith(`tool-${prefix}`),
+function AssistantMessageContent({
+  parts,
+  frames,
+  isStreaming,
+  toolSteps = [],
+}: {
+  parts: MessagePart[];
+  frames: { id: string; label: string }[];
+  isStreaming?: boolean;
+  toolSteps?: ToolStep[];
+}) {
+  const stepByCallId = new Map(
+    (toolSteps ?? []).map((s) => [s.toolCallId, s] as const),
   );
-}
+  const seenToolIds = new Set<string>();
+  const ordered: StreamOrderItem[] = [];
 
-function AssistantBubble({ msg, frameLookup }: { msg: ChatMessage; frameLookup: (id: string) => string | undefined }) {
-  const parts = msg.parts ?? [];
-
-  // Filter out noise and hidden planning tools, deduplicate by toolCallId
-  const seenToolCallIds = new Set<string>();
-  const toolParts = parts.filter((p) => {
-    if (NOISE_PART_TYPES.has(p.type ?? "")) return false;
-    const isToolPart =
-      p.type === "tool-step" ||
-      (p.type?.startsWith("tool-") && !NOISE_PART_TYPES.has(p.type)) ||
-      p.type === "dynamic-tool";
-    if (!isToolPart) return false;
-    // Get the tool name from either toolName or the type suffix
-    const name =
-      p.toolName ?? (p.type?.startsWith("tool-") ? p.type.slice(5) : "");
-    if (isHiddenTool(name)) return false;
-    // Deduplicate by toolCallId
-    if (p.toolCallId) {
-      if (seenToolCallIds.has(p.toolCallId)) return false;
-      seenToolCallIds.add(p.toolCallId);
+  for (const part of parts) {
+    if (part.type === "step-start" || part.type?.startsWith("data-")) continue;
+    if (part.type === "text") {
+      ordered.push({ kind: "text", text: part.text ?? "" });
+    } else if (part.type === "reasoning") {
+      ordered.push({ kind: "reasoning", text: part.text ?? "" });
+    } else if (
+      (part.type?.startsWith("tool-") || part.type === "dynamic-tool") &&
+      part.toolCallId &&
+      !seenToolIds.has(part.toolCallId)
+    ) {
+      seenToolIds.add(part.toolCallId);
+      ordered.push({ kind: "tool", toolCallId: part.toolCallId });
     }
-    return true;
-  });
-
-  const textParts = parts.filter(
-    (p) => p.type === "text" && p.text != null && p.text.length > 0,
-  );
-  const reasoningParts = parts.filter(
-    (p) => p.type === "reasoning" && p.text != null && p.text.length > 0,
-  );
-
-  if (
-    toolParts.length === 0 &&
-    textParts.length === 0 &&
-    reasoningParts.length === 0 &&
-    !msg.content
-  )
-    return null;
+  }
 
   return (
     <div className="flex flex-col gap-2">
-      {reasoningParts.length > 0 && (
-        <ExpandableReasoningBlock
-          key={`reasoning-${msg.id}`}
-          instanceKey={msg.id}
-          text={reasoningParts.map((p) => p.text!).join("\n\n")}
-          partState={reasoningParts[reasoningParts.length - 1].state}
-        />
-      )}
-      {toolParts.length > 0 && (
-        <div className="flex flex-wrap gap-1.5">
-          {toolParts.map((p, i) => (
-            <ToolChip key={p.toolCallId ?? i} part={p} frameLookup={frameLookup} />
-          ))}
-        </div>
-      )}
-      {textParts.map((p, i) => (
-        <div key={`${msg.id}-text-${i}`} className="chat-markdown">
-          <ReactMarkdown components={activityMarkdownComponents}>
-            {p.text!}
-          </ReactMarkdown>
-        </div>
-      ))}
-      {textParts.length === 0 &&
-        typeof msg.content === "string" &&
-        msg.content.length > 0 && (
-          <div className="chat-markdown">
-            <ReactMarkdown components={activityMarkdownComponents}>
-              {msg.content}
+      {ordered.map((item, i) => {
+        if (item.kind === "tool") {
+          const step = stepByCallId.get(item.toolCallId);
+          if (!step) return null;
+          return (
+            <div
+              key={`${item.toolCallId}-${i}`}
+              className="flex flex-wrap gap-1.5 shrink-0"
+            >
+              <ToolStepChip step={step} frames={frames} />
+            </div>
+          );
+        }
+        if (item.kind === "reasoning") {
+          return (
+            <ReasoningBlock
+              key={`reasoning-${i}`}
+              instanceKey={`act-reasoning-${i}`}
+              text={item.text}
+              isStreaming={isStreaming}
+              isComplete={
+                !isStreaming ||
+                ordered.slice(i + 1).some((x) => x.kind === "reasoning")
+              }
+            />
+          );
+        }
+        return item.text ? (
+          <div key={`text-${i}`} className="chat-markdown">
+            <ReactMarkdown components={markdownComponents}>
+              {item.text}
             </ReactMarkdown>
           </div>
-        )}
+        ) : null;
+      })}
     </div>
   );
 }
+
+/* ── Main component ── */
 
 export function CanvasBottomLeft() {
   const dispatch = useAppDispatch();
@@ -355,10 +390,6 @@ export function CanvasBottomLeft() {
   const [historyLoading, setHistoryLoading] = useState(true);
   const [chatStatus, setChatStatus] = useState<string>("ready");
   const frames = useAppSelector((s) => s.canvas.frames);
-  const frameLookup = useCallback(
-    (id: string) => frames.find((f) => f.id === id)?.label,
-    [frames],
-  );
 
   useEffect(() => {
     return subscribeActivityHistoryLoading(setHistoryLoading);
@@ -368,7 +399,6 @@ export function CanvasBottomLeft() {
     return subscribeChatStatus(setChatStatus);
   }, []);
 
-  // Live sync with ChatPanel useChat state — only update if message count or last id changed
   const lastMsgKeyRef = useRef("");
   useEffect(() => {
     return subscribeChatMessages((next) => {
@@ -386,9 +416,12 @@ export function CanvasBottomLeft() {
     if (scrollRef.current && logVisible) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
-  }, [messages, logVisible]);
+  }, [messages, logVisible, chatStatus]);
 
   const visibleMessages = messages.filter((m) => m.role !== "system");
+
+  const isActivelyStreaming =
+    chatStatus === "submitted" || chatStatus === "streaming";
 
   return (
     <div className="absolute bottom-4 left-4 z-10 flex flex-col items-start gap-2">
@@ -400,18 +433,16 @@ export function CanvasBottomLeft() {
             <span className="text-[11px] font-mono font-medium uppercase tracking-wider text-t-tertiary">
               Activity
             </span>
-            <div className="flex items-center gap-1">
-              <button
-                type="button"
-                onClick={() => dispatch(toggleAgentLogVisible())}
-                className="size-5 flex items-center justify-center rounded text-t-tertiary hover:text-t-secondary transition-colors"
-              >
-                <X className="size-3" />
-              </button>
-            </div>
+            <button
+              type="button"
+              onClick={() => dispatch(toggleAgentLogVisible())}
+              className="size-5 flex items-center justify-center rounded text-t-tertiary hover:text-t-secondary transition-colors"
+            >
+              <X className="size-3" />
+            </button>
           </div>
 
-          {/* Messages */}
+          {/* Messages — identical rendering to ChatPanel */}
           {historyLoading ? (
             <div className="flex items-center justify-center py-10 px-4">
               <div className="flex items-center gap-2 text-xs text-t-tertiary">
@@ -419,7 +450,7 @@ export function CanvasBottomLeft() {
                 Loading...
               </div>
             </div>
-          ) : visibleMessages.length === 0 ? (
+          ) : visibleMessages.length === 0 && !isActivelyStreaming ? (
             <div className="flex items-center justify-center py-10 px-4">
               <p className="text-[11px] text-t-tertiary text-center">
                 No activity yet
@@ -429,27 +460,51 @@ export function CanvasBottomLeft() {
             <div className="relative">
               <div className="pointer-events-none absolute left-0 right-0 top-0 z-10 h-4 bg-gradient-to-b from-surface-elevated to-transparent" />
 
-              {/* max-h + overflow-y only: avoid h-full inside flex-col without fixed card height (was collapsing to 0) */}
               <div
                 ref={scrollRef}
                 className="max-h-[min(480px,calc(560px-2.75rem))] overflow-y-auto scrollbar-hide"
               >
                 <div className="flex flex-col gap-2 px-3 py-3">
-                  {visibleMessages.map((msg, idx) => {
-                    const isLast = idx === visibleMessages.length - 1;
-                    const userText =
-                      msg.role === "user" ? getUserText(msg) : null;
+                  {visibleMessages.map((msg, msgIndex) => {
+                    const isLastMessage =
+                      msgIndex === visibleMessages.length - 1;
+
+                    const stepsForMessage =
+                      msg.role === "assistant"
+                        ? toolStepsFromParts(msg.parts as MessagePart[])
+                        : undefined;
+
+                    const isStreamingLastAssistant =
+                      isLastMessage &&
+                      msg.role === "assistant" &&
+                      isActivelyStreaming;
+
+                    const hasVisibleContent =
+                      isStreamingLastAssistant ||
+                      msg.role !== "assistant" ||
+                      (msg.parts ?? []).some(
+                        (p) =>
+                          p.type === "text" ||
+                          p.type === "reasoning" ||
+                          (p as MessagePart).type?.startsWith?.("tool-") ||
+                          (p as MessagePart).type === "dynamic-tool",
+                      ) ||
+                      typeof msg.content === "string" ||
+                      (stepsForMessage && stepsForMessage.length > 0);
+
+                    if (!hasVisibleContent) return null;
+
                     return (
                       <Fragment key={msg.id}>
                         {msg.role === "user" ? (
                           <div className="flex justify-end">
                             <div className="max-w-[90%] rounded-lg bg-input-bg px-2.5 py-1.5">
-                              {userText ? (
+                              {getUserText(msg) ? (
                                 <div className="chat-markdown">
                                   <ReactMarkdown
-                                    components={activityMarkdownComponents}
+                                    components={markdownComponents}
                                   >
-                                    {userText}
+                                    {getUserText(msg)!}
                                   </ReactMarkdown>
                                 </div>
                               ) : null}
@@ -458,7 +513,34 @@ export function CanvasBottomLeft() {
                         ) : msg.role === "assistant" ? (
                           <div className="flex justify-start">
                             <div className="max-w-[95%]">
-                              <AssistantBubble msg={msg} frameLookup={frameLookup} />
+                              {msg.parts && msg.parts.length > 0 ? (
+                                <AssistantMessageContent
+                                  parts={msg.parts as MessagePart[]}
+                                  frames={frames}
+                                  isStreaming={
+                                    chatStatus === "streaming" && isLastMessage
+                                  }
+                                  toolSteps={stepsForMessage}
+                                />
+                              ) : typeof msg.content === "string" ? (
+                                <div className="chat-markdown">
+                                  <ReactMarkdown
+                                    components={markdownComponents}
+                                  >
+                                    {msg.content}
+                                  </ReactMarkdown>
+                                </div>
+                              ) : stepsForMessage &&
+                                stepsForMessage.length > 0 ? (
+                                <AssistantMessageContent
+                                  parts={[]}
+                                  frames={frames}
+                                  isStreaming={
+                                    chatStatus === "streaming" && isLastMessage
+                                  }
+                                  toolSteps={stepsForMessage}
+                                />
+                              ) : null}
                             </div>
                           </div>
                         ) : null}
@@ -466,8 +548,8 @@ export function CanvasBottomLeft() {
                     );
                   })}
 
-                  {/* Thinking indicator — blue shimmer text */}
-                  {(chatStatus === "submitted" || chatStatus === "streaming") && (
+                  {/* Thinking indicator — shimmer text */}
+                  {isActivelyStreaming && (
                     <div className="flex justify-start">
                       <div className="rounded-lg bg-input-bg/60 px-3 py-2">
                         <span className="shimmer-text text-xs font-medium">

@@ -48,16 +48,36 @@ ${rows}
 
 const INITIAL_INSTRUCTIONS = `\
 <instructions>
-  The planning pipeline has already run (classifyIntent, planScreens, planStyle, build_theme).
-  The theme has been created and applied. Follow the plan above and create the screens.
+  This is a NEW project with no screens yet. The planning pipeline has run and its output
+  is in the planning_context section above (if present).
 
-  Work in this order — one tool call per response:
-    1. Call create_all_screens with ALL planned screens to create frames on the canvas.
-    2. Call design_screen for each frame, one per response.
-       Reason: incremental design lets the user review each screen before the next.
+  YOU MUST follow this EXACT sequence — one tool call per response:
 
-  The theme already exists — do NOT call build_theme. Just start creating screens.
-  Do not batch multiple tool calls in one response.
+  STEP 1 → build_theme
+    Call build_theme FIRST. This is NON-NEGOTIABLE for new projects.
+    Use the visual guidelines from the planning_context (if available) or infer a suitable
+    style from the user's prompt (e.g., fitness app → energetic greens, finance → blues).
+    Pass a themeName, description AND a variables object with your best CSS variable values.
+    The design model will refine them into a polished theme.
+    IMPORTANT: Always provide a creative, descriptive themeName that reflects the app's
+    style and mood (e.g. "Ocean Breeze", "Midnight Professional", "Vibrant Fitness").
+    NEVER use "Default" as the theme name.
+
+  STEP 2 → create_all_screens
+    Call create_all_screens with ALL screens from the plan (or your best interpretation
+    of the user's prompt if no plan is available). This creates empty placeholder frames.
+
+  STEP 3+ → design_screen (one per response)
+    Call design_screen for each frame returned by create_all_screens.
+    In each description, reference the theme so the design model uses consistent colors.
+    Design one screen per response so the user can review each one.
+
+  RULES:
+  - NEVER skip build_theme. Without it, screens will look inconsistent.
+  - NEVER call create_all_screens before build_theme.
+  - NEVER batch multiple tool calls in one response.
+  - If planning_context is empty or missing, still follow the same sequence —
+    infer screens and style from the user's prompt.
 </instructions>`;
 
 const STANDARD_INSTRUCTIONS = `\
@@ -68,12 +88,27 @@ const STANDARD_INSTRUCTIONS = `\
     This keeps changes incremental and reversible.
   </guiding_principle>
 
+  <theme_first>
+    If no theme exists (check the active_theme section — if it says "NO THEME EXISTS"
+    or the theme section is empty), you MUST call build_theme before doing anything else.
+    Never design, update, or edit a screen without a theme. The design_screen tool will
+    reject your call if no theme exists.
+  </theme_first>
+
   <read_before_write>
-    Before changing anything, read its current state.
-    - Call read_theme once to understand the available color tokens.
-    - Call read_screen for each screen you intend to edit or use as reference.
-    Reading is necessary because the screen HTML is the source of truth for
-    find/replace operations — guessing at content will break edit_design.
+    ALWAYS read before you write. This is what makes you a smart agent:
+    - Call read_theme FIRST to understand the current color tokens, fonts, and spacing.
+    - Call read_screen for EVERY screen you intend to edit — you need the exact HTML.
+    - Call read_screen for existing screens as REFERENCE — so your new designs
+      maintain the same navigation patterns, card styles, spacing, and typography.
+    Reading is non-negotiable. Guessing at content will break edit_design, and
+    skipping reference screens will produce inconsistent designs.
+
+    When the user asks you to create NEW screens and screens already exist:
+    1. read_theme (understand the palette)
+    2. read_screen on 1-2 existing screens (understand the design language)
+    3. create_all_screens (create empty placeholders)
+    4. design_screen for each new frame (using theme + reference context)
   </read_before_write>
 
   <choosing_the_right_write_tool>
@@ -116,17 +151,23 @@ const TOOL_GUIDANCE = `\
     Always call this before edit_design or update_screen so you have verbatim content.
   </tool>
 
-  <tool name="build_theme(variables)">
-    Creates or fully replaces the global theme. Use for first-time setup or complete overhauls.
+  <tool name="build_theme(themeName, variables, variantName?)">
+    Creates or fully replaces a theme variant. Use for first-time setup or complete overhauls.
+    ALWAYS pass a creative themeName that reflects the app's style (e.g. "Ocean Breeze", "Neon Pulse").
+    Pass variantName to target a specific variant (default: "light").
     Pass a flat object mapping CSS variable names (with -- prefix) to values. All of these are required:
     --background, --foreground, --primary, --primary-foreground, --secondary,
     --muted, --card, --card-foreground, --border, --radius, --font-sans, --font-heading.
-    Example call: build_theme({ variables: {"--primary":"#2563eb","--background":"#0f172a","--radius":"0.5rem",...} })
+    Example: build_theme({ themeName: "Midnight Blue", variantName: "dark", variables: {"--primary":"#3b82f6","--background":"#0f172a",...} })
   </tool>
 
-  <tool name="update_theme(updates)">
-    Merges specific token changes into the existing theme. Use for targeted tweaks.
-    Example: {"--primary": "#1d4ed8"}
+  <tool name="update_theme(updates, variantName?, themeName?)">
+    Merges specific token changes into a theme variant. Use for targeted tweaks.
+    Pass variantName to target a specific variant (e.g., "light", "dark").
+    If omitted, targets the variant the user is currently viewing.
+    Optionally pass a new themeName if the style direction has changed significantly.
+    Example: update_theme({ variantName: "dark", updates: {"--primary": "#3b82f6"} })
+    Do NOT use -dark suffix on keys — use variantName parameter instead.
   </tool>
 
   <tool name="create_all_screens(screens)">
@@ -163,22 +204,52 @@ const TOOL_GUIDANCE = `\
     → update_theme with the adjusted --primary value. Not build_theme.
 
     User: "Start over with a dark navy theme"
-    → build_theme with a full new variable set.
+    → build_theme with themeName: "Navy Depths", variantName: "dark" and a full new variable set.
+
+    User: "Update the dark variant colors" (while viewing dark mode)
+    → update_theme with variantName: "dark", updates: {"--background": "#0a0a0a", "--primary": "#60a5fa"}
+
+    User: "Make the background darker" (while viewing dark mode)
+    → update_theme with variantName: "dark", updates: {"--background": "#0a0a0a"}
+
+    User: "Make the background darker" (while viewing light mode)
+    → update_theme with variantName: "light", updates: {"--background": "#f0f0f0"}
+
+    User: "Create a high contrast variant"
+    → build_theme with themeName: "Bold Contrast", variantName: "high-contrast" and a full variable set with high contrast values.
   </decision_examples>
 </tool_guidance>`;
 
 const OUTPUT_CONSTRAINTS = `\
 <output_constraints>
   <theme>
-    There is no default theme. If no theme exists, invite the user to describe
-    the look they want before calling build_theme.
-    One global theme affects every screen — changes are global.
+    There is NO default theme. No fallback. If no theme exists, screens have no colors.
+    You MUST call build_theme before designing any screen. The design_screen tool will
+    REFUSE to execute if no theme exists — this is enforced at the tool level.
+
+    When calling build_theme, ALWAYS provide a creative themeName that captures the
+    visual identity (e.g. "Ocean Breeze", "Midnight Professional", "Neon Pulse",
+    "Warm Terracotta"). NEVER use "Default" or generic names.
+
+    If the user does not specify a style, infer one from the app type (e.g. fitness → energetic
+    greens, finance → professional blues, social → modern purples, food → warm oranges).
+
+    Themes have named VARIANTS (light, dark, custom). Use the variantName parameter
+    on build_theme/update_theme to target the correct variant. Do NOT use -dark suffix
+    on variable keys — that is the old convention and no longer used.
+
+    One global theme affects every screen — changes are global per variant.
     Reference theme tokens via Tailwind semantic classes:
     bg-primary, text-foreground, border-border, bg-card, text-muted-foreground, etc.
     Available tokens: background, foreground, card, card-foreground, input,
     primary, primary-foreground, secondary, secondary-foreground, muted,
     muted-foreground, destructive, destructive-foreground, border, popover,
     accent, ring, chart-1 through chart-5.
+
+    CONSISTENCY RULE: When calling design_screen, always include theme context in the
+    description — mention the primary color, background style, and typography so the
+    design model generates HTML that matches the established theme. Never let the design
+    model guess colors — always reference semantic theme classes.
   </theme>
 
   <html>
@@ -259,19 +330,51 @@ export function getSystemPrompt(
   planContext = "",
   agentScope = "",
   agentCount = 1,
+  themeMode: "light" | "dark" = "light",
 ): string {
   const planSection = planContext
     ? `\n<planning_context>\n${planContext}\n</planning_context>\n`
     : "";
 
   const themeSection = (() => {
-    if (!theme || typeof theme !== "object") return "";
+    if (!theme || typeof theme !== "object") {
+      return `\n<active_theme>
+  NO THEME EXISTS. You MUST call build_theme as your very first action before
+  creating or designing any screens. Do not proceed without a theme.
+</active_theme>\n`;
+    }
     const entries = Object.entries(theme).filter(
       ([k, v]) => k.startsWith("--") && v != null,
     );
-    if (entries.length === 0) return "";
+    if (entries.length === 0) {
+      return `\n<active_theme>
+  NO THEME EXISTS. You MUST call build_theme as your very first action before
+  creating or designing any screens. Do not proceed without a theme.
+</active_theme>\n`;
+    }
+
     const vars = entries.map(([k, v]) => `    ${k}: ${v}`).join("\n");
-    return `\n<active_theme>\n  The following CSS variables are set as the project theme. When calling design_screen,\n  include these in your description so the design model uses the correct palette.\n  Always reference semantic Tailwind classes (bg-primary, text-foreground, etc.) — never arbitrary colors.\n\n${vars}\n</active_theme>\n`;
+
+    return `\n<active_theme>
+  The project uses a structured theme system with named variants (e.g., light, dark, custom).
+  The user is currently viewing/editing the **${themeMode.toUpperCase()}** variant.
+
+  Current ${themeMode} variant variables:
+${vars}
+
+  VARIANT SYSTEM:
+  - Themes have named variants: light, dark, and any custom variants the user creates.
+  - Each variant is a complete set of CSS variables (--primary, --background, etc.).
+  - Variables do NOT use -dark suffix. Instead, use the variantName parameter on tools.
+
+  HOW TO UPDATE VARIANTS:
+  - To update the LIGHT variant: update_theme({ variantName: "light", updates: {"--primary": "#2563eb"} })
+  - To update the DARK variant:  update_theme({ variantName: "dark", updates: {"--primary": "#3b82f6"} })
+  - To create a new variant:     build_theme({ variantName: "dark", variables: {...full set...} })
+  - If the user doesn't specify which variant, target "${themeMode}" (the one they are viewing).
+
+  Always reference semantic Tailwind classes (bg-primary, text-foreground, etc.) in screen designs — never arbitrary colors.
+</active_theme>\n`;
   })();
 
   const instructions = isInitialPrompt(frames)
@@ -286,7 +389,7 @@ export function getSystemPrompt(
   TWO-PHASE WORKFLOW:
 
   Phase 1 — Create ALL screens at once:
-    1. Call build_theme first.
+    1. Call build_theme first with a creative themeName.
     2. Call create_all_screens with EVERY screen from the plan.
        This creates all placeholder frames on the canvas in one shot.
        The result contains each screen's frame ID.

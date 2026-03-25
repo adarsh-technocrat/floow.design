@@ -95,27 +95,6 @@ export function normalizeIncomingMessages(
       });
     }
   }
-  // #region agent log
-  fetch("http://127.0.0.1:7253/ingest/bf26e32e-b221-45cd-9795-984cd7651c6f", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      runId: "pre-fix",
-      hypothesisId: "H2",
-      location: "chat-session.ts:normalizeIncomingMessages",
-      message: "normalized incoming messages for persistence",
-      data: {
-        rawCount: raw.length,
-        normalizedCount: out.length,
-        withPartsCount: out.filter(
-          (m) => Array.isArray(m.parts) && m.parts.length > 0,
-        ).length,
-        assistantCount: out.filter((m) => m.role === "assistant").length,
-      },
-      timestamp: Date.now(),
-    }),
-  }).catch(() => {});
-  // #endregion
   return out;
 }
 
@@ -136,28 +115,5 @@ export function recordsToUiMessages(
       parts: [{ type: "text", text: r.content || "" }] as UIMessage["parts"],
     };
   });
-  // #region agent log
-  fetch("http://127.0.0.1:7253/ingest/bf26e32e-b221-45cd-9795-984cd7651c6f", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      runId: "pre-fix",
-      hypothesisId: "H3",
-      location: "chat-session.ts:recordsToUiMessages",
-      message: "converted records to ui messages",
-      data: {
-        recordCount: records.length,
-        withPartsCount: records.filter(
-          (r) => Array.isArray(r.parts) && r.parts.length > 0,
-        ).length,
-        fallbackContentCount: records.filter(
-          (r) => !(Array.isArray(r.parts) && r.parts.length > 0),
-        ).length,
-        assistantCount: records.filter((r) => r.role === "assistant").length,
-      },
-      timestamp: Date.now(),
-    }),
-  }).catch(() => {});
-  // #endregion
   return messages;
 }

@@ -1,4 +1,76 @@
 export type ThemeVariables = Record<string, string>;
+export type ThemeVariantMap = Record<string, ThemeVariables>;
+
+/**
+ * Detect whether a theme variables object uses the old flat format
+ * (mixed --key and --key-dark) or the new structured variant format
+ * ({light: {...}, dark: {...}}).
+ */
+export function isStructuredVariants(
+  obj: unknown,
+): obj is ThemeVariantMap {
+  if (!obj || typeof obj !== "object") return false;
+  const keys = Object.keys(obj);
+  if (keys.length === 0) return false;
+  // If any key starts with "--", it's the old flat format
+  if (keys.some((k) => k.startsWith("--"))) return false;
+  // Check that at least one value is an object (variant map)
+  return keys.some(
+    (k) => typeof (obj as Record<string, unknown>)[k] === "object",
+  );
+}
+
+/**
+ * Convert old flat theme ({--key: val, --key-dark: val2})
+ * into structured variants ({light: {--key: val}, dark: {--key: val2}}).
+ */
+export function migrateFlatToVariants(
+  flat: Record<string, string>,
+): ThemeVariantMap {
+  const light: ThemeVariables = {};
+  const dark: ThemeVariables = {};
+  for (const [k, v] of Object.entries(flat)) {
+    if (!k.startsWith("--") || !v) continue;
+    if (k.endsWith("-dark")) {
+      // --primary-dark → --primary in dark variant
+      const baseKey = k.slice(0, -5); // strip "-dark"
+      dark[baseKey] = v;
+    } else {
+      light[k] = v;
+    }
+  }
+  // Ensure dark variant has fallbacks from light for any missing keys
+  for (const [k, v] of Object.entries(light)) {
+    if (!(k in dark)) dark[k] = v;
+  }
+  const result: ThemeVariantMap = { light };
+  if (Object.keys(dark).length > 0) result.dark = dark;
+  return result;
+}
+
+/**
+ * Resolve a flat ThemeVariables from a variant map for a given variant name.
+ * Falls back to "light" if the requested variant doesn't exist.
+ */
+export function resolveVariant(
+  variants: ThemeVariantMap,
+  variantName: string,
+): ThemeVariables {
+  return variants[variantName] ?? variants.light ?? {};
+}
+
+/**
+ * Normalize a theme from the DB: accepts either old flat format or new structured format.
+ * Always returns ThemeVariantMap.
+ */
+export function ensureVariantMap(
+  raw: unknown,
+): ThemeVariantMap {
+  if (!raw || typeof raw !== "object") return { light: {} };
+  if (isStructuredVariants(raw)) return raw;
+  // Old flat format
+  return migrateFlatToVariants(raw as Record<string, string>);
+}
 
 const SCREEN_HTML_HEAD = `<!DOCTYPE html>
 <html lang="en">
@@ -62,32 +134,11 @@ export function normalizeThemeVars(
   return out;
 }
 
-const EMPTY_THEME_FALLBACK: ThemeVariables = {
-  "--background": "#ffffff",
-  "--foreground": "#000000",
-  "--primary": "#2563eb",
-  "--primary-foreground": "#ffffff",
-  "--secondary": "#f1f5f9",
-  "--secondary-foreground": "#1e293b",
-  "--muted": "#f1f5f9",
-  "--muted-foreground": "#64748b",
-  "--card": "#ffffff",
-  "--card-foreground": "#0f172a",
-  "--border": "#e2e8f0",
-  "--input": "#f0f2f1",
-  "--ring": "#2563eb",
-  "--radius": "0.5rem",
-  "--font-sans": "system-ui,sans-serif",
-  "--font-heading": "system-ui,sans-serif",
-};
-
 export function wrapScreenBody(
   bodyContent: string,
   theme: ThemeVariables = {},
 ): string {
-  const activeTheme =
-    Object.keys(theme).length > 0 ? theme : EMPTY_THEME_FALLBACK;
-  const themeCSS = Object.entries(activeTheme)
+  const themeCSS = Object.entries(theme)
     .filter(([k]) => k.startsWith("--"))
     .map(([k, v]) => `        ${k}: ${v};`)
     .join("\n");

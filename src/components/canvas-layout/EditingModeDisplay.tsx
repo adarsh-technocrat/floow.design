@@ -1,10 +1,16 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ArrowUp, X } from "lucide-react";
+import { ArrowUp, MessageSquareText, X } from "lucide-react";
+import { ImageIcon } from "@/lib/svg-icons";
 import { StyleGuideIcon } from "@/lib/svg-icons";
 import { useCanvasChat, type QueuedPrompt } from "@/hooks/useCanvasChat";
-import { subscribeCreditExhausted, type CreditExhaustedReason } from "@/lib/chat-bridge";
+import {
+  subscribeCreditExhausted,
+  type CreditExhaustedReason,
+} from "@/lib/chat-bridge";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import { setChatPanelOpen } from "@/store/slices/uiSlice";
 import { PricingDialog } from "@/components/PricingDialog";
 import { ChatPanel } from "./ChatPanel";
 import { StyleGuidePanel } from "./StyleGuidePanel";
@@ -47,9 +53,12 @@ function QueuedPromptChip({
 }
 
 export function EditingModeDisplay() {
+  const dispatch = useAppDispatch();
+  const chatPanelOpen = useAppSelector((s) => s.ui.chatPanelOpen);
   const [styleGuideOpen, setStyleGuideOpen] = useState(false);
   const [pricingDialogOpen, setPricingDialogOpen] = useState(false);
-  const [pricingDialogReason, setPricingDialogReason] = useState<CreditExhaustedReason>("insufficient_credits");
+  const [pricingDialogReason, setPricingDialogReason] =
+    useState<CreditExhaustedReason>("insufficient_credits");
 
   const {
     inputValue,
@@ -74,11 +83,10 @@ export function EditingModeDisplay() {
 
   return (
     <>
-      <ChatPanel isVisible={false} onClose={() => {}} />
-
+      <ChatPanel isVisible={chatPanelOpen} onClose={() => dispatch(setChatPanelOpen(false))} />
       <div className="absolute bottom-4 left-1/2 z-20 -translate-x-1/2 w-full max-w-[600px] px-4">
         {promptQueue.length > 0 && (
-          <div className="flex flex-col gap-0">
+          <div className="flex flex-col gap-0 -mb-3">
             {promptQueue.map((queuedPrompt, index) => (
               <div
                 key={queuedPrompt.id}
@@ -100,7 +108,7 @@ export function EditingModeDisplay() {
           </div>
         )}
 
-        <div className="rounded-2xl border border-b-strong bg-canvas-panel-bg shadow-lg backdrop-blur-xl transition-all focus-within:border-b-strong">
+        <div className="relative z-10 rounded-2xl border border-b-strong bg-canvas-panel-bg shadow-lg backdrop-blur-xl transition-all focus-within:border-b-strong">
           <div className="px-4 pt-4 pb-2">
             <textarea
               ref={inputRef}
@@ -120,6 +128,13 @@ export function EditingModeDisplay() {
 
           <div className="flex items-center justify-between px-4 py-2.5">
             <div className="flex items-center gap-2">
+              <button
+                type="button"
+                aria-label="Attach image"
+                className="inline-flex size-8 shrink-0 items-center justify-center rounded-lg text-t-tertiary transition-colors hover:text-t-secondary hover:bg-secondary/40"
+              >
+                <ImageIcon className="size-4" />
+              </button>
               {isAgentWorking && promptQueue.length > 0 && (
                 <span className="text-[11px] font-mono text-amber-500">
                   {promptQueue.length} queued
@@ -132,36 +147,29 @@ export function EditingModeDisplay() {
                 <button
                   type="button"
                   onClick={stopCurrentGeneration}
-                  className="inline-flex h-8 items-center gap-1.5 rounded-lg bg-red-500/15 px-3 text-xs font-medium text-red-500 transition-all hover:bg-red-500/25 active:scale-95"
+                  className="inline-flex size-8 shrink-0 items-center justify-center rounded-full bg-red-500/10 text-red-500 outline-none transition-all hover:bg-red-500/20 active:scale-95"
+                  aria-label="Stop generating"
                 >
-                  <svg
-                    width="12"
-                    height="12"
-                    viewBox="0 0 24 24"
-                    fill="currentColor"
-                  >
-                    <rect x="4" y="4" width="16" height="16" rx="2" />
+                  <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                    <rect x="6" y="6" width="12" height="12" rx="2" />
                   </svg>
-                  Stop
                 </button>
               ) : (
                 <button
                   type="button"
                   onClick={submitPromptOrAddToQueue}
                   disabled={!inputValue.trim()}
-                  className="inline-flex size-8 items-center justify-center rounded-lg bg-btn-primary-bg text-btn-primary-text transition-all hover:opacity-90 disabled:opacity-20 disabled:pointer-events-none active:scale-95"
+                  className="inline-flex size-8 shrink-0 items-center justify-center rounded-full bg-btn-primary-bg text-btn-primary-text shadow-sm outline-none transition-all hover:opacity-90 disabled:pointer-events-none disabled:opacity-30 focus-visible:ring-2 focus-visible:ring-ring/50 active:scale-95"
                 >
                   <svg
-                    width="14"
-                    height="14"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2.5"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="1em"
+                    height="1em"
+                    fill="currentColor"
+                    viewBox="0 0 256 256"
+                    className="size-4"
                   >
-                    <path d="M5 12h14M12 5l7 7-7 7" />
+                    <path d="M205.66,117.66a8,8,0,0,1-11.32,0L136,59.31V216a8,8,0,0,1-16,0V59.31L61.66,117.66a8,8,0,0,1-11.32-11.32l72-72a8,8,0,0,1,11.32,0l72,72A8,8,0,0,1,205.66,117.66Z" />
                   </svg>
                 </button>
               )}
@@ -172,6 +180,18 @@ export function EditingModeDisplay() {
 
       <div className="absolute right-4 top-16 z-20 flex flex-col items-center gap-2">
         <div className="flex flex-col items-center gap-1 rounded-full border border-b-strong bg-canvas-panel-bg shadow-md backdrop-blur-xl p-1">
+          <button
+            type="button"
+            onClick={() => dispatch(setChatPanelOpen(!chatPanelOpen))}
+            className={`rounded-full p-2 transition-colors ${
+              chatPanelOpen
+                ? "bg-btn-primary-bg text-btn-primary-text"
+                : "text-t-secondary hover:bg-input-bg hover:text-t-primary"
+            }`}
+            title="Chat Panel"
+          >
+            <MessageSquareText width={18} height={18} />
+          </button>
           <button
             type="button"
             onClick={() => setStyleGuideOpen((v) => !v)}

@@ -124,14 +124,67 @@ export const Frame = React.memo(function Frame({
   }, [id]);
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const overlayRef = useRef<HTMLDivElement>(null);
-  const showToolbar = showToolbarProp ?? selected;
+  const [stableSelected, setStableSelected] = useState(selected);
+  const hideSelectedRafRef = useRef<number | null>(null);
+  const showToolbar = showToolbarProp ?? stableSelected;
+  const [stableShowToolbar, setStableShowToolbar] = useState(showToolbar);
+  const hideToolbarRafRef = useRef<number | null>(null);
   const mainChatActiveFrameId = useAppSelector(
     (s) => s.agent.mainChatActiveFrameId,
   );
   const mainChatStatus = useAppSelector((s) => s.agent.mainChatStatus);
   const isActiveAgentFrame =
     mainChatStatus === "working" && mainChatActiveFrameId === id;
-  const enableElementInspection = (showToolbar ?? false) || isActiveAgentFrame;
+  const enableElementInspection =
+    (stableShowToolbar ?? false) || isActiveAgentFrame;
+
+  useEffect(() => {
+    if (hideSelectedRafRef.current != null) {
+      cancelAnimationFrame(hideSelectedRafRef.current);
+      hideSelectedRafRef.current = null;
+    }
+    if (selected) {
+      setStableSelected(true);
+      return;
+    }
+    // Keep selected state for two frames to avoid one-frame border blink.
+    hideSelectedRafRef.current = requestAnimationFrame(() => {
+      hideSelectedRafRef.current = requestAnimationFrame(() => {
+        hideSelectedRafRef.current = null;
+        setStableSelected(false);
+      });
+    });
+    return () => {
+      if (hideSelectedRafRef.current != null) {
+        cancelAnimationFrame(hideSelectedRafRef.current);
+        hideSelectedRafRef.current = null;
+      }
+    };
+  }, [selected]);
+
+  useEffect(() => {
+    if (hideToolbarRafRef.current != null) {
+      cancelAnimationFrame(hideToolbarRafRef.current);
+      hideToolbarRafRef.current = null;
+    }
+    if (showToolbar) {
+      setStableShowToolbar(true);
+      return;
+    }
+    // Smooth out transient selection toggles that cause visible blink.
+    hideToolbarRafRef.current = requestAnimationFrame(() => {
+      hideToolbarRafRef.current = requestAnimationFrame(() => {
+        hideToolbarRafRef.current = null;
+        setStableShowToolbar(false);
+      });
+    });
+    return () => {
+      if (hideToolbarRafRef.current != null) {
+        cancelAnimationFrame(hideToolbarRafRef.current);
+        hideToolbarRafRef.current = null;
+      }
+    };
+  }, [showToolbar]);
 
   const childrenWithInspection = useMemo(() => {
     if (children == null) return children;
@@ -171,13 +224,14 @@ export const Frame = React.memo(function Frame({
     onPositionChange,
     onSizeChange,
     onWheelForZoom,
+    selected,
   });
 
   return (
     <div
       ref={frameRef}
       data-frame
-      className={`absolute shrink-0 ${isDragging ? "cursor-grabbing" : ""} ${isGenerating ? "frame-generating" : ""}`}
+      className={`absolute shrink-0 select-none ${isDragging ? "cursor-grabbing" : ""} ${isGenerating ? "frame-generating" : ""}`}
       style={{
         left: `${left}px`,
         top: `${top}px`,
@@ -223,7 +277,7 @@ export const Frame = React.memo(function Frame({
           {childrenWithInspection ?? (
             <div className="size-full" title="Canvas Frame" />
           )}
-          {showToolbar && (
+          {stableShowToolbar && (
             <FrameElementInspectionOverlay
               iframeRef={iframeRef}
               overlayRef={overlayRef}
@@ -245,17 +299,43 @@ export const Frame = React.memo(function Frame({
       </div>
       <div className="pointer-events-none absolute inset-0 z-40" />
 
-      {selected && !showToolbar && !isDragging && (
-        <svg className="pointer-events-none absolute -inset-[5px] z-30 size-[calc(100%+10px)]" aria-hidden>
-          <rect x="1.5" y="1.5" width="calc(100% - 3px)" height="calc(100% - 3px)" fill="none" stroke="#8B7CFF" strokeWidth="3" strokeDasharray="10 7" rx="0" />
+      {stableSelected && !stableShowToolbar && !isDragging && (
+        <svg
+          className="pointer-events-none absolute -inset-[5px] z-30 size-[calc(100%+10px)]"
+          aria-hidden
+        >
+          <rect
+            x="1.5"
+            y="1.5"
+            width="calc(100% - 3px)"
+            height="calc(100% - 3px)"
+            fill="none"
+            stroke="#8B7CFF"
+            strokeWidth="3"
+            strokeDasharray="10 7"
+            rx="0"
+          />
         </svg>
       )}
 
-      {showToolbar && (
+      {stableShowToolbar && (
         <>
           {!isDragging && (
-            <svg className="pointer-events-none absolute -inset-[5px] z-30 size-[calc(100%+10px)]" aria-hidden>
-              <rect x="1.5" y="1.5" width="calc(100% - 3px)" height="calc(100% - 3px)" fill="none" stroke="#8B7CFF" strokeWidth="3" strokeDasharray="10 7" rx="0" />
+            <svg
+              className="pointer-events-none absolute -inset-[5px] z-30 size-[calc(100%+10px)]"
+              aria-hidden
+            >
+              <rect
+                x="1.5"
+                y="1.5"
+                width="calc(100% - 3px)"
+                height="calc(100% - 3px)"
+                fill="none"
+                stroke="#8B7CFF"
+                strokeWidth="3"
+                strokeDasharray="10 7"
+                rx="0"
+              />
             </svg>
           )}
           <ResizeHandleDot
@@ -287,13 +367,13 @@ export const Frame = React.memo(function Frame({
         className="absolute left-0 flex items-center gap-3 truncate whitespace-nowrap text-sm"
         style={{
           transform: "scale(1.79733)",
-          top: showToolbar ? "-53.9198px" : "-53.9198px",
+          top: stableShowToolbar ? "-53.9198px" : "-53.9198px",
           transformOrigin: "left top",
-          visibility: showToolbar ? "hidden" : "visible",
+          visibility: stableShowToolbar ? "hidden" : "visible",
         }}
       >
         <div
-          className="flex cursor-grab items-center gap-1 truncate"
+          className="flex cursor-grab select-none items-center gap-1 truncate"
           style={{ width: 239.244 }}
         >
           <span data-drag-handle className="cursor-grab">

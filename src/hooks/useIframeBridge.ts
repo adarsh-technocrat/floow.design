@@ -12,6 +12,18 @@ function extractBody(html: string): string | null {
   return html.substring(bodyStart + 1, bodyClose);
 }
 
+function extractCssVariables(html: string): Record<string, string> {
+  const vars: Record<string, string> = {};
+  const re = /(--[a-zA-Z0-9-_]+)\s*:\s*([^;]+);/g;
+  let match: RegExpExecArray | null;
+  while (true) {
+    match = re.exec(html);
+    if (!match) break;
+    vars[match[1]] = match[2].trim();
+  }
+  return vars;
+}
+
 function writeDocFull(iframe: HTMLIFrameElement | null, html: string) {
   if (!iframe?.contentDocument || !html) return;
   const doc = iframe.contentDocument;
@@ -51,13 +63,24 @@ export function useIframeBridge(
 
   const hasWrittenRef = useRef(false);
   const lastWrittenHtmlRef = useRef("");
+  const lastBodyHtmlRef = useRef("");
+  const lastCssVarsRef = useRef<Record<string, string>>({});
+  const pendingIncrementalRef = useRef<{
+    iframe: HTMLIFrameElement;
+    newBody: string;
+    cssVars: Record<string, string>;
+    scrollTop: number;
+  } | null>(null);
+  const incrementalRafRef = useRef<number | null>(null);
 
   const writeContent = useCallback(
     (html: string, incremental = false) => {
       const iframe = iframeRef.current;
       if (!iframe || !html) return;
 
-      if (html === lastWrittenHtmlRef.current) return;
+      if (html === lastWrittenHtmlRef.current) {
+        return;
+      }
       lastWrittenHtmlRef.current = html;
 
       const doc = iframe.contentDocument;
@@ -65,21 +88,46 @@ export function useIframeBridge(
       if (incremental && hasWrittenRef.current && doc?.body) {
         const newBody = extractBody(html);
         if (newBody !== null) {
-          const scrollTop = doc.documentElement?.scrollTop ?? 0;
-          requestAnimationFrame(() => {
-            if (!iframe.contentDocument?.body) return;
-            iframe.contentDocument.body.innerHTML = newBody;
-            requestAnimationFrame(() => {
-              if (iframe.contentDocument?.documentElement) {
-                iframe.contentDocument.documentElement.scrollTop = scrollTop;
+          pendingIncrementalRef.current = {
+            iframe,
+            newBody,
+            cssVars: extractCssVariables(html),
+            scrollTop: doc.documentElement?.scrollTop ?? 0,
+          };
+          if (incrementalRafRef.current == null) {
+            incrementalRafRef.current = requestAnimationFrame(() => {
+              incrementalRafRef.current = null;
+              const pending = pendingIncrementalRef.current;
+              pendingIncrementalRef.current = null;
+              if (!pending?.iframe.contentDocument?.body) return;
+              const root = pending.iframe.contentDocument.documentElement;
+              if (root) {
+                for (const [key, value] of Object.entries(pending.cssVars)) {
+                  if (lastCssVarsRef.current[key] === value) continue;
+                  root.style.setProperty(key, value);
+                  lastCssVarsRef.current[key] = value;
+                }
               }
+              if (lastBodyHtmlRef.current === pending.newBody) {
+                return;
+              }
+              lastBodyHtmlRef.current = pending.newBody;
+              pending.iframe.contentDocument.body.innerHTML = pending.newBody;
+              requestAnimationFrame(() => {
+                if (pending.iframe.contentDocument?.documentElement) {
+                  pending.iframe.contentDocument.documentElement.scrollTop =
+                    pending.scrollTop;
+                }
+              });
             });
-          });
+          }
           return;
         }
       }
 
       writeDocFull(iframe, html);
+      lastBodyHtmlRef.current = extractBody(html) ?? "";
+      lastCssVarsRef.current = extractCssVariables(html);
       hasWrittenRef.current = true;
     },
     [iframeRef],

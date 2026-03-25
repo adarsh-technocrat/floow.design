@@ -1,9 +1,29 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import { useAppSelector, useAppDispatch } from "@/store/hooks";
-import { setTheme } from "@/store/slices/canvasSlice";
-import { X, Copy, Check, Plus, Sun, Moon, Trash2 } from "lucide-react";
+import {
+  setActiveThemeId,
+  setActiveThemeMode,
+  setThemeVariantVariable,
+  assignThemeToFrame,
+  addThemeVariant,
+  removeThemeVariant,
+  type ThemeMode,
+} from "@/store/slices/canvasSlice";
+import {
+  X,
+  Copy,
+  Check,
+  Plus,
+  Sun,
+  Moon,
+  Trash2,
+  ChevronDown,
+  Layers,
+} from "lucide-react";
+import { resolveVariant } from "@/lib/screen-utils";
+import http from "@/lib/http";
 
 const VARIABLE_GROUPS: {
   label: string;
@@ -58,13 +78,7 @@ function getVariableType(
   return "string";
 }
 
-function ColorSwatch({
-  color,
-  size = 24,
-}: {
-  color: string;
-  size?: number;
-}) {
+function ColorSwatch({ color, size = 24 }: { color: string; size?: number }) {
   return (
     <div
       className="shrink-0 rounded-md border border-b-secondary shadow-inner"
@@ -76,28 +90,23 @@ function ColorSwatch({
 function VariableRow({
   varKey,
   name,
-  lightValue,
-  darkValue,
-  activeMode,
+  value,
   onValueChange,
   onDelete,
   isCustom,
 }: {
   varKey: string;
   name: string;
-  lightValue: string;
-  darkValue: string;
-  activeMode: "light" | "dark";
-  onValueChange: (key: string, value: string, mode: "light" | "dark") => void;
+  value: string;
+  onValueChange: (key: string, value: string) => void;
   onDelete?: (key: string) => void;
   isCustom?: boolean;
 }) {
-  const [editingMode, setEditingMode] = useState<"light" | "dark" | null>(null);
+  const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState("");
   const [copiedKey, setCopiedKey] = useState(false);
 
-  const currentValue = activeMode === "light" ? lightValue : darkValue;
-  const type = getVariableType(varKey, lightValue || darkValue);
+  const type = getVariableType(varKey, value);
 
   const handleCopyKey = () => {
     navigator.clipboard.writeText(`var(${varKey})`);
@@ -105,21 +114,20 @@ function VariableRow({
     setTimeout(() => setCopiedKey(false), 1500);
   };
 
-  const startEdit = (mode: "light" | "dark") => {
-    setDraft(mode === "light" ? lightValue : darkValue);
-    setEditingMode(mode);
+  const startEdit = () => {
+    setDraft(value);
+    setEditing(true);
   };
 
   const commitEdit = () => {
-    if (editingMode && draft.trim()) {
-      onValueChange(varKey, draft.trim(), editingMode);
+    if (draft.trim()) {
+      onValueChange(varKey, draft.trim());
     }
-    setEditingMode(null);
+    setEditing(false);
   };
 
   return (
     <div className="group rounded-lg px-3 py-2 transition-colors hover:bg-input-bg/50">
-      {/* Row 1: Name + actions */}
       <div className="flex items-center gap-2">
         <span className="text-[12px] font-medium text-t-primary truncate flex-1">
           {name}
@@ -148,104 +156,40 @@ function VariableRow({
         )}
       </div>
 
-      {/* Row 2: Light / Dark variants side by side */}
-      <div className="mt-1.5 flex items-stretch gap-2">
-        {/* Light variant */}
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-1 mb-1">
-            <Sun className="size-3 text-amber-500" />
-            <span className="text-[9px] font-mono uppercase tracking-widest text-t-tertiary">
-              Light
-            </span>
+      <div className="mt-1.5 flex items-center gap-1.5">
+        {type === "color" && value ? (
+          <div className="relative">
+            <ColorSwatch color={value} size={22} />
+            <input
+              type="color"
+              value={value.startsWith("#") ? value : "#000000"}
+              onChange={(e) => onValueChange(varKey, e.target.value)}
+              className="absolute inset-0 size-[22px] cursor-pointer opacity-0"
+            />
           </div>
-          <div className="flex items-center gap-1.5">
-            {type === "color" && lightValue ? (
-              <div className="relative">
-                <ColorSwatch color={lightValue} size={22} />
-                <input
-                  type="color"
-                  value={lightValue.startsWith("#") ? lightValue : "#000000"}
-                  onChange={(e) =>
-                    onValueChange(varKey, e.target.value, "light")
-                  }
-                  className="absolute inset-0 size-[22px] cursor-pointer opacity-0"
-                />
-              </div>
-            ) : null}
-            {editingMode === "light" ? (
-              <input
-                type="text"
-                value={draft}
-                onChange={(e) => setDraft(e.target.value)}
-                onBlur={commitEdit}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") commitEdit();
-                  if (e.key === "Escape") setEditingMode(null);
-                }}
-                className="w-full rounded border border-b-secondary bg-input-bg px-1.5 py-0.5 text-[10px] font-mono text-t-primary outline-none focus:border-t-secondary"
-                autoFocus
-              />
-            ) : (
-              <button
-                type="button"
-                onClick={() => startEdit("light")}
-                className="truncate text-[10px] font-mono text-t-secondary hover:text-t-primary transition-colors text-left"
-              >
-                {lightValue || "—"}
-              </button>
-            )}
-          </div>
-        </div>
-
-        {/* Divider */}
-        <div className="w-px bg-b-secondary self-stretch my-1" />
-
-        {/* Dark variant */}
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-1 mb-1">
-            <Moon className="size-3 text-indigo-400" />
-            <span className="text-[9px] font-mono uppercase tracking-widest text-t-tertiary">
-              Dark
-            </span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            {type === "color" && darkValue ? (
-              <div className="relative">
-                <ColorSwatch color={darkValue} size={22} />
-                <input
-                  type="color"
-                  value={darkValue.startsWith("#") ? darkValue : "#000000"}
-                  onChange={(e) =>
-                    onValueChange(varKey, e.target.value, "dark")
-                  }
-                  className="absolute inset-0 size-[22px] cursor-pointer opacity-0"
-                />
-              </div>
-            ) : null}
-            {editingMode === "dark" ? (
-              <input
-                type="text"
-                value={draft}
-                onChange={(e) => setDraft(e.target.value)}
-                onBlur={commitEdit}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") commitEdit();
-                  if (e.key === "Escape") setEditingMode(null);
-                }}
-                className="w-full rounded border border-b-secondary bg-input-bg px-1.5 py-0.5 text-[10px] font-mono text-t-primary outline-none focus:border-t-secondary"
-                autoFocus
-              />
-            ) : (
-              <button
-                type="button"
-                onClick={() => startEdit("dark")}
-                className="truncate text-[10px] font-mono text-t-secondary hover:text-t-primary transition-colors text-left"
-              >
-                {darkValue || "—"}
-              </button>
-            )}
-          </div>
-        </div>
+        ) : null}
+        {editing ? (
+          <input
+            type="text"
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            onBlur={commitEdit}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") commitEdit();
+              if (e.key === "Escape") setEditing(false);
+            }}
+            className="w-full rounded border border-b-secondary bg-input-bg px-1.5 py-0.5 text-[10px] font-mono text-t-primary outline-none focus:border-t-secondary"
+            autoFocus
+          />
+        ) : (
+          <button
+            type="button"
+            onClick={startEdit}
+            className="truncate text-[10px] font-mono text-t-secondary hover:text-t-primary transition-colors text-left"
+          >
+            {value || "—"}
+          </button>
+        )}
       </div>
     </div>
   );
@@ -254,20 +198,18 @@ function VariableRow({
 function AddVariableForm({
   onAdd,
 }: {
-  onAdd: (key: string, light: string, dark: string) => void;
+  onAdd: (key: string, value: string) => void;
 }) {
   const [open, setOpen] = useState(false);
   const [key, setKey] = useState("");
-  const [light, setLight] = useState("");
-  const [dark, setDark] = useState("");
+  const [value, setValue] = useState("");
 
   const handleSubmit = () => {
     const k = key.trim().startsWith("--") ? key.trim() : `--${key.trim()}`;
     if (!k || k === "--") return;
-    onAdd(k, light.trim() || "#000000", dark.trim() || "#ffffff");
+    onAdd(k, value.trim() || "#000000");
     setKey("");
-    setLight("");
-    setDark("");
+    setValue("");
     setOpen(false);
   };
 
@@ -300,31 +242,17 @@ function AddVariableForm({
             autoFocus
           />
         </div>
-        <div className="flex gap-2">
-          <div className="flex-1">
-            <label className="mb-1 flex items-center gap-1 text-[9px] font-mono uppercase tracking-widest text-t-tertiary">
-              <Sun className="size-2.5 text-amber-500" /> Light
-            </label>
-            <input
-              type="text"
-              value={light}
-              onChange={(e) => setLight(e.target.value)}
-              placeholder="#000000"
-              className="w-full rounded border border-b-secondary bg-input-bg px-2 py-1.5 text-[11px] font-mono text-t-primary placeholder:text-t-tertiary outline-none focus:border-t-secondary"
-            />
-          </div>
-          <div className="flex-1">
-            <label className="mb-1 flex items-center gap-1 text-[9px] font-mono uppercase tracking-widest text-t-tertiary">
-              <Moon className="size-2.5 text-indigo-400" /> Dark
-            </label>
-            <input
-              type="text"
-              value={dark}
-              onChange={(e) => setDark(e.target.value)}
-              placeholder="#ffffff"
-              className="w-full rounded border border-b-secondary bg-input-bg px-2 py-1.5 text-[11px] font-mono text-t-primary placeholder:text-t-tertiary outline-none focus:border-t-secondary"
-            />
-          </div>
+        <div>
+          <label className="mb-1 block text-[9px] font-mono uppercase tracking-widest text-t-tertiary">
+            Value
+          </label>
+          <input
+            type="text"
+            value={value}
+            onChange={(e) => setValue(e.target.value)}
+            placeholder="#000000"
+            className="w-full rounded border border-b-secondary bg-input-bg px-2 py-1.5 text-[11px] font-mono text-t-primary placeholder:text-t-tertiary outline-none focus:border-t-secondary"
+          />
         </div>
       </div>
       <div className="mt-2.5 flex items-center justify-end gap-2">
@@ -333,8 +261,7 @@ function AddVariableForm({
           onClick={() => {
             setOpen(false);
             setKey("");
-            setLight("");
-            setDark("");
+            setValue("");
           }}
           className="rounded px-2.5 py-1 text-[11px] text-t-secondary hover:bg-input-bg transition-colors"
         >
@@ -358,50 +285,193 @@ interface StyleGuidePanelProps {
 }
 
 export function StyleGuidePanel({ open, onClose }: StyleGuidePanelProps) {
-  const theme = useAppSelector((s) => s.canvas.theme);
+  const themes = useAppSelector((s) => s.canvas.themes);
+  const activeThemeId = useAppSelector((s) => s.canvas.activeThemeId);
+  const activeMode = useAppSelector((s) => s.canvas.activeThemeMode);
+  const selectedFrameIds = useAppSelector((s) => s.canvas.selectedFrameIds);
+  const frames = useAppSelector((s) => s.canvas.frames);
   const dispatch = useAppDispatch();
-  const [activeMode, setActiveMode] = useState<"light" | "dark">("light");
 
-  // Dark variants are stored as --key-dark in the theme object
-  const getLightValue = useCallback(
-    (key: string) => theme[key] ?? "",
-    [theme],
+  const [showAddVariant, setShowAddVariant] = useState(false);
+  const [newVariantName, setNewVariantName] = useState("");
+  const pendingThemeUpdatesRef = useRef(
+    new Map<
+      string,
+      { themeId: string; variantName: string; key: string; value: string }
+    >(),
   );
-  const getDarkValue = useCallback(
-    (key: string) => theme[`${key}-dark`] ?? theme[key] ?? "",
-    [theme],
+  const rafFlushRef = useRef<number | null>(null);
+  const pendingPersistRef = useRef(
+    new Map<
+      string,
+      {
+        themeId: string;
+        variantName: string;
+        variables: Record<string, string>;
+      }
+    >(),
   );
+  const persistInFlightRef = useRef(false);
+
+  const activeTheme = themes.find((t) => t.id === activeThemeId);
+  const variantNames = activeTheme ? Object.keys(activeTheme.variants) : [];
+  const currentVariant = activeTheme
+    ? resolveVariant(activeTheme.variants, activeMode)
+    : {};
+
+  const selectedFrame =
+    selectedFrameIds.length === 1
+      ? frames.find((f) => f.id === selectedFrameIds[0])
+      : undefined;
+
+  const flushThemePersistence = useCallback(() => {
+    if (persistInFlightRef.current) return;
+    const first = pendingPersistRef.current.entries().next();
+    if (first.done) return;
+    const [persistKey, payload] = first.value;
+    pendingPersistRef.current.delete(persistKey);
+    persistInFlightRef.current = true;
+
+    http
+      .put("/api/themes", {
+        id: payload.themeId,
+        variantName: payload.variantName,
+        variables: payload.variables,
+      })
+      .catch(() => {})
+      .finally(() => {
+        persistInFlightRef.current = false;
+        if (pendingPersistRef.current.size > 0) {
+          flushThemePersistence();
+        }
+      });
+  }, []);
+
+  const queueVariantPersistence = useCallback(
+    (
+      themeId: string,
+      variantName: string,
+      variables: Record<string, string>,
+    ) => {
+      const persistKey = `${themeId}:${variantName}`;
+      pendingPersistRef.current.set(persistKey, {
+        themeId,
+        variantName,
+        variables,
+      });
+      flushThemePersistence();
+    },
+    [flushThemePersistence],
+  );
+
+  const flushThemeUpdates = useCallback(() => {
+    rafFlushRef.current = null;
+    const updates = Array.from(pendingThemeUpdatesRef.current.values());
+    pendingThemeUpdatesRef.current.clear();
+    if (updates.length === 0) return;
+
+    for (const u of updates) {
+      dispatch(
+        setThemeVariantVariable({
+          themeId: u.themeId,
+          variantName: u.variantName,
+          key: u.key,
+          value: u.value,
+        }),
+      );
+    }
+  }, [dispatch, frames.length]);
 
   const handleValueChange = useCallback(
-    (key: string, value: string, mode: "light" | "dark") => {
-      if (mode === "light") {
-        dispatch(setTheme({ [key]: value }));
-      } else {
-        // Store dark variant separately; apply if currently previewing dark
-        dispatch(setTheme({ [`${key}-dark`]: value }));
+    (key: string, value: string) => {
+      if (!activeThemeId) return;
+      const fullVariantSnapshot = {
+        ...(activeTheme
+          ? resolveVariant(activeTheme.variants, activeMode)
+          : {}),
+        [key]: value,
+      };
+      queueVariantPersistence(activeThemeId, activeMode, fullVariantSnapshot);
+      pendingThemeUpdatesRef.current.set(
+        `${activeThemeId}:${activeMode}:${key}`,
+        {
+          themeId: activeThemeId,
+          variantName: activeMode,
+          key,
+          value,
+        },
+      );
+      if (rafFlushRef.current == null) {
+        rafFlushRef.current = requestAnimationFrame(flushThemeUpdates);
       }
     },
-    [dispatch],
-  );
-
-  const handleAddVariable = useCallback(
-    (key: string, light: string, dark: string) => {
-      dispatch(setTheme({ [key]: light, [`${key}-dark`]: dark }));
-    },
-    [dispatch],
+    [
+      activeThemeId,
+      activeTheme,
+      activeMode,
+      frames.length,
+      flushThemeUpdates,
+      queueVariantPersistence,
+    ],
   );
 
   const handleDeleteVariable = useCallback(
     (key: string) => {
-      // Set to empty to effectively remove — setTheme skips undefined but we can set empty
-      dispatch(setTheme({ [key]: "", [`${key}-dark`]: "" }));
+      handleValueChange(key, "");
     },
-    [dispatch],
+    [handleValueChange],
   );
+
+  const handleAddVariable = useCallback(
+    (key: string, value: string) => {
+      handleValueChange(key, value);
+    },
+    [handleValueChange],
+  );
+
+  const handleAddVariant = () => {
+    const name = newVariantName.trim().toLowerCase().replace(/\s+/g, "-");
+    if (!name || !activeThemeId) return;
+    if (activeTheme?.variants[name]) {
+      setShowAddVariant(false);
+      setNewVariantName("");
+      return;
+    }
+    const fullVariantSnapshot = activeTheme
+      ? resolveVariant(activeTheme.variants, activeMode)
+      : {};
+    dispatch(
+      addThemeVariant({
+        themeId: activeThemeId,
+        variantName: name,
+        baseVariant: activeMode,
+      }),
+    );
+    queueVariantPersistence(activeThemeId, name, fullVariantSnapshot);
+    dispatch(setActiveThemeMode(name as ThemeMode));
+    setNewVariantName("");
+    setShowAddVariant(false);
+  };
+
+  const handleRemoveVariant = (variantName: string) => {
+    if (!activeThemeId || variantName === "light") return;
+    dispatch(removeThemeVariant({ themeId: activeThemeId, variantName }));
+  };
+
+  const handleAssignToFrame = (themeId: string, variantName: string) => {
+    if (!selectedFrame) return;
+    dispatch(
+      assignThemeToFrame({
+        frameId: selectedFrame.id,
+        themeId,
+        variantName,
+      }),
+    );
+  };
 
   if (!open) return null;
 
-  const hasTheme = Object.keys(theme).filter((k) => k.startsWith("--") && !k.endsWith("-dark") && theme[k]).length > 0;
+  const hasTheme = activeTheme && variantNames.length > 0;
 
   return (
     <div className="absolute right-14 top-0 z-20 w-[340px] max-h-[calc(100vh-100px)] overflow-hidden rounded-xl border border-b-strong bg-surface-elevated shadow-xl backdrop-blur-xl flex flex-col">
@@ -437,37 +507,179 @@ export function StyleGuidePanel({ open, onClose }: StyleGuidePanelProps) {
         </button>
       </div>
 
-      {/* Mode toggle */}
+      {/* Theme selector dropdown */}
+      {themes.length > 0 && (
+        <div className="border-b border-b-secondary px-4 py-2.5 shrink-0">
+          <label className="text-[9px] font-mono uppercase tracking-widest text-t-tertiary mb-1.5 block">
+            Theme
+          </label>
+          <div className="relative">
+            <select
+              value={activeThemeId ?? ""}
+              onChange={(e) => dispatch(setActiveThemeId(e.target.value))}
+              className="w-full appearance-none rounded-lg border border-b-secondary bg-input-bg px-3 py-2 pr-8 text-xs font-medium text-t-primary outline-none focus:border-t-secondary cursor-pointer"
+            >
+              {themes.map((t) => (
+                <option key={t.id} value={t.id}>
+                  {t.name}
+                </option>
+              ))}
+            </select>
+            <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 size-3.5 text-t-tertiary" />
+          </div>
+        </div>
+      )}
+
+      {/* Variant tabs */}
       {hasTheme && (
-        <div className="flex items-center gap-1 border-b border-b-secondary px-4 py-2 shrink-0">
-          <span className="text-[10px] font-mono uppercase tracking-widest text-t-tertiary mr-auto">
-            Preview mode
-          </span>
-          <div className="inline-flex rounded-md border border-b-secondary bg-input-bg p-0.5">
+        <div className="border-b border-b-secondary px-4 py-2.5 shrink-0">
+          <div className="mb-1.5 flex items-center gap-1.5">
+            <Layers className="size-3 text-t-tertiary" />
+            <span className="text-[9px] font-mono uppercase tracking-widest text-t-tertiary">
+              Variant
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="min-w-0 flex-1 overflow-x-auto scrollbar-hide rounded-md border border-b-secondary bg-input-bg p-0.5">
+              <div className="inline-flex min-w-max items-center gap-1">
+                {variantNames.map((vName) => (
+                  <button
+                    key={vName}
+                    type="button"
+                    onClick={() =>
+                      dispatch(setActiveThemeMode(vName as ThemeMode))
+                    }
+                    className={`group/tab flex items-center gap-1 whitespace-nowrap rounded px-2 py-1 text-[10px] font-mono font-medium transition-colors ${
+                      activeMode === vName
+                        ? "bg-surface-elevated text-t-primary shadow-sm"
+                        : "text-t-tertiary hover:text-t-secondary"
+                    }`}
+                  >
+                    {vName === "light" ? (
+                      <Sun className="size-3" />
+                    ) : vName === "dark" ? (
+                      <Moon className="size-3" />
+                    ) : (
+                      <Layers className="size-3" />
+                    )}
+                    {vName}
+                    {vName !== "light" && activeMode === vName && (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleRemoveVariant(vName);
+                        }}
+                        className="ml-0.5 rounded p-0.5 opacity-0 group-hover/tab:opacity-100 text-t-tertiary hover:text-red-400 transition-all"
+                        title={`Remove ${vName} variant`}
+                      >
+                        <X className="size-2.5" />
+                      </button>
+                    )}
+                  </button>
+                ))}
+              </div>
+            </div>
             <button
               type="button"
-              onClick={() => setActiveMode("light")}
-              className={`flex items-center gap-1 rounded px-2 py-1 text-[10px] font-mono font-medium transition-colors ${
-                activeMode === "light"
-                  ? "bg-surface-elevated text-t-primary shadow-sm"
-                  : "text-t-tertiary hover:text-t-secondary"
-              }`}
+              onClick={() => setShowAddVariant(true)}
+              className="inline-flex shrink-0 items-center gap-1 rounded-md border border-b-secondary bg-input-bg px-2 py-1 text-[10px] font-mono text-t-secondary hover:text-t-primary transition-colors"
+              title="Add variant"
             >
-              <Sun className="size-3" />
-              Light
+              <Plus className="size-3" />
+              Add
             </button>
-            <button
-              type="button"
-              onClick={() => setActiveMode("dark")}
-              className={`flex items-center gap-1 rounded px-2 py-1 text-[10px] font-mono font-medium transition-colors ${
-                activeMode === "dark"
-                  ? "bg-surface-elevated text-t-primary shadow-sm"
-                  : "text-t-tertiary hover:text-t-secondary"
-              }`}
+          </div>
+        </div>
+      )}
+
+      {/* Add variant form */}
+      {showAddVariant && (
+        <div className="border-b border-b-secondary px-4 py-2.5 flex items-center gap-2 shrink-0">
+          <input
+            type="text"
+            value={newVariantName}
+            onChange={(e) => setNewVariantName(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") handleAddVariant();
+              if (e.key === "Escape") setShowAddVariant(false);
+            }}
+            placeholder="e.g. high-contrast"
+            className="flex-1 rounded border border-b-secondary bg-input-bg px-2 py-1 text-[11px] font-mono text-t-primary placeholder:text-t-tertiary outline-none focus:border-t-secondary"
+            autoFocus
+          />
+          <button
+            type="button"
+            onClick={handleAddVariant}
+            className="rounded bg-t-primary px-2 py-1 text-[10px] font-medium text-surface"
+          >
+            Add
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setShowAddVariant(false);
+              setNewVariantName("");
+            }}
+            className="rounded p-1 text-t-tertiary hover:text-t-primary"
+          >
+            <X className="size-3" />
+          </button>
+        </div>
+      )}
+
+      {/* Per-frame assignment */}
+      {selectedFrame && hasTheme && (
+        <div className="border-b border-b-secondary px-4 py-2.5 shrink-0 bg-input-bg/30">
+          <div className="flex items-center gap-1.5 mb-2">
+            <svg
+              width="12"
+              height="12"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              className="text-t-secondary"
             >
-              <Moon className="size-3" />
-              Dark
-            </button>
+              <rect x="3" y="3" width="18" height="18" rx="2" />
+            </svg>
+            <span className="text-[10px] font-mono font-medium text-t-secondary truncate">
+              {selectedFrame.label}
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            <select
+              value={selectedFrame.themeId ?? activeThemeId ?? ""}
+              onChange={(e) =>
+                handleAssignToFrame(
+                  e.target.value,
+                  selectedFrame.variantName ?? activeMode,
+                )
+              }
+              className="flex-1 appearance-none rounded border border-b-secondary bg-input-bg px-2 py-1.5 text-[11px] font-mono text-t-primary outline-none cursor-pointer"
+            >
+              {themes.map((t) => (
+                <option key={t.id} value={t.id}>
+                  {t.name}
+                </option>
+              ))}
+            </select>
+            <select
+              value={selectedFrame.variantName ?? activeMode}
+              onChange={(e) =>
+                handleAssignToFrame(
+                  selectedFrame.themeId ?? activeThemeId ?? "",
+                  e.target.value,
+                )
+              }
+              className="w-24 appearance-none rounded border border-b-secondary bg-input-bg px-2 py-1.5 text-[11px] font-mono text-t-primary outline-none cursor-pointer"
+            >
+              {variantNames.map((v) => (
+                <option key={v} value={v}>
+                  {v}
+                </option>
+              ))}
+            </select>
           </div>
         </div>
       )}
@@ -493,9 +705,7 @@ export function StyleGuidePanel({ open, onClose }: StyleGuidePanelProps) {
                 <circle cx="6" cy="12" r="2.5" />
               </svg>
             </div>
-            <p className="text-xs font-medium text-t-secondary">
-              No theme yet
-            </p>
+            <p className="text-xs font-medium text-t-secondary">No theme yet</p>
             <p className="mt-1 text-[11px] text-t-tertiary">
               Generate a design to create theme variables.
             </p>
@@ -504,7 +714,9 @@ export function StyleGuidePanel({ open, onClose }: StyleGuidePanelProps) {
           <div className="py-2">
             {VARIABLE_GROUPS.map((group) => {
               const groupVars = group.vars.filter(
-                (v) => theme[v.key] !== undefined && theme[v.key] !== "",
+                (v) =>
+                  currentVariant[v.key] !== undefined &&
+                  currentVariant[v.key] !== "",
               );
               if (groupVars.length === 0) return null;
               return (
@@ -517,9 +729,7 @@ export function StyleGuidePanel({ open, onClose }: StyleGuidePanelProps) {
                       key={v.key}
                       varKey={v.key}
                       name={v.name}
-                      lightValue={getLightValue(v.key)}
-                      darkValue={getDarkValue(v.key)}
-                      activeMode={activeMode}
+                      value={currentVariant[v.key] ?? ""}
                       onValueChange={handleValueChange}
                     />
                   ))}
@@ -532,12 +742,8 @@ export function StyleGuidePanel({ open, onClose }: StyleGuidePanelProps) {
               const knownKeys = new Set(
                 VARIABLE_GROUPS.flatMap((g) => g.vars.map((v) => v.key)),
               );
-              const extras = Object.entries(theme).filter(
-                ([k, v]) =>
-                  !knownKeys.has(k) &&
-                  k.startsWith("--") &&
-                  !k.endsWith("-dark") &&
-                  v !== "",
+              const extras = Object.entries(currentVariant).filter(
+                ([k, v]) => !knownKeys.has(k) && k.startsWith("--") && v !== "",
               );
               if (extras.length === 0) return null;
               return (
@@ -550,9 +756,7 @@ export function StyleGuidePanel({ open, onClose }: StyleGuidePanelProps) {
                       key={k}
                       varKey={k}
                       name={k.replace(/^--/, "")}
-                      lightValue={getLightValue(k)}
-                      darkValue={getDarkValue(k)}
-                      activeMode={activeMode}
+                      value={currentVariant[k] ?? ""}
                       onValueChange={handleValueChange}
                       onDelete={handleDeleteVariable}
                       isCustom
@@ -571,7 +775,12 @@ export function StyleGuidePanel({ open, onClose }: StyleGuidePanelProps) {
       {hasTheme && (
         <div className="border-t border-b-secondary px-4 py-2.5 shrink-0">
           <p className="text-[10px] text-t-tertiary/60">
-            Edits apply live to all screens. Click swatches to pick colors.
+            Editing{" "}
+            <span className="font-medium text-t-tertiary">
+              {activeTheme?.name}
+            </span>{" "}
+            / <span className="font-medium text-t-tertiary">{activeMode}</span>.
+            Changes apply live.
           </p>
         </div>
       )}

@@ -28,6 +28,7 @@ import {
 } from "@/lib/chat-bridge";
 import { cursor, initCursor } from "@/lib/cursor";
 import { Brain, ChevronDown, X, Zap } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import ReactMarkdown from "react-markdown";
 import { ImageIcon } from "@/lib/svg-icons";
@@ -83,7 +84,8 @@ const latestCanvasState: {
     html: string;
   }[];
   theme: Record<string, string>;
-} = { frames: [], theme: {} };
+  themeMode: "light" | "dark";
+} = { frames: [], theme: {}, themeMode: "light" };
 
 function getToolDisplayLabel(
   toolType: string,
@@ -215,18 +217,25 @@ function ToolStepChip({
 
   return (
     <div
-      className={`not-prose flex w-fit items-center gap-2 rounded-md border border-b-secondary px-2 py-1 transition-all ${
-        finished ? "bg-input-bg" : "bg-surface-sunken/80"
+      className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 ${
+        finished
+          ? "border-emerald-500/30 bg-emerald-500/8"
+          : "border-blue-500/30 bg-blue-500/8"
       }`}
     >
       {finished ? (
-        CheckIcon
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" className="shrink-0">
+          <path d="M8 12.5l2.5 2.5 5-5" stroke="#22c55e" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
       ) : (
-        <span className="inline-block size-3.5 shrink-0 animate-pulse rounded-full bg-t-tertiary/80" />
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" className="shrink-0 animate-spin" style={{ animationDuration: "1.5s" }}>
+          <circle cx="12" cy="12" r="9" stroke="#3b82f6" strokeOpacity="0.3" strokeWidth="2.5" />
+          <path d="M12 3a9 9 0 0 1 9 9" stroke="#3b82f6" strokeWidth="2.5" strokeLinecap="round" />
+        </svg>
       )}
       <span
-        className={`font-mono text-[11px] uppercase tracking-wider ${
-          finished ? "text-t-secondary" : "text-t-primary"
+        className={`text-[11px] font-medium ${
+          finished ? "text-emerald-600 dark:text-emerald-400" : "text-blue-600 dark:text-blue-400"
         }`}
       >
         {label}
@@ -235,13 +244,43 @@ function ToolStepChip({
   );
 }
 
-function StreamingActivityIndicator() {
+function StreamingActivityIndicator({ label }: { label?: string }) {
   return (
-    <div className="flex w-full justify-start">
-      <div className="w-fit max-w-[85%] rounded-lg bg-muted/50 px-3 py-2.5 text-sm">
-        <span className="inline-block animate-pulse bg-gradient-to-r from-t-400 via-t-200 to-t-400 bg-[length:200%_100%] bg-clip-text text-transparent [animation-duration:1.5s] font-medium">
-          Working…
+    <div className="flex justify-start">
+      <div className="rounded-lg bg-input-bg/60 px-3 py-2">
+        <span className="shimmer-text text-xs font-medium">
+          {label ?? "Thinking..."}
         </span>
+      </div>
+    </div>
+  );
+}
+
+function WelcomeState() {
+  return (
+    <div className="flex flex-1 flex-col items-center justify-center gap-4 px-6 py-12 text-center">
+      <div className="flex size-12 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-500/15 to-blue-500/15">
+        <Zap className="size-6 text-violet-500" fill="currentColor" />
+      </div>
+      <div className="flex flex-col gap-1.5">
+        <h3 className="text-sm font-semibold text-t-primary">AI Design Assistant</h3>
+        <p className="text-xs leading-relaxed text-t-tertiary max-w-[280px]">
+          Describe what you want to build or change. I can create screens, update designs, and build themes.
+        </p>
+      </div>
+      <div className="flex flex-col gap-2 w-full max-w-[260px] mt-2">
+        {[
+          "Design a login screen",
+          "Update the color theme",
+          "Add a settings page",
+        ].map((suggestion) => (
+          <div
+            key={suggestion}
+            className="rounded-xl border border-b-secondary/60 bg-input-bg/50 px-3.5 py-2.5 text-xs text-t-secondary text-left transition-colors hover:bg-input-bg hover:text-t-primary cursor-default"
+          >
+            {suggestion}
+          </div>
+        ))}
       </div>
     </div>
   );
@@ -251,43 +290,53 @@ function ReasoningBlock({
   text,
   isStreaming,
   isComplete,
+  instanceKey,
 }: {
   text: string;
   isStreaming?: boolean;
   isComplete?: boolean;
+  instanceKey: string;
 }) {
-  const defaultExpanded = !!isStreaming && !isComplete;
-  const [userExpanded, setUserExpanded] = useState<boolean | null>(null);
-  const expanded = userExpanded !== null ? userExpanded : defaultExpanded;
+  const streaming = !!isStreaming && !isComplete;
+  const [open, setOpen] = useState(false);
+
+  useEffect(() => {
+    if (streaming) setOpen(true);
+  }, [streaming]);
 
   return (
-    <div className="not-prose flex w-full flex-col transition-all">
+    <div className="overflow-hidden rounded-md border border-b-secondary bg-input-bg">
       <button
         type="button"
-        onClick={() => setUserExpanded(!expanded)}
-        className="inline-flex w-full items-center justify-between gap-1 px-0 py-1 text-left"
+        onClick={() => setOpen((v) => !v)}
+        className="flex w-full items-center gap-2 px-2.5 py-2 text-left transition-colors hover:bg-surface-sunken/80"
+        aria-expanded={open}
+        aria-controls={`reasoning-body-${instanceKey}`}
+        id={`reasoning-trigger-${instanceKey}`}
       >
-        <div className="flex items-center gap-1.5">
-          <Brain
-            className="size-3.5 shrink-0 text-t-secondary"
-            strokeWidth={1.5}
-          />
-          <span className="font-mono text-[11px] text-t-secondary uppercase tracking-wider">
-            {expanded ? "Hide thinking" : "Thinking"}
-          </span>
-        </div>
+        <Brain className="size-3.5 shrink-0 text-t-tertiary" />
+        <span className="flex-1 text-xs font-medium text-t-secondary">
+          {streaming ? "Reasoning…" : "Reasoning"}
+        </span>
         <ChevronDown
-          className={`size-3.5 shrink-0 text-t-secondary transition-transform ${
-            expanded ? "rotate-180" : ""
-          }`}
-          strokeWidth={2}
+          className={cn(
+            "size-3.5 shrink-0 text-t-tertiary transition-transform",
+            open && "rotate-180",
+          )}
         />
       </button>
-      {expanded && text && (
-        <div className="chat-markdown py-1.5 text-sm text-t-secondary font-sans">
-          <ReactMarkdown components={markdownComponents}>{text}</ReactMarkdown>
+      {open ? (
+        <div
+          id={`reasoning-body-${instanceKey}`}
+          role="region"
+          aria-labelledby={`reasoning-trigger-${instanceKey}`}
+          className="max-h-[120px] overflow-y-auto px-2 py-1.5"
+        >
+          <div className="chat-markdown text-[11px] leading-relaxed">
+            <ReactMarkdown components={markdownComponents}>{text}</ReactMarkdown>
+          </div>
         </div>
-      )}
+      ) : null}
     </div>
   );
 }
@@ -331,7 +380,7 @@ function AssistantMessageContent({
   }
 
   return (
-    <div className="space-y-3">
+    <div className="flex flex-col gap-2">
       {ordered.map((item, i) => {
         if (item.kind === "tool") {
           const step = stepByCallId.get(item.toolCallId);
@@ -339,7 +388,7 @@ function AssistantMessageContent({
           return (
             <div
               key={`${item.toolCallId}-${i}`}
-              className="flex flex-col gap-2 shrink-0"
+              className="flex flex-wrap gap-1.5 shrink-0"
             >
               <ToolStepChip step={step} frames={frames} />
             </div>
@@ -349,6 +398,7 @@ function AssistantMessageContent({
           return (
             <ReasoningBlock
               key={`reasoning-${i}`}
+              instanceKey={`reasoning-${i}`}
               text={item.text}
               isStreaming={isStreaming}
               isComplete={
@@ -379,51 +429,67 @@ function getUserMessageText(msg: {
   return textPart?.text ?? null;
 }
 
-const CheckIcon = (
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    width="1em"
-    height="1em"
-    fill="currentColor"
-    viewBox="0 0 256 256"
-    className="size-3.5 shrink-0 text-t-tertiary"
-  >
-    <path d="M229.66,77.66l-128,128a8,8,0,0,1-11.32,0l-56-56a8,8,0,0,1,11.32-11.32L96,188.69,218.34,66.34a8,8,0,0,1,11.32,11.32Z" />
-  </svg>
-);
 
 const markdownComponents: React.ComponentProps<
   typeof ReactMarkdown
 >["components"] = {
-  p: ({ children }) => <p className="mb-2 last:mb-0">{children}</p>,
+  p: ({ children }) => (
+    <p className="mb-1.5 last:mb-0 text-[13px] leading-relaxed text-t-secondary">
+      {children}
+    </p>
+  ),
   ul: ({ children }) => (
-    <ul className="mb-2 list-disc space-y-1 pl-4">{children}</ul>
+    <ul className="mb-1.5 list-disc space-y-0.5 pl-3">{children}</ul>
   ),
   ol: ({ children }) => (
-    <ol className="mb-2 list-decimal space-y-1 pl-4">{children}</ol>
+    <ol className="mb-1.5 list-decimal space-y-0.5 pl-3">{children}</ol>
   ),
-  li: ({ children }) => <li className="leading-relaxed">{children}</li>,
+  li: ({ children }) => (
+    <li className="text-[13px] leading-relaxed text-t-secondary">{children}</li>
+  ),
   code: ({ children }) => (
-    <code className="rounded bg-muted/80 px-1.5 py-0.5 font-mono text-xs">
+    <code className="rounded bg-muted/80 px-1 py-0.5 font-mono text-[12px] text-t-primary">
       {children}
     </code>
   ),
   pre: ({ children }) => (
-    <pre className="mb-2 overflow-x-auto rounded-lg bg-muted/80 p-3 font-mono text-xs">
+    <pre className="mb-1.5 max-w-full overflow-x-auto rounded-md bg-muted/80 p-2 font-mono text-[12px] text-t-secondary">
       {children}
     </pre>
   ),
   strong: ({ children }) => (
-    <strong className="font-semibold">{children}</strong>
+    <strong className="font-semibold text-t-primary">{children}</strong>
   ),
+  em: ({ children }) => <em className="italic text-t-secondary">{children}</em>,
   h1: ({ children }) => (
-    <h1 className="mb-2 mt-3 text-base font-semibold first:mt-0">{children}</h1>
+    <h1 className="mb-1 mt-2 text-[15px] font-semibold text-t-primary first:mt-0">
+      {children}
+    </h1>
   ),
   h2: ({ children }) => (
-    <h2 className="mb-2 mt-3 text-sm font-semibold first:mt-0">{children}</h2>
+    <h2 className="mb-1 mt-2 text-[13px] font-semibold text-t-primary first:mt-0">
+      {children}
+    </h2>
   ),
   h3: ({ children }) => (
-    <h3 className="mb-2 mt-2 text-sm font-medium first:mt-0">{children}</h3>
+    <h3 className="mb-1 mt-1.5 text-[13px] font-medium text-t-primary first:mt-0">
+      {children}
+    </h3>
+  ),
+  blockquote: ({ children }) => (
+    <blockquote className="mb-1.5 border-l-2 pl-2 text-t-secondary [border-left-color:var(--border-secondary)]">
+      {children}
+    </blockquote>
+  ),
+  a: ({ children, href }) => (
+    <a
+      href={href}
+      className="text-t-primary underline underline-offset-2 hover:text-t-secondary"
+      target="_blank"
+      rel="noreferrer"
+    >
+      {children}
+    </a>
   ),
 };
 
@@ -433,42 +499,7 @@ const DEFAULT_PANEL_WIDTH = 432;
 const RAIL_OFFSET = 70;
 const RIGHT_MARGIN = 16;
 
-function ChatHistoryShimmer() {
-  return (
-    <div className="flex flex-col gap-4 p-2">
-      <div className="flex justify-end">
-        <div className="h-8 w-[60%] animate-pulse rounded-lg bg-input-bg" />
-      </div>
-      <div className="flex flex-col gap-2">
-        <div className="h-6 w-[45%] animate-pulse rounded-lg bg-input-bg" />
-        <div
-          className="h-6 w-[70%] animate-pulse rounded-lg bg-input-bg"
-          style={{ animationDelay: "75ms" }}
-        />
-        <div
-          className="h-6 w-[55%] animate-pulse rounded-lg bg-input-bg"
-          style={{ animationDelay: "150ms" }}
-        />
-      </div>
-      <div className="flex justify-end">
-        <div
-          className="h-8 w-[50%] animate-pulse rounded-lg bg-input-bg"
-          style={{ animationDelay: "200ms" }}
-        />
-      </div>
-      <div className="flex flex-col gap-2">
-        <div
-          className="h-6 w-[65%] animate-pulse rounded-lg bg-input-bg"
-          style={{ animationDelay: "250ms" }}
-        />
-        <div
-          className="h-6 w-[40%] animate-pulse rounded-lg bg-input-bg"
-          style={{ animationDelay: "325ms" }}
-        />
-      </div>
-    </div>
-  );
-}
+// ChatHistoryShimmer is no longer needed — loading state is inline
 
 interface ChatPanelProps {
   isVisible: boolean;
@@ -506,6 +537,7 @@ export function ChatPanel({
   const projectId = useAppSelector((s) => s.project.projectId) ?? "";
   const frames = useAppSelector((s) => s.canvas.frames);
   const theme = useAppSelector((s) => s.canvas.theme);
+  const activeThemeMode = useAppSelector((s) => s.canvas.activeThemeMode);
   const activeFrameLabel =
     selectedFrameIds.length === 1
       ? (frames.find((f) => f.id === selectedFrameIds[0])?.label ?? frameName)
@@ -532,32 +564,46 @@ export function ChatPanel({
     stateRef.current = { frames, theme };
     latestCanvasState.frames = frames;
     latestCanvasState.theme = theme;
-  }, [frames, theme]);
+    latestCanvasState.themeMode = activeThemeMode;
+  }, [frames, theme, activeThemeMode]);
 
   const activeThemeIdRef = useRef<string | null>(null);
   const persistThemeToDatabase = useCallback(
-    (variables: Record<string, string>, themeName?: string) => {
+    (
+      variables: Record<string, string>,
+      themeName?: string,
+      variantName?: string,
+    ) => {
       if (!chatUserId) return;
       const themeId = activeThemeIdRef.current;
       if (themeId) {
         http
-          .put("/api/themes", { id: themeId, variables })
+          .put("/api/themes", {
+            id: themeId,
+            ...(themeName && { name: themeName }),
+            variables,
+            variantName: variantName ?? latestCanvasState.themeMode,
+          })
           .then(({ data }) => {
             dispatch(
               upsertStoredTheme({
                 id: data.id,
                 name: data.name,
-                variables: data.variables,
+                variants: data.variants,
               }),
             );
           })
           .catch(() => {});
       } else {
+        // For new themes, wrap variables in the variant structure
+        const variants = {
+          [variantName ?? latestCanvasState.themeMode ?? "light"]: variables,
+        };
         http
           .post("/api/themes", {
             userId: chatUserId,
-            name: themeName ?? "Default",
-            variables,
+            name: themeName || "Untitled Theme",
+            variants,
           })
           .then(({ data }) => {
             activeThemeIdRef.current = data.id;
@@ -565,7 +611,7 @@ export function ChatPanel({
               upsertStoredTheme({
                 id: data.id,
                 name: data.name,
-                variables: data.variables,
+                variants: data.variants,
               }),
             );
           })
@@ -612,6 +658,7 @@ export function ChatPanel({
             messageId: options.messageId,
             frames: latestCanvasState.frames,
             theme: latestCanvasState.theme,
+            themeMode: latestCanvasState.themeMode,
             agentCount: agentCountRef.current,
             userId: chatSessionContextRef.current.userId,
           },
@@ -639,6 +686,7 @@ export function ChatPanel({
             html?: string;
           };
           theme?: Record<string, string>;
+          themeName?: string;
           themeUpdates?: Record<string, string>;
         };
       }
@@ -687,23 +735,6 @@ export function ChatPanel({
           toolName === "edit_design" ||
           toolName === "read_screen"
         ) {
-          // #region agent log
-          fetch(
-            "http://127.0.0.1:7253/ingest/bf26e32e-b221-45cd-9795-984cd7651c6f",
-            {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                location: "ChatPanel.tsx:tool-input-start",
-                message: "calling cursor.working before input known",
-                data: { toolCallId, toolName },
-                timestamp: Date.now(),
-                runId: "pre-fix",
-                hypothesisId: "H1",
-              }),
-            },
-          ).catch(() => {});
-          // #endregion
           cursor.working(cursor.MAIN);
         }
         return;
@@ -720,6 +751,7 @@ export function ChatPanel({
                 html?: string;
               };
               theme?: Record<string, string>;
+              themeName?: string;
               themeUpdates?: Record<string, string>;
               orchestrationId?: string;
               agents?: Array<{
@@ -796,14 +828,17 @@ export function ChatPanel({
         }
         if (output?.themeUpdates) {
           dispatch(setTheme(output.themeUpdates));
-          persistThemeToDatabase({
-            ...stateRef.current.theme,
-            ...output.themeUpdates,
-          });
+          persistThemeToDatabase(
+            {
+              ...stateRef.current.theme,
+              ...output.themeUpdates,
+            },
+            output.themeName,
+          );
         }
         if (output?.theme) {
           dispatch(replaceTheme(output.theme));
-          persistThemeToDatabase(output.theme);
+          persistThemeToDatabase(output.theme, output.themeName);
         }
         const finishedStep = toolStepsRef.current.find(
           (s) => s.toolCallId === toolCallId,
@@ -828,27 +863,6 @@ export function ChatPanel({
         const step = toolStepsRef.current.find(
           (s) => s.toolCallId === ev.toolCallId,
         );
-        // #region agent log
-        fetch(
-          "http://127.0.0.1:7253/ingest/bf26e32e-b221-45cd-9795-984cd7651c6f",
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              location: "ChatPanel.tsx:tool-input-available",
-              message: "tool input available",
-              data: {
-                toolCallId: ev.toolCallId,
-                inputId: input.id ?? null,
-                stepToolName: step?.toolName ?? null,
-              },
-              timestamp: Date.now(),
-              runId: "pre-fix",
-              hypothesisId: "H1",
-            }),
-          },
-        ).catch(() => {});
-        // #endregion
         if (input.id && step) {
           if (
             step.toolName === "design_screen" ||
@@ -888,26 +902,6 @@ export function ChatPanel({
           data.toolName === "edit_design" ||
           data.toolName === "read_screen"
         ) {
-          // #region agent log
-          fetch(
-            "http://127.0.0.1:7253/ingest/bf26e32e-b221-45cd-9795-984cd7651c6f",
-            {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                location: "ChatPanel.tsx:data-tool-call-start",
-                message: "calling cursor.working on data-tool-call-start",
-                data: {
-                  toolCallId: data.toolCallId,
-                  toolName: data.toolName,
-                },
-                timestamp: Date.now(),
-                runId: "pre-fix",
-                hypothesisId: "H4",
-              }),
-            },
-          ).catch(() => {});
-          // #endregion
           cursor.working(cursor.MAIN);
         }
         return;
@@ -919,29 +913,6 @@ export function ChatPanel({
           data.toolName === "design_screen" ||
           data.toolName === "update_screen"
         ) {
-          // #region agent log
-          fetch(
-            "http://127.0.0.1:7253/ingest/bf26e32e-b221-45cd-9795-984cd7651c6f",
-            {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                location: "ChatPanel.tsx:data-tool-call-delta",
-                message: "design/update delta",
-                data: {
-                  toolCallId: data.toolCallId,
-                  toolName: data.toolName,
-                  hasFrame: Boolean(data.frame),
-                  frameId: data.frame?.id ?? null,
-                  hasHtml: data.frame?.html !== undefined,
-                },
-                timestamp: Date.now(),
-                runId: "pre-fix",
-                hypothesisId: "H3",
-              }),
-            },
-          ).catch(() => {});
-          // #endregion
         }
         if (
           data.toolName === "read_screen" &&
@@ -1079,13 +1050,19 @@ export function ChatPanel({
             .catch(() => {});
         } else if (data.toolName === "update_theme" && data.themeUpdates) {
           dispatch(setTheme(data.themeUpdates));
-          persistThemeToDatabase({
-            ...stateRef.current.theme,
-            ...data.themeUpdates,
-          });
+          persistThemeToDatabase(
+            {
+              ...stateRef.current.theme,
+              ...data.themeUpdates,
+            },
+            (data as { themeName?: string }).themeName,
+          );
         } else if (data.toolName === "build_theme" && data.theme) {
           dispatch(replaceTheme(data.theme));
-          persistThemeToDatabase(data.theme);
+          persistThemeToDatabase(
+            data.theme,
+            (data as { themeName?: string }).themeName,
+          );
         }
         if (data.toolName === "read_screen") {
           const frameId =
@@ -1150,29 +1127,6 @@ export function ChatPanel({
           const existingParts = (
             (lastMsg as { parts?: MessagePart[] }).parts ?? []
           ).filter((p) => p.type !== TOOL_STEP_PART_TYPE);
-          // #region agent log
-          fetch(
-            "http://127.0.0.1:7253/ingest/bf26e32e-b221-45cd-9795-984cd7651c6f",
-            {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                runId: "pre-fix",
-                hypothesisId: "H2",
-                location: "ChatPanel.tsx:onFinish",
-                message: "persisting assistant parts",
-                data: {
-                  stepPartsCount: stepParts.length,
-                  existingPartsCount: existingParts.length,
-                  existingPartTypes: existingParts
-                    .map((p) => p.type)
-                    .slice(0, 10),
-                },
-                timestamp: Date.now(),
-              }),
-            },
-          ).catch(() => {});
-          // #endregion
           const updated = [...finishedMessages];
           updated[lastIdx] = {
             ...lastMsg,
@@ -1191,23 +1145,6 @@ export function ChatPanel({
     },
     onError: (error) => {
       const msg = error?.message || "";
-      // #region agent log
-      fetch(
-        "http://127.0.0.1:7253/ingest/bf26e32e-b221-45cd-9795-984cd7651c6f",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            runId: "pre-fix",
-            hypothesisId: "H5",
-            location: "ChatPanel.tsx:onError",
-            message: "chat request error surfaced",
-            data: { messagePreview: msg.slice(0, 140) },
-            timestamp: Date.now(),
-          }),
-        },
-      ).catch(() => {});
-      // #endregion
       if (
         msg.includes("no_plan") ||
         (msg.includes("402") && !msg.includes("insufficient_credits"))
@@ -1239,39 +1176,6 @@ export function ChatPanel({
       .get(`/api/chat/sessions?${q.toString()}`)
       .then(({ data }: { data: { messages?: UIMessage[] } }) => {
         if (lastHydrateKeyRef.current !== hydrateKey) return;
-        // #region agent log
-        fetch(
-          "http://127.0.0.1:7253/ingest/bf26e32e-b221-45cd-9795-984cd7651c6f",
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              runId: "pre-fix",
-              hypothesisId: "H3",
-              location: "ChatPanel.tsx:hydrateHistory",
-              message: "history payload received",
-              data: {
-                messageCount: data?.messages?.length ?? 0,
-                lastRole:
-                  data?.messages && data.messages.length > 0
-                    ? data.messages[data.messages.length - 1]?.role
-                    : null,
-                lastPartTypes:
-                  data?.messages && data.messages.length > 0
-                    ? ((
-                        data.messages[data.messages.length - 1] as {
-                          parts?: Array<{ type?: string }>;
-                        }
-                      ).parts
-                        ?.map((p) => p?.type ?? "unknown")
-                        ?.slice(0, 10) ?? [])
-                    : [],
-              },
-              timestamp: Date.now(),
-            }),
-          },
-        ).catch(() => {});
-        // #endregion
         if (data?.messages && data.messages.length > 0) {
           setMessages(data.messages);
         } else {
@@ -1299,20 +1203,6 @@ export function ChatPanel({
         : status === "submitted"
           ? "submitted"
           : "ready";
-    // #region agent log
-    fetch("http://127.0.0.1:7253/ingest/bf26e32e-b221-45cd-9795-984cd7651c6f", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        runId: "pre-fix",
-        hypothesisId: "H4",
-        location: "ChatPanel.tsx:statusEffect",
-        message: "chat status changed",
-        data: { status: s },
-        timestamp: Date.now(),
-      }),
-    }).catch(() => {});
-    // #endregion
     emitChatStatus(s);
     if (s === "ready") clearGeneratingFrames();
   }, [status]);
@@ -1375,23 +1265,6 @@ export function ChatPanel({
       e?.preventDefault();
       if (!inputValue.trim()) return;
       const prompt = inputValue.trim();
-      // #region agent log
-      fetch(
-        "http://127.0.0.1:7253/ingest/bf26e32e-b221-45cd-9795-984cd7651c6f",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            runId: "pre-fix",
-            hypothesisId: "H6",
-            location: "ChatPanel.tsx:handleSend",
-            message: "prompt submitted from panel",
-            data: { promptLength: prompt.length },
-            timestamp: Date.now(),
-          }),
-        },
-      ).catch(() => {});
-      // #endregion
       setInputValue("");
 
       setToolSteps([]);
@@ -1405,42 +1278,11 @@ export function ChatPanel({
   // Register send function for the bottom input box
   useEffect(() => {
     const bridgeSend = (text: string) => {
-      // #region agent log
-      fetch(
-        "http://127.0.0.1:7253/ingest/bf26e32e-b221-45cd-9795-984cd7651c6f",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            runId: "pre-fix",
-            hypothesisId: "H4",
-            location: "ChatPanel.tsx:bridgeSend",
-            message: "bridge send invoked",
-            data: { textLength: text.trim().length },
-            timestamp: Date.now(),
-          }),
-        },
-      ).catch(() => {});
-      // #endregion
       setToolSteps([]);
       setLastMessageToolSteps([]);
       dispatch(pushAgentLog({ type: "user", text }));
       sendMessage({ text });
     };
-    // #region agent log
-    fetch("http://127.0.0.1:7253/ingest/bf26e32e-b221-45cd-9795-984cd7651c6f", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        runId: "pre-fix",
-        hypothesisId: "H4",
-        location: "ChatPanel.tsx:registerBridge",
-        message: "chat bridge handlers registered",
-        data: {},
-        timestamp: Date.now(),
-      }),
-    }).catch(() => {});
-    // #endregion
     registerChatSend(bridgeSend);
     registerChatStop(stop);
     return () => {
@@ -1450,31 +1292,6 @@ export function ChatPanel({
   }, [sendMessage, stop, dispatch, setToolSteps]);
 
   useEffect(() => {
-    const last = messages[messages.length - 1] as
-      | { role?: string; parts?: Array<{ type?: string }>; content?: string }
-      | undefined;
-    // #region agent log
-    fetch("http://127.0.0.1:7253/ingest/bf26e32e-b221-45cd-9795-984cd7651c6f", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        runId: "pre-fix",
-        hypothesisId: "H4",
-        location: "ChatPanel.tsx:messagesEffect",
-        message: "message state changed",
-        data: {
-          status,
-          totalMessages: messages.length,
-          lastRole: last?.role ?? null,
-          lastPartTypes:
-            last?.parts?.map((p) => p?.type ?? "unknown")?.slice(0, 10) ?? [],
-          lastContentLength:
-            typeof last?.content === "string" ? last.content.length : 0,
-        },
-        timestamp: Date.now(),
-      }),
-    }).catch(() => {});
-    // #endregion
     chatThreadRef.current?.scrollTo({
       top: chatThreadRef.current.scrollHeight,
       behavior: status === "streaming" ? "auto" : "smooth",
@@ -1533,7 +1350,7 @@ export function ChatPanel({
 
   return (
     <div
-      className="chat-panel fixed top-[8%] bottom-[10%] z-30 flex flex-col rounded-xl border border-b-secondary bg-surface-elevated shadow-lg"
+      className="chat-panel fixed top-[8%] bottom-[10%] z-30 flex flex-col rounded-xl border border-b-secondary bg-surface-elevated/90 backdrop-blur-xl shadow-lg overflow-hidden"
       style={{
         right: `${RAIL_OFFSET + RIGHT_MARGIN}px`,
         width: `${panelWidth}px`,
@@ -1547,248 +1364,214 @@ export function ChatPanel({
         <div className="h-full w-0.5 rounded-full bg-border opacity-0 hover:opacity-100" />
       </div>
 
-      <div className="flex flex-row items-center justify-between p-2 pl-3">
+      {/* Header — matches Activity panel */}
+      <div className="flex items-center justify-between px-3 py-2 flex-shrink-0">
         <div className="flex items-center gap-2">
-          <div ref={headerDropdownRef} className="relative">
-            <button
-              type="button"
-              onClick={() => setShowHeaderDropdown((v) => !v)}
-              className="inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-sm font-medium text-foreground transition-colors hover:bg-input-bg"
-            >
-              {(() => {
-                return (
-                  <>
-                    <span className="text-sm">✨</span>
-                    <span className="text-t-secondary">AI</span>
-                  </>
-                );
-              })()}
-              <span className="text-t-tertiary">·</span>
-              <span className="text-t-secondary text-xs font-normal">
-                {activeFrameLabel.length > 12
-                  ? `${activeFrameLabel.slice(0, 12)}…`
-                  : activeFrameLabel}
-              </span>
-              <ChevronDown className="size-3.5 text-t-tertiary" />
-            </button>
-            {showHeaderDropdown && (
-              <div className="absolute left-0 top-full z-50 mt-1 min-w-[200px] overflow-hidden rounded-xl border border-b-secondary bg-surface-elevated/95 py-1 shadow-lg backdrop-blur-xl">
-                <div className="sticky top-0 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-t-tertiary">
-                  Active Agents
-                </div>
-                {isMultiAgent
-                  ? [
-                      <button
-                        key="main-agent"
-                        type="button"
-                        onClick={() => {
-                          // removed: dispatch(setActiveAgent(null));
-                          setShowHeaderDropdown(false);
-                        }}
-                        className={`flex w-full items-center gap-2.5 px-3 py-2 text-left text-xs transition-colors hover:bg-input-bg hover:text-t-primary ${
-                          activeAgentId === null
-                            ? "bg-input-bg text-t-primary"
-                            : "text-t-secondary"
-                        }`}
-                      >
-                        <span className="text-sm">{"✨"}</span>
-                        <div className="flex flex-col">
-                          <span className="font-medium text-t-secondary">
-                            {"AI"}
-                          </span>
-                        </div>
-                      </button>,
-                    ]
-                  : Array.from({ length: agentCount }, (_, i) => {
-                      const persona = { name: "AI", emoji: "✨" };
-                      const assignedFrame = frames[i];
-                      return (
-                        <button
-                          key={i}
-                          type="button"
-                          onClick={() => setShowHeaderDropdown(false)}
-                          className="flex w-full items-center gap-2.5 px-3 py-2 text-left text-xs text-t-secondary transition-colors hover:bg-input-bg hover:text-t-primary"
-                        >
-                          <span className="inline-flex size-5 shrink-0 items-center justify-center rounded-full bg-input-bg text-xs text-t-secondary">
-                            {persona.emoji}
-                          </span>
-                          <div className="flex flex-col">
-                            <span className="font-medium text-t-primary">
-                              {persona.name}
-                            </span>
-                            <span className="text-[11px] text-t-tertiary">
-                              {assignedFrame
-                                ? assignedFrame.label
-                                : "Unassigned"}
-                            </span>
-                          </div>
-                        </button>
-                      );
-                    })}
-              </div>
-            )}
+          <span className="text-[11px] font-mono font-medium uppercase tracking-wider text-t-tertiary">
+            Chat
+          </span>
+          {selectedFrameIds.length > 0 && (
+            <span className="text-[11px] text-t-tertiary truncate max-w-[140px]">
+              · {activeFrameLabel}
+            </span>
+          )}
+        </div>
+        <div ref={headerDropdownRef} className="relative">
+          <button
+            type="button"
+            onClick={onClose}
+            className="size-5 flex items-center justify-center rounded text-t-tertiary hover:text-t-secondary transition-colors"
+          >
+            <X className="size-3" />
+          </button>
+        </div>
+      </div>
+
+      {/* Messages area — matches Activity panel */}
+      {isLoadingHistory ? (
+        <div className="flex items-center justify-center py-10 px-4">
+          <div className="flex items-center gap-2 text-xs text-t-tertiary">
+            <div className="size-1.5 rounded-full bg-t-tertiary animate-pulse" />
+            Loading...
           </div>
         </div>
-        <button
-          type="button"
-          onClick={onClose}
-          aria-label="Close panel"
-          className="inline-flex w-8 h-8 min-h-8 shrink-0 cursor-pointer items-center justify-center rounded-md bg-secondary/40 text-secondary-foreground/30 px-2 py-1.5 shadow-xs transition-colors hover:bg-secondary/60"
-        >
-          <X className="h-3 w-3" />
-        </button>
-      </div>
+      ) : !isLoadingHistory && messages.length === 0 && !isActivelyStreaming ? (
+        <WelcomeState />
+      ) : (
+        <div className="relative min-h-0 flex-1">
+          <div className="pointer-events-none absolute left-0 right-0 top-0 z-10 h-4 bg-gradient-to-b from-surface-elevated to-transparent" />
 
-      <div
-        ref={chatThreadRef}
-        id="chat-thread-area"
-        className="min-h-0 flex-1 space-y-4 overflow-y-auto scrollbar-hide p-2"
-      >
-        {isLoadingHistory && <ChatHistoryShimmer />}
+          <div
+            ref={chatThreadRef}
+            id="chat-thread-area"
+            className="h-full overflow-y-auto scrollbar-hide"
+          >
+            <div className="flex flex-col gap-2 px-3 py-3">
+              {messages
+                .filter((m: { role: string }) => m.role !== "system")
+                .map(
+                  (
+                    msg: {
+                      id: string;
+                      role: string;
+                      parts?: Array<{
+                        type: string;
+                        text?: string;
+                        state?: string;
+                      }>;
+                      content?: string;
+                    },
+                    msgIndex: number,
+                  ) => {
+                    const visibleMessages = messages.filter(
+                      (m: { role: string }) => m.role !== "system",
+                    );
+                    const isLastMessage =
+                      msgIndex === visibleMessages.length - 1;
 
-        {!isLoadingHistory &&
-          messages.map(
-            (
-              msg: {
-                id: string;
-                role: string;
-                parts?: Array<{
-                  type: string;
-                  text?: string;
-                  state?: string;
-                }>;
-                content?: string;
-              },
-              msgIndex: number,
-            ) => {
-              const isLastMessage = msgIndex === messages.length - 1;
-              const stepsFromParts =
-                msg.role === "assistant"
-                  ? toolStepsFromParts(msg.parts as MessagePart[])
-                  : undefined;
+                    const stepsFromParts =
+                      msg.role === "assistant"
+                        ? toolStepsFromParts(msg.parts as MessagePart[])
+                        : undefined;
 
-              const liveToolSteps =
-                isLastMessage && isActivelyStreaming ? toolSteps : undefined;
+                    const liveToolSteps =
+                      isLastMessage && isActivelyStreaming
+                        ? toolSteps
+                        : undefined;
 
-              const fallbackPersisted =
-                msg.role === "assistant" && isLastMessage
-                  ? lastMessageToolSteps
-                  : undefined;
+                    const fallbackPersisted =
+                      msg.role === "assistant" && isLastMessage
+                        ? lastMessageToolSteps
+                        : undefined;
 
-              const stepsForMessage =
-                liveToolSteps && liveToolSteps.length > 0
-                  ? liveToolSteps
-                  : (stepsFromParts ??
-                    (fallbackPersisted?.length
-                      ? fallbackPersisted
-                      : undefined));
+                    const stepsForMessage =
+                      liveToolSteps && liveToolSteps.length > 0
+                        ? liveToolSteps
+                        : (stepsFromParts ??
+                          (fallbackPersisted?.length
+                            ? fallbackPersisted
+                            : undefined));
 
-              const isStreamingLastAssistant =
-                isLastMessage &&
-                msg.role === "assistant" &&
-                isActivelyStreaming;
+                    const isStreamingLastAssistant =
+                      isLastMessage &&
+                      msg.role === "assistant" &&
+                      isActivelyStreaming;
 
-              const hasVisibleContent =
-                isStreamingLastAssistant ||
-                msg.role !== "assistant" ||
-                (msg.parts ?? []).some(
-                  (p) =>
-                    p.type === "text" ||
-                    p.type === "reasoning" ||
-                    (p as MessagePart).type?.startsWith?.("tool-") ||
-                    (p as MessagePart).type === "dynamic-tool",
-                ) ||
-                typeof msg.content === "string" ||
-                (stepsForMessage && stepsForMessage.length > 0);
+                    const hasVisibleContent =
+                      isStreamingLastAssistant ||
+                      msg.role !== "assistant" ||
+                      (msg.parts ?? []).some(
+                        (p) =>
+                          p.type === "text" ||
+                          p.type === "reasoning" ||
+                          (p as MessagePart).type?.startsWith?.("tool-") ||
+                          (p as MessagePart).type === "dynamic-tool",
+                      ) ||
+                      typeof msg.content === "string" ||
+                      (stepsForMessage && stepsForMessage.length > 0);
 
-              if (!hasVisibleContent) return null;
+                    if (!hasVisibleContent) return null;
 
-              return (
-                <Fragment key={msg.id}>
-                  <div
-                    className={`flex w-full ${
-                      msg.role === "user" ? "justify-end" : "justify-start"
-                    }`}
-                  >
-                    <div
-                      className={`rounded-lg px-3 py-2 text-sm ${
-                        msg.role === "user"
-                          ? "w-fit max-w-[85%] bg-btn-primary-bg text-btn-primary-text"
-                          : msg.role === "assistant"
-                            ? "w-full bg-muted/50 text-t-primary"
-                            : "w-fit max-w-[85%] bg-muted/30 text-t-primary"
-                      }`}
-                    >
-                      {msg.role === "assistant" ? (
-                        msg.parts && msg.parts.length > 0 ? (
-                          <AssistantMessageContent
-                            parts={msg.parts as MessagePart[]}
-                            frames={frames}
-                            isStreaming={
-                              status === "streaming" && isLastMessage
-                            }
-                            toolSteps={stepsForMessage}
-                          />
-                        ) : typeof msg.content === "string" ? (
-                          <div className="chat-markdown">
-                            <ReactMarkdown components={markdownComponents}>
-                              {msg.content}
-                            </ReactMarkdown>
+                    return (
+                      <Fragment key={msg.id}>
+                        {msg.role === "user" ? (
+                          <div className="flex justify-end">
+                            <div className="max-w-[90%] rounded-lg bg-input-bg px-2.5 py-1.5">
+                              {getUserMessageText(msg) ? (
+                                <div className="chat-markdown">
+                                  <ReactMarkdown
+                                    components={markdownComponents}
+                                  >
+                                    {getUserMessageText(msg)!}
+                                  </ReactMarkdown>
+                                </div>
+                              ) : null}
+                            </div>
                           </div>
-                        ) : stepsForMessage && stepsForMessage.length > 0 ? (
-                          <AssistantMessageContent
-                            parts={[]}
-                            frames={frames}
-                            isStreaming={
-                              status === "streaming" && isLastMessage
-                            }
-                            toolSteps={stepsForMessage}
-                          />
-                        ) : isStreamingLastAssistant ? (
-                          <span className="inline-block animate-pulse text-t-tertiary text-xs">
-                            …
-                          </span>
-                        ) : null
-                      ) : msg.role === "user" ? (
-                        getUserMessageText(msg)
-                      ) : null}
-                    </div>
-                  </div>
-                </Fragment>
-              );
-            },
-          )}
+                        ) : msg.role === "assistant" ? (
+                          <div className="flex justify-start">
+                            <div className="max-w-[95%]">
+                              {msg.parts && msg.parts.length > 0 ? (
+                                <AssistantMessageContent
+                                  parts={msg.parts as MessagePart[]}
+                                  frames={frames}
+                                  isStreaming={
+                                    status === "streaming" && isLastMessage
+                                  }
+                                  toolSteps={stepsForMessage}
+                                />
+                              ) : typeof msg.content === "string" ? (
+                                <div className="chat-markdown">
+                                  <ReactMarkdown
+                                    components={markdownComponents}
+                                  >
+                                    {msg.content}
+                                  </ReactMarkdown>
+                                </div>
+                              ) : stepsForMessage &&
+                                stepsForMessage.length > 0 ? (
+                                <AssistantMessageContent
+                                  parts={[]}
+                                  frames={frames}
+                                  isStreaming={
+                                    status === "streaming" && isLastMessage
+                                  }
+                                  toolSteps={stepsForMessage}
+                                />
+                              ) : null}
+                            </div>
+                          </div>
+                        ) : null}
+                      </Fragment>
+                    );
+                  },
+                )}
 
-        {showPendingBubble && (
-          <div className="flex w-full justify-start">
-            <div className="w-full rounded-lg bg-muted/50 px-3 py-2.5 text-sm text-t-primary">
-              <AssistantMessageContent
-                parts={[]}
-                frames={frames}
-                isStreaming={status === "streaming"}
-                toolSteps={toolSteps}
-              />
+              {showPendingBubble && (
+                <div className="flex justify-start">
+                  <div className="max-w-[95%]">
+                    <AssistantMessageContent
+                      parts={[]}
+                      frames={frames}
+                      isStreaming={status === "streaming"}
+                      toolSteps={toolSteps}
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* Thinking indicator — shimmer text like Activity panel */}
+              {(showStreamingIndicator ||
+                (isActivelyStreaming && !showPendingBubble && !lastMsgHasContent)) && (
+                <StreamingActivityIndicator
+                  label={
+                    status === "submitted"
+                      ? "Thinking..."
+                      : "Generating screens..."
+                  }
+                />
+              )}
             </div>
           </div>
-        )}
 
-        {showStreamingIndicator && <StreamingActivityIndicator />}
-      </div>
+          <div className="pointer-events-none absolute bottom-0 left-0 right-0 z-10 h-4 bg-gradient-to-t from-surface-elevated to-transparent" />
+        </div>
+      )}
 
-      <div className="w-full p-4">
+      <div className="w-full border-t border-b-secondary/50 p-3">
         <form
           onSubmit={handleSend}
-          className="w-full overflow-visible rounded-xl border border-border/60 bg-input-bg shadow-none focus-within:ring-2 focus-within:ring-ring/30"
+          className="w-full overflow-visible rounded-2xl border border-border/50 bg-input-bg/80 shadow-sm transition-all focus-within:border-border focus-within:bg-input-bg focus-within:shadow-md"
         >
           {selectedFrameIds.length > 0 && (
-            <div className="flex flex-wrap gap-1.5 px-4 pt-3 pb-1">
+            <div className="flex flex-wrap gap-1.5 px-3.5 pt-3 pb-0.5">
               {selectedFrameIds.map((id) => {
                 const frame = frames.find((f) => f.id === id);
                 if (!frame) return null;
                 return (
                   <span
                     key={id}
-                    className="mention-chip inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium text-mention-chip-text"
+                    className="mention-chip inline-flex items-center gap-1.5 rounded-lg border px-2 py-0.5 text-[11px] font-medium text-mention-chip-text"
                     style={{
                       backgroundColor: "var(--mention-chip-bg)",
                       borderColor: "var(--mention-chip-border)",
@@ -1796,8 +1579,8 @@ export function ChatPanel({
                   >
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
-                      width="12"
-                      height="12"
+                      width="10"
+                      height="10"
                       viewBox="0 0 24 24"
                       fill="none"
                       stroke="currentColor"
@@ -1817,7 +1600,7 @@ export function ChatPanel({
             value={inputValue}
             onChange={setInputValue}
             pages={frames.map((f) => ({ id: f.id, label: f.label }))}
-            placeholder="What changes do you want to make?"
+            placeholder="Ask AI to design or edit..."
             onKeyDown={(e) => {
               if (e.key === "Enter" && !e.shiftKey) {
                 e.preventDefault();
@@ -1827,24 +1610,24 @@ export function ChatPanel({
             disabled={isActivelyStreaming}
             className="text-sm"
           />
-          <div className="flex items-center justify-between p-2">
-            <div className="flex items-center gap-1">
+          <div className="flex items-center justify-between px-2 pb-2">
+            <div className="flex items-center gap-0.5">
               <button
                 type="button"
                 aria-label="Attach image"
-                className="inline-flex size-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground/60 transition-colors hover:text-muted-foreground hover:bg-secondary/40"
+                className="inline-flex size-7 shrink-0 items-center justify-center rounded-lg text-t-tertiary transition-colors hover:text-t-secondary hover:bg-secondary/40"
               >
-                <ImageIcon className="size-4" />
+                <ImageIcon className="size-3.5" />
               </button>
               <div ref={agentDropdownRef} className="relative">
                 <button
                   type="button"
                   onClick={() => setShowAgentDropdown((v) => !v)}
-                  className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium text-t-secondary transition-colors hover:bg-secondary/40"
+                  className="inline-flex items-center gap-1 rounded-lg px-1.5 py-1 text-xs font-medium text-t-tertiary transition-colors hover:text-t-secondary hover:bg-secondary/40"
                 >
-                  <Zap className="size-3.5" fill="currentColor" />
-                  {agentCount}
-                  <ChevronDown className="size-3 opacity-60" />
+                  <Zap className="size-3" fill="currentColor" />
+                  <span className="text-[11px]">{agentCount}</span>
+                  <ChevronDown className="size-2.5 opacity-60" />
                 </button>
                 {showAgentDropdown && (
                   <div className="absolute bottom-full left-0 z-50 mb-1 min-w-[130px] overflow-hidden rounded-xl border border-b-secondary bg-surface-elevated/95 py-1 shadow-lg backdrop-blur-xl">
@@ -1857,7 +1640,6 @@ export function ChatPanel({
                           key={n}
                           type="button"
                           onClick={() => {
-                            // removed: dispatch(setAgentCountAction(n));
                             if (n === 1 && isMultiAgent) {
                               // removed;
                             }
@@ -1881,22 +1663,35 @@ export function ChatPanel({
                 )}
               </div>
             </div>
-            <button
-              type="submit"
-              disabled={!inputValue.trim() || isActivelyStreaming}
-              className="inline-flex size-8 shrink-0 items-center justify-center rounded-full bg-btn-primary-bg text-btn-primary-text shadow-xs outline-none transition-colors hover:opacity-90 disabled:pointer-events-none disabled:opacity-50 focus-visible:ring-2 focus-visible:ring-ring/50 active:scale-95"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="1em"
-                height="1em"
-                fill="currentColor"
-                viewBox="0 0 256 256"
-                className="size-4"
+            {isActivelyStreaming ? (
+              <button
+                type="button"
+                onClick={() => stop()}
+                className="inline-flex size-7 shrink-0 items-center justify-center rounded-full bg-red-500/10 text-red-500 outline-none transition-all hover:bg-red-500/20 active:scale-95"
+                aria-label="Stop generating"
               >
-                <path d="M205.66,117.66a8,8,0,0,1-11.32,0L136,59.31V216a8,8,0,0,1-16,0V59.31L61.66,117.66a8,8,0,0,1-11.32-11.32l72-72a8,8,0,0,1,11.32,0l72,72A8,8,0,0,1,205.66,117.66Z" />
-              </svg>
-            </button>
+                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                  <rect x="6" y="6" width="12" height="12" rx="2" />
+                </svg>
+              </button>
+            ) : (
+              <button
+                type="submit"
+                disabled={!inputValue.trim()}
+                className="inline-flex size-7 shrink-0 items-center justify-center rounded-full bg-btn-primary-bg text-btn-primary-text shadow-sm outline-none transition-all hover:opacity-90 disabled:pointer-events-none disabled:opacity-30 focus-visible:ring-2 focus-visible:ring-ring/50 active:scale-95"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="1em"
+                  height="1em"
+                  fill="currentColor"
+                  viewBox="0 0 256 256"
+                  className="size-3.5"
+                >
+                  <path d="M205.66,117.66a8,8,0,0,1-11.32,0L136,59.31V216a8,8,0,0,1-16,0V59.31L61.66,117.66a8,8,0,0,1-11.32-11.32l72-72a8,8,0,0,1,11.32,0l72,72A8,8,0,0,1,205.66,117.66Z" />
+                </svg>
+              </button>
+            )}
           </div>
         </form>
       </div>

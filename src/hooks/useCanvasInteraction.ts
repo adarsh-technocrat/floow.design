@@ -251,13 +251,16 @@ export function useCanvasInteraction({
 
   const handleFrameSelect = useCallback(
     (id: string, metaKey: boolean) => {
+      const alreadyOnlySelected =
+        selectedFrameIds.length === 1 && selectedFrameIds[0] === id;
       if (metaKey) {
         toggleFrameSelectionState(id);
       } else {
+        if (alreadyOnlySelected) return;
         setSelectedFrameIds([id]);
       }
     },
-    [setSelectedFrameIds, toggleFrameSelectionState],
+    [selectedFrameIds, setSelectedFrameIds, toggleFrameSelectionState],
   );
 
   const handleWheel = useCallback(

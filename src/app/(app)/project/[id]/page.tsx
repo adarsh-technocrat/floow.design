@@ -30,47 +30,12 @@ export default function ProjectCanvasPage() {
   useEffect(() => {
     if (promptSentRef.current || !projectLoaded) return;
     const prompt = searchParams.get("prompt");
-    // #region agent log
-    fetch("http://127.0.0.1:7253/ingest/bf26e32e-b221-45cd-9795-984cd7651c6f", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        runId: "pre-fix",
-        hypothesisId: "H3",
-        location: "app/[projectId]/page.tsx:autoSend:entry",
-        message: "canvas autosend effect entered",
-        data: {
-          projectLoaded,
-          hasPrompt: Boolean(prompt),
-          promptLength: prompt?.length ?? 0,
-        },
-        timestamp: Date.now(),
-      }),
-    }).catch(() => {});
-    // #endregion
     if (!prompt) return;
 
     // Poll until chat bridge is ready (ChatPanel has mounted and registered)
     const timer = setInterval(() => {
       if (!isChatBridgeReady()) return; // not ready yet, keep waiting
 
-      // #region agent log
-      fetch(
-        "http://127.0.0.1:7253/ingest/bf26e32e-b221-45cd-9795-984cd7651c6f",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            runId: "pre-fix",
-            hypothesisId: "H3",
-            location: "app/[projectId]/page.tsx:autoSend:bridgeReady",
-            message: "chat bridge ready, sending prompt",
-            data: { promptLength: prompt.length },
-            timestamp: Date.now(),
-          }),
-        },
-      ).catch(() => {});
-      // #endregion
       sendChatMessage(prompt);
       promptSentRef.current = true;
       clearInterval(timer);
@@ -84,23 +49,6 @@ export default function ProjectCanvasPage() {
 
     // Give up after 15s
     const timeout = setTimeout(() => {
-      // #region agent log
-      fetch(
-        "http://127.0.0.1:7253/ingest/bf26e32e-b221-45cd-9795-984cd7651c6f",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            runId: "pre-fix",
-            hypothesisId: "H3",
-            location: "app/[projectId]/page.tsx:autoSend:timeout",
-            message: "autosend timer timed out before bridge ready",
-            data: { promptLength: prompt.length },
-            timestamp: Date.now(),
-          }),
-        },
-      ).catch(() => {});
-      // #endregion
       clearInterval(timer);
     }, 15000);
 
