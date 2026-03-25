@@ -68,7 +68,7 @@ export const FramePreview = React.forwardRef<
 
   useEffect(() => {
     if (!enableElementInspection) return;
-    fetch(`/api/scripts/element-inspector?v=${Date.now()}`)
+    fetch("/api/scripts/element-inspector")
       .then((r) => r.text())
       .then(setInspectorScript)
       .catch(() => {});

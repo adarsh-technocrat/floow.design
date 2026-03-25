@@ -10,32 +10,10 @@
   var ELEMENT_ID_ATTR = "data-uxm-element-id";
   var ID_PREFIX = "uxm-";
   var counter = 0;
-  var lastDebugAt = 0;
-
-  function debugLog(hypothesisId, message, data) {
-    var now = Date.now();
-    if (now - lastDebugAt < 120) return;
-    lastDebugAt = now;
-    // #region agent log
-    fetch("http://127.0.0.1:7253/ingest/bf26e32e-b221-45cd-9795-984cd7651c6f", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        runId: "inspector-rca",
-        hypothesisId: hypothesisId,
-        location: "element-inspector.js",
-        message: message,
-        data: data,
-        timestamp: now,
-      }),
-    }).catch(function () {});
-    // #endregion
-  }
 
   function ensureElementIds(doc) {
     var body = doc.body;
     if (!body) return;
-    var assigned = 0;
     var walk = function (el) {
       if (!el || el.nodeType !== 1) return;
       if (
@@ -47,7 +25,6 @@
       if (!el.getAttribute(ELEMENT_ID_ATTR)) {
         counter += 1;
         el.setAttribute(ELEMENT_ID_ATTR, ID_PREFIX + counter);
-        assigned += 1;
       }
       var child = el.firstElementChild;
       while (child) {
@@ -56,11 +33,6 @@
       }
     };
     walk(body);
-    debugLog("H1", "ensureElementIds executed", {
-      assigned: assigned,
-      counter: counter,
-      bodyChildren: body.children ? body.children.length : 0,
-    });
   }
 
   function getElementInfo(el) {
@@ -172,30 +144,7 @@
         var x = payload.x;
         var y = payload.y;
         if (typeof x !== "number" || typeof y !== "number") return;
-        var raw = document.elementFromPoint(x, y);
         var target = findElementByPoint(x, y);
-        var ancestorWithId = null;
-        var scan = raw;
-        while (scan && scan !== document.body) {
-          if (scan.getAttribute && scan.getAttribute(ELEMENT_ID_ATTR)) {
-            ancestorWithId = scan;
-            break;
-          }
-          scan = scan.parentElement;
-        }
-        debugLog("H2", "hit-test resolution", {
-          x: x,
-          y: y,
-          rawTag: raw && raw.tagName ? raw.tagName.toLowerCase() : null,
-          rawHasId: !!(raw && raw.getAttribute && raw.getAttribute(ELEMENT_ID_ATTR)),
-          ancestorWithIdTag:
-            ancestorWithId && ancestorWithId.tagName
-              ? ancestorWithId.tagName.toLowerCase()
-              : null,
-          targetTag: target && target.tagName ? target.tagName.toLowerCase() : null,
-          targetId: target ? target.getAttribute(ELEMENT_ID_ATTR) : null,
-          taggedCount: document.querySelectorAll("[" + ELEMENT_ID_ATTR + "]").length,
-        });
         if (target) {
           window.parent.postMessage(
             { type: "ELEMENT_INFO", payload: getElementInfo(target) },

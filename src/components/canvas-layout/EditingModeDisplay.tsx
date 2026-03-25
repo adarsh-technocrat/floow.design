@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ArrowUp, MessageSquareText, X } from "lucide-react";
+import { ArrowUp, X } from "lucide-react";
 import { ImageIcon } from "@/lib/svg-icons";
 import { StyleGuideIcon } from "@/lib/svg-icons";
 import { useCanvasChat, type QueuedPrompt } from "@/hooks/useCanvasChat";
@@ -9,10 +9,8 @@ import {
   subscribeCreditExhausted,
   type CreditExhaustedReason,
 } from "@/lib/chat-bridge";
-import { useAppDispatch, useAppSelector } from "@/store/hooks";
-import { setChatPanelOpen } from "@/store/slices/uiSlice";
 import { PricingDialog } from "@/components/PricingDialog";
-import { ChatPanel } from "./ChatPanel";
+import { ChatEngine } from "./ChatEngine";
 import { StyleGuidePanel } from "./StyleGuidePanel";
 
 function QueuedPromptChip({
@@ -53,8 +51,6 @@ function QueuedPromptChip({
 }
 
 export function EditingModeDisplay() {
-  const dispatch = useAppDispatch();
-  const chatPanelOpen = useAppSelector((s) => s.ui.chatPanelOpen);
   const [styleGuideOpen, setStyleGuideOpen] = useState(false);
   const [pricingDialogOpen, setPricingDialogOpen] = useState(false);
   const [pricingDialogReason, setPricingDialogReason] =
@@ -83,7 +79,7 @@ export function EditingModeDisplay() {
 
   return (
     <>
-      <ChatPanel isVisible={chatPanelOpen} onClose={() => dispatch(setChatPanelOpen(false))} />
+      <ChatEngine />
       <div className="absolute bottom-4 left-1/2 z-20 -translate-x-1/2 w-full max-w-[600px] px-4">
         {promptQueue.length > 0 && (
           <div className="flex flex-col gap-0 -mb-3">
@@ -180,18 +176,6 @@ export function EditingModeDisplay() {
 
       <div className="absolute right-4 top-16 z-20 flex flex-col items-center gap-2">
         <div className="flex flex-col items-center gap-1 rounded-full border border-b-strong bg-canvas-panel-bg shadow-md backdrop-blur-xl p-1">
-          <button
-            type="button"
-            onClick={() => dispatch(setChatPanelOpen(!chatPanelOpen))}
-            className={`rounded-full p-2 transition-colors ${
-              chatPanelOpen
-                ? "bg-btn-primary-bg text-btn-primary-text"
-                : "text-t-secondary hover:bg-input-bg hover:text-t-primary"
-            }`}
-            title="Chat Panel"
-          >
-            <MessageSquareText width={18} height={18} />
-          </button>
           <button
             type="button"
             onClick={() => setStyleGuideOpen((v) => !v)}
