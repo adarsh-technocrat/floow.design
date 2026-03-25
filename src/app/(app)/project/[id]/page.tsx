@@ -32,11 +32,21 @@ export default function ProjectCanvasPage() {
     const prompt = searchParams.get("prompt");
     if (!prompt) return;
 
-    // Poll until chat bridge is ready (ChatPanel has mounted and registered)
+    // Poll until chat bridge is ready (ChatEngine has mounted and registered)
     const timer = setInterval(() => {
       if (!isChatBridgeReady()) return; // not ready yet, keep waiting
 
-      sendChatMessage(prompt);
+      // Check for image URLs stored by dashboard
+      let imageUrls: string[] | undefined;
+      try {
+        const stored = sessionStorage.getItem("pending_prompt_images");
+        if (stored) {
+          imageUrls = JSON.parse(stored);
+          sessionStorage.removeItem("pending_prompt_images");
+        }
+      } catch { /* ignore */ }
+
+      sendChatMessage(prompt, imageUrls);
       promptSentRef.current = true;
       clearInterval(timer);
 
