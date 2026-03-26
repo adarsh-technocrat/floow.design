@@ -1,7 +1,3 @@
-// Bridge between the bottom input box and the ChatPanel's useChat hook.
-// ChatPanel registers its sendMessage, EditingModeDisplay calls it.
-// Activity (CanvasBottomLeft) subscribes to live message snapshots from useChat.
-
 export interface ChatMessagePayload {
   text: string;
   imageDataUrls?: string[];
@@ -20,7 +16,6 @@ export type ActivityHistoryLoadingListener = (loading: boolean) => void;
 
 const _historyLoadingListeners = new Set<ActivityHistoryLoadingListener>();
 
-/** Last emitted value so new subscribers (e.g. after Strict Mode remount) don't miss `false` and stay on shimmer forever. */
 let _lastActivityHistoryLoading: boolean | undefined;
 
 export function registerChatSend(fn: (payload: ChatMessagePayload) => void) {
@@ -37,12 +32,10 @@ export function sendChatMessage(text: string, imageDataUrls?: string[]) {
   }
 }
 
-/** Returns true if a chat send function is registered (ChatPanel is mounted) */
 export function isChatBridgeReady(): boolean {
   return _sendFn !== null;
 }
 
-// Stop function bridge
 let _stopFn: (() => void) | null = null;
 
 export function registerChatStop(fn: () => void) {
@@ -57,7 +50,6 @@ export function stopChatGeneration() {
   if (_stopFn) _stopFn();
 }
 
-// Chat status bridge — lets Activity panel know if the agent is working
 type ChatStatus = "ready" | "submitted" | "streaming" | "error";
 type ChatStatusListener = (status: ChatStatus) => void;
 const _statusListeners = new Set<ChatStatusListener>();
@@ -76,7 +68,6 @@ export function subscribeChatStatus(listener: ChatStatusListener): () => void {
   };
 }
 
-// Generating frames bridge — tracks which frame IDs are currently being generated
 type GeneratingFramesListener = (ids: Set<string>) => void;
 const _generatingListeners = new Set<GeneratingFramesListener>();
 let _generatingFrameIds = new Set<string>();
@@ -120,7 +111,6 @@ export function subscribeChatMessages(
   };
 }
 
-/** Push the current useChat messages to Activity and any other subscribers. */
 export function emitChatMessagesSnapshot(messages: unknown[]): void {
   _lastMessagesSnapshot = messages;
   _hasEmittedMessagesSnapshot = true;
@@ -146,6 +136,18 @@ export function emitActivityHistoryLoading(loading: boolean): void {
   for (const l of _historyLoadingListeners) {
     l(loading);
   }
+}
+
+let _isNewProject = false;
+
+export function markNewProject(): void {
+  _isNewProject = true;
+}
+
+export function consumeNewProjectFlag(): boolean {
+  const val = _isNewProject;
+  _isNewProject = false;
+  return val;
 }
 
 export type CreditExhaustedReason = "no_plan" | "insufficient_credits";

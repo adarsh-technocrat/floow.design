@@ -13,8 +13,6 @@ import {
 } from "@/lib/chat-bridge";
 import ReactMarkdown from "react-markdown";
 
-/* ── Types ── */
-
 interface MessagePart {
   type: string;
   text?: string;
@@ -34,7 +32,6 @@ interface ChatMessage {
   parts?: MessagePart[];
 }
 
-/** Changes when the last message body updates (streaming); avoids skipping Activity updates when only length+id stay the same. */
 function fingerprintLastMessage(msg: ChatMessage | undefined): string {
   if (!msg) return "";
   if (typeof msg.content === "string" && msg.content.length > 0) {
@@ -51,8 +48,6 @@ function fingerprintLastMessage(msg: ChatMessage | undefined): string {
   }
   return `p:${parts.length}:${sig}`;
 }
-
-/* ── Helpers (identical to ChatPanel) ── */
 
 function getUserText(msg: ChatMessage): string | null {
   if (typeof msg.content === "string" && msg.content.length > 0)
@@ -165,8 +160,6 @@ function toolStepsFromParts(
   return steps.length > 0 ? steps : undefined;
 }
 
-/* ── Markdown components (identical to ChatPanel) ── */
-
 const markdownComponents: React.ComponentProps<
   typeof ReactMarkdown
 >["components"] = {
@@ -229,8 +222,6 @@ const markdownComponents: React.ComponentProps<
     </a>
   ),
 };
-
-/* ── UI components (identical to ChatPanel) ── */
 
 function ToolStepChip({
   step,
@@ -328,7 +319,7 @@ function ReasoningBlock({
   }, [streaming]);
 
   return (
-    <div className="overflow-hidden rounded-md border border-b-secondary bg-input-bg">
+    <>
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
@@ -353,7 +344,7 @@ function ReasoningBlock({
           id={`act-reasoning-body-${instanceKey}`}
           role="region"
           aria-labelledby={`act-reasoning-trigger-${instanceKey}`}
-          className="max-h-[120px] overflow-y-auto px-2 py-1.5"
+          className="overflow-y-auto px-2 py-1.5"
         >
           <div className="chat-markdown text-[11px] leading-relaxed">
             <ReactMarkdown components={markdownComponents}>
@@ -362,7 +353,7 @@ function ReasoningBlock({
           </div>
         </div>
       ) : null}
-    </div>
+    </>
   );
 }
 
@@ -445,8 +436,6 @@ function AssistantMessageContent({
   );
 }
 
-/* ── Main component ── */
-
 export function CanvasBottomLeft() {
   const dispatch = useAppDispatch();
   const logVisible = useAppSelector((s) => s.ui.agentLogVisible);
@@ -477,7 +466,6 @@ export function CanvasBottomLeft() {
     });
   }, []);
 
-  // Auto-scroll
   useEffect(() => {
     if (scrollRef.current && logVisible) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
@@ -489,15 +477,12 @@ export function CanvasBottomLeft() {
   const isActivelyStreaming =
     chatStatus === "submitted" || chatStatus === "streaming";
 
-  // Image preview dialog
   const [previewImage, setPreviewImage] = useState<string | null>(null);
 
   return (
     <div className="absolute bottom-4 left-4 z-10 flex flex-col items-start gap-2">
-      {/* Log panel */}
       {logVisible && (
         <div className="w-[300px] max-h-[560px] flex flex-col rounded-xl border border-b-secondary bg-surface-elevated/90 backdrop-blur-xl overflow-hidden">
-          {/* Header */}
           <div className="flex items-center justify-between px-3 py-2 flex-shrink-0">
             <span className="text-[11px] font-mono font-medium uppercase tracking-wider text-t-tertiary">
               Activity
@@ -511,7 +496,6 @@ export function CanvasBottomLeft() {
             </button>
           </div>
 
-          {/* Messages — identical rendering to ChatPanel */}
           {historyLoading ? (
             <div className="flex items-center justify-center py-10 px-4">
               <div className="flex items-center gap-2 text-xs text-t-tertiary">
@@ -635,16 +619,13 @@ export function CanvasBottomLeft() {
                     );
                   })}
 
-                  {/* Thinking indicator — shimmer text */}
                   {isActivelyStreaming && (
                     <div className="flex justify-start">
-                      <div className="rounded-lg bg-input-bg/60 px-3 py-2">
-                        <span className="shimmer-text text-xs font-medium">
-                          {chatStatus === "submitted"
-                            ? "Thinking..."
-                            : "Generating screens..."}
-                        </span>
-                      </div>
+                      <span className="shimmer-text text-xs font-medium">
+                        {chatStatus === "submitted"
+                          ? "Thinking..."
+                          : "Generating screens..."}
+                      </span>
                     </div>
                   )}
                 </div>
@@ -656,7 +637,6 @@ export function CanvasBottomLeft() {
         </div>
       )}
 
-      {/* Agent Log button */}
       <button
         type="button"
         onClick={() => dispatch(toggleAgentLogVisible())}
@@ -676,7 +656,6 @@ export function CanvasBottomLeft() {
         )}
       </button>
 
-      {/* Image Preview Dialog */}
       {previewImage && (
         <div
           className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 backdrop-blur-sm"

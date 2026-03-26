@@ -7,7 +7,6 @@ function generateApiKey(): string {
   return "fl_" + randomBytes(28).toString("base64url");
 }
 
-// GET — list all API keys for the authenticated user (key shown masked)
 export async function GET(req: NextRequest) {
   const [userId, errorRes] = await requireAuth(req);
   if (errorRes) return errorRes;

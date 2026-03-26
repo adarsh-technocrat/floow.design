@@ -1,11 +1,3 @@
-/**
- * Element inspector script for frame iframes.
- * Injected into frame HTML to enable selectable/editable elements:
- * - Assigns data-uxm-element-id to DOM elements
- * - Listens for parent messages: GET_ELEMENT_INFO, HIGHLIGHT_ELEMENT, SELECT_ELEMENT,
- *   HIDE_ELEMENT, UPDATE_TEXT, ADD_CLASS, REMOVE_CLASS, TOGGLE_CLASS, GET_CLASSES
- * - Responds with ELEMENT_INFO, TEXT_UPDATED, CLASSES_UPDATED, ELEMENT_CLASSES, IFRAME_READY
- */
 (function () {
   var ELEMENT_ID_ATTR = "data-uxm-element-id";
   var ID_PREFIX = "uxm-";
@@ -120,7 +112,6 @@
     var body = document.body;
     if (!body) return;
     var observer = new MutationObserver(function () {
-      // Re-tag newly rendered nodes after incremental body HTML updates.
       ensureElementIds(document);
     });
     observer.observe(body, { childList: true, subtree: true });
@@ -186,7 +177,6 @@
         );
         if (el) {
           el.style.visibility = payload.hide ? "hidden" : "visible";
-          // Tag with edit-sync attribute so overlay and iframe element are linked
           if (payload.hide) {
             el.setAttribute("data-uxm-edit-sync", payload.elementId);
           } else {
@@ -197,7 +187,6 @@
       }
 
       case "SYNC_TEXT": {
-        // Silent live sync — updates the element without sending a response (no re-render in parent)
         var el = document.querySelector(
           "[" + ELEMENT_ID_ATTR + '="' + payload.elementId + '"]',
         );
@@ -351,7 +340,6 @@
         var fontFaceRules = [];
         var fontLinkHrefs = [];
         try {
-          // Extract @font-face rules from stylesheets
           var sheets = document.styleSheets;
           for (var i = 0; i < sheets.length; i++) {
             try {
@@ -363,11 +351,9 @@
                 }
               }
             } catch (e) {
-              // Cross-origin stylesheet, try to get href
               if (sheets[i].href) fontLinkHrefs.push(sheets[i].href);
             }
           }
-          // Extract <link> tags for font stylesheets
           document
             .querySelectorAll('link[rel="stylesheet"]')
             .forEach(function (link) {
@@ -380,9 +366,7 @@
                 );
               }
             });
-        } catch (e) {
-          /* ignore */
-        }
+        } catch (e) {}
         window.parent.postMessage(
           {
             type: "FONT_RESOURCES",
@@ -401,8 +385,130 @@
     }
   });
 
+  function stopPreviousCursorTracker() {
+    try {
+      if (window.__uxmCursorInterval) {
+        clearInterval(window.__uxmCursorInterval);
+        window.__uxmCursorInterval = 0;
+      }
+      if (
+        window.__uxmCursorObserver &&
+        typeof window.__uxmCursorObserver.disconnect === "function"
+      ) {
+        window.__uxmCursorObserver.disconnect();
+        window.__uxmCursorObserver = null;
+      }
+    } catch (_) {}
+  }
+
+  function startCursorTracker() {
+    try {
+      stopPreviousCursorTracker();
+      var fid = "";
+      try {
+        fid =
+          (window.frameElement &&
+            window.frameElement.getAttribute("data-frame-id")) ||
+          "";
+      } catch (_) {}
+      if (!fid) {
+        try {
+          var meta = document.querySelector('meta[name="uxm-frame-id"]');
+          if (meta) fid = meta.getAttribute("content") || "";
+        } catch (_) {}
+      }
+      if (!fid) return;
+      function report() {
+        try {
+          var b = document.body;
+          if (!b) return;
+          var ch = b.children;
+          var t = null;
+          for (var i = ch.length - 1; i >= 0; i--) {
+            var tag = (ch[i] && ch[i].tagName) || "";
+            if (tag !== "SCRIPT" && tag !== "STYLE") {
+              t = ch[i];
+              break;
+            }
+          }
+          if (!t) return;
+          var el = t;
+          var d = 0;
+          while (el.lastElementChild && d < 6) {
+            var lt = el.lastElementChild.tagName;
+            if (lt === "SCRIPT" || lt === "STYLE") {
+              var prev = el.lastElementChild.previousElementSibling;
+              if (prev) {
+                el = prev;
+              } else break;
+            } else {
+              el = el.lastElementChild;
+            }
+            d++;
+          }
+          if (el === b || el === document.documentElement) return;
+          if (!el.getAttribute(ELEMENT_ID_ATTR)) {
+            counter += 1;
+            el.setAttribute(ELEMENT_ID_ATTR, ID_PREFIX + counter);
+          }
+          var r = el.getBoundingClientRect();
+          if (r.width < 1 && r.height < 1) return;
+          window.parent.postMessage(
+            {
+              type: "cursor-element-track",
+              frameId: fid,
+              elementId: el.getAttribute(ELEMENT_ID_ATTR) || "",
+              rect: {
+                left: r.left,
+                top: r.top,
+                width: r.width,
+                height: r.height,
+              },
+            },
+            "*",
+          );
+        } catch (_) {}
+      }
+      report();
+      if (typeof MutationObserver !== "undefined") {
+        var mo = new MutationObserver(report);
+        mo.observe(document.body, { childList: true, subtree: true });
+        window.__uxmCursorObserver = mo;
+      }
+      window.__uxmCursorInterval = setInterval(report, 150);
+    } catch (_) {}
+  }
+
+  function startCanvasZoom() {
+    try {
+      document.addEventListener(
+        "wheel",
+        function (e) {
+          if (e.ctrlKey || e.metaKey) {
+            e.preventDefault();
+            e.stopPropagation();
+            try {
+              window.parent.postMessage(
+                {
+                  type: "canvas-zoom",
+                  deltaY: e.deltaY,
+                  clientX: e.clientX,
+                  clientY: e.clientY,
+                },
+                "*",
+              );
+            } catch (_) {}
+          }
+        },
+        { passive: false, capture: true },
+      );
+    } catch (_) {}
+  }
+
   function init() {
     ensureElementIds(document);
+    startCursorTracker();
+    startCanvasZoom();
     startIdSyncObserver();
     if (document.readyState === "complete") {
       window.parent.postMessage(

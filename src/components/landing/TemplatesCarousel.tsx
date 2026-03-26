@@ -10,7 +10,6 @@ interface Template {
   tag: string;
   screens: number;
   thumbnail: string | null;
-  firstFrameHtml: string | null;
 }
 
 export function TemplatesCarousel() {
@@ -18,7 +17,6 @@ export function TemplatesCarousel() {
   const [templates, setTemplates] = useState<Template[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Landing page — no Redux store, direct call is appropriate
   useEffect(() => {
     http
       .get<{ templates?: Template[] }>("/api/templates")
@@ -80,7 +78,6 @@ export function TemplatesCarousel() {
         </div>
       </div>
 
-      {/* Cards */}
       <div className="px-4 py-6 sm:px-5 sm:py-8">
         <h2
           className="text-2xl md:text-3xl font-semibold tracking-tight text-t-primary mb-2"
@@ -115,27 +112,12 @@ export function TemplatesCarousel() {
                 className="group relative flex-shrink-0 w-[170px] sm:w-[200px] md:w-[220px] no-underline"
               >
                 <div className="relative aspect-[9/16] w-full overflow-hidden rounded-lg border border-b-secondary bg-input-bg shadow-sm transition-shadow hover:shadow-md">
-                  {/* Frame preview */}
                   {t.thumbnail ? (
                     <img
                       alt={t.name}
                       src={t.thumbnail}
                       className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
                     />
-                  ) : t.firstFrameHtml ? (
-                    <div className="pointer-events-none absolute inset-0 overflow-hidden">
-                      <iframe
-                        srcDoc={t.firstFrameHtml}
-                        sandbox=""
-                        title={`${t.name} preview`}
-                        className="h-[927px] w-[420px] origin-top-left border-none"
-                        style={{
-                          transform: "scale(0.523)",
-                          transformOrigin: "top left",
-                        }}
-                        tabIndex={-1}
-                      />
-                    </div>
                   ) : (
                     <div className="flex h-full w-full items-center justify-center">
                       <span className="text-[11px] font-mono text-t-tertiary">
@@ -144,7 +126,6 @@ export function TemplatesCarousel() {
                     </div>
                   )}
 
-                  {/* Overlay */}
                   <div className="absolute inset-0 bg-gradient-to-t from-surface/80 via-transparent to-transparent" />
                   <div className="absolute bottom-0 left-0 right-0 p-3">
                     <div className="flex items-center gap-2 mb-1">

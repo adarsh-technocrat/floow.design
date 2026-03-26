@@ -1,29 +1,18 @@
 export type ThemeVariables = Record<string, string>;
 export type ThemeVariantMap = Record<string, ThemeVariables>;
 
-/**
- * Detect whether a theme variables object uses the old flat format
- * (mixed --key and --key-dark) or the new structured variant format
- * ({light: {...}, dark: {...}}).
- */
 export function isStructuredVariants(
   obj: unknown,
 ): obj is ThemeVariantMap {
   if (!obj || typeof obj !== "object") return false;
   const keys = Object.keys(obj);
   if (keys.length === 0) return false;
-  // If any key starts with "--", it's the old flat format
   if (keys.some((k) => k.startsWith("--"))) return false;
-  // Check that at least one value is an object (variant map)
   return keys.some(
     (k) => typeof (obj as Record<string, unknown>)[k] === "object",
   );
 }
 
-/**
- * Convert old flat theme ({--key: val, --key-dark: val2})
- * into structured variants ({light: {--key: val}, dark: {--key: val2}}).
- */
 export function migrateFlatToVariants(
   flat: Record<string, string>,
 ): ThemeVariantMap {
@@ -32,14 +21,12 @@ export function migrateFlatToVariants(
   for (const [k, v] of Object.entries(flat)) {
     if (!k.startsWith("--") || !v) continue;
     if (k.endsWith("-dark")) {
-      // --primary-dark → --primary in dark variant
-      const baseKey = k.slice(0, -5); // strip "-dark"
+      const baseKey = k.slice(0, -5);
       dark[baseKey] = v;
     } else {
       light[k] = v;
     }
   }
-  // Ensure dark variant has fallbacks from light for any missing keys
   for (const [k, v] of Object.entries(light)) {
     if (!(k in dark)) dark[k] = v;
   }
@@ -48,10 +35,6 @@ export function migrateFlatToVariants(
   return result;
 }
 
-/**
- * Resolve a flat ThemeVariables from a variant map for a given variant name.
- * Falls back to "light" if the requested variant doesn't exist.
- */
 export function resolveVariant(
   variants: ThemeVariantMap,
   variantName: string,
@@ -59,16 +42,11 @@ export function resolveVariant(
   return variants[variantName] ?? variants.light ?? {};
 }
 
-/**
- * Normalize a theme from the DB: accepts either old flat format or new structured format.
- * Always returns ThemeVariantMap.
- */
 export function ensureVariantMap(
   raw: unknown,
 ): ThemeVariantMap {
   if (!raw || typeof raw !== "object") return { light: {} };
   if (isStructuredVariants(raw)) return raw;
-  // Old flat format
   return migrateFlatToVariants(raw as Record<string, string>);
 }
 
@@ -170,13 +148,26 @@ export function looksLikeMalformedFrameContent(html: string): boolean {
   return !looksLikeHtml;
 }
 
+export function injectFrameIdMeta(html: string, frameId: string): string {
+  if (!frameId) return html;
+  const safe = frameId
+    .replace(/&/g, "&amp;")
+    .replace(/"/g, "&quot;")
+    .replace(/</g, "&lt;");
+  const tag = `<meta name="uxm-frame-id" content="${safe}" />`;
+  if (html.includes("</head>")) return html.replace("</head>", `${tag}</head>`);
+  if (/<head[\s>]/i.test(html))
+    return html.replace(/<head[^>]*>/i, (m) => `${m}${tag}`);
+  return `${tag}${html}`;
+}
+
 export function injectElementInspectorScript(
   html: string,
   scriptContent: string,
 ): string {
   if (!scriptContent.trim()) return html;
   const escaped = scriptContent.replace(/<\/script\s*>/gi, "<\\/script>");
-  const script = `<script>${escaped}</script>`;
+  const script = `<script data-inspector="true">${escaped}</script>`;
   return html.includes("</body>")
     ? html.replace("</body>", `${script}</body>`)
     : html + script;

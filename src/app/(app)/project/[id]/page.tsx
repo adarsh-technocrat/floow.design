@@ -12,8 +12,8 @@ import {
   EditingModeDisplay,
 } from "@/components/canvas-layout";
 import { CellProgressLoader } from "@/components/CellProgressLoader";
-import { useCanvasThumbnail } from "@/hooks/useCanvasThumbnail";
-import { sendChatMessage, isChatBridgeReady } from "@/lib/chat-bridge";
+import { CaptureCanvasThumbnail } from "@/components/CaptureCanvasThumbnail";
+import { sendChatMessage, isChatBridgeReady, markNewProject } from "@/lib/chat-bridge";
 import { setAgentLogVisible } from "@/store/slices/uiSlice";
 import type { RootState } from "@/store";
 
@@ -24,19 +24,18 @@ export default function ProjectCanvasPage() {
   const searchParams = useSearchParams();
   const promptSentRef = useRef(false);
 
-  useCanvasThumbnail(projectId);
+  useEffect(() => {
+    if (searchParams.get("prompt")) markNewProject();
+  }, [searchParams]);
 
-  // Auto-send prompt from URL query param once project & chat bridge are ready
   useEffect(() => {
     if (promptSentRef.current || !projectLoaded) return;
     const prompt = searchParams.get("prompt");
     if (!prompt) return;
 
-    // Poll until chat bridge is ready (ChatEngine has mounted and registered)
     const timer = setInterval(() => {
-      if (!isChatBridgeReady()) return; // not ready yet, keep waiting
+      if (!isChatBridgeReady()) return;
 
-      // Check for image URLs stored by dashboard
       let imageUrls: string[] | undefined;
       try {
         const stored = sessionStorage.getItem("pending_prompt_images");
@@ -44,20 +43,17 @@ export default function ProjectCanvasPage() {
           imageUrls = JSON.parse(stored);
           sessionStorage.removeItem("pending_prompt_images");
         }
-      } catch { /* ignore */ }
+      } catch {}
 
       sendChatMessage(prompt, imageUrls);
       promptSentRef.current = true;
       clearInterval(timer);
 
-      // Auto-open the activity log so user sees the agent working
       dispatch(setAgentLogVisible(true));
 
-      // Clean the URL
       window.history.replaceState({}, "", window.location.pathname);
     }, 300);
 
-    // Give up after 15s
     const timeout = setTimeout(() => {
       clearInterval(timer);
     }, 15000);
@@ -90,6 +86,7 @@ export default function ProjectCanvasPage() {
         <CanvasBottomLeft />
         <CanvasBottomRight />
         <EditingModeDisplay />
+        <CaptureCanvasThumbnail />
       </div>
     </div>
   );

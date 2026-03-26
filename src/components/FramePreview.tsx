@@ -11,6 +11,7 @@ import { useIframeBridge } from "@/hooks/useIframeBridge";
 import { useAppSelector } from "@/store/hooks";
 import {
   injectFrameScripts,
+  injectFrameIdMeta,
   injectElementInspectorScript,
   truncatePartialHtml,
   looksLikeMalformedFrameContent,
@@ -61,9 +62,25 @@ export const FramePreview = React.forwardRef<
   const postTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const writeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const latestHtmlRef = useRef("");
+  const enableInspectionRef = useRef(enableElementInspection);
+  const inspectorScriptRef = useRef(inspectorScript);
+  enableInspectionRef.current = enableElementInspection;
+  inspectorScriptRef.current = inspectorScript;
+
+  const reinjectElementInspector = useCallback(() => {
+    if (!enableInspectionRef.current || !inspectorScriptRef.current) return;
+    const doc = internalRef.current?.contentDocument;
+    if (!doc?.body) return;
+    doc.querySelectorAll("script[data-inspector]").forEach((n) => n.remove());
+    const script = doc.createElement("script");
+    script.setAttribute("data-inspector", "true");
+    script.textContent = inspectorScriptRef.current;
+    doc.body.appendChild(script);
+  }, []);
 
   const { writeContent } = useIframeBridge(internalRef, {
     onMessage: onMessageFromFrame,
+    onAfterIncrementalBodyWrite: reinjectElementInspector,
   });
 
   useEffect(() => {
@@ -81,10 +98,11 @@ export const FramePreview = React.forwardRef<
     if (!safeHtml) return "";
     let out = injectFrameScripts(safeHtml);
     if (enableElementInspection && inspectorScript) {
+      out = injectFrameIdMeta(out, frameId);
       out = injectElementInspectorScript(out, inspectorScript);
     }
     return out;
-  }, [html, enableElementInspection, inspectorScript]);
+  }, [html, enableElementInspection, inspectorScript, frameId]);
 
   useEffect(() => {
     if (!html || isStreaming) return;
@@ -100,21 +118,6 @@ export const FramePreview = React.forwardRef<
       if (postTimeoutRef.current) clearTimeout(postTimeoutRef.current);
     };
   }, [frameId, html, label, left, top, isStreaming]);
-
-  const injectedInspectorRef = useRef(false);
-  useEffect(() => {
-    if (!inspectorScript || injectedInspectorRef.current) return;
-    const iframe = internalRef.current;
-    const doc = iframe?.contentDocument;
-    if (!doc?.body) return;
-    const existing = doc.querySelector("script[data-inspector]");
-    if (existing) return;
-    injectedInspectorRef.current = true;
-    const script = doc.createElement("script");
-    script.setAttribute("data-inspector", "true");
-    script.textContent = inspectorScript;
-    doc.body.appendChild(script);
-  }, [inspectorScript]);
 
   const prevHtmlLenRef = useRef(0);
   const lastWriteTimeRef = useRef(0);

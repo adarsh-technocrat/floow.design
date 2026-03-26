@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 
-// GET /api/templates — list all template projects
 export async function GET() {
   try {
     const templates = await prisma.project.findMany({
@@ -13,11 +12,6 @@ export async function GET() {
         templateTag: true,
         thumbnail: true,
         _count: { select: { frames: true } },
-        frames: {
-          orderBy: { updatedAt: "asc" },
-          take: 1,
-          select: { html: true },
-        },
       },
     });
 
@@ -28,7 +22,6 @@ export async function GET() {
         tag: t.templateTag || "Template",
         screens: t._count.frames,
         thumbnail: t.thumbnail,
-        firstFrameHtml: t.frames[0]?.html || null,
       })),
     });
   } catch (e) {

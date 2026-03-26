@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { requireAuth } from "@/lib/auth";
 
-// GET /api/projects — list active (non-trashed) projects for the authenticated user
 export async function GET(req: NextRequest) {
   const [userId, errorRes] = await requireAuth(req);
   if (errorRes) return errorRes;
@@ -41,11 +40,6 @@ export async function GET(req: NextRequest) {
         createdAt: true,
         updatedAt: true,
         _count: { select: { frames: true } },
-        frames: {
-          orderBy: { updatedAt: "asc" },
-          take: 1,
-          select: { html: true },
-        },
       },
     });
 
@@ -55,7 +49,6 @@ export async function GET(req: NextRequest) {
         name: p.name,
         screens: p._count.frames,
         thumbnail: p.thumbnail,
-        firstFrameHtml: p.frames[0]?.html || null,
         createdAt: p.createdAt.toISOString(),
         updatedAt: p.updatedAt.toISOString(),
       })),
@@ -68,7 +61,6 @@ export async function GET(req: NextRequest) {
   }
 }
 
-// POST /api/projects — create a new project
 export async function POST(req: NextRequest) {
   const [userId, errorRes] = await requireAuth(req);
   if (errorRes) return errorRes;
@@ -104,7 +96,6 @@ export async function POST(req: NextRequest) {
   }
 }
 
-// DELETE /api/projects — soft-delete (trash) a project
 export async function DELETE(req: NextRequest) {
   const [userId, errorRes] = await requireAuth(req);
   if (errorRes) return errorRes;
@@ -115,7 +106,6 @@ export async function DELETE(req: NextRequest) {
       return NextResponse.json({ error: "id is required" }, { status: 400 });
     }
 
-    // Verify ownership before trashing
     const project = await prisma.project.findUnique({
       where: { id },
       select: { ownerId: true, teamId: true },

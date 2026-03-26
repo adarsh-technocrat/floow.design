@@ -6,7 +6,6 @@ export interface ProjectListItem {
   name: string;
   screens: number;
   thumbnail: string | null;
-  firstFrameHtml: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -16,7 +15,6 @@ export interface TrashedProject {
   name: string;
   screens: number;
   thumbnail: string | null;
-  firstFrameHtml?: string | null;
   trashedAt: string;
   createdAt: string;
   updatedAt: string;
@@ -28,7 +26,6 @@ export interface TemplateItem {
   tag: string;
   screens: number;
   thumbnail: string | null;
-  firstFrameHtml: string | null;
 }
 
 interface ProjectsState {
@@ -51,7 +48,6 @@ const initialState: ProjectsState = {
   templatesLoading: false,
 };
 
-// Fetch all active projects
 export const fetchProjects = createAsyncThunk(
   "projects/fetchAll",
   async () => {
@@ -60,7 +56,6 @@ export const fetchProjects = createAsyncThunk(
   },
 );
 
-// Create a new project
 export const createProject = createAsyncThunk(
   "projects/create",
   async (name: string) => {
@@ -69,7 +64,6 @@ export const createProject = createAsyncThunk(
   },
 );
 
-// Trash a project (soft delete)
 export const trashProject = createAsyncThunk(
   "projects/trash",
   async (id: string) => {
@@ -78,7 +72,6 @@ export const trashProject = createAsyncThunk(
   },
 );
 
-// Fetch trashed projects
 export const fetchTrashedProjects = createAsyncThunk(
   "projects/fetchTrashed",
   async () => {
@@ -87,18 +80,15 @@ export const fetchTrashedProjects = createAsyncThunk(
   },
 );
 
-// Restore a trashed project
 export const restoreProject = createAsyncThunk(
   "projects/restore",
   async (id: string, { dispatch }) => {
     await http.post("/api/projects/trash", { id });
-    // Refresh both lists
     dispatch(fetchProjects());
     return id;
   },
 );
 
-// Permanently delete a project
 export const permanentlyDeleteProject = createAsyncThunk(
   "projects/permanentDelete",
   async (id: string) => {
@@ -107,7 +97,6 @@ export const permanentlyDeleteProject = createAsyncThunk(
   },
 );
 
-// Fetch templates
 export const fetchTemplates = createAsyncThunk(
   "projects/fetchTemplates",
   async () => {
@@ -116,7 +105,6 @@ export const fetchTemplates = createAsyncThunk(
   },
 );
 
-// Save frame to API
 export const persistFrame = createAsyncThunk(
   "projects/persistFrame",
   async (payload: {
@@ -132,7 +120,6 @@ export const persistFrame = createAsyncThunk(
   },
 );
 
-// Delete frame from API
 export const deleteFrameFromApi = createAsyncThunk(
   "projects/deleteFrame",
   async (frameId: string) => {

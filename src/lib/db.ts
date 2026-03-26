@@ -19,8 +19,7 @@ export async function ensureUser(
   meta?: { email?: string | null; displayName?: string | null },
 ) {
   const update =
-    meta &&
-    (meta.email !== undefined || meta.displayName !== undefined)
+    meta && (meta.email !== undefined || meta.displayName !== undefined)
       ? {
           ...(meta.email !== undefined ? { email: meta.email } : {}),
           ...(meta.displayName !== undefined

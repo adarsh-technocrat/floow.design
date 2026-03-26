@@ -42,6 +42,7 @@ function writeDocFull(iframe: HTMLIFrameElement | null, html: string) {
 
 export interface UseIframeBridgeOptions {
   onMessage?: (event: MessageEvent) => void;
+  onAfterIncrementalBodyWrite?: () => void;
 }
 
 export interface UseIframeBridgeReturn {
@@ -55,11 +56,15 @@ export function useIframeBridge(
   iframeRef: React.RefObject<HTMLIFrameElement | null>,
   options: UseIframeBridgeOptions = {},
 ): UseIframeBridgeReturn {
-  const { onMessage } = options;
+  const { onMessage, onAfterIncrementalBodyWrite } = options;
   const onMessageRef = useRef(onMessage);
+  const onAfterIncrementalBodyWriteRef = useRef(onAfterIncrementalBodyWrite);
   useEffect(() => {
     onMessageRef.current = onMessage;
   }, [onMessage]);
+  useEffect(() => {
+    onAfterIncrementalBodyWriteRef.current = onAfterIncrementalBodyWrite;
+  }, [onAfterIncrementalBodyWrite]);
 
   const hasWrittenRef = useRef(false);
   const lastWrittenHtmlRef = useRef("");
@@ -113,6 +118,7 @@ export function useIframeBridge(
               }
               lastBodyHtmlRef.current = pending.newBody;
               pending.iframe.contentDocument.body.innerHTML = pending.newBody;
+              onAfterIncrementalBodyWriteRef.current?.();
               requestAnimationFrame(() => {
                 if (pending.iframe.contentDocument?.documentElement) {
                   pending.iframe.contentDocument.documentElement.scrollTop =

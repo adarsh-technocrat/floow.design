@@ -1,11 +1,5 @@
 "use client";
 
-/**
- * Headless chat engine — no UI, just the useChat hook + tool handling.
- * Mount this once so the AI chat backend stays connected.
- * The Activity panel (CanvasBottomLeft) displays messages via chat-bridge.
- */
-
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport, type UIMessage } from "ai";
@@ -30,13 +24,13 @@ import {
   unregisterChatSend,
   registerChatStop,
   unregisterChatStop,
+  consumeNewProjectFlag,
 } from "@/lib/chat-bridge";
 import { cursor, initCursor } from "@/lib/cursor";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
+import { getFirebaseAuth } from "@/lib/firebase/config";
 import http from "@/lib/http";
-
-/* ── Throttled HTML flush ── */
 
 const CP_THROTTLE_MS = 100;
 let cpPendingHtml = new Map<string, string>();
@@ -69,8 +63,6 @@ function cpFlushHtmlNow() {
     cpDispatchRef(updateFrameHtml({ id: fid, html: fhtml }));
   }
 }
-
-/* ── Types ── */
 
 interface ToolStep {
   toolCallId: string;
@@ -110,10 +102,7 @@ const latestCanvasState: {
   themeMode: "light" | "dark";
 } = { frames: [], theme: {}, themeMode: "light" };
 
-/** Read by DefaultChatTransport (stable closure); updated in ChatEngine effect. */
 const latestChatRequestMeta = { agentCount: 1 };
-
-/* ── Helpers ── */
 
 function getToolDisplayLabel(
   toolType: string,
@@ -165,8 +154,6 @@ function addStepIfNew(prev: ToolStep[], step: ToolStep): ToolStep[] {
   return [...prev, step];
 }
 
-/* ── Component ── */
-
 export function ChatEngine() {
   const dispatch = useAppDispatch();
   useEffect(() => {
@@ -208,10 +195,6 @@ export function ChatEngine() {
     latestCanvasState.themeMode = activeThemeMode;
   }, [frames, theme, activeThemeMode]);
 
-  const chatSessionContextRef = useRef({ projectId });
-  useEffect(() => {
-    chatSessionContextRef.current = { projectId };
-  }, [projectId]);
 
   const activeThemeIdRef = useRef<string | null>(null);
   const persistThemeToDatabase = useCallback(
@@ -265,32 +248,39 @@ export function ChatEngine() {
     [chatUserId, dispatch],
   );
 
-  const postChatSession = useCallback((messagesPayload: UIMessage[]) => {
-    const { projectId: pid } = chatSessionContextRef.current;
-    return http.post("/api/chat/sessions", {
-      projectId: pid,
-      isActive: true,
-      messages: messagesPayload,
-    });
-  }, []);
 
   const [transport] = useState(
     () =>
       new DefaultChatTransport({
         api: "/api/chat",
-        prepareSendMessagesRequest: (options) => ({
-          body: {
-            ...options.body,
-            messages: options.messages,
-            id: options.id,
-            trigger: options.trigger,
-            messageId: options.messageId,
-            frames: latestCanvasState.frames,
-            theme: latestCanvasState.theme,
-            themeMode: latestCanvasState.themeMode,
-            agentCount: latestChatRequestMeta.agentCount,
-          },
-        }),
+        prepareSendMessagesRequest: async (options) => {
+          const raw = options.headers;
+          const headers: Record<string, string> =
+            raw instanceof Headers
+              ? Object.fromEntries(raw.entries())
+              : { ...((raw ?? {}) as Record<string, string>) };
+
+          const fbUser = getFirebaseAuth()?.currentUser;
+          if (fbUser) {
+            const token = await fbUser.getIdToken();
+            headers.Authorization = `Bearer ${token}`;
+          }
+
+          return {
+            headers,
+            body: {
+              ...options.body,
+              messages: options.messages,
+              id: options.id,
+              trigger: options.trigger,
+              messageId: options.messageId,
+              frames: latestCanvasState.frames,
+              theme: latestCanvasState.theme,
+              themeMode: latestCanvasState.themeMode,
+              agentCount: latestChatRequestMeta.agentCount,
+            },
+          };
+        },
       }),
   );
 
@@ -754,12 +744,8 @@ export function ChatEngine() {
             parts: [...stepParts, ...existingParts],
           } as typeof lastMsg;
           setMessages(updated);
-          void postChatSession(updated).catch(() => {});
           return;
         }
-      }
-      if (!isAbort && !isError && finishedMessages.length > 0) {
-        void postChatSession(finishedMessages).catch(() => {});
       }
     },
     onError: (error) => {
@@ -777,13 +763,18 @@ export function ChatEngine() {
     },
   });
 
-  // Hydrate history
   const lastHydrateKeyRef = useRef("");
   useEffect(() => {
     if (!projectId || !chatUserId) return;
     const hydrateKey = `${projectId}:${chatUserId}`;
     if (hydrateKey === lastHydrateKeyRef.current) return;
     lastHydrateKeyRef.current = hydrateKey;
+
+    if (consumeNewProjectFlag()) {
+      setMessages([]);
+      setIsLoadingHistory(false);
+      return;
+    }
 
     queueMicrotask(() => setIsLoadingHistory(true));
     const q = new URLSearchParams({ projectId });
@@ -805,13 +796,11 @@ export function ChatEngine() {
       });
   }, [setMessages, projectId, chatUserId]);
 
-  // Broadcast messages to Activity panel
   useEffect(() => {
     if (isLoadingHistory) return;
     emitChatMessagesSnapshot(messages);
   }, [messages, isLoadingHistory]);
 
-  // Broadcast status
   useEffect(() => {
     const s =
       status === "streaming"
@@ -823,26 +812,10 @@ export function ChatEngine() {
     if (s === "ready") clearGeneratingFrames();
   }, [status]);
 
-  // Broadcast loading state
   useEffect(() => {
     emitActivityHistoryLoading(isLoadingHistory);
   }, [isLoadingHistory]);
 
-  // Debounced session persist
-  const persistTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  useEffect(() => {
-    if (messages.length === 0 || status === "streaming") return;
-    if (persistTimeoutRef.current) clearTimeout(persistTimeoutRef.current);
-    persistTimeoutRef.current = setTimeout(() => {
-      persistTimeoutRef.current = null;
-      void postChatSession(messages).catch(() => {});
-    }, 1500);
-    return () => {
-      if (persistTimeoutRef.current) clearTimeout(persistTimeoutRef.current);
-    };
-  }, [messages, status, postChatSession]);
-
-  // Register send/stop for the center input
   useEffect(() => {
     const bridgeSend = (payload: {
       text: string;
@@ -852,7 +825,6 @@ export function ChatEngine() {
       dispatch(pushAgentLog({ type: "user", text: payload.text }));
 
       if (payload.imageDataUrls && payload.imageDataUrls.length > 0) {
-        // Images are already uploaded HTTPS URLs from Vercel Blob
         const files = payload.imageDataUrls.map((url) => ({
           type: "file" as const,
           mediaType: "image/png",
@@ -871,6 +843,5 @@ export function ChatEngine() {
     };
   }, [sendMessage, stop, dispatch, setToolSteps]);
 
-  // Headless — no UI
   return null;
 }

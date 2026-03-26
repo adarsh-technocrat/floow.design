@@ -474,8 +474,7 @@ export function StyleGuidePanel({ open, onClose }: StyleGuidePanelProps) {
   const hasTheme = activeTheme && variantNames.length > 0;
 
   return (
-    <div className="absolute right-14 top-0 z-20 w-[340px] max-h-[calc(100vh-100px)] overflow-hidden rounded-xl border border-b-strong bg-surface-elevated shadow-xl backdrop-blur-xl flex flex-col">
-      {/* Header */}
+    <div className="absolute right-14 top-0 z-20 w-[340px] max-h-[calc(100vh-200px)] overflow-hidden rounded-xl border border-b-strong bg-surface-elevated shadow-xl backdrop-blur-xl flex flex-col">
       <div className="flex items-center justify-between border-b border-b-secondary px-4 py-3 shrink-0">
         <div className="flex items-center gap-2">
           <svg
@@ -507,7 +506,6 @@ export function StyleGuidePanel({ open, onClose }: StyleGuidePanelProps) {
         </button>
       </div>
 
-      {/* Theme selector dropdown */}
       {themes.length > 0 && (
         <div className="border-b border-b-secondary px-4 py-2.5 shrink-0">
           <label className="text-[9px] font-mono uppercase tracking-widest text-t-tertiary mb-1.5 block">
@@ -530,7 +528,6 @@ export function StyleGuidePanel({ open, onClose }: StyleGuidePanelProps) {
         </div>
       )}
 
-      {/* Variant tabs */}
       {hasTheme && (
         <div className="border-b border-b-secondary px-4 py-2.5 shrink-0">
           <div className="mb-1.5 flex items-center gap-1.5">
@@ -593,7 +590,6 @@ export function StyleGuidePanel({ open, onClose }: StyleGuidePanelProps) {
         </div>
       )}
 
-      {/* Add variant form */}
       {showAddVariant && (
         <div className="border-b border-b-secondary px-4 py-2.5 flex items-center gap-2 shrink-0">
           <input
@@ -628,7 +624,6 @@ export function StyleGuidePanel({ open, onClose }: StyleGuidePanelProps) {
         </div>
       )}
 
-      {/* Per-frame assignment */}
       {selectedFrame && hasTheme && (
         <div className="border-b border-b-secondary px-4 py-2.5 shrink-0 bg-input-bg/30">
           <div className="flex items-center gap-1.5 mb-2">
@@ -684,7 +679,6 @@ export function StyleGuidePanel({ open, onClose }: StyleGuidePanelProps) {
         </div>
       )}
 
-      {/* Content */}
       <div className="flex-1 overflow-y-auto">
         {!hasTheme ? (
           <div className="px-4 py-10 text-center">
@@ -737,7 +731,6 @@ export function StyleGuidePanel({ open, onClose }: StyleGuidePanelProps) {
               );
             })}
 
-            {/* Custom variables */}
             {(() => {
               const knownKeys = new Set(
                 VARIABLE_GROUPS.flatMap((g) => g.vars.map((v) => v.key)),
@@ -771,7 +764,6 @@ export function StyleGuidePanel({ open, onClose }: StyleGuidePanelProps) {
         )}
       </div>
 
-      {/* Footer */}
       {hasTheme && (
         <div className="border-t border-b-secondary px-4 py-2.5 shrink-0">
           <p className="text-[10px] text-t-tertiary/60">

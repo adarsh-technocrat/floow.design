@@ -27,7 +27,6 @@ interface _Project {
   name: string;
   screens: number;
   thumbnail: string | null;
-  firstFrameHtml: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -37,7 +36,6 @@ interface _TrashedProject {
   name: string;
   screens: number;
   thumbnail: string | null;
-  firstFrameHtml?: string | null;
   trashedAt: string;
   createdAt: string;
   updatedAt: string;
@@ -110,7 +108,6 @@ function DashboardSidebarUsage({
   const { credits, creditCap, plan, billingInterval, creditsResetAt } = summary;
   const safeRemaining = Math.max(0, credits);
   const ratio = Math.min(1, safeRemaining / creditCap);
-  /** Keep a sliver visible when there is balance so it never reads as “empty” at a glance. */
   const barPct = safeRemaining <= 0 ? 0 : Math.max(ratio * 100, 5);
 
   const fillClass =
@@ -339,7 +336,6 @@ function ApiKeysView() {
 
   return (
     <>
-      {/* Header */}
       <div className="flex shrink-0 items-center justify-between border-b border-b-secondary px-5 py-4">
         <div className="flex items-center gap-2">
           <h2 className="text-[11px] font-mono font-semibold uppercase tracking-wider text-t-primary">
@@ -369,7 +365,6 @@ function ApiKeysView() {
       </div>
 
       <div className="flex-1 overflow-y-auto">
-        {/* Just-created key banner */}
         {justCreated && (
           <div className="mx-5 mt-5 rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-4">
             <div className="flex items-start justify-between gap-3">
@@ -417,7 +412,6 @@ function ApiKeysView() {
           </div>
         )}
 
-        {/* Create form */}
         {showCreate && (
           <div className="mx-5 mt-5 rounded-xl border border-b-secondary bg-surface-elevated p-4">
             <label className="mb-2 block text-[11px] font-mono font-medium uppercase tracking-wider text-t-tertiary">
@@ -461,7 +455,6 @@ function ApiKeysView() {
           </div>
         )}
 
-        {/* Loading */}
         {loading && keys.length === 0 && (
           <div className="flex items-center justify-center py-24">
             <div className="flex items-center gap-2 text-sm text-t-tertiary">
@@ -471,7 +464,6 @@ function ApiKeysView() {
           </div>
         )}
 
-        {/* Empty state */}
         {!loading && keys.length === 0 && (
           <div className="flex flex-col items-center justify-center px-6 py-24 text-center">
             <div className="mb-4 flex size-14 items-center justify-center rounded-2xl border border-dashed border-b-secondary bg-surface-sunken">
@@ -498,7 +490,6 @@ function ApiKeysView() {
           </div>
         )}
 
-        {/* Active keys */}
         {activeKeys.length > 0 && (
           <div className="p-5">
             <p className="mb-3 text-[11px] font-mono font-medium uppercase tracking-wider text-t-secondary">
@@ -558,7 +549,6 @@ function ApiKeysView() {
           </div>
         )}
 
-        {/* Revoked keys */}
         {revokedKeys.length > 0 && (
           <div className="px-5 pb-5">
             <p className="mb-3 text-[11px] font-mono font-medium uppercase tracking-wider text-t-secondary">
@@ -597,7 +587,6 @@ function ApiKeysView() {
           </div>
         )}
 
-        {/* Footer note */}
         {keys.length > 0 && (
           <div className="border-t border-b-secondary px-5 py-3">
             <p className="text-[11px] text-t-tertiary/60">
@@ -622,6 +611,7 @@ export default function DashboardPage() {
   const planSummary = useAppSelector((s) => s.user.plan);
   const planLoading = useAppSelector((s) => s.user.planLoading);
   const [inputValue, setInputValue] = useState("");
+  const [isCreatingProject, setIsCreatingProject] = useState(false);
   const [activeView, setActiveView] = useState<"home" | "trash" | "api-keys">(
     "home",
   );
@@ -634,7 +624,6 @@ export default function DashboardPage() {
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const streamingRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  // Image attachments — shared hook
   const {
     attachedImages,
     hasUploadingImages,
@@ -647,9 +636,7 @@ export default function DashboardPage() {
     getUploadedUrls,
   } = useImageAttachments();
 
-  // Stream a prompt into the input box character by character
   const streamPrompt = useCallback((text: string) => {
-    // Clear any existing stream
     if (streamingRef.current) {
       clearInterval(streamingRef.current);
       streamingRef.current = null;
@@ -661,7 +648,6 @@ export default function DashboardPage() {
       if (i < text.length) {
         setInputValue(text.slice(0, i + 1));
         i++;
-        // Auto-resize textarea as content streams in
         const el = inputRef.current;
         if (el) {
           el.style.height = "auto";
@@ -672,20 +658,17 @@ export default function DashboardPage() {
           clearInterval(streamingRef.current);
           streamingRef.current = null;
         }
-        // Focus input after streaming completes
         inputRef.current?.focus();
       }
     }, 20);
   }, []);
 
-  // Cleanup on unmount
   useEffect(() => {
     return () => {
       if (streamingRef.current) clearInterval(streamingRef.current);
     };
   }, []);
 
-  // Close user menu on click outside
   useEffect(() => {
     const handleClick = (e: MouseEvent) => {
       if (
@@ -699,19 +682,16 @@ export default function DashboardPage() {
     return () => document.removeEventListener("mousedown", handleClick);
   }, [userMenuOpen]);
 
-  // Shuffle inspiration prompts so it feels fresh each visit
   const shuffledInspirations = useMemo(
     () => [...inspirationPrompts].sort(() => Math.random() - 0.5),
     [],
   );
 
-  // Fetch projects + plan via Redux thunks
   useEffect(() => {
     if (!user) return;
     dispatch(fetchProjects());
     dispatch(fetchUserPlan());
 
-    // Silent refresh on tab visibility
     const onVis = () => {
       if (document.visibilityState === "visible" && user) {
         dispatch(fetchUserPlan());
@@ -721,14 +701,18 @@ export default function DashboardPage() {
     return () => document.removeEventListener("visibilitychange", onVis);
   }, [user, dispatch]);
 
-  // Create new project and navigate with prompt
   const createProject = useCallback(
     async (name?: string) => {
       const prompt = name || "Untitled Project";
-      const result = await dispatch(createProjectThunk(prompt)).unwrap();
-      if (result.id) {
-        const params = name ? `?prompt=${encodeURIComponent(name)}` : "";
-        router.push(`/project/${result.id}${params}`);
+      setIsCreatingProject(true);
+      try {
+        const result = await dispatch(createProjectThunk(prompt)).unwrap();
+        if (result.id) {
+          const params = name ? `?prompt=${encodeURIComponent(name)}` : "";
+          router.push(`/project/${result.id}${params}`);
+        }
+      } catch {
+        setIsCreatingProject(false);
       }
     },
     [router, dispatch],
@@ -736,8 +720,7 @@ export default function DashboardPage() {
 
   const handleSubmit = () => {
     if (!inputValue.trim() && attachedImages.length === 0) return;
-    if (hasUploadingImages) return;
-    // Gate: must be on a paid plan
+    if (hasUploadingImages || isCreatingProject) return;
     if (!planSummary || planSummary.plan === "FREE") {
       setPricingDialogReason("no_plan");
       setPricingDialogOpen(true);
@@ -748,7 +731,6 @@ export default function DashboardPage() {
       setPricingDialogOpen(true);
       return;
     }
-    // Store image URLs in sessionStorage for the project page to pick up
     const imageUrls = getUploadedUrls();
     if (imageUrls.length > 0) {
       sessionStorage.setItem(
@@ -760,7 +742,6 @@ export default function DashboardPage() {
     createProject(inputValue.trim() || "Attached image");
   };
 
-  // All project operations via Redux thunks
   const fetchTrash = useCallback(() => {
     dispatch(fetchTrashedProjects());
   }, [dispatch]);
@@ -858,9 +839,7 @@ export default function DashboardPage() {
   return (
     <div className="h-screen w-full bg-surface text-t-primary p-3">
       <div className="h-full w-full rounded-2xl border border-b-secondary bg-canvas-bg overflow-hidden flex relative">
-        {/* Left sidebar */}
         <aside className="relative z-10 flex w-[260px] flex-shrink-0 flex-col border-r border-b-secondary bg-surface/80 backdrop-blur-sm">
-          {/* Logo */}
           <div className="flex h-14 items-center px-4">
             <Link href="/" className="no-underline flex items-center gap-2">
               <span
@@ -874,7 +853,6 @@ export default function DashboardPage() {
             </Link>
           </div>
 
-          {/* New project button */}
           <div className="px-3 mb-1">
             <button
               onClick={() => {
@@ -898,7 +876,6 @@ export default function DashboardPage() {
             </button>
           </div>
 
-          {/* Nav items */}
           <nav className="flex flex-col gap-0.5 px-3 py-2">
             {sidebarNav.map((item) => (
               <button
@@ -925,9 +902,7 @@ export default function DashboardPage() {
             ))}
           </nav>
 
-          {/* Recent projects — scrollable area */}
           <div className="flex-1 overflow-y-auto px-3 py-2">
-            {/* Recent projects */}
             <p className="mb-2 px-3 text-xs font-mono font-medium uppercase tracking-wider text-t-secondary">
               Recent
             </p>
@@ -968,7 +943,6 @@ export default function DashboardPage() {
             )}
           </div>
 
-          {/* Credit usage */}
           <div className="px-3 pb-2">
             <DashboardSidebarUsage
               summary={planSummary}
@@ -977,12 +951,10 @@ export default function DashboardPage() {
             />
           </div>
 
-          {/* Bottom — user + controls */}
           <div
             className="relative border-t border-b-secondary p-3"
             ref={userMenuRef}
           >
-            {/* User menu dropdown */}
             {userMenuOpen && (
               <div className="absolute bottom-full left-3 right-3 mb-2 overflow-hidden rounded-xl border border-b-secondary bg-surface-elevated shadow-lg">
                 <div className="px-4 py-3 border-b border-b-secondary">
@@ -1113,9 +1085,7 @@ export default function DashboardPage() {
           </div>
         </aside>
 
-        {/* Main content area */}
         <div className="flex-1 flex flex-col relative overflow-hidden">
-          {/* Dotted canvas bg — home only */}
           {activeView === "home" && (
             <div
               className="pointer-events-none absolute inset-0 z-0"
@@ -1127,7 +1097,6 @@ export default function DashboardPage() {
             />
           )}
 
-          {/* Center content */}
           <AnimatePresence mode="wait">
             {activeView === "home" ? (
               <motion.div
@@ -1144,7 +1113,6 @@ export default function DashboardPage() {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.6 }}
                 >
-                  {/* Floating thunder icons */}
                   {[
                     {
                       x: "-60px",
@@ -1254,7 +1222,6 @@ export default function DashboardPage() {
                   </h1>
                 </motion.div>
 
-                {/* Prompt input */}
                 <motion.div
                   className="w-full max-w-[820px]"
                   initial={{ opacity: 0, y: 20 }}
@@ -1262,7 +1229,6 @@ export default function DashboardPage() {
                   transition={{ delay: 0.15, duration: 0.6 }}
                 >
                   <div className="rounded-2xl border border-b-secondary bg-surface-elevated backdrop-blur-xl transition-all focus-within:border-b-secondary">
-                    {/* Hidden file input */}
                     <input
                       ref={fileInputRef}
                       type="file"
@@ -1272,7 +1238,6 @@ export default function DashboardPage() {
                       onChange={handleDashboardFileChange}
                     />
 
-                    {/* Image previews */}
                     {attachedImages.length > 0 && (
                       <div className="flex gap-2 px-4 pt-3 pb-0 overflow-x-auto">
                         {attachedImages.map((img) => (
@@ -1379,8 +1344,9 @@ export default function DashboardPage() {
                           }
                         }}
                         onPaste={handleDashboardPaste}
+                        disabled={isCreatingProject}
                         rows={3}
-                        className="w-full bg-transparent text-[15px] text-t-primary placeholder-transparent outline-none resize-none leading-relaxed min-h-[100px] max-h-[240px] relative z-10"
+                        className="w-full bg-transparent text-[15px] text-t-primary placeholder-transparent outline-none resize-none leading-relaxed min-h-[100px] max-h-[240px] relative z-10 disabled:opacity-50"
                         onInput={(e) => {
                           const el = e.currentTarget;
                           el.style.height = "auto";
@@ -1430,10 +1396,14 @@ export default function DashboardPage() {
                           disabled={
                             (!inputValue.trim() &&
                               attachedImages.length === 0) ||
-                            hasUploadingImages
+                            hasUploadingImages ||
+                            isCreatingProject
                           }
                           className="inline-flex size-8 shrink-0 items-center justify-center rounded-full bg-btn-primary-bg text-btn-primary-text shadow-sm outline-none transition-all hover:opacity-90 disabled:pointer-events-none disabled:opacity-30 focus-visible:ring-2 focus-visible:ring-ring/50 active:scale-95"
                         >
+                          {isCreatingProject ? (
+                            <div className="size-4 animate-spin rounded-full border-2 border-btn-primary-text border-t-transparent" />
+                          ) : (
                           <svg
                             xmlns="http://www.w3.org/2000/svg"
                             width="1em"
@@ -1444,12 +1414,12 @@ export default function DashboardPage() {
                           >
                             <path d="M205.66,117.66a8,8,0,0,1-11.32,0L136,59.31V216a8,8,0,0,1-16,0V59.31L61.66,117.66a8,8,0,0,1-11.32-11.32l72-72a8,8,0,0,1,11.32,0l72,72A8,8,0,0,1,205.66,117.66Z" />
                           </svg>
+                          )}
                         </button>
                       </div>
                     </div>
                   </div>
 
-                  {/* Inspiration chips */}
                   <div className="mt-4 flex items-center justify-center gap-2 overflow-x-auto max-w-full flex-nowrap">
                     <span className="text-[11px] font-mono text-t-tertiary uppercase tracking-wider mr-1">
                       Try
@@ -1479,7 +1449,6 @@ export default function DashboardPage() {
                   </div>
                 </motion.div>
 
-                {/* Project cards */}
                 {projects.length > 0 && (
                   <motion.div
                     className="w-full max-w-[820px] mt-10"
@@ -1509,7 +1478,6 @@ export default function DashboardPage() {
                             >
                               <ProjectFramePreview
                                 thumbnail={project.thumbnail}
-                                firstFrameHtml={project.firstFrameHtml}
                                 title={project.name}
                               />
                             </Link>
@@ -1553,7 +1521,6 @@ export default function DashboardPage() {
                 )}
               </motion.div>
             ) : activeView === "trash" ? (
-              /* Trash view */
               <motion.div
                 key="trash"
                 className="relative z-10 flex-1 flex flex-col overflow-hidden"
@@ -1617,7 +1584,6 @@ export default function DashboardPage() {
                           <div className="relative aspect-[16/10] w-full min-h-0 border-b border-b-secondary/80 bg-surface-sunken">
                             <ProjectFramePreview
                               thumbnail={project.thumbnail}
-                              firstFrameHtml={project.firstFrameHtml}
                               title={project.name}
                               emptyLabel={`${project.screens} screens`}
                               dimmed
