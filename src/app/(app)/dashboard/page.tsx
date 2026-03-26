@@ -1314,7 +1314,7 @@ export default function DashboardPage() {
                               <button
                                 type="button"
                                 onClick={() => removeDashboardImage(img.id)}
-                                className="absolute -top-1.5 -right-1.5 flex size-5 items-center justify-center rounded-full bg-surface-elevated border border-b-secondary text-t-tertiary shadow-sm opacity-0 group-hover:opacity-100 transition-opacity hover:text-t-primary"
+                                className="absolute -top-1.5 -right-1.5 flex size-5 items-center justify-center rounded-full bg-surface-elevated border border-b-secondary text-t-tertiary shadow-sm transition-colors hover:text-t-primary"
                               >
                                 <svg
                                   width="10"
