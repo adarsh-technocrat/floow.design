@@ -769,26 +769,34 @@ export default function DashboardPage() {
     title: string;
     description: string;
     confirmLabel: string;
+    cancelLabel: string;
     variant: "danger" | "warning";
+    requireAcknowledgment: boolean;
     onConfirm: () => void;
   }>({
     open: false,
     title: "",
     description: "",
     confirmLabel: "",
+    cancelLabel: "Cancel",
     variant: "danger",
+    requireAcknowledgment: false,
     onConfirm: () => {},
   });
 
   const trashProject = useCallback(
     (id: string) => {
       const project = projects.find((p) => p.id === id);
+      const name = project?.name || "This project";
       setConfirmDialog({
         open: true,
-        title: "Move to trash?",
-        description: `"${project?.name || "This project"}" will be moved to trash. You can restore it later from the trash.`,
+        title: `Move the “${name}” project to trash?`,
+        description:
+          "You can restore it later from Trash. Nothing is deleted permanently yet.",
         confirmLabel: "Move to trash",
-        variant: "warning",
+        cancelLabel: "Keep project",
+        variant: "danger",
+        requireAcknowledgment: false,
         onConfirm: () => dispatch(trashProjectThunk(id)),
       });
     },
@@ -805,12 +813,16 @@ export default function DashboardPage() {
   const permanentlyDelete = useCallback(
     (id: string) => {
       const project = trashedProjects.find((p) => p.id === id);
+      const name = project?.name || "This project";
       setConfirmDialog({
         open: true,
-        title: "Delete permanently?",
-        description: `"${project?.name || "This project"}" will be permanently deleted. This action cannot be undone.`,
-        confirmLabel: "Delete forever",
+        title: `Delete the “${name}” project?`,
+        description:
+          "All screens, chat history, and files in this project will be removed. This action cannot be undone.",
+        confirmLabel: "Delete project",
+        cancelLabel: "Keep project",
         variant: "danger",
+        requireAcknowledgment: true,
         onConfirm: () => dispatch(permanentlyDeleteProject(id)),
       });
     },
@@ -1714,7 +1726,9 @@ export default function DashboardPage() {
         title={confirmDialog.title}
         description={confirmDialog.description}
         confirmLabel={confirmDialog.confirmLabel}
+        cancelLabel={confirmDialog.cancelLabel}
         variant={confirmDialog.variant}
+        requireAcknowledgment={confirmDialog.requireAcknowledgment}
         onConfirm={confirmDialog.onConfirm}
       />
     </div>
