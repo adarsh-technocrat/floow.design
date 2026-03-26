@@ -45,12 +45,13 @@ const mobileNavLinkActiveClass = "text-t-primary bg-input-bg";
 
 export function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
-  const [hash, setHash] = useState("");
+  const [hash, setHash] = useState(() =>
+    typeof window !== "undefined" ? window.location.hash : "",
+  );
   const pathname = usePathname();
   const { user, loading } = useAuth();
 
   useEffect(() => {
-    setHash(typeof window !== "undefined" ? window.location.hash : "");
     const onHashChange = () => setHash(window.location.hash);
     window.addEventListener("hashchange", onHashChange);
     return () => window.removeEventListener("hashchange", onHashChange);
@@ -89,6 +90,7 @@ export function Header() {
               </Link>
               <Link
                 href="/dashboard"
+                aria-label="Go to dashboard"
                 className="inline-flex overflow-hidden rounded-full ring-2 ring-black/[0.06] dark:ring-white/10"
               >
                 <Avatar
@@ -101,18 +103,18 @@ export function Header() {
             </>
           ) : (
             <>
-              <a
+              <Link
                 href="/signin"
                 className="hidden sm:inline-flex px-4 py-2 text-[11px] font-semibold uppercase tracking-wider text-t-secondary hover:text-t-primary transition-colors no-underline font-mono"
               >
                 Sign in
-              </a>
-              <a
+              </Link>
+              <Link
                 href="/project"
                 className="inline-flex h-9 items-center px-5 rounded border-0 bg-btn-primary-bg text-[11px] font-semibold uppercase tracking-wider text-btn-primary-text hover:opacity-90 transition-colors no-underline font-mono"
               >
                 Get Started
-              </a>
+              </Link>
             </>
           )}
           <button

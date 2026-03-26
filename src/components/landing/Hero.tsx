@@ -182,9 +182,11 @@ export function Hero() {
                 <button
                   type="button"
                   className="flex items-center justify-center rounded-lg p-2 text-t-tertiary hover:text-t-secondary hover:bg-input-bg transition-colors"
+                  aria-label="Attach file"
                   title="Attach"
                 >
                   <svg
+                    aria-hidden="true"
                     width="16"
                     height="16"
                     viewBox="0 0 256 256"
@@ -205,6 +207,7 @@ export function Hero() {
                   <>
                     Generate
                     <svg
+                      aria-hidden="true"
                       width="14"
                       height="14"
                       viewBox="0 0 24 24"

@@ -74,12 +74,12 @@ export function FeaturesGrid() {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 gap-px border-t border-b-secondary bg-b-secondary md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-px border-t border-b-secondary bg-b-secondary md:grid-cols-2 lg:grid-cols-3 contain-layout">
           {features.map((f) => (
             <Link
               key={f.title}
               href={`/features/${f.slug}`}
-              className="group flex flex-col bg-surface px-4 py-8 md:px-6 md:py-10 lg:px-8 lg:py-12 transition-colors hover:bg-input-bg/80 no-underline"
+              className="group flex flex-col bg-surface px-4 py-8 md:px-6 md:py-10 lg:px-8 lg:py-12 transition-colors hover:bg-input-bg/80 no-underline min-h-[160px] md:min-h-[180px]"
             >
               <span className="mb-3 text-[11px] font-mono font-semibold uppercase tracking-widest text-t-tertiary">
                 {f.label}

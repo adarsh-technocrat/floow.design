@@ -90,8 +90,6 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  maximumScale: 1,
-  userScalable: false,
 };
 
 export default function RootLayout({
@@ -102,6 +100,8 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
+        <link rel="preconnect" href="https://floow-b2e39.firebaseapp.com" />
+        <link rel="preconnect" href="https://apis.google.com" />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
@@ -130,10 +130,11 @@ export default function RootLayout({
             }),
           }}
         />
+        <link rel="dns-prefetch" href="https://analytics.ahrefs.com" />
         <Script
           src="https://analytics.ahrefs.com/analytics.js"
           data-key="1otq8EisxkFeCPi/ClKZuw"
-          strategy="afterInteractive"
+          strategy="lazyOnload"
         />
       </head>
       <body
