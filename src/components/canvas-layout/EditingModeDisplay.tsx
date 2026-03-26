@@ -59,14 +59,14 @@ function ToolbarChip({
   icon?: ReactNode;
 }) {
   return (
-    <div className="group inline-flex h-8 max-w-[210px] items-center gap-1.5 rounded-full border border-white/15 bg-white/5 px-3 text-[13px] text-t-secondary">
+    <div className="group inline-flex h-8 max-w-[210px] items-center gap-1.5 rounded-full border border-b-secondary bg-input-bg px-3 text-[13px] text-t-secondary">
       {icon ? <span className="shrink-0">{icon}</span> : null}
       <span className="truncate">{label}</span>
       {onRemove ? (
         <button
           type="button"
           onClick={onRemove}
-          className="shrink-0 rounded-full p-0.5 text-t-tertiary transition-colors group-hover:text-t-secondary hover:bg-white/10"
+          className="shrink-0 rounded-full p-0.5 text-t-tertiary transition-colors group-hover:text-t-secondary hover:bg-surface-sunken"
           aria-label={`Remove ${label}`}
         >
           <X className="size-3.5" />
@@ -141,7 +141,7 @@ export function EditingModeDisplay() {
           </div>
         )}
 
-        <div className="relative z-10 rounded-[28px] border border-white/15 bg-[#16181D]/95 shadow-[0_8px_30px_rgba(0,0,0,0.35)] backdrop-blur-xl transition-all focus-within:border-white/25">
+        <div className="relative z-10 rounded-[28px] border border-b-secondary bg-canvas-panel-bg shadow-md backdrop-blur-xl transition-all focus-within:border-b-strong">
           {/* Hidden file input */}
           <input
             ref={fileInputRef}
@@ -155,7 +155,7 @@ export function EditingModeDisplay() {
           {(attachedFrames.length > 0 ||
             selectedElement ||
             attachedImages.length > 0) && (
-            <div className="flex gap-2 overflow-x-auto px-4 pb-0 pt-3">
+            <div className="flex gap-2 overflow-x-auto px-5 pb-0 pt-3">
               {attachedFrames.map((frame) => (
                 <ToolbarChip
                   key={frame.id}
@@ -185,7 +185,7 @@ export function EditingModeDisplay() {
             </div>
           )}
 
-          <div className="px-4 pb-2 pt-2">
+          <div className="px-5 pb-2 pt-3">
             <textarea
               ref={inputRef}
               value={inputValue}
@@ -201,19 +201,19 @@ export function EditingModeDisplay() {
                       ? `Edit ${attachedFrames.length === 1 ? `"${attachedFrames[0].label || "screen"}"` : `${attachedFrames.length} screens`}...`
                       : "What would you like to change or create?"
               }
-              rows={2}
-              className="max-h-[140px] min-h-[52px] w-full resize-none bg-transparent text-[16px] leading-relaxed text-white placeholder:text-[#A3A9B5] outline-none"
+              rows={1}
+              className="max-h-[140px] min-h-[48px] w-full resize-none bg-transparent py-2 text-[16px] leading-relaxed text-t-primary placeholder:text-t-tertiary outline-none"
               onInput={handleTextareaAutoResize}
             />
           </div>
 
-          <div className="flex items-center justify-between px-4 py-2.5">
+          <div className="flex items-center justify-between px-5 py-2.5">
             <div className="flex items-center gap-1.5">
               <button
                 type="button"
                 aria-label="Attach image"
                 onClick={handleAttachImage}
-                className="inline-flex size-8 shrink-0 items-center justify-center rounded-md text-[#C5CAD4] transition-colors hover:bg-white/10 hover:text-white"
+                className="inline-flex size-8 shrink-0 items-center justify-center rounded-md text-t-secondary transition-colors hover:bg-input-bg hover:text-t-primary"
               >
                 <ImageIcon className="size-4" />
               </button>
@@ -250,7 +250,7 @@ export function EditingModeDisplay() {
                     (!inputValue.trim() && attachedImages.length === 0) ||
                     hasUploadingImages
                   }
-                  className="inline-flex size-8 shrink-0 items-center justify-center rounded-full bg-white text-black shadow-sm outline-none transition-all hover:opacity-90 disabled:pointer-events-none disabled:opacity-30 focus-visible:ring-2 focus-visible:ring-ring/50 active:scale-95"
+                  className="inline-flex size-8 shrink-0 items-center justify-center rounded-full bg-btn-primary-bg text-btn-primary-text shadow-sm outline-none transition-all hover:opacity-90 disabled:pointer-events-none disabled:opacity-30 focus-visible:ring-2 focus-visible:ring-ring/50 active:scale-95"
                 >
                   <ArrowUp className="size-4" />
                 </button>

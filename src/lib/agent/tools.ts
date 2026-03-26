@@ -133,13 +133,98 @@ FORBIDDEN: bg-blue-500, text-gray-700, bg-slate-900, text-zinc-400, or ANY arbit
 Every color must come from the theme variables above. This ensures all screens look like they belong to the same app.`;
 }
 
+/**
+ * Extract a concise structural summary from screen HTML so the design model
+ * understands what was previously built (navigation items, sections, key UI
+ * patterns) without receiving the entire HTML blob.
+ */
+function summarizeScreenHtml(html: string, maxLength = 600): string {
+  const body = extractBodyContent(html);
+  if (!body) return "(empty)";
+
+  const parts: string[] = [];
+
+  // Extract headings
+  const headings = [...body.matchAll(/<h[1-3][^>]*>(.*?)<\/h[1-3]>/gi)]
+    .map((m) => m[1].replace(/<[^>]+>/g, "").trim())
+    .filter(Boolean);
+  if (headings.length > 0) parts.push(`Headings: ${headings.join(", ")}`);
+
+  // Extract navigation/tab bar items
+  const navMatch = body.match(/<nav[^>]*>([\s\S]*?)<\/nav>/i);
+  if (navMatch) {
+    const navTexts = [...navMatch[1].matchAll(/>([^<]{2,30})</g)]
+      .map((m) => m[1].trim())
+      .filter((t) => t.length > 1 && !t.startsWith("<"));
+    if (navTexts.length > 0) parts.push(`Nav items: ${navTexts.join(", ")}`);
+  }
+
+  // Extract bottom tab bar (common pattern: fixed bottom bar)
+  const bottomBar = body.match(
+    /fixed\s+bottom[\s\S]{0,500}?(<\/div>|<\/nav>)/i,
+  );
+  if (bottomBar) {
+    const tabTexts = [...bottomBar[0].matchAll(/>([A-Z][a-z]{1,15})</g)].map(
+      (m) => m[1],
+    );
+    if (tabTexts.length > 0) parts.push(`Bottom tabs: ${tabTexts.join(", ")}`);
+  }
+
+  // Extract buttons/CTAs
+  const buttons = [
+    ...body.matchAll(/<button[^>]*>(.*?)<\/button>/gi),
+    ...body.matchAll(/<a[^>]*class="[^"]*btn[^"]*"[^>]*>(.*?)<\/a>/gi),
+  ]
+    .map((m) => m[1].replace(/<[^>]+>/g, "").trim())
+    .filter((t) => t.length > 1 && t.length < 40);
+  if (buttons.length > 0)
+    parts.push(`Buttons: ${buttons.slice(0, 5).join(", ")}`);
+
+  // Extract key text content (paragraphs, spans with substantial text)
+  const textSnippets = [
+    ...body.matchAll(/<(?:p|span|div)[^>]*>([^<]{10,80})</g),
+  ]
+    .map((m) => m[1].trim())
+    .filter((t) => !t.includes("{") && !t.includes("hgi-"))
+    .slice(0, 4);
+  if (textSnippets.length > 0)
+    parts.push(`Key text: ${textSnippets.join(" | ")}`);
+
+  // Extract icon names used (HugeIcons pattern)
+  const icons = [...body.matchAll(/hgi-([\w-]+)/g)]
+    .map((m) => m[1])
+    .filter((v, i, a) => a.indexOf(v) === i)
+    .slice(0, 8);
+  if (icons.length > 0) parts.push(`Icons used: ${icons.join(", ")}`);
+
+  // Detect structural patterns
+  const patterns: string[] = [];
+  if (/fixed\s+bottom/i.test(body)) patterns.push("bottom tab bar");
+  if (/fixed\s+top|sticky\s+top/i.test(body)) patterns.push("sticky top bar");
+  if (/grid-cols-2|grid-cols-3/i.test(body)) patterns.push("grid layout");
+  if (/overflow-x-auto|flex.*overflow/i.test(body))
+    patterns.push("horizontal scroll");
+  if (/rounded-2xl.*shadow|shadow.*rounded-2xl/i.test(body))
+    patterns.push("elevated cards");
+  if (patterns.length > 0) parts.push(`Patterns: ${patterns.join(", ")}`);
+
+  const summary = parts.join("\n    ");
+  return summary.length > maxLength
+    ? summary.slice(0, maxLength) + "…"
+    : summary;
+}
+
 function buildScreenContext(frames: FrameState[], currentId: string): string {
   const siblings = frames.filter(
     (f) => f.id !== currentId && f.html && f.html.length > 100,
   );
   if (siblings.length === 0) return "";
-  const summaries = siblings.map((f) => `  - "${f.label}"`).join("\n");
-  return `\n\nOther screens already designed in this project:\n${summaries}\n\nCONSISTENCY REQUIREMENTS — match these screens exactly:\n- Same navigation pattern (bottom tab bar, top app bar style)\n- Same spacing scale (padding, margins, gaps)\n- Same card style (border radius, shadow, background)\n- Same typography scale (heading sizes, body text size)\n- Same button style (height, radius, font weight)\n- Same icon style (HugeIcons stroke-rounded, consistent size)`;
+
+  const summaries = siblings
+    .map((f) => `  Screen "${f.label}":\n    ${summarizeScreenHtml(f.html)}`)
+    .join("\n\n");
+
+  return `\n\nPREVIOUSLY DESIGNED SCREENS — use these as reference for continuity and flow:\n${summaries}\n\nCONSISTENCY & NAVIGATION FLOW REQUIREMENTS:\n- The new screen MUST feel like it belongs to the same app as the screens above\n- Match the EXACT same navigation pattern (same bottom tab bar items, same active/inactive styling)\n- If existing screens have a bottom tab bar, include the SAME tabs with this screen's tab highlighted\n- Maintain the same visual language: card style, spacing scale, typography scale, button style, icon style\n- Ensure navigation flow makes sense: buttons like "View All", "See Details", etc. should lead to screens that exist\n- Use the same header/app bar pattern (back arrows, titles, action icons)\n- Match the same icon family and size (HugeIcons stroke-rounded)\n- Every screen should feel like a natural continuation of the user journey`;
 }
 
 async function generateThemeWithDesignModel(
@@ -382,13 +467,13 @@ export function createTools(ctx: ToolContext) {
 
     design_screen: tool({
       description:
-        "Generates the full design for an existing screen frame. Use this to design screens created by create_all_screens. The design model generates the HTML from the description. Streams the design live into the frame.",
+        "Generates the full design for an existing screen frame. Use this to design screens created by create_all_screens. The design model generates the HTML from the description. Streams the design live into the frame. IMPORTANT: In the description, reference what was designed in previous screens (from their screenSummary) — especially navigation items, tab bar labels, shared UI patterns, and flow connections. This ensures visual and navigational continuity across the app.",
       inputSchema: z.object({
         id: z.string().describe("Frame id (from create_all_screens result)"),
         description: z
           .string()
           .describe(
-            "Full description of the screen content and layout to generate.",
+            "Full description of the screen content and layout to generate. MUST include: (1) what this screen shows, (2) navigation items matching other screens (e.g. same bottom tab bar items), (3) how this screen connects to previously designed screens in the flow.",
           ),
       }),
       onInputStart: ({ toolCallId }) => {
@@ -423,7 +508,7 @@ export function createTools(ctx: ToolContext) {
         }
         const themeCtx = buildThemeContext(theme);
         const screenCtx = buildScreenContext(frames, id);
-        const designPrompt = `You are a mobile UI designer creating a screen for an app that already has an established design system. Generate the inner body HTML (no html/head/body tags) for a screen named "${frame.label}".\n\nDescription: ${description}${themeCtx}${screenCtx}\n\nRULES:\n- Use ONLY Tailwind semantic theme classes (bg-primary, text-foreground, etc.) — NEVER arbitrary colors\n- Use HugeIcons font icons (class="hgi-stroke hgi-icon-name")\n- Apply font-heading to h1 and h2 elements\n- Use rounded-lg or rounded-xl on cards, shadow-md on elevated surfaces\n- Minimum touch targets of 44px (min-h-11 or py-3 on buttons)\n- Output only the complete inner body HTML, no markdown or explanation`;
+        const designPrompt = `You are an elite mobile UI designer known for creating stunning, award-winning app screens. Generate the inner body HTML (no html/head/body tags) for a screen named "${frame.label}".\n\nDescription: ${description}${themeCtx}${screenCtx}\n\nDESIGN QUALITY RULES (NON-NEGOTIABLE):\n- Create BEAUTIFUL, premium designs that look like top Dribbble/Behance shots\n- Use ONLY Tailwind semantic theme classes (bg-primary, text-foreground, etc.) — NEVER arbitrary colors\n- Use HugeIcons font icons (class="hgi-stroke hgi-icon-name")\n- Apply font-heading to h1 and h2 elements with bold, large typography (text-2xl+ font-bold)\n- Use rounded-2xl on cards, rounded-xl on buttons, shadow-md or shadow-lg on elevated surfaces\n- Generous spacing: p-5/p-6 on containers, gap-4 to gap-6 between sections\n- Create clear visual hierarchy with 2-3 levels of text size and weight\n- Use text-muted-foreground for secondary text, uppercase tracking-wide text-xs for labels\n- Primary CTAs should be full-width, rounded-xl, py-4, font-semibold\n- Add realistic sample data (names, prices, dates, ratings, avatars) to make screens feel alive\n- Use subtle gradients (bg-gradient-to-b/br) and layered cards for depth\n- Minimum touch targets of 44px (min-h-11 or py-3 on buttons)\n- Whitespace is a feature — never let content feel cramped\n- Output only the complete inner body HTML, no markdown or explanation`;
         const generated = await streamScreenHtmlWithDesignModel(
           designModel.vertex,
           designModel.modelId,
@@ -449,25 +534,32 @@ export function createTools(ctx: ToolContext) {
           };
         }
         frame.html = wrapScreenBody(finalHtml, theme);
-        const result = {
-          success: true,
-          frame: {
-            id: frame.id,
-            label: frame.label,
-            left: frame.left,
-            top: frame.top,
-            html: frame.html,
-          },
-        };
+        // Send full frame data to the UI via writer
         writer?.write({
           type: "data-tool-call-end",
           data: {
             toolCallId,
             toolName: "design_screen",
-            frame: result.frame,
+            frame: {
+              id: frame.id,
+              label: frame.label,
+              left: frame.left,
+              top: frame.top,
+              html: frame.html,
+            },
           },
         });
-        return result;
+        // Return a summary to the orchestrator agent (not full HTML) to keep
+        // context lean while giving it enough info to maintain continuity
+        // when crafting descriptions for subsequent screens.
+        const summary = summarizeScreenHtml(frame.html);
+        return {
+          success: true,
+          id: frame.id,
+          label: frame.label,
+          screenSummary: summary,
+          note: "Screen designed successfully. Use the screenSummary above as context when designing the next screen to maintain navigation flow and visual continuity.",
+        };
       },
     }),
 
@@ -509,8 +601,8 @@ export function createTools(ctx: ToolContext) {
         const currentBody = frame.html ? extractBodyContent(frame.html) : "";
         const themeCtx = buildThemeContext(theme);
         const designPrompt = currentBody
-          ? `You are a mobile UI designer. Update this screen's inner body HTML according to the description below. Output the complete updated inner body HTML only, no markdown or explanation.\n\nDescription of changes: ${description}${themeCtx}\n\nCurrent inner body HTML:\n${currentBody}`
-          : `You are a mobile UI designer. Generate the inner body HTML (no html/head/body tags) for a screen named "${frame.label}".\n\nDescription: ${description}${themeCtx}\n\nUse Tailwind classes and HugeIcons font icons (class="hgi-stroke hgi-icon-name") where needed. Output only the complete inner body HTML, no markdown or explanation.`;
+          ? `You are an elite mobile UI designer creating stunning, premium screens. Update this screen's inner body HTML according to the description below. Maintain beautiful design quality — generous spacing, bold typography, soft shadows, and visual depth. Output the complete updated inner body HTML only, no markdown or explanation.\n\nDescription of changes: ${description}${themeCtx}\n\nCurrent inner body HTML:\n${currentBody}`
+          : `You are an elite mobile UI designer creating stunning, premium screens. Generate the inner body HTML (no html/head/body tags) for a screen named "${frame.label}".\n\nDescription: ${description}${themeCtx}\n\nCreate a beautiful, polished design with generous spacing, bold headings, layered cards with soft shadows, and clear visual hierarchy. Use Tailwind semantic theme classes and HugeIcons font icons (class="hgi-stroke hgi-icon-name"). Output only the complete inner body HTML, no markdown or explanation.`;
         const generated = await streamScreenHtmlWithDesignModel(
           designModel.vertex,
           designModel.modelId,
@@ -778,7 +870,7 @@ export function createTools(ctx: ToolContext) {
             contextParts.push(
               `Draft variables from agent (refine or keep): ${JSON.stringify(agentVars)}`,
             );
-          const designPrompt = `Generate a complete, cohesive CSS theme for a mobile app as a flat JSON object.\n\nRequired keys: ${THEME_KEYS}\n\nRules:\n- Colors must be harmonious — primary and secondary should complement each other\n- Foreground colors must have strong contrast against their background (WCAG AA minimum)\n- --primary-foreground must be readable on --primary background\n- --card should be slightly different from --background to create depth\n- --muted should be a subtle tint of the primary or background\n- --border should be a light gray that works on both --background and --card\n- --font-sans and --font-heading should be real Google Fonts (e.g. 'Inter', 'Plus Jakarta Sans', 'DM Sans')\n- --radius should be between 0.5rem and 1rem for modern mobile apps\n- Values: hex colors, rem for --radius, quoted font family strings\n\n${contextParts.join("\n\n")}`;
+          const designPrompt = `Generate a BEAUTIFUL, premium CSS theme for a mobile app as a flat JSON object. The theme should feel like it belongs in an award-winning app.\n\nRequired keys: ${THEME_KEYS}\n\nRules:\n- Colors must be rich, harmonious, and premium — avoid generic or dull palettes\n- Primary and secondary should complement each other beautifully\n- Foreground colors must have strong contrast against their background (WCAG AA minimum)\n- --primary-foreground must be readable on --primary background\n- --card should be slightly different from --background to create visual depth and layering\n- --muted should be a subtle, elegant tint of the primary or background\n- --border should be a soft, refined color that works on both --background and --card\n- --font-sans and --font-heading should be modern, premium Google Fonts (e.g. 'Plus Jakarta Sans', 'Inter', 'DM Sans', 'Space Grotesk', 'Outfit', 'Manrope')\n- --radius should be between 0.75rem and 1.25rem for a soft, modern mobile feel\n- Aim for the visual quality of Airbnb, Spotify, Linear, or Apple Health themes\n- Values: hex colors, rem for --radius, quoted font family strings\n\n${contextParts.join("\n\n")}`;
           const generated = await generateThemeWithDesignModel(
             designModel.vertex,
             designModel.modelId,

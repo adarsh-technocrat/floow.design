@@ -48,7 +48,7 @@ export const FramePreview = React.forwardRef<
     top,
     allowInteraction = false,
     enableElementInspection = false,
-    iframeRef: iframeRefProp,
+    iframeRef: iframeExternalRef,
     onMessageFromFrame,
   },
   ref,
@@ -57,15 +57,19 @@ export const FramePreview = React.forwardRef<
   const isStreaming = html.length < LOADING_THRESHOLD;
   const [_loadKey, setLoadKey] = useState(0);
   const [inspectorScript, setInspectorScript] = useState("");
-  const hasFadedInRef = useRef(false);
+  const [wasStreaming] = useState(() => isStreaming);
   const internalRef = useRef<HTMLIFrameElement>(null);
   const postTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const writeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const latestHtmlRef = useRef("");
   const enableInspectionRef = useRef(enableElementInspection);
   const inspectorScriptRef = useRef(inspectorScript);
-  enableInspectionRef.current = enableElementInspection;
-  inspectorScriptRef.current = inspectorScript;
+  useEffect(() => {
+    enableInspectionRef.current = enableElementInspection;
+  }, [enableElementInspection]);
+  useEffect(() => {
+    inspectorScriptRef.current = inspectorScript;
+  }, [inspectorScript]);
 
   const reinjectElementInspector = useCallback(() => {
     if (!enableInspectionRef.current || !inspectorScriptRef.current) return;
@@ -117,7 +121,7 @@ export const FramePreview = React.forwardRef<
     return () => {
       if (postTimeoutRef.current) clearTimeout(postTimeoutRef.current);
     };
-  }, [frameId, html, label, left, top, isStreaming]);
+  }, [frameId, html, label, left, top, isStreaming, projectId]);
 
   const prevHtmlLenRef = useRef(0);
   const lastWriteTimeRef = useRef(0);
@@ -126,7 +130,7 @@ export const FramePreview = React.forwardRef<
     if (!preparedHtml) return;
     latestHtmlRef.current = preparedHtml;
 
-    const doWrite = (incremental: boolean) => {
+    const doWrite = (_incremental: boolean) => {
       lastWriteTimeRef.current = Date.now();
       const htmlToWrite = latestHtmlRef.current;
       writeContent(htmlToWrite, true);
@@ -164,48 +168,31 @@ export const FramePreview = React.forwardRef<
       (
         internalRef as React.MutableRefObject<HTMLIFrameElement | null>
       ).current = el;
-      if (iframeRefProp) iframeRefProp.current = el;
+      if (iframeExternalRef) iframeExternalRef.current = el;
       if (typeof ref === "function") ref(el);
       else if (ref)
         (ref as React.MutableRefObject<HTMLIFrameElement | null>).current = el;
     },
-    [ref, iframeRefProp],
+    [ref, iframeExternalRef],
   );
 
   const handleIframeLoad = useCallback(() => {
     if (!latestHtmlRef.current) return;
     const htmlToWrite = latestHtmlRef.current;
     writeContent(htmlToWrite);
-  }, [frameId, writeContent]);
+  }, [writeContent]);
+
+  const showFadeIn = wasStreaming && !isStreaming;
 
   const isMalformed = looksLikeMalformedFrameContent(html);
 
   if (!html || html.length === 0 || isMalformed) {
     return (
       <div
-        className="frame-preview-loading relative size-full overflow-hidden"
+        className="relative size-full overflow-hidden"
         data-frame-id={frameId}
-      >
-        <div
-          className="absolute inset-0 bg-linear-to-br from-surface-elevated via-input-bg to-surface-elevated dark:hidden"
-          aria-hidden
-        />
-        <div
-          className="absolute inset-0 hidden dark:block frame-preview-gradient"
-          aria-hidden
-        />
-        <div className="absolute inset-0 flex items-center justify-center">
-          <span className="text-sm text-t-secondary dark:text-white/50">
-            {isMalformed ? "Regenerating…" : "Generating…"}
-          </span>
-        </div>
-      </div>
+      />
     );
-  }
-
-  const showFadeIn = !isStreaming && !hasFadedInRef.current;
-  if (showFadeIn) {
-    hasFadedInRef.current = true;
   }
 
   const iframeClassName = [

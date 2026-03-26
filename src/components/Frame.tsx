@@ -12,6 +12,7 @@ import FrameElementInspectionOverlay from "@/components/frame/element-inspection
 import { useAppSelector } from "@/store/hooks";
 import {
   subscribeGeneratingFrames,
+  getSelectedElementContext,
   setSelectedElementContext,
 } from "@/lib/chat-bridge";
 import type { OnElementSelectedPayload } from "@/components/frame/element-inspection/FrameElementInspectionOverlay";
@@ -166,12 +167,8 @@ export const Frame = React.memo(function Frame({
   const width = widthProp ?? FRAME_WIDTH;
   const height = heightProp ?? FRAME_HEIGHT;
   const frameRef = useRef<HTMLDivElement>(null);
-  const [isGenerating, setIsGenerating] = useState(false);
-
   useEffect(() => {
-    return subscribeGeneratingFrames((ids) => {
-      setIsGenerating(ids.has(id));
-    });
+    return subscribeGeneratingFrames(() => {});
   }, [id]);
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const overlayRef = useRef<HTMLDivElement>(null);
@@ -206,6 +203,23 @@ export const Frame = React.memo(function Frame({
     },
     [id, label],
   );
+
+  useEffect(() => {
+    if (stableShowToolbar) return;
+    const ctx = getSelectedElementContext();
+    if (ctx?.frameId === id) {
+      setSelectedElementContext(null);
+    }
+  }, [stableShowToolbar, id]);
+
+  useEffect(() => {
+    return () => {
+      const ctx = getSelectedElementContext();
+      if (ctx?.frameId === id) {
+        setSelectedElementContext(null);
+      }
+    };
+  }, [id]);
 
   useEffect(() => {
     if (hideSelectedRafRef.current != null) {
@@ -316,25 +330,6 @@ export const Frame = React.memo(function Frame({
       onPointerUp={handlePointerUp}
       onPointerCancel={handlePointerUp}
     >
-      {isGenerating && (
-        <div
-          className="animate-gradient-rotate pointer-events-none absolute z-[45]"
-          style={{
-            inset: "-4px",
-            borderRadius: "2.2rem",
-            padding: "4px",
-          }}
-          aria-hidden
-        >
-          <div
-            className="size-full"
-            style={{
-              borderRadius: "inherit",
-              background: "var(--canvas-bg, #0a0a0a)",
-            }}
-          />
-        </div>
-      )}
       <svg width="0" height="0" style={{ position: "absolute" }} aria-hidden>
         <defs>
           <clipPath

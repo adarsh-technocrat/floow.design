@@ -11,18 +11,22 @@ const PLANNER_SCREENS_PROMPT =
   'Given a user request and that intent is "generate", list the screens to create. Each screen has name and description.';
 
 const PLANNER_STYLE_PROMPT = `\
-Given a user request and the screens to create, provide detailed visual guidelines for the app's design system.
+Given a user request and the screens to create, provide detailed visual guidelines for a BEAUTIFUL, premium mobile app design system.
+Your goal is to produce designs that look like award-winning apps on Dribbble and Behance.
 
 Your guidelines MUST include:
-- Color palette: primary color, background (light/dark), accent colors, text colors
-- Typography: font families (Google Fonts), heading vs body styles
-- Mood: modern, minimal, playful, corporate, etc.
-- Spacing: compact or spacious
-- Border radius: sharp, rounded, or pill-shaped
+- Color palette: rich, harmonious primary color, background (light/dark), accent colors, text colors — choose colors that feel premium and modern
+- Typography: modern Google Fonts (e.g. 'Plus Jakarta Sans', 'Inter', 'DM Sans', 'Space Grotesk', 'Outfit', 'Satoshi'), bold expressive headings, clean readable body text
+- Mood: always premium and polished — modern, minimal, elegant, refined, bold, or luxurious
+- Spacing: ALWAYS spacious — generous padding, breathing room between elements
+- Border radius: rounded (rounded-xl to rounded-2xl) for a soft, modern feel
+- Shadow style: soft, layered shadows for depth (shadow-sm to shadow-lg)
+- Visual effects: subtle gradients, glassmorphism, or layered backgrounds where appropriate
 - Any brand-specific style cues from the user's request
 
-Be specific with color hex values when the user implies a style (e.g. "dark theme" → dark backgrounds, "vibrant" → saturated primaries).
-If the user doesn't specify a style, infer one from the app type (e.g. finance app → professional blues, food app → warm oranges).
+Be specific with color hex values when the user implies a style (e.g. "dark theme" → rich dark backgrounds like #0A0A0F, "vibrant" → saturated primaries).
+If the user doesn't specify a style, choose a BEAUTIFUL palette — avoid generic blues. Think: warm gradients, rich purples, elegant dark themes, vibrant coral, soft sage green.
+Always aim for the aesthetic quality of apps like Airbnb, Spotify, Linear, Arc Browser, or Apple Health.
 
 ALWAYS set shouldGenerate to true for new app designs. Only set to false if the user is explicitly editing existing screens without style changes.`;
 
@@ -67,7 +71,6 @@ export async function runPlanningPipeline(
   writer: UIMessageStreamWriter,
   _theme: ThemeVariables,
 ): Promise<PlanningResult> {
-  const empty: PlanningResult = { planContext: "" };
   try {
     const classifyId = nextPlanCallId("classifyIntent");
     emitPlanStart(writer, classifyId, "classifyIntent");
@@ -116,7 +119,7 @@ export async function runPlanningPipeline(
     const themeRequired = intent === "generate" || shouldGenerate;
     const planContext = `## Planning (from pipeline)\n- Intent: ${intent}\n- Screens to create: ${JSON.stringify(screens, null, 2)}\n- Visual guidelines: ${guidelines}\n- Theme generation required: ${themeRequired ? "YES — call build_theme FIRST before creating any screens" : "NO — user is editing existing screens, skip theme creation"}\n`;
     return { planContext };
-  } catch (err) {
+  } catch {
     // Planning failed — provide a minimal fallback so the agent still works
     const fallback = `## Planning (from pipeline — fallback due to error)\n- Intent: generate\n- Screens to create: (use your best judgment based on the user's prompt)\n- Visual guidelines: (infer from the app type described in the prompt)\n- Theme generation required: YES — call build_theme FIRST before creating any screens\n`;
     return { planContext: fallback };
