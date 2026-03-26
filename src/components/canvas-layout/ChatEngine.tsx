@@ -11,6 +11,8 @@ import {
   setTheme,
   replaceTheme,
   upsertStoredTheme,
+  setActiveThemeMode,
+  type ThemeMode,
 } from "@/store/slices/canvasSlice";
 import { pushAgentLog } from "@/store/slices/uiSlice";
 import {
@@ -454,8 +456,12 @@ export function ChatEngine() {
           );
         }
         if (output?.theme) {
+          const variantName = (output as { variantName?: string }).variantName;
+          if (variantName) {
+            dispatch(setActiveThemeMode(variantName as ThemeMode));
+          }
           dispatch(replaceTheme(output.theme));
-          persistThemeToDatabase(output.theme, output.themeName);
+          persistThemeToDatabase(output.theme, output.themeName, variantName);
         }
         const finishedStep = toolStepsRef.current.find(
           (s) => s.toolCallId === toolCallId,
@@ -670,10 +676,15 @@ export function ChatEngine() {
             (data as { themeName?: string }).themeName,
           );
         } else if (data.toolName === "build_theme" && data.theme) {
+          const variantName = (data as { variantName?: string }).variantName;
+          if (variantName) {
+            dispatch(setActiveThemeMode(variantName as ThemeMode));
+          }
           dispatch(replaceTheme(data.theme));
           persistThemeToDatabase(
             data.theme,
             (data as { themeName?: string }).themeName,
+            variantName,
           );
         }
         if (data.toolName === "read_screen") {

@@ -13,7 +13,11 @@ import {
 } from "@/components/canvas-layout";
 import { CellProgressLoader } from "@/components/CellProgressLoader";
 import { CaptureCanvasThumbnail } from "@/components/CaptureCanvasThumbnail";
-import { sendChatMessage, isChatBridgeReady, markNewProject } from "@/lib/chat-bridge";
+import {
+  sendChatMessage,
+  isChatBridgeReady,
+  markNewProject,
+} from "@/lib/chat-bridge";
 import { setAgentLogVisible } from "@/store/slices/uiSlice";
 import type { RootState } from "@/store";
 
@@ -24,14 +28,19 @@ export default function ProjectCanvasPage() {
   const searchParams = useSearchParams();
   const promptSentRef = useRef(false);
 
-  useEffect(() => {
-    if (searchParams.get("prompt")) markNewProject();
-  }, [searchParams]);
+  const hasPrompt = !!searchParams.get("prompt");
+  const markedNewRef = useRef(false);
+  if (hasPrompt && !markedNewRef.current) {
+    markedNewRef.current = true;
+    markNewProject();
+  }
 
   useEffect(() => {
     if (promptSentRef.current || !projectLoaded) return;
     const prompt = searchParams.get("prompt");
     if (!prompt) return;
+
+    dispatch(setAgentLogVisible(true));
 
     const timer = setInterval(() => {
       if (!isChatBridgeReady()) return;
@@ -48,8 +57,6 @@ export default function ProjectCanvasPage() {
       sendChatMessage(prompt, imageUrls);
       promptSentRef.current = true;
       clearInterval(timer);
-
-      dispatch(setAgentLogVisible(true));
 
       window.history.replaceState({}, "", window.location.pathname);
     }, 300);

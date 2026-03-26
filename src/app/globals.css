@@ -657,30 +657,37 @@ html {
   }
 }
 
-/* Generating frame border animation */
-@keyframes generating-border {
+@property --angle {
+  syntax: "<angle>";
+  initial-value: 0deg;
+  inherits: false;
+}
+
+@keyframes spin-border {
   0% {
-    border-color: rgba(139, 92, 246, 0.5);
-    box-shadow: 0 0 12px rgba(139, 92, 246, 0.15);
-  }
-  33% {
-    border-color: rgba(59, 130, 246, 0.5);
-    box-shadow: 0 0 12px rgba(59, 130, 246, 0.15);
-  }
-  66% {
-    border-color: rgba(16, 185, 129, 0.5);
-    box-shadow: 0 0 12px rgba(16, 185, 129, 0.15);
+    --angle: 0deg;
   }
   100% {
-    border-color: rgba(139, 92, 246, 0.5);
-    box-shadow: 0 0 12px rgba(139, 92, 246, 0.15);
+    --angle: 360deg;
   }
 }
 
-.frame-generating {
-  border: 2px solid rgba(139, 92, 246, 0.5);
-  border-radius: 2rem;
-  animation: generating-border 3s ease-in-out infinite;
+.animate-gradient-rotate {
+  animation: spin-border 3s linear infinite;
+  background: conic-gradient(
+    from var(--angle),
+    #ffffff,
+    #f0f8ff,
+    #87ceeb,
+    #6eb5f7,
+    #5da3f0,
+    #87ceeb,
+    #f0f8ff,
+    #ffffff
+  );
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
 }
 
 /* Blue shimmer text effect for thinking indicator */

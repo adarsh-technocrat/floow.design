@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import { loadFrames, loadThemes, type StoredTheme } from "./canvasSlice";
+import { loadFrames, loadThemes, resetCanvas, type StoredTheme } from "./canvasSlice";
 import http from "@/lib/http";
 
 export interface ProjectState {
@@ -18,7 +18,11 @@ const initialState: ProjectState = {
 
 export const fetchProject = createAsyncThunk(
   "project/fetch",
-  async ({ projectId }: { projectId: string }, { dispatch }) => {
+  async ({ projectId }: { projectId: string }, { dispatch, getState }) => {
+    const currentId = (getState() as { project: ProjectState }).project.projectId;
+    if (currentId !== projectId) {
+      dispatch(resetCanvas());
+    }
     const q = new URLSearchParams({ id: projectId });
     const { data: res } = await http.get(`/api/project?${q.toString()}`);
     const name = typeof res?.name === "string" ? res.name : "Untitled Project";
@@ -39,6 +43,15 @@ const projectSlice = createSlice({
   reducers: {},
   extraReducers: (builder) => {
     builder
+      .addCase(fetchProject.pending, (state, action) => {
+        const newId = action.meta.arg.projectId;
+        if (state.projectId !== newId) {
+          state.projectId = newId;
+          state.projectName = null;
+          state.messages = [];
+          state.loaded = false;
+        }
+      })
       .addCase(fetchProject.fulfilled, (state, action) => {
         state.projectId = action.payload.projectId;
         state.projectName = action.payload.name;

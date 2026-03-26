@@ -59,7 +59,7 @@ const initialState: CanvasState = {
   theme: {},
   themes: [],
   activeThemeId: null,
-  activeThemeMode: "light",
+  activeThemeMode: "dark",
 };
 
 /** Helper: get the active StoredTheme from state */
@@ -367,7 +367,8 @@ const canvasSlice = createSlice({
         }
       }
       if (state.activeThemeMode === variantName) {
-        state.activeThemeMode = "light";
+        const remaining = Object.keys(theme.variants);
+        state.activeThemeMode = (remaining[0] ?? "dark") as ThemeMode;
         syncResolvedTheme(state);
       }
     },
@@ -408,6 +409,14 @@ const canvasSlice = createSlice({
         themeId: f.themeId,
       }));
     },
+    resetCanvas: (state) => {
+      state.frames = [];
+      state.selectedFrameIds = [];
+      state.theme = {};
+      state.themes = [];
+      state.activeThemeId = null;
+      state.activeThemeMode = "dark";
+    },
     toggleFrameInSelection: (state, action: { payload: string }) => {
       const id = action.payload;
       const i = state.selectedFrameIds.indexOf(id);
@@ -421,6 +430,7 @@ const canvasSlice = createSlice({
 });
 
 export const {
+  resetCanvas,
   setTransform,
   setZoom,
   addFrame,

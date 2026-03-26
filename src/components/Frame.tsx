@@ -231,7 +231,7 @@ export const Frame = React.memo(function Frame({
     <div
       ref={frameRef}
       data-frame
-      className={`absolute shrink-0 select-none ${isDragging ? "cursor-grabbing" : ""} ${isGenerating ? "frame-generating" : ""}`}
+      className={`absolute shrink-0 select-none ${isDragging ? "cursor-grabbing" : ""}`}
       style={{
         left: `${left}px`,
         top: `${top}px`,
@@ -245,6 +245,17 @@ export const Frame = React.memo(function Frame({
       onPointerUp={handlePointerUp}
       onPointerCancel={handlePointerUp}
     >
+      {isGenerating && (
+        <div
+          className="animate-gradient-rotate pointer-events-none absolute z-[1]"
+          style={{
+            inset: "-3px",
+            borderRadius: "2.2rem",
+            padding: "3px",
+          }}
+          aria-hidden
+        />
+      )}
       <svg width="0" height="0" style={{ position: "absolute" }} aria-hidden>
         <defs>
           <clipPath
