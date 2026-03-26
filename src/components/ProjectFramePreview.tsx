@@ -3,6 +3,43 @@
 import { cn } from "@/lib/utils";
 import type { FramePreviewItem } from "@/store/slices/projectsSlice";
 
+/**
+ * Renders a phone-shaped scaled-down iframe preview of a screen.
+ * The iframe is rendered at full mobile size (390×844) then scaled down
+ * with CSS transform to fit the card, giving a crisp miniature preview.
+ */
+const DEVICE_W = 390;
+const DEVICE_H = 844;
+const SCALE = 0.29;
+
+function MiniScreen({ frameId, label }: { frameId: string; label: string }) {
+  const scaledW = DEVICE_W * SCALE;
+  const scaledH = DEVICE_H * SCALE;
+
+  return (
+    <div
+      className="relative overflow-hidden rounded-xl border border-border/30 bg-white shadow-md"
+      style={{ width: scaledW, height: scaledH }}
+    >
+      <iframe
+        title={label}
+        src={`/api/frames/${frameId}/render`}
+        className="border-0 pointer-events-none origin-top-left"
+        sandbox="allow-scripts"
+        loading="lazy"
+        tabIndex={-1}
+        style={{
+          width: DEVICE_W,
+          height: DEVICE_H,
+          transform: `scale(${SCALE})`,
+          transformOrigin: "top left",
+          colorScheme: "light",
+        }}
+      />
+    </div>
+  );
+}
+
 export type ProjectFramePreviewProps = {
   title: string;
   framePreviews?: FramePreviewItem[];
@@ -10,22 +47,6 @@ export type ProjectFramePreviewProps = {
   dimmed?: boolean;
   className?: string;
 };
-
-function MiniScreen({ frameId, label }: { frameId: string; label: string }) {
-  return (
-    <div className="relative flex h-full w-full flex-col overflow-hidden rounded-lg border border-border/40 bg-white shadow-sm">
-      <iframe
-        title={label}
-        src={`/api/frames/${frameId}/render`}
-        className="h-full w-full border-0 pointer-events-none"
-        sandbox="allow-scripts"
-        loading="lazy"
-        tabIndex={-1}
-        style={{ colorScheme: "light" }}
-      />
-    </div>
-  );
-}
 
 export function ProjectFramePreview({
   title: _title,
@@ -60,25 +81,25 @@ export function ProjectFramePreview({
   return (
     <div
       className={cn(
-        "flex h-full w-full min-h-0 items-center justify-center gap-2 overflow-hidden bg-surface-sunken px-3 py-3 sm:px-4 sm:py-4",
+        "flex h-full w-full min-h-0 items-end justify-center overflow-hidden bg-surface-sunken px-3 pt-4",
         className,
       )}
       style={{
         backgroundImage: `radial-gradient(var(--canvas-dot) 0.65px, transparent 0.65px)`,
         backgroundSize: "14px 14px",
+        gap: count >= 3 ? "6px" : "8px",
       }}
     >
       {framePreviews.map((frame, i) => (
         <div
           key={frame.id}
-          className="relative h-full overflow-hidden rounded-lg"
+          className="relative shrink-0"
           style={{
-            width: count === 1 ? "45%" : count === 2 ? "38%" : "30%",
             transform:
               count >= 3
-                ? `rotate(${i === 0 ? -3 : i === 2 ? 3 : 0}deg) translateY(${i === 1 ? -2 : 2}px)`
+                ? `rotate(${i === 0 ? -4 : i === 2 ? 4 : 0}deg) translateY(${i === 1 ? -6 : 4}px)`
                 : count === 2
-                  ? `rotate(${i === 0 ? -2 : 2}deg)`
+                  ? `rotate(${i === 0 ? -3 : 3}deg)`
                   : undefined,
             zIndex: count >= 3 && i === 1 ? 2 : 1,
           }}
