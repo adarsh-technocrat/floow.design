@@ -16,7 +16,6 @@ export async function GET(
         templateTag: true,
         templateSlug: true,
         templateDesc: true,
-        thumbnail: true,
         createdAt: true,
         frames: {
           select: { id: true, label: true, left: true, top: true, html: true },
@@ -26,7 +25,10 @@ export async function GET(
     });
 
     if (!template) {
-      return NextResponse.json({ error: "Template not found" }, { status: 404 });
+      return NextResponse.json(
+        { error: "Template not found" },
+        { status: 404 },
+      );
     }
 
     return NextResponse.json({
@@ -36,7 +38,6 @@ export async function GET(
         tag: template.templateTag || "Template",
         slug: template.templateSlug,
         description: template.templateDesc,
-        thumbnail: template.thumbnail,
         screens: template.frames.length,
         createdAt: template.createdAt.toISOString(),
         frames: template.frames.map((f) => ({

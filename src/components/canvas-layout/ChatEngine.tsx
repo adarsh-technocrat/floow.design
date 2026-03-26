@@ -104,7 +104,13 @@ const latestCanvasState: {
   themeMode: "light" | "dark";
 } = { frames: [], theme: {}, themeMode: "light" };
 
-const latestChatRequestMeta = { agentCount: 1 };
+import type { SelectedElementContext } from "@/lib/chat-bridge";
+
+const latestChatRequestMeta: {
+  agentCount: number;
+  focusedFrameIds: string[];
+  selectedElement: SelectedElementContext | null;
+} = { agentCount: 1, focusedFrameIds: [], selectedElement: null };
 
 function getToolDisplayLabel(
   toolType: string,
@@ -126,6 +132,8 @@ function getToolDisplayLabel(
     return isCalled ? "Updated theme" : "Updating theme…";
   if (toolType === "create_all_screens")
     return isCalled ? "Created all screens" : "Creating all screens…";
+  if (toolType === "generate_image")
+    return isCalled ? "Generated image" : "Generating image…";
 
   if (
     input?.id &&
@@ -197,7 +205,6 @@ export function ChatEngine() {
     latestCanvasState.themeMode = activeThemeMode;
   }, [frames, theme, activeThemeMode]);
 
-
   const activeThemeIdRef = useRef<string | null>(null);
   const persistThemeToDatabase = useCallback(
     (
@@ -250,7 +257,6 @@ export function ChatEngine() {
     [chatUserId, dispatch],
   );
 
-
   const [transport] = useState(
     () =>
       new DefaultChatTransport({
@@ -280,6 +286,8 @@ export function ChatEngine() {
               theme: latestCanvasState.theme,
               themeMode: latestCanvasState.themeMode,
               agentCount: latestChatRequestMeta.agentCount,
+              focusedFrameIds: latestChatRequestMeta.focusedFrameIds,
+              selectedElement: latestChatRequestMeta.selectedElement,
             },
           };
         },
@@ -783,7 +791,7 @@ export function ChatEngine() {
 
     if (consumeNewProjectFlag()) {
       setMessages([]);
-      setIsLoadingHistory(false);
+      queueMicrotask(() => setIsLoadingHistory(false));
       return;
     }
 
@@ -831,9 +839,15 @@ export function ChatEngine() {
     const bridgeSend = (payload: {
       text: string;
       imageDataUrls?: string[];
+      attachedFrameIds?: string[];
+      selectedElement?: SelectedElementContext;
     }) => {
       setToolSteps([]);
       dispatch(pushAgentLog({ type: "user", text: payload.text }));
+
+      // Store focused frame IDs and element context so they're included in the next request
+      latestChatRequestMeta.focusedFrameIds = payload.attachedFrameIds ?? [];
+      latestChatRequestMeta.selectedElement = payload.selectedElement ?? null;
 
       if (payload.imageDataUrls && payload.imageDataUrls.length > 0) {
         const files = payload.imageDataUrls.map((url) => ({

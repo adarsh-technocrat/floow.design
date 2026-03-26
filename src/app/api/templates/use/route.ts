@@ -9,30 +9,41 @@ export async function POST(req: NextRequest) {
   try {
     const { templateId } = (await req.json()) as { templateId?: string };
     if (!templateId) {
-      return NextResponse.json({ error: "templateId is required" }, { status: 400 });
+      return NextResponse.json(
+        { error: "templateId is required" },
+        { status: 400 },
+      );
     }
 
     const template = await prisma.project.findFirst({
       where: { id: templateId, isTemplate: true, trashedAt: null },
       select: {
         name: true,
-        thumbnail: true,
         frames: {
-          select: { label: true, left: true, top: true, html: true, themeId: true, variantName: true },
+          select: {
+            label: true,
+            left: true,
+            top: true,
+            html: true,
+            themeId: true,
+            variantName: true,
+          },
           orderBy: { updatedAt: "asc" },
         },
       },
     });
 
     if (!template) {
-      return NextResponse.json({ error: "Template not found" }, { status: 404 });
+      return NextResponse.json(
+        { error: "Template not found" },
+        { status: 404 },
+      );
     }
 
     const project = await prisma.project.create({
       data: {
         name: template.name,
         ownerId: userId,
-        thumbnail: template.thumbnail,
         frames: {
           create: template.frames.map((f) => ({
             id: `frm-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`,

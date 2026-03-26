@@ -5,7 +5,7 @@ export interface ProjectListItem {
   id: string;
   name: string;
   screens: number;
-  thumbnail: string | null;
+
   createdAt: string;
   updatedAt: string;
 }
@@ -14,7 +14,7 @@ export interface TrashedProject {
   id: string;
   name: string;
   screens: number;
-  thumbnail: string | null;
+
   trashedAt: string;
   createdAt: string;
   updatedAt: string;
@@ -25,7 +25,7 @@ export interface TemplateItem {
   name: string;
   tag: string;
   screens: number;
-  thumbnail: string | null;
+
   firstFrameHtml: string | null;
 }
 
@@ -49,13 +49,10 @@ const initialState: ProjectsState = {
   templatesLoading: false,
 };
 
-export const fetchProjects = createAsyncThunk(
-  "projects/fetchAll",
-  async () => {
-    const { data } = await http.get("/api/projects");
-    return (data.projects ?? []) as ProjectListItem[];
-  },
-);
+export const fetchProjects = createAsyncThunk("projects/fetchAll", async () => {
+  const { data } = await http.get("/api/projects");
+  return (data.projects ?? []) as ProjectListItem[];
+});
 
 export const createProject = createAsyncThunk(
   "projects/create",
@@ -124,9 +121,7 @@ export const persistFrame = createAsyncThunk(
 export const deleteFrameFromApi = createAsyncThunk(
   "projects/deleteFrame",
   async (frameId: string) => {
-    await http.delete(
-      `/api/frames?frameId=${encodeURIComponent(frameId)}`,
-    );
+    await http.delete(`/api/frames?frameId=${encodeURIComponent(frameId)}`);
     return frameId;
   },
 );

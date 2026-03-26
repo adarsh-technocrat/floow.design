@@ -33,7 +33,12 @@ export const metadata: Metadata = {
   description:
     "Design mobile apps with AI in seconds. Generate pixel-perfect iOS & Android screens and export to Figma. Try free.",
   icons: {
-    icon: "/icon.svg",
+    icon: [
+      { url: "/icon", sizes: "48x48", type: "image/png" },
+      { url: "/icon", sizes: "96x96", type: "image/png" },
+      { url: "/icon", sizes: "192x192", type: "image/png" },
+    ],
+    apple: [{ url: "/apple-icon", sizes: "180x180", type: "image/png" }],
   },
   alternates: {
     canonical: siteUrl,
@@ -112,7 +117,7 @@ export default function RootLayout({
                   "@type": "Organization",
                   name: "floow.design",
                   url: siteUrl,
-                  logo: `${siteUrl}/icon.svg`,
+                  logo: `${siteUrl}/icon`,
                   description:
                     "AI-powered mobile app design tool. Generate pixel-perfect iOS & Android screens in seconds.",
                 },

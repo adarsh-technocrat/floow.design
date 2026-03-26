@@ -5,9 +5,7 @@ import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
-const ADMIN_EMAILS = [
-  "adarshkumarsingh865@gmail.com",
-];
+const ADMIN_EMAILS = ["adarshkumarsingh865@gmail.com"];
 
 function usage() {
   console.log(`
@@ -53,7 +51,10 @@ async function ensureUniqueSlug(base: string): Promise<string> {
   }
 }
 
-function generateTemplateName(projectName: string, screenCount: number): string {
+function generateTemplateName(
+  projectName: string,
+  screenCount: number,
+): string {
   const cleaned = projectName
     .replace(/^untitled\s*project$/i, "")
     .replace(/\s+/g, " ")
@@ -65,7 +66,15 @@ function generateTemplateName(projectName: string, screenCount: number): string 
 function generateTag(frames: { label: string }[]): string {
   const labels = frames.map((f) => f.label.toLowerCase()).join(" ");
   const tagMap: Record<string, string[]> = {
-    Finance: ["wallet", "crypto", "bank", "payment", "finance", "trading", "portfolio"],
+    Finance: [
+      "wallet",
+      "crypto",
+      "bank",
+      "payment",
+      "finance",
+      "trading",
+      "portfolio",
+    ],
     Social: ["feed", "chat", "profile", "social", "message", "story", "post"],
     "E-Commerce": ["cart", "shop", "product", "checkout", "store", "order"],
     Health: ["health", "fitness", "workout", "diet", "medical", "tracker"],
@@ -81,7 +90,11 @@ function generateTag(frames: { label: string }[]): string {
   return "App";
 }
 
-function generateDescription(name: string, tag: string, frames: { label: string }[]): string {
+function generateDescription(
+  name: string,
+  tag: string,
+  frames: { label: string }[],
+): string {
   const screens = frames.map((f) => f.label).join(", ");
   return `${name} is a ready-to-use ${tag.toLowerCase()} mobile app template with ${frames.length} screen${frames.length > 1 ? "s" : ""}: ${screens}. Built with a modern design system — customize colors, fonts, and layout instantly.`;
 }
@@ -121,11 +134,18 @@ async function main() {
     select: {
       id: true,
       name: true,
-      thumbnail: true,
       ownerId: true,
       frames: {
-        select: { id: true, label: true, left: true, top: true, html: true, themeId: true, variantName: true },
-        orderBy: { updatedAt: "asc" },
+        select: {
+          id: true,
+          label: true,
+          left: true,
+          top: true,
+          html: true,
+          themeId: true,
+          variantName: true,
+        },
+        orderBy: { left: "asc" },
       },
     },
   });
@@ -135,16 +155,23 @@ async function main() {
     process.exit(1);
   }
 
-  const framesWithContent = project.frames.filter((f) => f.html && f.html.length > 50);
+  const framesWithContent = project.frames.filter(
+    (f) => f.html && f.html.length > 50,
+  );
   if (framesWithContent.length === 0) {
     console.error(`\n  ✗ Project has no screens with content.\n`);
     process.exit(1);
   }
 
-  const templateName = customName || generateTemplateName(project.name, framesWithContent.length);
+  const templateName =
+    customName || generateTemplateName(project.name, framesWithContent.length);
   const templateTag = customTag || generateTag(framesWithContent);
-  const templateSlug = await ensureUniqueSlug(customSlug || toSlug(templateName));
-  const templateDesc = customDesc || generateDescription(templateName, templateTag, framesWithContent);
+  const templateSlug = await ensureUniqueSlug(
+    customSlug || toSlug(templateName),
+  );
+  const templateDesc =
+    customDesc ||
+    generateDescription(templateName, templateTag, framesWithContent);
 
   console.log("\n  ┌─────────────────────────────────────────");
   console.log(`  │  Template Preview`);
@@ -153,12 +180,15 @@ async function main() {
   console.log(`  │  Name     : ${templateName}`);
   console.log(`  │  Slug     : ${templateSlug}`);
   console.log(`  │  Tag      : ${templateTag}`);
-  console.log(`  │  Desc     : ${templateDesc.slice(0, 100)}${templateDesc.length > 100 ? "..." : ""}`);
+  console.log(
+    `  │  Desc     : ${templateDesc.slice(0, 100)}${templateDesc.length > 100 ? "..." : ""}`,
+  );
   console.log(`  │  Screens  : ${framesWithContent.length}`);
   for (const frame of framesWithContent) {
-    console.log(`  │    • ${frame.label} (${(frame.html.length / 1024).toFixed(1)}KB)`);
+    console.log(
+      `  │    • ${frame.label} (${(frame.html.length / 1024).toFixed(1)}KB)`,
+    );
   }
-  console.log(`  │  Thumb    : ${project.thumbnail ? "yes" : "no"}`);
   console.log(`  │  URL      : /templates/${templateSlug}`);
   console.log("  └─────────────────────────────────────────\n");
 
@@ -178,7 +208,6 @@ async function main() {
       templateTag,
       templateSlug,
       templateDesc,
-      thumbnail: project.thumbnail,
       ownerId: admin.id,
       frames: {
         create: framesWithContent.map((frame) => ({
@@ -192,7 +221,12 @@ async function main() {
         })),
       },
     },
-    select: { id: true, name: true, templateSlug: true, _count: { select: { frames: true } } },
+    select: {
+      id: true,
+      name: true,
+      templateSlug: true,
+      _count: { select: { frames: true } },
+    },
   });
 
   console.log(`  ✓ Template created!`);

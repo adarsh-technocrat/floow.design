@@ -26,7 +26,6 @@ interface _Project {
   id: string;
   name: string;
   screens: number;
-  thumbnail: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -35,7 +34,6 @@ interface _TrashedProject {
   id: string;
   name: string;
   screens: number;
-  thumbnail: string | null;
   trashedAt: string;
   createdAt: string;
   updatedAt: string;
@@ -1404,16 +1402,16 @@ export default function DashboardPage() {
                           {isCreatingProject ? (
                             <div className="size-4 animate-spin rounded-full border-2 border-btn-primary-text border-t-transparent" />
                           ) : (
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            width="1em"
-                            height="1em"
-                            fill="currentColor"
-                            viewBox="0 0 256 256"
-                            className="size-4"
-                          >
-                            <path d="M205.66,117.66a8,8,0,0,1-11.32,0L136,59.31V216a8,8,0,0,1-16,0V59.31L61.66,117.66a8,8,0,0,1-11.32-11.32l72-72a8,8,0,0,1,11.32,0l72,72A8,8,0,0,1,205.66,117.66Z" />
-                          </svg>
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              width="1em"
+                              height="1em"
+                              fill="currentColor"
+                              viewBox="0 0 256 256"
+                              className="size-4"
+                            >
+                              <path d="M205.66,117.66a8,8,0,0,1-11.32,0L136,59.31V216a8,8,0,0,1-16,0V59.31L61.66,117.66a8,8,0,0,1-11.32-11.32l72-72a8,8,0,0,1,11.32,0l72,72A8,8,0,0,1,205.66,117.66Z" />
+                            </svg>
                           )}
                         </button>
                       </div>
@@ -1476,10 +1474,7 @@ export default function DashboardPage() {
                               href={`/project/${project.id}`}
                               className="relative block h-full min-h-0 w-full overflow-hidden"
                             >
-                              <ProjectFramePreview
-                                thumbnail={project.thumbnail}
-                                title={project.name}
-                              />
+                              <ProjectFramePreview title={project.name} />
                             </Link>
                             <button
                               type="button"
@@ -1583,7 +1578,6 @@ export default function DashboardPage() {
                         >
                           <div className="relative aspect-[16/10] w-full min-h-0 border-b border-b-secondary/80 bg-surface-sunken">
                             <ProjectFramePreview
-                              thumbnail={project.thumbnail}
                               title={project.name}
                               emptyLabel={`${project.screens} screens`}
                               dimmed

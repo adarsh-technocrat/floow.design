@@ -20,6 +20,15 @@ export interface FrameState {
   html: string;
 }
 
+export interface ImageGenContext {
+  generateAndUpload(args: {
+    id: string;
+    prompt: string;
+    aspectRatio: string;
+    background: string;
+  }): Promise<string | null>;
+}
+
 export interface ToolContext {
   frames: FrameState[];
   theme: ThemeVariables;
@@ -28,6 +37,7 @@ export interface ToolContext {
     vertex: GoogleVertexProvider;
     modelId: string;
   };
+  imageContext?: ImageGenContext;
   screenPositions?: Array<{ left: number; top: number }>;
   allowSpawnAgents?: boolean;
   excludeCreateScreen?: boolean;
@@ -165,9 +175,12 @@ export function createTools(ctx: ToolContext) {
     theme,
     writer,
     designModel,
+    imageContext,
     allowSpawnAgents,
     excludeCreateScreen,
   } = ctx;
+
+  const imagePlaceholders = new Map<string, string>();
 
   const updateScreenStreamState = new Map<string, UpdateScreenStreamState>();
   const editScreenStreamBuffer = new Map<string, string>();
@@ -273,6 +286,97 @@ export function createTools(ctx: ToolContext) {
       execute: async () => {
         const result = JSON.stringify(theme, null, 2);
         return result;
+      },
+    }),
+
+    generate_image: tool({
+      description:
+        'Generates an image and returns a URL to use in screen HTML. Call this BEFORE design_screen or update_screen that needs the image. Reference in HTML as src="<returned_url>". Use for app illustrations, backgrounds, photos, icons, and logos.',
+      inputSchema: z.object({
+        id: z
+          .string()
+          .describe(
+            "Unique placeholder id for this image, e.g. img-hero, img-avatar-1",
+          ),
+        prompt: z
+          .string()
+          .describe(
+            "Detailed description of the image to generate. Be specific about style, subject, colors, mood.",
+          ),
+        aspect_ratio: z
+          .enum(["square", "landscape", "portrait"])
+          .describe(
+            "square (1:1, icons/avatars), landscape (16:9, banners/headers), portrait (9:16, full-screen backgrounds)",
+          ),
+        background: z
+          .enum(["opaque", "transparent"])
+          .describe(
+            "opaque for photos/backgrounds/illustrations, transparent for icons/logos that overlay other content",
+          ),
+      }),
+      onInputStart: ({ toolCallId }) => {
+        writer?.write({
+          type: "tool-input-start",
+          toolCallId,
+          toolName: "generate_image",
+        });
+      },
+      execute: async (
+        {
+          id,
+          prompt,
+          aspect_ratio,
+          background,
+        }: {
+          id: string;
+          prompt: string;
+          aspect_ratio: string;
+          background: string;
+        },
+        { toolCallId },
+      ) => {
+        const placeholderUrl = `placeholder:${id}`;
+
+        if (imageContext?.generateAndUpload) {
+          try {
+            const url = await imageContext.generateAndUpload({
+              id,
+              prompt,
+              aspectRatio: aspect_ratio,
+              background,
+            });
+            if (url) {
+              imagePlaceholders.set(id, url);
+              writer?.write({
+                type: "data-tool-call-end",
+                data: {
+                  toolCallId,
+                  toolName: "generate_image",
+                },
+              });
+              return { success: true, url, id };
+            }
+          } catch (err) {
+            // Fall through to placeholder
+            console.error("[generate_image] failed:", err);
+          }
+        }
+
+        // Fallback: return placeholder URL
+        imagePlaceholders.set(id, placeholderUrl);
+        writer?.write({
+          type: "data-tool-call-end",
+          data: {
+            toolCallId,
+            toolName: "generate_image",
+          },
+        });
+        return {
+          success: true,
+          url: placeholderUrl,
+          id,
+          note: "Image generation not configured. Placeholder URL returned — replace with a real image later.",
+        };
       },
     }),
 
@@ -530,7 +634,7 @@ export function createTools(ctx: ToolContext) {
 
     update_theme: tool({
       description:
-        'Updates CSS theme variables for a specific variant. Use variantName to target light, dark, or a custom variant. Optionally provide a new themeName if the style direction has changed significantly.',
+        "Updates CSS theme variables for a specific variant. Use variantName to target light, dark, or a custom variant. Optionally provide a new themeName if the style direction has changed significantly.",
       inputSchema: z.object({
         themeName: z
           .string()
@@ -562,7 +666,11 @@ export function createTools(ctx: ToolContext) {
           themeName,
           updates,
           variantName: inputVariantName,
-        }: { themeName?: string; updates: Record<string, string>; variantName?: string },
+        }: {
+          themeName?: string;
+          updates: Record<string, string>;
+          variantName?: string;
+        },
         { toolCallId },
       ) => {
         const targetVariant = inputVariantName ?? "light";

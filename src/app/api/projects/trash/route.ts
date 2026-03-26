@@ -14,7 +14,6 @@ export async function GET(req: NextRequest) {
       select: {
         id: true,
         name: true,
-        thumbnail: true,
         trashedAt: true,
         createdAt: true,
         updatedAt: true,
@@ -27,7 +26,6 @@ export async function GET(req: NextRequest) {
         id: p.id,
         name: p.name,
         screens: p._count.frames,
-        thumbnail: p.thumbnail,
         trashedAt: p.trashedAt?.toISOString() ?? null,
         createdAt: p.createdAt.toISOString(),
         updatedAt: p.updatedAt.toISOString(),

@@ -36,7 +36,6 @@ export async function GET(req: NextRequest) {
       select: {
         id: true,
         name: true,
-        thumbnail: true,
         createdAt: true,
         updatedAt: true,
         _count: { select: { frames: true } },
@@ -48,7 +47,6 @@ export async function GET(req: NextRequest) {
         id: p.id,
         name: p.name,
         screens: p._count.frames,
-        thumbnail: p.thumbnail,
         createdAt: p.createdAt.toISOString(),
         updatedAt: p.updatedAt.toISOString(),
       })),

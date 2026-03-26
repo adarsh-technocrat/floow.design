@@ -13,7 +13,9 @@ export function CanvasTopLeft() {
   const router = useRouter();
   const dispatch = useAppDispatch();
   const { user } = useAuth();
-  const currentProjectId = (params?.id ?? params?.projectId) as string | undefined;
+  const currentProjectId = (params?.id ?? params?.projectId) as
+    | string
+    | undefined;
   const projects = useAppSelector((s) => s.projects.list);
   const listLoading = useAppSelector((s) => s.projects.listLoading);
   const currentProjectName = useAppSelector((s) => {
@@ -136,24 +138,13 @@ export function CanvasTopLeft() {
                     key={project.id}
                     onClick={() => handleSwitch(project.id)}
                     className={`flex w-full items-center gap-3 px-3 py-2.5 text-left transition-colors hover:bg-input-bg ${
-                      project.id === currentProjectId
-                        ? "bg-input-bg/60"
-                        : ""
+                      project.id === currentProjectId ? "bg-input-bg/60" : ""
                     }`}
                   >
-                    {/* Thumbnail or placeholder */}
                     <div className="size-8 shrink-0 overflow-hidden rounded-md border border-b-secondary bg-input-bg">
-                      {project.thumbnail ? (
-                        <img
-                          src={project.thumbnail}
-                          alt=""
-                          className="size-full object-cover"
-                        />
-                      ) : (
-                        <div className="flex size-full items-center justify-center text-[8px] text-t-tertiary">
-                          {project.screens}s
-                        </div>
-                      )}
+                      <div className="flex size-full items-center justify-center text-[8px] text-t-tertiary">
+                        {project.screens}s
+                      </div>
                     </div>
                     <div className="min-w-0 flex-1">
                       <p

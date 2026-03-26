@@ -40,14 +40,16 @@ export function Canvas() {
     ) => {
       const frame = frames.find((f) => f.id === frameId);
       if (!frame) return;
-      http.post("/api/frames", {
+      http
+        .post("/api/frames", {
           frameId: frame.id,
           html: html ?? frame.html,
           label: label ?? frame.label,
           left: left ?? frame.left,
           top: top ?? frame.top,
           projectId,
-        }).catch(() => {});
+        })
+        .catch(() => {});
     },
     [frames, projectId],
   );
@@ -93,7 +95,7 @@ export function Canvas() {
   const {
     isPanning,
     isMarquee,
-    isZooming,
+    isZooming: _isZooming,
     spaceHeld,
     marqueeStartRef,
     marqueeEnd,
@@ -136,7 +138,9 @@ export function Canvas() {
             onDelete={() => {
               const count = selectedFrameIds.length;
               selectedFrameIds.forEach((id) => {
-                http.delete(`/api/frames?frameId=${encodeURIComponent(id)}`).catch(() => {});
+                http
+                  .delete(`/api/frames?frameId=${encodeURIComponent(id)}`)
+                  .catch(() => {});
                 removeFrameFromCanvas(id);
               });
               toast.dismiss("selection");
@@ -172,6 +176,7 @@ export function Canvas() {
     >(),
   );
 
+  /* eslint-disable react-hooks/refs -- cleanup stale handler refs when frames change */
   useMemo(() => {
     const ids = new Set(frames.map((f) => f.id));
     for (const k of positionChangeHandlers.current.keys()) {
@@ -181,6 +186,7 @@ export function Canvas() {
       }
     }
   }, [frames]);
+  /* eslint-enable react-hooks/refs */
 
   const getPositionChangeHandler = useCallback(
     (id: string) => {
@@ -246,6 +252,7 @@ export function Canvas() {
           backfaceVisibility: "hidden" as const,
         }}
       >
+        {/* eslint-disable react-hooks/refs -- marquee coordinates from ref during active drag */}
         {marqueeStartRef.current && marqueeEnd && (
           <svg
             className="pointer-events-none absolute z-50"
@@ -256,7 +263,18 @@ export function Canvas() {
               height: Math.abs(marqueeEnd.y - marqueeStartRef.current.contentY),
             }}
           >
-            <rect x="1.5" y="1.5" width="calc(100% - 3px)" height="calc(100% - 3px)" fill="rgba(138,135,248,0.12)" stroke="#8B7CFF" strokeOpacity="0.55" strokeWidth="3" strokeDasharray="10 7" rx="0" />
+            <rect
+              x="1.5"
+              y="1.5"
+              width="calc(100% - 3px)"
+              height="calc(100% - 3px)"
+              fill="rgba(138,135,248,0.12)"
+              stroke="#8B7CFF"
+              strokeOpacity="0.55"
+              strokeWidth="3"
+              strokeDasharray="10 7"
+              rx="0"
+            />
           </svg>
         )}
         {frames.map((frame) => (
@@ -299,6 +317,7 @@ export function Canvas() {
             />
           </Frame>
         ))}
+        {/* eslint-enable react-hooks/refs */}
         <AgentShutterOverlays />
         <AgentCursors />
       </div>

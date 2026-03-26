@@ -32,7 +32,6 @@ async function getTemplates() {
       templateTag: true,
       templateSlug: true,
       templateDesc: true,
-      thumbnail: true,
       _count: { select: { frames: true } },
       frames: {
         where: { html: { not: "" } },
@@ -49,7 +48,6 @@ async function getTemplates() {
     slug: t.templateSlug,
     description: t.templateDesc,
     screens: t._count.frames,
-    thumbnail: t.thumbnail,
     frames: t.frames
       .filter((f) => f.html.length > 50)
       .map((f) => ({ id: f.id, label: f.label, html: f.html })),
@@ -105,18 +103,13 @@ export default async function TemplatesPage() {
                   className="relative aspect-[9/14] w-full overflow-hidden"
                   style={{
                     backgroundColor: "var(--canvas-bg, #0a0a0a)",
-                    backgroundImage: "radial-gradient(var(--canvas-dot) 0.65px, transparent 0.65px)",
+                    backgroundImage:
+                      "radial-gradient(var(--canvas-dot) 0.65px, transparent 0.65px)",
                     backgroundSize: "14px 14px",
                   }}
                 >
                   {t.frames.length > 0 ? (
                     <TemplateCardCarousel frames={t.frames} />
-                  ) : t.thumbnail ? (
-                    <img
-                      alt={t.name}
-                      src={t.thumbnail}
-                      className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
-                    />
                   ) : (
                     <div className="flex h-full w-full items-center justify-center">
                       <span className="text-xs font-mono text-t-tertiary">

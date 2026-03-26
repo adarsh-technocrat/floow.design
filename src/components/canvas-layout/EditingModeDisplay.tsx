@@ -1,9 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { ArrowUp, X } from "lucide-react";
-import { ImageIcon } from "@/lib/svg-icons";
-import { StyleGuideIcon } from "@/lib/svg-icons";
+import { type ReactNode, useEffect, useState } from "react";
+import { ArrowUp, ChevronDown, Plus, SlidersHorizontal, X } from "lucide-react";
+import { ImageIcon, StyleGuideIcon, FrameIcon } from "@/lib/svg-icons";
 import { useCanvasChat, type QueuedPrompt } from "@/hooks/useCanvasChat";
 import {
   subscribeCreditExhausted,
@@ -50,6 +49,33 @@ function QueuedPromptChip({
   );
 }
 
+function ToolbarChip({
+  label,
+  onRemove,
+  icon,
+}: {
+  label: string;
+  onRemove?: () => void;
+  icon?: ReactNode;
+}) {
+  return (
+    <div className="group inline-flex h-8 max-w-[210px] items-center gap-1.5 rounded-full border border-white/15 bg-white/5 px-3 text-[13px] text-t-secondary">
+      {icon ? <span className="shrink-0">{icon}</span> : null}
+      <span className="truncate">{label}</span>
+      {onRemove ? (
+        <button
+          type="button"
+          onClick={onRemove}
+          className="shrink-0 rounded-full p-0.5 text-t-tertiary transition-colors group-hover:text-t-secondary hover:bg-white/10"
+          aria-label={`Remove ${label}`}
+        >
+          <X className="size-3.5" />
+        </button>
+      ) : null}
+    </div>
+  );
+}
+
 export function EditingModeDisplay() {
   const [styleGuideOpen, setStyleGuideOpen] = useState(false);
   const [pricingDialogOpen, setPricingDialogOpen] = useState(false);
@@ -62,11 +88,15 @@ export function EditingModeDisplay() {
     inputRef,
     fileInputRef,
     attachedImages,
+    attachedFrames,
+    selectedElement,
     hasUploadingImages,
     handleAttachImage,
     handleFileChange,
     handlePaste,
     removeAttachedImage,
+    removeAttachedFrame,
+    clearSelectedElement,
     isAgentWorking,
     promptQueue,
     submitPromptOrAddToQueue,
@@ -87,7 +117,7 @@ export function EditingModeDisplay() {
   return (
     <>
       <ChatEngine />
-      <div className="absolute bottom-4 left-1/2 z-20 -translate-x-1/2 w-full max-w-[600px] px-4">
+      <div className="absolute bottom-4 left-1/2 z-20 w-full max-w-[660px] -translate-x-1/2 px-4">
         {promptQueue.length > 0 && (
           <div className="flex flex-col gap-0 -mb-3">
             {promptQueue.map((queuedPrompt, index) => (
@@ -111,7 +141,7 @@ export function EditingModeDisplay() {
           </div>
         )}
 
-        <div className="relative z-10 rounded-2xl border border-b-strong bg-canvas-panel-bg shadow-lg backdrop-blur-xl transition-all focus-within:border-b-strong">
+        <div className="relative z-10 rounded-[28px] border border-white/15 bg-[#16181D]/95 shadow-[0_8px_30px_rgba(0,0,0,0.35)] backdrop-blur-xl transition-all focus-within:border-white/25">
           {/* Hidden file input */}
           <input
             ref={fileInputRef}
@@ -122,55 +152,40 @@ export function EditingModeDisplay() {
             onChange={handleFileChange}
           />
 
-          {/* Image previews */}
-          {attachedImages.length > 0 && (
-            <div className="flex gap-2 px-4 pt-3 pb-0 overflow-x-auto">
+          {(attachedFrames.length > 0 ||
+            selectedElement ||
+            attachedImages.length > 0) && (
+            <div className="flex gap-2 overflow-x-auto px-4 pb-0 pt-3">
+              {attachedFrames.map((frame) => (
+                <ToolbarChip
+                  key={frame.id}
+                  label={frame.label || "Untitled Screen"}
+                  onRemove={() => removeAttachedFrame(frame.id)}
+                  icon={<FrameIcon color="currentColor" className="size-3.5" />}
+                />
+              ))}
+              {selectedElement ? (
+                <ToolbarChip
+                  label={
+                    selectedElement.text
+                      ? selectedElement.text.slice(0, 32)
+                      : `<${selectedElement.tagName}>`
+                  }
+                  onRemove={clearSelectedElement}
+                />
+              ) : null}
               {attachedImages.map((img) => (
-                <div key={img.id} className="relative shrink-0 group">
-                  <img
-                    src={img.dataUrl}
-                    alt={img.name}
-                    className={`size-16 rounded-lg object-cover border border-b-secondary transition-opacity ${
-                      img.uploading ? "opacity-50" : img.error ? "opacity-40" : ""
-                    }`}
-                  />
-                  {/* Upload spinner overlay */}
-                  {img.uploading && (
-                    <div className="absolute inset-0 flex items-center justify-center rounded-lg">
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" className="animate-spin text-t-secondary">
-                        <circle cx="12" cy="12" r="9" stroke="currentColor" strokeOpacity="0.25" strokeWidth="2.5" />
-                        <path d="M12 3a9 9 0 0 1 9 9" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
-                      </svg>
-                    </div>
-                  )}
-                  {/* Error indicator */}
-                  {img.error && !img.uploading && (
-                    <div className="absolute inset-0 flex items-center justify-center rounded-lg">
-                      <span className="text-[10px] font-medium text-red-500 bg-surface-elevated/80 rounded px-1">Failed</span>
-                    </div>
-                  )}
-                  {/* Uploaded check */}
-                  {img.url && !img.uploading && !img.error && (
-                    <div className="absolute bottom-0.5 right-0.5 flex size-4 items-center justify-center rounded-full bg-emerald-500 shadow-sm">
-                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none">
-                        <path d="M8 12.5l2.5 2.5 5-5" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
-                      </svg>
-                    </div>
-                  )}
-                  {/* Remove button */}
-                  <button
-                    type="button"
-                    onClick={() => removeAttachedImage(img.id)}
-                    className="absolute -top-1.5 -right-1.5 flex size-5 items-center justify-center rounded-full bg-surface-elevated border border-b-secondary text-t-tertiary shadow-sm opacity-0 group-hover:opacity-100 transition-opacity hover:text-t-primary"
-                  >
-                    <X className="size-3" />
-                  </button>
-                </div>
+                <ToolbarChip
+                  key={img.id}
+                  label={img.name || "Image"}
+                  onRemove={() => removeAttachedImage(img.id)}
+                  icon={<ImageIcon className="size-3.5" />}
+                />
               ))}
             </div>
           )}
 
-          <div className="px-4 pt-4 pb-2">
+          <div className="px-4 pb-2 pt-2">
             <textarea
               ref={inputRef}
               value={inputValue}
@@ -180,21 +195,33 @@ export function EditingModeDisplay() {
               placeholder={
                 isAgentWorking
                   ? "Type to queue next prompt..."
-                  : "Describe what to design..."
+                  : selectedElement
+                    ? `Edit <${selectedElement.tagName}> element...`
+                    : attachedFrames.length > 0
+                      ? `Edit ${attachedFrames.length === 1 ? `"${attachedFrames[0].label || "screen"}"` : `${attachedFrames.length} screens`}...`
+                      : "What would you like to change or create?"
               }
               rows={2}
-              className="w-full bg-transparent text-[15px] text-t-primary placeholder-t-tertiary outline-none resize-none leading-relaxed max-h-[140px] min-h-[52px]"
+              className="max-h-[140px] min-h-[52px] w-full resize-none bg-transparent text-[16px] leading-relaxed text-white placeholder:text-[#A3A9B5] outline-none"
               onInput={handleTextareaAutoResize}
             />
           </div>
 
           <div className="flex items-center justify-between px-4 py-2.5">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5">
+              <button
+                type="button"
+                aria-label="Open attachments"
+                onClick={handleAttachImage}
+                className="inline-flex size-8 shrink-0 items-center justify-center rounded-md text-[#C5CAD4] transition-colors hover:bg-white/10 hover:text-white"
+              >
+                <Plus className="size-4" />
+              </button>
               <button
                 type="button"
                 aria-label="Attach image"
                 onClick={handleAttachImage}
-                className="inline-flex size-8 shrink-0 items-center justify-center rounded-lg text-t-tertiary transition-colors hover:text-t-secondary hover:bg-secondary/40"
+                className="inline-flex size-8 shrink-0 items-center justify-center rounded-md text-[#C5CAD4] transition-colors hover:bg-white/10 hover:text-white"
               >
                 <ImageIcon className="size-4" />
               </button>
@@ -206,6 +233,27 @@ export function EditingModeDisplay() {
             </div>
 
             <div className="flex items-center gap-2">
+              <button
+                type="button"
+                className="inline-flex h-8 items-center gap-1 rounded-full border border-white/10 bg-white/5 px-2.5 text-[12px] text-[#D8DDE8] hover:bg-white/10"
+              >
+                <span className="inline-flex size-4 items-center justify-center rounded-full bg-indigo-500/80" />
+                <ChevronDown className="size-3.5 text-[#AAB1BC]" />
+              </button>
+              <button
+                type="button"
+                className="inline-flex h-8 items-center gap-1 rounded-full border border-white/10 bg-white/5 px-3 text-[12px] text-[#D8DDE8] hover:bg-white/10"
+              >
+                <span>3.0 Flash</span>
+                <ChevronDown className="size-3.5 text-[#AAB1BC]" />
+              </button>
+              <button
+                type="button"
+                aria-label="Tune generation settings"
+                className="inline-flex size-8 items-center justify-center rounded-md text-[#C5CAD4] transition-colors hover:bg-white/10 hover:text-white"
+              >
+                <SlidersHorizontal className="size-4" />
+              </button>
               {isAgentWorking ? (
                 <button
                   type="button"
@@ -213,7 +261,13 @@ export function EditingModeDisplay() {
                   className="inline-flex size-8 shrink-0 items-center justify-center rounded-full bg-red-500/10 text-red-500 outline-none transition-all hover:bg-red-500/20 active:scale-95"
                   aria-label="Stop generating"
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="12"
+                    height="12"
+                    viewBox="0 0 24 24"
+                    fill="currentColor"
+                  >
                     <rect x="6" y="6" width="12" height="12" rx="2" />
                   </svg>
                 </button>
@@ -221,19 +275,13 @@ export function EditingModeDisplay() {
                 <button
                   type="button"
                   onClick={submitPromptOrAddToQueue}
-                  disabled={(!inputValue.trim() && attachedImages.length === 0) || hasUploadingImages}
-                  className="inline-flex size-8 shrink-0 items-center justify-center rounded-full bg-btn-primary-bg text-btn-primary-text shadow-sm outline-none transition-all hover:opacity-90 disabled:pointer-events-none disabled:opacity-30 focus-visible:ring-2 focus-visible:ring-ring/50 active:scale-95"
+                  disabled={
+                    (!inputValue.trim() && attachedImages.length === 0) ||
+                    hasUploadingImages
+                  }
+                  className="inline-flex size-8 shrink-0 items-center justify-center rounded-full bg-white text-black shadow-sm outline-none transition-all hover:opacity-90 disabled:pointer-events-none disabled:opacity-30 focus-visible:ring-2 focus-visible:ring-ring/50 active:scale-95"
                 >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="1em"
-                    height="1em"
-                    fill="currentColor"
-                    viewBox="0 0 256 256"
-                    className="size-4"
-                  >
-                    <path d="M205.66,117.66a8,8,0,0,1-11.32,0L136,59.31V216a8,8,0,0,1-16,0V59.31L61.66,117.66a8,8,0,0,1-11.32-11.32l72-72a8,8,0,0,1,11.32,0l72,72A8,8,0,0,1,205.66,117.66Z" />
-                  </svg>
+                  <ArrowUp className="size-4" />
                 </button>
               )}
             </div>

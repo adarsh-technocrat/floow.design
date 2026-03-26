@@ -10,7 +10,6 @@ interface Template {
   name: string;
   tag: string;
   screens: number;
-  thumbnail: string | null;
   firstFrameHtml: string | null;
 }
 
@@ -58,7 +57,9 @@ export function TemplatesCarousel() {
     }
     setUsingId(templateId);
     try {
-      const { data } = await http.post<{ id?: string }>("/api/templates/use", { templateId });
+      const { data } = await http.post<{ id?: string }>("/api/templates/use", {
+        templateId,
+      });
       if (data.id) {
         router.push(`/project/${data.id}`);
       }
@@ -162,13 +163,7 @@ export function TemplatesCarousel() {
                 onClick={() => handleUseTemplate(t.id)}
               >
                 <div className="relative aspect-[9/16] w-full overflow-hidden rounded-lg border border-b-secondary bg-input-bg shadow-sm transition-shadow hover:shadow-md">
-                  {t.thumbnail ? (
-                    <img
-                      alt={t.name}
-                      src={t.thumbnail}
-                      className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
-                    />
-                  ) : t.firstFrameHtml ? (
+                  {t.firstFrameHtml ? (
                     <FramePreviewIframe
                       html={t.firstFrameHtml}
                       title={`${t.name} preview`}
@@ -183,7 +178,9 @@ export function TemplatesCarousel() {
 
                   <div className="absolute inset-0 bg-gradient-to-t from-surface/80 via-transparent to-transparent" />
 
-                  <div className={`absolute inset-0 flex items-center justify-center bg-black/40 transition-opacity duration-200 ${usingId === t.id ? "opacity-100" : "opacity-0 group-hover:opacity-100"}`}>
+                  <div
+                    className={`absolute inset-0 flex items-center justify-center bg-black/40 transition-opacity duration-200 ${usingId === t.id ? "opacity-100" : "opacity-0 group-hover:opacity-100"}`}
+                  >
                     <span className="rounded-full bg-btn-primary-bg px-4 py-2 text-xs font-semibold text-btn-primary-text shadow-lg backdrop-blur-sm flex items-center gap-2">
                       {usingId === t.id ? (
                         <>

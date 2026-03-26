@@ -15,6 +15,7 @@ import {
 } from "@/constants/agent-prompts";
 import type { ThemeVariables } from "@/lib/screen-utils";
 import { createTools, type FrameState } from "@/lib/agent/tools";
+import { buildImageContext } from "@/lib/agent/image-gen";
 import { runPlanningPipeline } from "@/lib/agent/planner";
 import { getAuthenticatedUserId } from "@/lib/auth";
 
@@ -156,6 +157,19 @@ export async function POST(req: Request) {
     const agentPlanContext = body?.planContext as string | undefined;
     const agentCount =
       typeof body?.agentCount === "number" ? body.agentCount : 1;
+    const focusedFrameIds = Array.isArray(body?.focusedFrameIds)
+      ? (body.focusedFrameIds as string[])
+      : [];
+    const selectedElement = body?.selectedElement as
+      | {
+          frameId: string;
+          frameLabel: string;
+          elementId: string;
+          tagName: string;
+          text: string | null;
+          innerHTML: string | null;
+        }
+      | undefined;
 
     const lastMsg = rawMessages[rawMessages.length - 1];
     const userPrompt =
@@ -192,11 +206,16 @@ export async function POST(req: Request) {
           planContext = planning.planContext;
         }
 
+        const imageContext = process.env.GOOGLE_VERTEX_PROJECT
+          ? buildImageContext()
+          : undefined;
+
         const tools = createTools({
           frames,
           theme,
           writer,
           designModel: { vertex, modelId: DESIGN_MODEL_ID },
+          imageContext,
           screenPositions:
             screenPositions.length > 0 ? screenPositions : undefined,
           allowSpawnAgents: !agentId,
@@ -221,6 +240,8 @@ export async function POST(req: Request) {
           agentScope,
           agentCount,
           themeMode,
+          focusedFrameIds,
+          selectedElement,
         );
 
         // Pre-process: convert data: URL file parts to inline image parts
@@ -270,7 +291,7 @@ export async function POST(req: Request) {
           system,
           messages: messagesToSend,
           tools,
-          stopWhen: stepCountIs(10),
+          stopWhen: stepCountIs(30),
           maxRetries: 2,
           providerOptions: getProviderOptions(CHAT_MODEL_ID) as Parameters<
             typeof streamText

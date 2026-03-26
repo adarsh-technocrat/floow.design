@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Header } from "@/components/landing/Header";
 import { Footer } from "@/components/landing/Footer";
@@ -21,7 +22,6 @@ async function getTemplate(slug: string) {
       templateTag: true,
       templateSlug: true,
       templateDesc: true,
-      thumbnail: true,
       createdAt: true,
       frames: {
         select: { id: true, label: true, html: true },
@@ -53,15 +53,11 @@ export async function generateMetadata({
       type: "website",
       url: `https://www.floow.design/templates/${slug}`,
       siteName: "floow.design",
-      ...(template.thumbnail && {
-        images: [{ url: template.thumbnail, width: 1200, height: 630 }],
-      }),
     },
     twitter: {
       card: "summary_large_image",
       title,
       description,
-      ...(template.thumbnail && { images: [template.thumbnail] }),
     },
     alternates: {
       canonical: `https://www.floow.design/templates/${slug}`,
@@ -85,9 +81,12 @@ export default async function TemplateDetailPage({ params }: PageProps) {
         <div className="border-b border-b-secondary px-4 py-8 sm:px-6 sm:py-12 md:px-12 md:py-16">
           <div className="flex flex-col gap-6 max-w-3xl mx-auto">
             <div className="flex items-center gap-3 text-xs font-mono text-t-tertiary">
-              <a href="/templates" className="hover:text-t-secondary transition-colors">
+              <Link
+                href="/templates"
+                className="hover:text-t-secondary transition-colors"
+              >
                 Templates
-              </a>
+              </Link>
               <span>/</span>
               <span className="text-t-secondary">{template.name}</span>
             </div>
@@ -136,16 +135,23 @@ export default async function TemplateDetailPage({ params }: PageProps) {
             {template.frames
               .filter((f) => f.html && f.html.length > 50)
               .map((frame) => (
-                <div key={frame.id} className="flex flex-col items-center gap-3">
+                <div
+                  key={frame.id}
+                  className="flex flex-col items-center gap-3"
+                >
                   <div
                     className="relative w-full overflow-hidden rounded-2xl border border-b-secondary bg-surface-sunken"
                     style={{
                       aspectRatio: "430 / 932",
-                      backgroundImage: "radial-gradient(var(--canvas-dot) 0.65px, transparent 0.65px)",
+                      backgroundImage:
+                        "radial-gradient(var(--canvas-dot) 0.65px, transparent 0.65px)",
                       backgroundSize: "14px 14px",
                     }}
                   >
-                    <TemplateScreenPreview html={frame.html} title={frame.label} />
+                    <TemplateScreenPreview
+                      html={frame.html}
+                      title={frame.label}
+                    />
                   </div>
                   <p className="text-xs font-medium text-t-secondary">
                     {frame.label}
@@ -166,7 +172,8 @@ export default async function TemplateDetailPage({ params }: PageProps) {
               Start building with this template
             </h2>
             <p className="text-sm text-t-secondary">
-              Customize every screen with AI — change colors, layout, content, and more.
+              Customize every screen with AI — change colors, layout, content,
+              and more.
             </p>
             <TemplateUseButton templateId={template.id} />
           </div>

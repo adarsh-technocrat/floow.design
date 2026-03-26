@@ -1,10 +1,20 @@
 "use client";
 
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { FrameToolbar } from "@/components/FrameToolbar";
 import FrameElementInspectionOverlay from "@/components/frame/element-inspection/FrameElementInspectionOverlay";
 import { useAppSelector } from "@/store/hooks";
-import { subscribeGeneratingFrames } from "@/lib/chat-bridge";
+import {
+  subscribeGeneratingFrames,
+  setSelectedElementContext,
+} from "@/lib/chat-bridge";
+import type { OnElementSelectedPayload } from "@/components/frame/element-inspection/FrameElementInspectionOverlay";
 import {
   useFrameInteraction,
   type ResizeHandle,
@@ -138,6 +148,24 @@ export const Frame = React.memo(function Frame({
   const enableElementInspection =
     (stableShowToolbar ?? false) || isActiveAgentFrame;
 
+  const handleElementSelected = useCallback(
+    (info: OnElementSelectedPayload) => {
+      if (info.selectedElement) {
+        setSelectedElementContext({
+          frameId: id,
+          frameLabel: label,
+          elementId: info.selectedElement.elementId,
+          tagName: info.selectedElement.tagName,
+          text: info.selectedElement.text,
+          innerHTML: info.selectedElement.innerHTML,
+        });
+      } else {
+        setSelectedElementContext(null);
+      }
+    },
+    [id, label],
+  );
+
   useEffect(() => {
     if (hideSelectedRafRef.current != null) {
       cancelAnimationFrame(hideSelectedRafRef.current);
@@ -186,6 +214,7 @@ export const Frame = React.memo(function Frame({
     };
   }, [showToolbar]);
 
+  /* eslint-disable react-hooks/refs -- iframeRef is forwarded to child for element inspection */
   const childrenWithInspection = useMemo(() => {
     if (children == null) return children;
     const child = React.Children.only(children);
@@ -201,6 +230,7 @@ export const Frame = React.memo(function Frame({
       },
     );
   }, [children, enableElementInspection]);
+  /* eslint-enable react-hooks/refs */
 
   const {
     isDragging,
@@ -294,6 +324,7 @@ export const Frame = React.memo(function Frame({
               overlayRef={overlayRef}
               enabled={true}
               zoom={canvasScale}
+              onElementSelected={handleElementSelected}
             />
           )}
           {onWheelForZoom && (

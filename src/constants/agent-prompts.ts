@@ -177,6 +177,17 @@ const TOOL_GUIDANCE = `\
     In multi-agent mode, use the returned frame IDs when calling spawn_agents.
   </tool>
 
+  <tool name="generate_image(id, prompt, aspect_ratio, background)">
+    Generates an AI image and returns a public URL. Call BEFORE design_screen or update_screen
+    that needs the image. Use the returned URL directly in img src attributes.
+    - id: unique name like "img-hero", "img-avatar-1"
+    - prompt: detailed visual description (style, subject, colors, mood)
+    - aspect_ratio: "square" (1:1, avatars/icons), "landscape" (3:2, banners), "portrait" (2:3, backgrounds)
+    - background: "opaque" (photos/illustrations) or "transparent" (icons/logos)
+    Example workflow: generate_image → get URL → use URL in design_screen description or HTML.
+    For multiple images, call generate_image for each one before the design step.
+  </tool>
+
   <tool name="design_screen(id, description)">
     Generates the full design for an existing screen frame. Use this after create_all_screens
     to fill each frame with content. The design model generates the HTML from the description
@@ -331,6 +342,15 @@ export function getSystemPrompt(
   agentScope = "",
   agentCount = 1,
   themeMode: "light" | "dark" = "light",
+  focusedFrameIds: string[] = [],
+  selectedElement?: {
+    frameId: string;
+    frameLabel: string;
+    elementId: string;
+    tagName: string;
+    text: string | null;
+    innerHTML: string | null;
+  },
 ): string {
   const planSection = planContext
     ? `\n<planning_context>\n${planContext}\n</planning_context>\n`
@@ -405,10 +425,55 @@ ${vars}
 </orchestration>\n`
       : "";
 
+  const focusedSection = (() => {
+    if (focusedFrameIds.length === 0) return "";
+    const focusedFrames = frames.filter((f) => focusedFrameIds.includes(f.id));
+    if (focusedFrames.length === 0) return "";
+    const names = focusedFrames
+      .map((f) => `"${f.label}" (id: ${f.id})`)
+      .join(", ");
+    return `\n<focused_screens>
+  The user has selected and attached ${focusedFrames.length === 1 ? "this screen" : "these screens"} for targeted editing: ${names}.
+
+  IMPORTANT: The user's next message is specifically about ${focusedFrames.length === 1 ? "this screen" : "these screens"}.
+  - Focus your edits ONLY on the selected screen(s).
+  - Use read_screen first to understand the current state, then use edit_design or update_screen to make precise changes.
+  - Do NOT modify or create other screens unless explicitly asked.
+  - Keep the changes surgical and precise — only change what the user asks for.
+</focused_screens>\n`;
+  })();
+
+  const elementSection = (() => {
+    if (!selectedElement) return "";
+    const textPreview = selectedElement.text
+      ? `\n  Element text content: "${selectedElement.text.slice(0, 200)}"`
+      : "";
+    const htmlPreview = selectedElement.innerHTML
+      ? `\n  Element HTML: ${selectedElement.innerHTML.slice(0, 300)}`
+      : "";
+    return `\n<focused_element>
+  The user has selected a SPECIFIC ELEMENT within the screen "${selectedElement.frameLabel}" (frame id: ${selectedElement.frameId}).
+
+  Selected element details:
+  - Element ID attribute: data-uxm-element-id="${selectedElement.elementId}"
+  - Tag: <${selectedElement.tagName}>${textPreview}${htmlPreview}
+
+  CRITICAL INSTRUCTIONS for element-level editing:
+  - The user wants to edit ONLY this specific element, not the whole screen.
+  - Use read_screen on frame "${selectedElement.frameId}" first to find this exact element by its data-uxm-element-id="${selectedElement.elementId}" attribute.
+  - Use edit_design to make a SURGICAL edit — target ONLY the element with data-uxm-element-id="${selectedElement.elementId}".
+  - In your edit instructions, reference the element by its data-uxm-element-id attribute to be precise.
+  - Do NOT redesign or restructure the rest of the screen.
+  - Preserve the element's position, size, and surrounding layout unless the user explicitly asks to change them.
+</focused_element>\n`;
+  })();
+
   return [
     ROLE,
     buildBackground(frames),
     themeSection,
+    focusedSection,
+    elementSection,
     agentScope,
     orchestrationInstruction,
     planSection,

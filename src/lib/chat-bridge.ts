@@ -1,6 +1,17 @@
+export interface SelectedElementContext {
+  frameId: string;
+  frameLabel: string;
+  elementId: string;
+  tagName: string;
+  text: string | null;
+  innerHTML: string | null;
+}
+
 export interface ChatMessagePayload {
   text: string;
   imageDataUrls?: string[];
+  attachedFrameIds?: string[];
+  selectedElement?: SelectedElementContext;
 }
 
 let _sendFn: ((payload: ChatMessagePayload) => void) | null = null;
@@ -26,10 +37,42 @@ export function unregisterChatSend() {
   _sendFn = null;
 }
 
-export function sendChatMessage(text: string, imageDataUrls?: string[]) {
+export function sendChatMessage(
+  text: string,
+  imageDataUrls?: string[],
+  attachedFrameIds?: string[],
+  selectedElement?: SelectedElementContext,
+) {
   if (_sendFn) {
-    _sendFn({ text, imageDataUrls });
+    _sendFn({ text, imageDataUrls, attachedFrameIds, selectedElement });
   }
+}
+
+/* ---- Selected Element (for element-level sectional editing) ---- */
+
+let _selectedElementContext: SelectedElementContext | null = null;
+type SelectedElementListener = (ctx: SelectedElementContext | null) => void;
+const _selectedElementListeners = new Set<SelectedElementListener>();
+
+export function setSelectedElementContext(
+  ctx: SelectedElementContext | null,
+): void {
+  _selectedElementContext = ctx;
+  for (const l of _selectedElementListeners) l(ctx);
+}
+
+export function getSelectedElementContext(): SelectedElementContext | null {
+  return _selectedElementContext;
+}
+
+export function subscribeSelectedElement(
+  listener: SelectedElementListener,
+): () => void {
+  _selectedElementListeners.add(listener);
+  listener(_selectedElementContext);
+  return () => {
+    _selectedElementListeners.delete(listener);
+  };
 }
 
 export function isChatBridgeReady(): boolean {

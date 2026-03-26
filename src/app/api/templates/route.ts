@@ -12,7 +12,6 @@ export async function GET() {
         templateTag: true,
         templateSlug: true,
         templateDesc: true,
-        thumbnail: true,
         _count: { select: { frames: true } },
         frames: {
           orderBy: { updatedAt: "asc" },
@@ -30,7 +29,6 @@ export async function GET() {
         slug: t.templateSlug,
         description: t.templateDesc,
         screens: t._count.frames,
-        thumbnail: t.thumbnail,
         firstFrameHtml: t.frames[0]?.html || null,
       })),
     });

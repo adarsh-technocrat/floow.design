@@ -12,7 +12,6 @@ import {
   EditingModeDisplay,
 } from "@/components/canvas-layout";
 import { CellProgressLoader } from "@/components/CellProgressLoader";
-import { CaptureCanvasThumbnail } from "@/components/CaptureCanvasThumbnail";
 import {
   sendChatMessage,
   isChatBridgeReady,
@@ -23,13 +22,14 @@ import type { RootState } from "@/store";
 
 export default function ProjectCanvasPage() {
   const dispatch = useDispatch();
-  const projectId = useSelector((s: RootState) => s.project.projectId);
   const projectLoaded = useSelector((s: RootState) => s.project.loaded);
   const searchParams = useSearchParams();
   const promptSentRef = useRef(false);
 
   const hasPrompt = !!searchParams.get("prompt");
   const markedNewRef = useRef(false);
+
+  // eslint-disable-next-line react-hooks/refs -- one-time init guard, safe pattern
   if (hasPrompt && !markedNewRef.current) {
     markedNewRef.current = true;
     markNewProject();
@@ -93,7 +93,6 @@ export default function ProjectCanvasPage() {
         <CanvasBottomLeft />
         <CanvasBottomRight />
         <EditingModeDisplay />
-        <CaptureCanvasThumbnail />
       </div>
     </div>
   );
