@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import crypto from "crypto";
 import { prisma } from "@/lib/db";
 import { requireAuth } from "@/lib/auth";
 
@@ -43,6 +44,7 @@ export async function POST(req: NextRequest) {
         ...(source.teamId ? { teamId: source.teamId } : {}),
         frames: {
           create: source.frames.map((f) => ({
+            id: crypto.randomUUID().replace(/-/g, "").slice(0, 20),
             label: f.label,
             left: f.left,
             top: f.top,
