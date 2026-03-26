@@ -48,13 +48,23 @@ export function TemplatesCarousel() {
   const { user } = useAuth();
   const router = useRouter();
 
-  const handleUseTemplate = (templateId: string) => {
+  const [usingId, setUsingId] = useState<string | null>(null);
+
+  const handleUseTemplate = async (templateId: string) => {
     if (!user) {
       sessionStorage.setItem("pending_template", templateId);
       router.push("/signin");
       return;
     }
-    router.push(`/project/${templateId}`);
+    setUsingId(templateId);
+    try {
+      const { data } = await http.post<{ id?: string }>("/api/templates/use", { templateId });
+      if (data.id) {
+        router.push(`/project/${data.id}`);
+      }
+    } catch {
+      setUsingId(null);
+    }
   };
 
   useEffect(() => {
@@ -173,9 +183,16 @@ export function TemplatesCarousel() {
 
                   <div className="absolute inset-0 bg-gradient-to-t from-surface/80 via-transparent to-transparent" />
 
-                  <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
-                    <span className="rounded-full bg-btn-primary-bg px-4 py-2 text-xs font-semibold text-btn-primary-text shadow-lg backdrop-blur-sm">
-                      Use Template
+                  <div className={`absolute inset-0 flex items-center justify-center bg-black/40 transition-opacity duration-200 ${usingId === t.id ? "opacity-100" : "opacity-0 group-hover:opacity-100"}`}>
+                    <span className="rounded-full bg-btn-primary-bg px-4 py-2 text-xs font-semibold text-btn-primary-text shadow-lg backdrop-blur-sm flex items-center gap-2">
+                      {usingId === t.id ? (
+                        <>
+                          <span className="size-3.5 animate-spin rounded-full border-2 border-btn-primary-text border-t-transparent" />
+                          Creating...
+                        </>
+                      ) : (
+                        "Use Template"
+                      )}
                     </span>
                   </div>
 

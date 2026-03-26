@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Header } from "@/components/landing/Header";
 import { Footer } from "@/components/landing/Footer";
+import { TemplateCardCarousel } from "./TemplateCardCarousel";
 import { prisma } from "@/lib/db";
 import type { Metadata } from "next";
 
@@ -34,9 +35,9 @@ async function getTemplates() {
       thumbnail: true,
       _count: { select: { frames: true } },
       frames: {
+        where: { html: { not: "" } },
         orderBy: { updatedAt: "asc" },
-        take: 1,
-        select: { html: true },
+        select: { id: true, label: true, html: true },
       },
     },
   });
@@ -49,7 +50,9 @@ async function getTemplates() {
     description: t.templateDesc,
     screens: t._count.frames,
     thumbnail: t.thumbnail,
-    firstFrameHtml: t.frames[0]?.html || null,
+    frames: t.frames
+      .filter((f) => f.html.length > 50)
+      .map((f) => ({ id: f.id, label: f.label, html: f.html })),
   }));
 }
 
@@ -95,11 +98,20 @@ export default async function TemplatesPage() {
             {templates.map((t) => (
               <Link
                 key={t.id}
-                href={t.slug ? `/templates/${t.slug}` : `/project/${t.id}`}
+                href={t.slug ? `/templates/${t.slug}` : `/templates`}
                 className="group flex flex-col overflow-hidden rounded-xl border border-b-secondary bg-surface-elevated transition-all hover:-translate-y-1 hover:shadow-lg no-underline"
               >
-                <div className="relative aspect-[9/14] w-full overflow-hidden bg-input-bg">
-                  {t.thumbnail ? (
+                <div
+                  className="relative aspect-[9/14] w-full overflow-hidden"
+                  style={{
+                    backgroundColor: "var(--canvas-bg, #0a0a0a)",
+                    backgroundImage: "radial-gradient(var(--canvas-dot) 0.65px, transparent 0.65px)",
+                    backgroundSize: "14px 14px",
+                  }}
+                >
+                  {t.frames.length > 0 ? (
+                    <TemplateCardCarousel frames={t.frames} />
+                  ) : t.thumbnail ? (
                     <img
                       alt={t.name}
                       src={t.thumbnail}
@@ -112,10 +124,9 @@ export default async function TemplatesPage() {
                       </span>
                     </div>
                   )}
-                  <div className="absolute inset-0 bg-gradient-to-t from-surface/60 via-transparent to-transparent" />
                 </div>
 
-                <div className="flex flex-col gap-2 p-4">
+                <div className="flex flex-col gap-2 p-4 border-t border-b-secondary">
                   <div className="flex items-center gap-2">
                     <span className="rounded bg-btn-primary-bg/15 px-2 py-0.5 text-[10px] font-mono font-semibold uppercase tracking-wider text-btn-primary-bg">
                       {t.tag}

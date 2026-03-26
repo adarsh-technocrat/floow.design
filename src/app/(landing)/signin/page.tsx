@@ -196,7 +196,14 @@ function SignInPageContent() {
     const pendingTemplate = sessionStorage.getItem("pending_template");
     if (pendingTemplate) {
       sessionStorage.removeItem("pending_template");
-      router.push(`/project/${pendingTemplate}`);
+      try {
+        const { data } = await http.post<{ id?: string }>("/api/templates/use", { templateId: pendingTemplate });
+        if (data.id) {
+          router.push(`/project/${data.id}`);
+          return;
+        }
+      } catch {}
+      router.push("/dashboard");
       return;
     }
     if (pendingPrompt) {
