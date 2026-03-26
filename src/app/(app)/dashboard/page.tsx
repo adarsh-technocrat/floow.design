@@ -1463,18 +1463,21 @@ export default function DashboardPage() {
                         {projects.length !== 1 ? "s" : ""}
                       </span>
                     </div>
-                    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4">
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
                       {projects.map((project) => (
                         <article
                           key={project.id}
-                          className="group flex h-full flex-col overflow-hidden rounded-xl border border-b-secondary bg-surface-elevated shadow-xs transition-all hover:-translate-y-0.5 hover:border-b-strong hover:shadow-md"
+                          className="group flex h-full flex-col overflow-hidden rounded-2xl border border-b-secondary bg-surface-elevated shadow-sm transition-all hover:-translate-y-1 hover:border-b-strong hover:shadow-lg"
                         >
-                          <div className="relative aspect-[16/10] w-full min-h-0 border-b border-b-secondary/80 bg-surface-sunken">
+                          <div className="relative aspect-[16/9] w-full min-h-0 border-b border-b-secondary/80 bg-surface-sunken">
                             <Link
                               href={`/project/${project.id}`}
                               className="relative block h-full min-h-0 w-full overflow-hidden"
                             >
-                              <ProjectFramePreview title={project.name} />
+                              <ProjectFramePreview
+                                title={project.name}
+                                framePreviews={project.framePreviews}
+                              />
                             </Link>
                             <button
                               type="button"
@@ -1499,13 +1502,14 @@ export default function DashboardPage() {
                           </div>
                           <Link
                             href={`/project/${project.id}`}
-                            className="flex flex-col justify-center gap-0.5 px-3 py-2.5 no-underline"
+                            className="flex flex-col justify-center gap-1 px-4 py-3 no-underline"
                           >
-                            <p className="line-clamp-1 text-[13px] font-medium text-t-primary">
+                            <p className="line-clamp-1 text-sm font-semibold text-t-primary">
                               {project.name}
                             </p>
-                            <p className="text-[10px] font-mono text-t-tertiary">
-                              {project.screens} screens ·{" "}
+                            <p className="text-[11px] font-mono text-t-tertiary">
+                              {project.screens} screen
+                              {project.screens !== 1 ? "s" : ""} ·{" "}
                               {timeAgo(project.updatedAt)}
                             </p>
                           </Link>

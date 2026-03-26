@@ -1,10 +1,17 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import http from "@/lib/http";
 
+export interface FramePreviewItem {
+  id: string;
+  label: string;
+  html: string;
+}
+
 export interface ProjectListItem {
   id: string;
   name: string;
   screens: number;
+  framePreviews?: FramePreviewItem[];
 
   createdAt: string;
   updatedAt: string;
