@@ -787,10 +787,11 @@ export default function DashboardPage() {
   const trashProject = useCallback(
     (id: string) => {
       const project = projects.find((p) => p.id === id);
-      const name = project?.name || "This project";
+      const raw = project?.name || "Untitled";
+      const name = raw.length > 30 ? raw.slice(0, 28) + "\u2026" : raw;
       setConfirmDialog({
         open: true,
-        title: `Move the “${name}” project to trash?`,
+        title: `Move "${name}" to trash?`,
         description:
           "You can restore it later from Trash. Nothing is deleted permanently yet.",
         confirmLabel: "Move to trash",
@@ -813,10 +814,11 @@ export default function DashboardPage() {
   const permanentlyDelete = useCallback(
     (id: string) => {
       const project = trashedProjects.find((p) => p.id === id);
-      const name = project?.name || "This project";
+      const raw = project?.name || "Untitled";
+      const name = raw.length > 30 ? raw.slice(0, 28) + "\u2026" : raw;
       setConfirmDialog({
         open: true,
-        title: `Delete the “${name}” project?`,
+        title: `Delete "${name}"?`,
         description:
           "All screens, chat history, and files in this project will be removed. This action cannot be undone.",
         confirmLabel: "Delete project",
