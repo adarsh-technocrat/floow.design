@@ -1468,12 +1468,12 @@ export default function DashboardPage() {
 
                 {projects.length > 0 && (
                   <motion.div
-                    className="w-full max-w-[820px] mt-10"
+                    className="w-full max-w-[880px] mt-10 rounded-2xl border border-b-secondary bg-surface-elevated p-5 sm:p-6"
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.3, duration: 0.5 }}
                   >
-                    <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center justify-between mb-5">
                       <h2 className="text-[11px] font-mono font-semibold uppercase tracking-wider text-t-secondary">
                         Recent projects
                       </h2>
