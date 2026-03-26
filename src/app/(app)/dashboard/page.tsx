@@ -1245,199 +1245,207 @@ export default function DashboardPage() {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.15, duration: 0.6 }}
                 >
-                  <div className="rounded-2xl border border-b-secondary bg-surface-elevated backdrop-blur-xl transition-all focus-within:border-b-secondary">
-                    <input
-                      ref={fileInputRef}
-                      type="file"
-                      accept="image/*"
-                      multiple
-                      className="hidden"
-                      onChange={handleDashboardFileChange}
-                    />
+                  <div className="relative">
+                    {/* Stack layers behind the input */}
+                    <div className="absolute inset-x-2 -bottom-2 h-full rounded-2xl border border-b-secondary/40 bg-surface-sunken/60" />
+                    <div className="absolute inset-x-1 -bottom-1 h-full rounded-2xl border border-b-secondary/60 bg-surface-elevated/40" />
+                    <div className="relative rounded-2xl border border-b-secondary bg-surface-elevated backdrop-blur-xl transition-all focus-within:border-b-secondary shadow-sm">
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/*"
+                        multiple
+                        className="hidden"
+                        onChange={handleDashboardFileChange}
+                      />
 
-                    {attachedImages.length > 0 && (
-                      <div className="flex gap-2 px-4 pt-3 pb-0 overflow-x-auto">
-                        {attachedImages.map((img) => (
-                          <div key={img.id} className="relative shrink-0 group">
-                            <img
-                              src={img.dataUrl}
-                              alt={img.name}
-                              className={`size-16 rounded-lg object-cover border border-b-secondary transition-opacity ${
-                                img.uploading
-                                  ? "opacity-50"
-                                  : img.error
-                                    ? "opacity-40"
-                                    : ""
-                              }`}
-                            />
-                            {img.uploading && (
-                              <div className="absolute inset-0 flex items-center justify-center rounded-lg">
-                                <svg
-                                  width="20"
-                                  height="20"
-                                  viewBox="0 0 24 24"
-                                  fill="none"
-                                  className="animate-spin text-t-secondary"
-                                >
-                                  <circle
-                                    cx="12"
-                                    cy="12"
-                                    r="9"
-                                    stroke="currentColor"
-                                    strokeOpacity="0.25"
-                                    strokeWidth="2.5"
-                                  />
-                                  <path
-                                    d="M12 3a9 9 0 0 1 9 9"
-                                    stroke="currentColor"
-                                    strokeWidth="2.5"
-                                    strokeLinecap="round"
-                                  />
-                                </svg>
-                              </div>
-                            )}
-                            {img.error && !img.uploading && (
-                              <div className="absolute inset-0 flex items-center justify-center rounded-lg">
-                                <span className="text-[10px] font-medium text-red-500 bg-surface-elevated/80 rounded px-1">
-                                  Failed
-                                </span>
-                              </div>
-                            )}
-                            {img.url && !img.uploading && !img.error && (
-                              <div className="absolute bottom-0.5 right-0.5 flex size-4 items-center justify-center rounded-full bg-emerald-500 shadow-sm">
+                      {attachedImages.length > 0 && (
+                        <div className="flex gap-2 px-4 pt-3 pb-0 overflow-x-auto">
+                          {attachedImages.map((img) => (
+                            <div
+                              key={img.id}
+                              className="relative shrink-0 group"
+                            >
+                              <img
+                                src={img.dataUrl}
+                                alt={img.name}
+                                className={`size-16 rounded-lg object-cover border border-b-secondary transition-opacity ${
+                                  img.uploading
+                                    ? "opacity-50"
+                                    : img.error
+                                      ? "opacity-40"
+                                      : ""
+                                }`}
+                              />
+                              {img.uploading && (
+                                <div className="absolute inset-0 flex items-center justify-center rounded-lg">
+                                  <svg
+                                    width="20"
+                                    height="20"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    className="animate-spin text-t-secondary"
+                                  >
+                                    <circle
+                                      cx="12"
+                                      cy="12"
+                                      r="9"
+                                      stroke="currentColor"
+                                      strokeOpacity="0.25"
+                                      strokeWidth="2.5"
+                                    />
+                                    <path
+                                      d="M12 3a9 9 0 0 1 9 9"
+                                      stroke="currentColor"
+                                      strokeWidth="2.5"
+                                      strokeLinecap="round"
+                                    />
+                                  </svg>
+                                </div>
+                              )}
+                              {img.error && !img.uploading && (
+                                <div className="absolute inset-0 flex items-center justify-center rounded-lg">
+                                  <span className="text-[10px] font-medium text-red-500 bg-surface-elevated/80 rounded px-1">
+                                    Failed
+                                  </span>
+                                </div>
+                              )}
+                              {img.url && !img.uploading && !img.error && (
+                                <div className="absolute bottom-0.5 right-0.5 flex size-4 items-center justify-center rounded-full bg-emerald-500 shadow-sm">
+                                  <svg
+                                    width="10"
+                                    height="10"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                  >
+                                    <path
+                                      d="M8 12.5l2.5 2.5 5-5"
+                                      stroke="white"
+                                      strokeWidth="3"
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                    />
+                                  </svg>
+                                </div>
+                              )}
+                              <button
+                                type="button"
+                                onClick={() => removeDashboardImage(img.id)}
+                                className="absolute -top-1.5 -right-1.5 flex size-5 items-center justify-center rounded-full bg-surface-elevated border border-b-secondary text-t-tertiary shadow-sm opacity-0 group-hover:opacity-100 transition-opacity hover:text-t-primary"
+                              >
                                 <svg
                                   width="10"
                                   height="10"
                                   viewBox="0 0 24 24"
                                   fill="none"
+                                  stroke="currentColor"
+                                  strokeWidth="2.5"
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
                                 >
-                                  <path
-                                    d="M8 12.5l2.5 2.5 5-5"
-                                    stroke="white"
-                                    strokeWidth="3"
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                  />
+                                  <path d="M18 6L6 18M6 6l12 12" />
                                 </svg>
-                              </div>
-                            )}
-                            <button
-                              type="button"
-                              onClick={() => removeDashboardImage(img.id)}
-                              className="absolute -top-1.5 -right-1.5 flex size-5 items-center justify-center rounded-full bg-surface-elevated border border-b-secondary text-t-tertiary shadow-sm opacity-0 group-hover:opacity-100 transition-opacity hover:text-t-primary"
-                            >
-                              <svg
-                                width="10"
-                                height="10"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth="2.5"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                              >
-                                <path d="M18 6L6 18M6 6l12 12" />
-                              </svg>
-                            </button>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-
-                    <div className="px-4 pt-4 pb-2 relative">
-                      {!inputValue && attachedImages.length === 0 && (
-                        <div className="absolute inset-x-4 top-4 pointer-events-none text-[15px] leading-relaxed">
-                          <StreamingPlaceholder />
+                              </button>
+                            </div>
+                          ))}
                         </div>
                       )}
-                      <textarea
-                        ref={inputRef}
-                        value={inputValue}
-                        onChange={(e) => setInputValue(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter" && !e.shiftKey) {
-                            e.preventDefault();
-                            handleSubmit();
-                          }
-                        }}
-                        onPaste={handleDashboardPaste}
-                        disabled={isCreatingProject}
-                        rows={3}
-                        className="w-full bg-transparent text-[15px] text-t-primary placeholder-transparent outline-none resize-none leading-relaxed min-h-[100px] max-h-[240px] relative z-10 disabled:opacity-50"
-                        onInput={(e) => {
-                          const el = e.currentTarget;
-                          el.style.height = "auto";
-                          el.style.height =
-                            Math.min(el.scrollHeight, 240) + "px";
-                        }}
-                      />
-                    </div>
-                    <div className="flex items-center justify-between px-4 py-2.5">
-                      <div className="flex items-center gap-2">
-                        <button
-                          type="button"
-                          onClick={openFilePicker}
-                          className="inline-flex size-7 items-center justify-center rounded-md text-t-tertiary hover:text-t-secondary hover:bg-surface-sunken dark:hover:bg-white/[0.06] transition-colors"
-                          title="Attach image"
-                        >
-                          <svg
-                            width="15"
-                            height="15"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          >
-                            <rect
-                              x="3"
-                              y="3"
-                              width="18"
-                              height="18"
-                              rx="2"
-                              ry="2"
-                            />
-                            <circle cx="8.5" cy="8.5" r="1.5" />
-                            <path d="M21 15l-5-5L5 21" />
-                          </svg>
-                        </button>
+
+                      <div className="px-4 pt-4 pb-2 relative">
+                        {!inputValue && attachedImages.length === 0 && (
+                          <div className="absolute inset-x-4 top-4 pointer-events-none text-[15px] leading-relaxed">
+                            <StreamingPlaceholder />
+                          </div>
+                        )}
+                        <textarea
+                          ref={inputRef}
+                          value={inputValue}
+                          onChange={(e) => setInputValue(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter" && !e.shiftKey) {
+                              e.preventDefault();
+                              handleSubmit();
+                            }
+                          }}
+                          onPaste={handleDashboardPaste}
+                          disabled={isCreatingProject}
+                          rows={3}
+                          className="w-full bg-transparent text-[15px] text-t-primary placeholder-transparent outline-none resize-none leading-relaxed min-h-[100px] max-h-[240px] relative z-10 disabled:opacity-50"
+                          onInput={(e) => {
+                            const el = e.currentTarget;
+                            el.style.height = "auto";
+                            el.style.height =
+                              Math.min(el.scrollHeight, 240) + "px";
+                          }}
+                        />
                       </div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-[11px] font-mono text-t-tertiary hidden border border-b-secondary rounded bg-surface-sunken px-1.5 py-0.5 sm:inline">
-                          ⌘ Enter
-                        </span>
-                        <button
-                          type="button"
-                          onClick={handleSubmit}
-                          disabled={
-                            (!inputValue.trim() &&
-                              attachedImages.length === 0) ||
-                            hasUploadingImages ||
-                            isCreatingProject
-                          }
-                          className="inline-flex size-8 shrink-0 items-center justify-center rounded-full bg-btn-primary-bg text-btn-primary-text shadow-sm outline-none transition-all hover:opacity-90 disabled:pointer-events-none disabled:opacity-30 focus-visible:ring-2 focus-visible:ring-ring/50 active:scale-95"
-                        >
-                          {isCreatingProject ? (
-                            <div className="size-4 animate-spin rounded-full border-2 border-btn-primary-text border-t-transparent" />
-                          ) : (
+                      <div className="flex items-center justify-between px-4 py-2.5">
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={openFilePicker}
+                            className="inline-flex size-7 items-center justify-center rounded-md text-t-tertiary hover:text-t-secondary hover:bg-surface-sunken dark:hover:bg-white/[0.06] transition-colors"
+                            title="Attach image"
+                          >
                             <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              width="1em"
-                              height="1em"
-                              fill="currentColor"
-                              viewBox="0 0 256 256"
-                              className="size-4"
+                              width="15"
+                              height="15"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
                             >
-                              <path d="M205.66,117.66a8,8,0,0,1-11.32,0L136,59.31V216a8,8,0,0,1-16,0V59.31L61.66,117.66a8,8,0,0,1-11.32-11.32l72-72a8,8,0,0,1,11.32,0l72,72A8,8,0,0,1,205.66,117.66Z" />
+                              <rect
+                                x="3"
+                                y="3"
+                                width="18"
+                                height="18"
+                                rx="2"
+                                ry="2"
+                              />
+                              <circle cx="8.5" cy="8.5" r="1.5" />
+                              <path d="M21 15l-5-5L5 21" />
                             </svg>
-                          )}
-                        </button>
+                          </button>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-[11px] font-mono text-t-tertiary hidden border border-b-secondary rounded bg-surface-sunken px-1.5 py-0.5 sm:inline">
+                            ⌘ Enter
+                          </span>
+                          <button
+                            type="button"
+                            onClick={handleSubmit}
+                            disabled={
+                              (!inputValue.trim() &&
+                                attachedImages.length === 0) ||
+                              hasUploadingImages ||
+                              isCreatingProject
+                            }
+                            className="inline-flex size-8 shrink-0 items-center justify-center rounded-full bg-btn-primary-bg text-btn-primary-text shadow-sm outline-none transition-all hover:opacity-90 disabled:pointer-events-none disabled:opacity-30 focus-visible:ring-2 focus-visible:ring-ring/50 active:scale-95"
+                          >
+                            {isCreatingProject ? (
+                              <div className="size-4 animate-spin rounded-full border-2 border-btn-primary-text border-t-transparent" />
+                            ) : (
+                              <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                width="1em"
+                                height="1em"
+                                fill="currentColor"
+                                viewBox="0 0 256 256"
+                                className="size-4"
+                              >
+                                <path d="M205.66,117.66a8,8,0,0,1-11.32,0L136,59.31V216a8,8,0,0,1-16,0V59.31L61.66,117.66a8,8,0,0,1-11.32-11.32l72-72a8,8,0,0,1,11.32,0l72,72A8,8,0,0,1,205.66,117.66Z" />
+                              </svg>
+                            )}
+                          </button>
+                        </div>
                       </div>
                     </div>
                   </div>
 
-                  <div className="mt-4 flex items-center justify-center gap-2 overflow-x-auto max-w-full flex-nowrap">
+                  <div className="mt-6 flex items-center justify-center gap-2 overflow-x-auto max-w-full flex-nowrap">
                     <span className="text-[11px] font-mono text-t-tertiary uppercase tracking-wider mr-1">
                       Try
                     </span>
