@@ -18,7 +18,7 @@ function MiniScreen({ frameId, label }: { frameId: string; label: string }) {
         title={label}
         src={`/api/frames/${frameId}/render`}
         className="h-full w-full border-0 pointer-events-none"
-        sandbox=""
+        sandbox="allow-scripts"
         loading="lazy"
         tabIndex={-1}
         style={{ colorScheme: "light" }}
