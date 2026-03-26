@@ -90,10 +90,13 @@ function DashboardSidebarUsage({
 }) {
   if (loading) {
     return (
-      <div className="rounded-lg border border-b-secondary bg-surface-sunken px-3 py-2.5">
-        <div className="mb-2 h-2 w-16 animate-pulse rounded bg-t-tertiary/20" />
-        <div className="h-1.5 w-full overflow-hidden rounded-full bg-t-tertiary/10">
-          <div className="h-full w-1/3 animate-pulse rounded-full bg-t-tertiary/15" />
+      <div className="rounded-xl border border-b-secondary bg-surface-sunken px-4 py-3">
+        <div className="flex items-center gap-2">
+          <div className="h-3 w-12 animate-pulse rounded bg-t-tertiary/15" />
+          <div className="ml-auto h-3 w-8 animate-pulse rounded bg-t-tertiary/10" />
+        </div>
+        <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-t-tertiary/8">
+          <div className="h-full w-2/5 animate-pulse rounded-full bg-t-tertiary/12" />
         </div>
       </div>
     );
@@ -106,70 +109,86 @@ function DashboardSidebarUsage({
   const { credits, creditCap, plan, billingInterval, creditsResetAt } = summary;
   const safeRemaining = Math.max(0, credits);
   const ratio = Math.min(1, safeRemaining / creditCap);
-  const barPct = safeRemaining <= 0 ? 0 : Math.max(ratio * 100, 5);
+  const barPct = safeRemaining <= 0 ? 0 : Math.max(ratio * 100, 4);
+  const usedPct = Math.round((1 - ratio) * 100);
 
-  const fillClass =
+  const fillColor =
     ratio >= 0.42
-      ? "bg-emerald-500/40 dark:bg-emerald-400/30"
+      ? "bg-emerald-500 dark:bg-emerald-400"
       : ratio >= 0.18
-        ? "bg-amber-500/50 dark:bg-amber-400/35"
-        : "bg-orange-500/50 dark:bg-orange-400/40";
+        ? "bg-amber-500 dark:bg-amber-400"
+        : "bg-orange-500 dark:bg-orange-400";
 
-  const calmLine =
-    ratio >= 0.35
-      ? "Comfortable headroom for this period."
-      : ratio >= 0.15
-        ? "You still have a good amount to work with."
-        : safeRemaining <= 0
-          ? "Allowance will refresh on schedule — or upgrade anytime."
-          : "Running lower; designs you’ve started stay safe.";
+  const dotColor =
+    ratio >= 0.42
+      ? "bg-emerald-500"
+      : ratio >= 0.18
+        ? "bg-amber-500"
+        : "bg-orange-500";
 
   const planLine = planDisplayLabels[plan] ?? plan;
   const intervalBit =
     plan !== "FREE" && billingInterval
       ? billingInterval === "yearly"
-        ? " · Yearly"
-        : " · Monthly"
+        ? "Yearly"
+        : "Monthly"
       : "";
 
   const resetHint = shortResetHint(creditsResetAt);
 
   return (
-    <div className="rounded-lg border border-b-secondary bg-surface-sunken px-3 py-3">
-      <div className="flex items-start justify-between gap-2 mb-2">
-        <div className="min-w-0">
-          <p className="text-[11px] font-medium text-t-secondary">Credits</p>
-          <p className="mt-0.5 text-base font-semibold font-mono text-t-primary leading-tight">
-            {formatCreditsSoftLabel(safeRemaining)}
-            <span className="text-xs font-normal text-t-secondary ml-1 font-sans">
-              remaining
-            </span>
-          </p>
+    <div className="rounded-xl border border-b-secondary bg-surface-sunken/80 backdrop-blur-sm">
+      {/* Header */}
+      <div className="flex items-center justify-between px-4 pt-3 pb-2">
+        <div className="flex items-center gap-1.5">
+          <div className={`size-1.5 rounded-full ${dotColor}`} />
+          <span className="text-[11px] font-semibold uppercase tracking-wider text-t-secondary">
+            {planLine}
+          </span>
+          {intervalBit && (
+            <span className="text-[10px] text-t-tertiary">· {intervalBit}</span>
+          )}
         </div>
         <button
           type="button"
           onClick={onManage}
-          className="shrink-0 text-[11px] font-medium text-t-secondary hover:text-t-primary transition-colors"
+          className="rounded-md px-2 py-0.5 text-[11px] font-medium text-t-tertiary transition-colors hover:bg-surface-elevated hover:text-t-primary"
         >
           Manage
         </button>
       </div>
 
-      <div className="h-2 w-full overflow-hidden rounded-full bg-surface-elevated dark:bg-white/10">
-        <div
-          className={`h-full rounded-full ${fillClass} transition-[width] duration-1100 ease-out motion-reduce:transition-none`}
-          style={{ width: `${barPct}%` }}
-        />
+      {/* Credits display */}
+      <div className="px-4 pb-2">
+        <div className="flex items-baseline gap-1">
+          <span className="text-xl font-bold font-mono tabular-nums text-t-primary leading-none">
+            {formatCreditsSoftLabel(safeRemaining)}
+          </span>
+          <span className="text-[11px] text-t-tertiary">
+            / {formatCreditsSoftLabel(creditCap)}
+          </span>
+        </div>
       </div>
 
-      <p className="mt-2 text-[11px] leading-snug text-t-secondary">
-        {calmLine}
-      </p>
-      <p className="mt-1 text-[11px] font-mono text-t-tertiary">
-        {planLine}
-        {intervalBit}
-        {resetHint ? ` · ${resetHint}` : ""}
-      </p>
+      {/* Progress bar */}
+      <div className="px-4 pb-2.5">
+        <div className="h-1.5 w-full overflow-hidden rounded-full bg-t-tertiary/10">
+          <div
+            className={`h-full rounded-full ${fillColor} transition-[width] duration-1000 ease-out motion-reduce:transition-none`}
+            style={{ width: `${barPct}%`, opacity: 0.6 }}
+          />
+        </div>
+      </div>
+
+      {/* Footer */}
+      {(resetHint || usedPct > 0) && (
+        <div className="flex items-center justify-between border-t border-b-secondary/60 px-4 py-2">
+          <span className="text-[10px] text-t-tertiary">{usedPct}% used</span>
+          {resetHint && (
+            <span className="text-[10px] text-t-tertiary">{resetHint}</span>
+          )}
+        </div>
+      )}
     </div>
   );
 }
