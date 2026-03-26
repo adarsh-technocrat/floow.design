@@ -1310,24 +1310,7 @@ export default function DashboardPage() {
                                   </span>
                                 </div>
                               )}
-                              {img.url && !img.uploading && !img.error && (
-                                <div className="absolute bottom-0.5 right-0.5 flex size-4 items-center justify-center rounded-full bg-emerald-500 shadow-sm">
-                                  <svg
-                                    width="10"
-                                    height="10"
-                                    viewBox="0 0 24 24"
-                                    fill="none"
-                                  >
-                                    <path
-                                      d="M8 12.5l2.5 2.5 5-5"
-                                      stroke="white"
-                                      strokeWidth="3"
-                                      strokeLinecap="round"
-                                      strokeLinejoin="round"
-                                    />
-                                  </svg>
-                                </div>
-                              )}
+                              {img.url && !img.uploading && !img.error && <></>}
                               <button
                                 type="button"
                                 onClick={() => removeDashboardImage(img.id)}
