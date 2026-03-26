@@ -1468,7 +1468,7 @@ export default function DashboardPage() {
 
                 {projects.length > 0 && (
                   <motion.div
-                    className="w-full max-w-[880px] mt-10 rounded-2xl border border-b-secondary bg-surface-elevated p-5 sm:p-6"
+                    className="w-full max-w-[880px] mt-10 rounded-2xl border border-b-secondary bg-surface-elevated/60 backdrop-blur-xl p-5 sm:p-6"
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.3, duration: 0.5 }}
