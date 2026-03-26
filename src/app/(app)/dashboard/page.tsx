@@ -10,6 +10,7 @@ import {
   fetchProjects,
   createProject as createProjectThunk,
   trashProject as trashProjectThunk,
+  duplicateProject as duplicateProjectThunk,
   fetchTrashedProjects,
   restoreProject as restoreProjectThunk,
   permanentlyDeleteProject,
@@ -831,6 +832,31 @@ export default function DashboardPage() {
     [dispatch, trashedProjects],
   );
 
+  const [openCardMenu, setOpenCardMenu] = useState<string | null>(null);
+  const cardMenuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!openCardMenu) return;
+    const handler = (e: MouseEvent) => {
+      if (
+        cardMenuRef.current &&
+        !cardMenuRef.current.contains(e.target as Node)
+      ) {
+        setOpenCardMenu(null);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [openCardMenu]);
+
+  const handleDuplicate = useCallback(
+    (id: string) => {
+      setOpenCardMenu(null);
+      dispatch(duplicateProjectThunk(id));
+    },
+    [dispatch],
+  );
+
   const sidebarNav = [
     {
       key: "home",
@@ -1533,26 +1559,92 @@ export default function DashboardPage() {
                                 framePreviews={project.framePreviews}
                               />
                             </Link>
-                            <button
-                              type="button"
-                              className="absolute right-1.5 top-1.5 z-10 flex size-7 items-center justify-center rounded-md border border-b-secondary bg-surface/90 text-t-tertiary shadow-sm backdrop-blur-sm transition-all hover:border-red-500/30 hover:bg-red-500/10 hover:text-red-500 opacity-0 group-hover:opacity-100"
-                              title="Move to trash"
-                              onClick={() => trashProject(project.id)}
+                            <div
+                              className="absolute right-1.5 top-1.5 z-10"
+                              ref={
+                                openCardMenu === project.id
+                                  ? cardMenuRef
+                                  : undefined
+                              }
                             >
-                              <svg
-                                width="12"
-                                height="12"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth="2"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
+                              <button
+                                type="button"
+                                className="flex size-7 items-center justify-center rounded-md border border-b-secondary bg-surface/90 text-t-tertiary shadow-sm backdrop-blur-sm transition-all hover:bg-surface-elevated hover:text-t-primary opacity-0 group-hover:opacity-100"
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  setOpenCardMenu(
+                                    openCardMenu === project.id
+                                      ? null
+                                      : project.id,
+                                  );
+                                }}
                               >
-                                <polyline points="3 6 5 6 21 6" />
-                                <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" />
-                              </svg>
-                            </button>
+                                <svg
+                                  width="14"
+                                  height="14"
+                                  viewBox="0 0 24 24"
+                                  fill="currentColor"
+                                >
+                                  <circle cx="12" cy="5" r="2" />
+                                  <circle cx="12" cy="12" r="2" />
+                                  <circle cx="12" cy="19" r="2" />
+                                </svg>
+                              </button>
+                              {openCardMenu === project.id && (
+                                <div className="absolute right-0 top-8 w-40 rounded-lg border border-b-secondary bg-surface-elevated shadow-lg overflow-hidden">
+                                  <button
+                                    type="button"
+                                    className="flex w-full items-center gap-2.5 px-3 py-2 text-[13px] text-t-primary transition-colors hover:bg-surface-sunken"
+                                    onClick={() => handleDuplicate(project.id)}
+                                  >
+                                    <svg
+                                      width="14"
+                                      height="14"
+                                      viewBox="0 0 24 24"
+                                      fill="none"
+                                      stroke="currentColor"
+                                      strokeWidth="2"
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                    >
+                                      <rect
+                                        x="9"
+                                        y="9"
+                                        width="13"
+                                        height="13"
+                                        rx="2"
+                                        ry="2"
+                                      />
+                                      <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" />
+                                    </svg>
+                                    Duplicate
+                                  </button>
+                                  <button
+                                    type="button"
+                                    className="flex w-full items-center gap-2.5 px-3 py-2 text-[13px] text-red-500 transition-colors hover:bg-red-500/10"
+                                    onClick={() => {
+                                      setOpenCardMenu(null);
+                                      trashProject(project.id);
+                                    }}
+                                  >
+                                    <svg
+                                      width="14"
+                                      height="14"
+                                      viewBox="0 0 24 24"
+                                      fill="none"
+                                      stroke="currentColor"
+                                      strokeWidth="2"
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                    >
+                                      <polyline points="3 6 5 6 21 6" />
+                                      <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" />
+                                    </svg>
+                                    Delete
+                                  </button>
+                                </div>
+                              )}
+                            </div>
                           </div>
                           <Link
                             href={`/project/${project.id}`}

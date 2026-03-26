@@ -68,6 +68,15 @@ export const createProject = createAsyncThunk(
   },
 );
 
+export const duplicateProject = createAsyncThunk(
+  "projects/duplicate",
+  async (id: string, { dispatch }) => {
+    const { data } = await http.post("/api/projects/duplicate", { id });
+    dispatch(fetchProjects());
+    return data as ProjectListItem;
+  },
+);
+
 export const trashProject = createAsyncThunk(
   "projects/trash",
   async (id: string) => {
