@@ -10,8 +10,15 @@ export async function GET() {
         id: true,
         name: true,
         templateTag: true,
+        templateSlug: true,
+        templateDesc: true,
         thumbnail: true,
         _count: { select: { frames: true } },
+        frames: {
+          orderBy: { updatedAt: "asc" },
+          take: 1,
+          select: { html: true },
+        },
       },
     });
 
@@ -20,8 +27,11 @@ export async function GET() {
         id: t.id,
         name: t.name,
         tag: t.templateTag || "Template",
+        slug: t.templateSlug,
+        description: t.templateDesc,
         screens: t._count.frames,
         thumbnail: t.thumbnail,
+        firstFrameHtml: t.frames[0]?.html || null,
       })),
     });
   } catch (e) {

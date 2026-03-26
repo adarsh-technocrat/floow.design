@@ -193,6 +193,12 @@ function SignInPageContent() {
   /** After sign-in, create a project from the pending prompt and go to canvas,
    *  or fall back to /dashboard. */
   const navigateAfterAuth = async () => {
+    const pendingTemplate = sessionStorage.getItem("pending_template");
+    if (pendingTemplate) {
+      sessionStorage.removeItem("pending_template");
+      router.push(`/project/${pendingTemplate}`);
+      return;
+    }
     if (pendingPrompt) {
       try {
         const { data } = await http.post<{ id?: string }>("/api/projects", { name: pendingPrompt });
@@ -200,9 +206,7 @@ function SignInPageContent() {
           router.push(`/project/${data.id}?prompt=${encodeURIComponent(pendingPrompt)}`);
           return;
         }
-      } catch {
-        // fall through to dashboard
-      }
+      } catch {}
     }
     router.push("/dashboard");
   };

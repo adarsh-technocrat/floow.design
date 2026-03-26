@@ -26,6 +26,7 @@ export interface TemplateItem {
   tag: string;
   screens: number;
   thumbnail: string | null;
+  firstFrameHtml: string | null;
 }
 
 interface ProjectsState {

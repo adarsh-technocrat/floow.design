@@ -10,7 +10,7 @@ import { Avatar } from "@/components/ui/Avatar";
 
 const navLinks = [
   { label: "Features", href: "/#features" },
-  { label: "Templates", href: "/#templates" },
+  { label: "Templates", href: "/templates" },
   { label: "Pricing", href: "/pricing" },
   { label: "Blog", href: "/blog" },
   { label: "FAQ", href: "/#faq" },

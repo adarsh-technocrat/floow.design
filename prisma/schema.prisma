@@ -147,19 +147,21 @@ model TeamCreditLog {
 }
 
 model Project {
-  id           String        @id @default(cuid())
-  name         String        @default("Untitled Project")
-  thumbnail    String?       @db.Text
-  isTemplate   Boolean       @default(false)
-  templateTag  String?
-  trashedAt    DateTime?
-  ownerId      String?
-  teamId       String?
-  team         Team?         @relation(fields: [teamId], references: [id])
-  chatSessions ChatSession[]
-  frames       Frame[]
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
+  id              String        @id @default(cuid())
+  name            String        @default("Untitled Project")
+  thumbnail       String?       @db.Text
+  isTemplate      Boolean       @default(false)
+  templateTag     String?
+  templateSlug    String?       @unique
+  templateDesc    String?       @db.Text
+  trashedAt       DateTime?
+  ownerId         String?
+  teamId          String?
+  team            Team?         @relation(fields: [teamId], references: [id])
+  chatSessions    ChatSession[]
+  frames          Frame[]
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
 
   @@index([trashedAt, isTemplate])
   @@index([updatedAt])

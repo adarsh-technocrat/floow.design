@@ -75,6 +75,12 @@ const staticPages = [
     lastmod: "2026-03-26",
   },
   {
+    path: "/templates",
+    changefreq: "weekly",
+    priority: "0.9",
+    lastmod: "2026-03-26",
+  },
+  {
     path: "/blog",
     changefreq: "daily",
     priority: "0.8",
