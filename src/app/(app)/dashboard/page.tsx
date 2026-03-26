@@ -849,10 +849,14 @@ export default function DashboardPage() {
     return () => document.removeEventListener("mousedown", handler);
   }, [openCardMenu]);
 
+  const [duplicatingId, setDuplicatingId] = useState<string | null>(null);
+
   const handleDuplicate = useCallback(
-    (id: string) => {
+    async (id: string) => {
       setOpenCardMenu(null);
-      dispatch(duplicateProjectThunk(id));
+      setDuplicatingId(id);
+      await dispatch(duplicateProjectThunk(id));
+      setDuplicatingId(null);
     },
     [dispatch],
   );
@@ -1550,6 +1554,16 @@ export default function DashboardPage() {
                           className="group flex h-full flex-col overflow-hidden rounded-2xl border border-b-secondary bg-surface-elevated shadow-sm transition-all hover:-translate-y-1 hover:border-b-strong hover:shadow-lg"
                         >
                           <div className="relative aspect-[16/9] w-full min-h-0 border-b border-b-secondary/80 bg-surface-sunken">
+                            {duplicatingId === project.id && (
+                              <div className="absolute inset-0 z-20 flex items-center justify-center bg-surface-sunken/80 backdrop-blur-sm">
+                                <div className="flex items-center gap-2 rounded-lg bg-surface-elevated px-3 py-2 shadow-md border border-b-secondary">
+                                  <div className="size-4 animate-spin rounded-full border-2 border-t-primary border-r-transparent border-b-t-tertiary/30 border-l-transparent" />
+                                  <span className="text-xs font-medium text-t-secondary">
+                                    Duplicating...
+                                  </span>
+                                </div>
+                              </div>
+                            )}
                             <Link
                               href={`/project/${project.id}`}
                               className="relative block h-full min-h-0 w-full overflow-hidden"
