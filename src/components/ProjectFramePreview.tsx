@@ -10,7 +10,7 @@ import type { FramePreviewItem } from "@/store/slices/projectsSlice";
  */
 const DEVICE_W = 390;
 const DEVICE_H = 844;
-const SCALE = 0.29;
+const SCALE = 0.18;
 
 function MiniScreen({ frameId, label }: { frameId: string; label: string }) {
   const scaledW = DEVICE_W * SCALE;
@@ -18,7 +18,7 @@ function MiniScreen({ frameId, label }: { frameId: string; label: string }) {
 
   return (
     <div
-      className="relative overflow-hidden rounded-xl border border-border/30 bg-white shadow-md"
+      className="relative overflow-hidden rounded-lg border border-border/30 bg-white shadow-sm"
       style={{ width: scaledW, height: scaledH }}
     >
       <iframe
