@@ -18,6 +18,7 @@ import { fetchUserPlan } from "@/store/slices/userSlice";
 import { ThemeToggleCompact } from "@/components/ThemeToggle";
 import { Avatar } from "@/components/ui/Avatar";
 import { PricingDialog } from "@/components/PricingDialog";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { ProjectFramePreview } from "@/components/ProjectFramePreview";
 import http from "@/lib/http";
 import { useImageAttachments } from "@/hooks/useImageAttachments";
@@ -763,11 +764,35 @@ export default function DashboardPage() {
     dispatch(fetchTrashedProjects());
   }, [dispatch]);
 
+  const [confirmDialog, setConfirmDialog] = useState<{
+    open: boolean;
+    title: string;
+    description: string;
+    confirmLabel: string;
+    variant: "danger" | "warning";
+    onConfirm: () => void;
+  }>({
+    open: false,
+    title: "",
+    description: "",
+    confirmLabel: "",
+    variant: "danger",
+    onConfirm: () => {},
+  });
+
   const trashProject = useCallback(
     (id: string) => {
-      dispatch(trashProjectThunk(id));
+      const project = projects.find((p) => p.id === id);
+      setConfirmDialog({
+        open: true,
+        title: "Move to trash?",
+        description: `"${project?.name || "This project"}" will be moved to trash. You can restore it later from the trash.`,
+        confirmLabel: "Move to trash",
+        variant: "warning",
+        onConfirm: () => dispatch(trashProjectThunk(id)),
+      });
     },
-    [dispatch],
+    [dispatch, projects],
   );
 
   const restoreProject = useCallback(
@@ -779,9 +804,17 @@ export default function DashboardPage() {
 
   const permanentlyDelete = useCallback(
     (id: string) => {
-      dispatch(permanentlyDeleteProject(id));
+      const project = trashedProjects.find((p) => p.id === id);
+      setConfirmDialog({
+        open: true,
+        title: "Delete permanently?",
+        description: `"${project?.name || "This project"}" will be permanently deleted. This action cannot be undone.`,
+        confirmLabel: "Delete forever",
+        variant: "danger",
+        onConfirm: () => dispatch(permanentlyDeleteProject(id)),
+      });
     },
-    [dispatch],
+    [dispatch, trashedProjects],
   );
 
   const sidebarNav = [
@@ -1674,6 +1707,15 @@ export default function DashboardPage() {
         open={pricingDialogOpen}
         onClose={() => setPricingDialogOpen(false)}
         reason={pricingDialogReason}
+      />
+      <ConfirmDialog
+        open={confirmDialog.open}
+        onOpenChange={(open) => setConfirmDialog((prev) => ({ ...prev, open }))}
+        title={confirmDialog.title}
+        description={confirmDialog.description}
+        confirmLabel={confirmDialog.confirmLabel}
+        variant={confirmDialog.variant}
+        onConfirm={confirmDialog.onConfirm}
       />
     </div>
   );
