@@ -10,7 +10,7 @@ import type { FramePreviewItem } from "@/store/slices/projectsSlice";
  */
 const DEVICE_W = 390;
 const DEVICE_H = 844;
-const SCALE = 0.18;
+const SCALE = 0.15;
 
 function MiniScreen({ frameId, label }: { frameId: string; label: string }) {
   const scaledW = DEVICE_W * SCALE;
