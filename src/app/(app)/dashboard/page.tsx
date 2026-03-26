@@ -1411,9 +1411,6 @@ export default function DashboardPage() {
                           </button>
                         </div>
                         <div className="flex items-center gap-2">
-                          <span className="text-[11px] font-mono text-t-tertiary hidden border border-b-secondary rounded bg-surface-sunken px-1.5 py-0.5 sm:inline">
-                            ⌘ Enter
-                          </span>
                           <button
                             type="button"
                             onClick={handleSubmit}
