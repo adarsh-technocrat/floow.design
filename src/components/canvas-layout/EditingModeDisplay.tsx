@@ -1,7 +1,7 @@
 "use client";
 
 import { type ReactNode, useEffect, useState } from "react";
-import { ArrowUp, ChevronDown, Plus, SlidersHorizontal, X } from "lucide-react";
+import { ArrowUp, X } from "lucide-react";
 import { ImageIcon, StyleGuideIcon, FrameIcon } from "@/lib/svg-icons";
 import { useCanvasChat, type QueuedPrompt } from "@/hooks/useCanvasChat";
 import {
@@ -211,14 +211,6 @@ export function EditingModeDisplay() {
             <div className="flex items-center gap-1.5">
               <button
                 type="button"
-                aria-label="Open attachments"
-                onClick={handleAttachImage}
-                className="inline-flex size-8 shrink-0 items-center justify-center rounded-md text-[#C5CAD4] transition-colors hover:bg-white/10 hover:text-white"
-              >
-                <Plus className="size-4" />
-              </button>
-              <button
-                type="button"
                 aria-label="Attach image"
                 onClick={handleAttachImage}
                 className="inline-flex size-8 shrink-0 items-center justify-center rounded-md text-[#C5CAD4] transition-colors hover:bg-white/10 hover:text-white"
@@ -233,27 +225,6 @@ export function EditingModeDisplay() {
             </div>
 
             <div className="flex items-center gap-2">
-              <button
-                type="button"
-                className="inline-flex h-8 items-center gap-1 rounded-full border border-white/10 bg-white/5 px-2.5 text-[12px] text-[#D8DDE8] hover:bg-white/10"
-              >
-                <span className="inline-flex size-4 items-center justify-center rounded-full bg-indigo-500/80" />
-                <ChevronDown className="size-3.5 text-[#AAB1BC]" />
-              </button>
-              <button
-                type="button"
-                className="inline-flex h-8 items-center gap-1 rounded-full border border-white/10 bg-white/5 px-3 text-[12px] text-[#D8DDE8] hover:bg-white/10"
-              >
-                <span>3.0 Flash</span>
-                <ChevronDown className="size-3.5 text-[#AAB1BC]" />
-              </button>
-              <button
-                type="button"
-                aria-label="Tune generation settings"
-                className="inline-flex size-8 items-center justify-center rounded-md text-[#C5CAD4] transition-colors hover:bg-white/10 hover:text-white"
-              >
-                <SlidersHorizontal className="size-4" />
-              </button>
               {isAgentWorking ? (
                 <button
                   type="button"
