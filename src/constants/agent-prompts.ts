@@ -99,15 +99,27 @@ const INITIAL_INSTRUCTIONS = `\
     Design one screen per response. No batching.
 
     CRITICAL — MAINTAINING CONTEXT BETWEEN SCREENS:
-    After each design_screen call, you receive a screenSummary in the result.
-    You MUST use these summaries to maintain continuity when designing subsequent screens:
-    - Reference the EXACT navigation/tab bar items from previous screens (same labels, same order)
-    - If screen 1 has a bottom tab bar with "Home, Search, Favorites, Profile", every screen MUST
-      have those same tabs — just with the current screen's tab highlighted
-    - Reference shared UI patterns (card styles, header format, icon naming)
-    - Ensure buttons like "View Details" or "Book Now" lead to screens that actually exist in the plan
-    - Mention specific content from previous screens in your description when relevant
-      (e.g. "This is the detail screen that the user navigates to from the listing cards on the Home screen")
+    After each design_screen call, you receive:
+      1. screenSummary — a summary of the screen you just designed
+      2. appScreenMap — a running map of ALL screens (designed + pending)
+
+    You MUST use appScreenMap to maintain continuity when designing the next screen.
+    Your description for the NEXT design_screen call must EXPLICITLY include:
+
+    a) NAVIGATION CONTINUITY: Copy the exact tab bar items from the previous screen.
+       Example: "Bottom tab bar with: Home, Search, Favorites, Profile — with Search tab active"
+       Do NOT paraphrase or reorder tabs. Copy them verbatim.
+
+    b) VISUAL CONTINUITY: Reference the card style, header format, spacing, and icon style
+       from previously designed screens.
+       Example: "Use the same rounded-2xl elevated cards with shadow-md as the Home screen"
+
+    c) FLOW CONNECTIONS: Describe how this screen connects to others in the app.
+       Example: "This is the detail view that opens when the user taps a listing card on the Home screen.
+       Include a back arrow in the header that would return to Home."
+
+    d) PENDING SCREENS: If there are screens not yet designed, include UI elements that would
+       navigate to them (tabs, buttons, links).
 
   RULES:
   - NEVER skip build_theme.
@@ -115,8 +127,8 @@ const INITIAL_INSTRUCTIONS = `\
   - NEVER batch multiple tool calls in one response.
   - If planning_context is missing, still follow the same sequence —
     infer screens and style from the user's prompt.
-  - ALWAYS incorporate screenSummary from previous design_screen results into the
-    description of the next screen to maintain flow and navigation continuity.
+  - ALWAYS read and incorporate the appScreenMap from the previous design_screen result.
+    If you ignore it, the screens will feel disconnected and the user will notice.
 </instructions>`;
 
 // ─────────────────────────────────────────────────────────────────────────────

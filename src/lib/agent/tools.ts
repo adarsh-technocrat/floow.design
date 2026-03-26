@@ -18,6 +18,8 @@ export interface FrameState {
   left: number;
   top: number;
   html: string;
+  /** Brief description provided when the screen was created (from create_all_screens or planning) */
+  screenDescription?: string;
 }
 
 export interface ImageGenContext {
@@ -138,17 +140,28 @@ Every color must come from the theme variables above. This ensures all screens l
  * understands what was previously built (navigation items, sections, key UI
  * patterns) without receiving the entire HTML blob.
  */
-function summarizeScreenHtml(html: string, maxLength = 600): string {
+function summarizeScreenHtml(html: string, maxLength = 900): string {
   const body = extractBodyContent(html);
   if (!body) return "(empty)";
 
   const parts: string[] = [];
 
-  // Extract headings
+  // Extract headings — these define the screen's identity
   const headings = [...body.matchAll(/<h[1-3][^>]*>(.*?)<\/h[1-3]>/gi)]
     .map((m) => m[1].replace(/<[^>]+>/g, "").trim())
     .filter(Boolean);
   if (headings.length > 0) parts.push(`Headings: ${headings.join(", ")}`);
+
+  // Extract top/header bar content
+  const topBar = body.match(
+    /(?:fixed\s+top|sticky\s+top)[\s\S]{0,500}?(<\/div>|<\/header>|<\/nav>)/i,
+  );
+  if (topBar) {
+    const topTexts = [...topBar[0].matchAll(/>([^<]{2,30})</g)]
+      .map((m) => m[1].trim())
+      .filter((t) => t.length > 1 && !t.startsWith("<") && !t.includes("hgi-"));
+    if (topTexts.length > 0) parts.push(`Header bar: ${topTexts.join(", ")}`);
+  }
 
   // Extract navigation/tab bar items
   const navMatch = body.match(/<nav[^>]*>([\s\S]*?)<\/nav>/i);
@@ -161,16 +174,21 @@ function summarizeScreenHtml(html: string, maxLength = 600): string {
 
   // Extract bottom tab bar (common pattern: fixed bottom bar)
   const bottomBar = body.match(
-    /fixed\s+bottom[\s\S]{0,500}?(<\/div>|<\/nav>)/i,
+    /fixed\s+bottom[\s\S]{0,800}?(<\/div>|<\/nav>)/i,
   );
   if (bottomBar) {
     const tabTexts = [...bottomBar[0].matchAll(/>([A-Z][a-z]{1,15})</g)].map(
       (m) => m[1],
     );
     if (tabTexts.length > 0) parts.push(`Bottom tabs: ${tabTexts.join(", ")}`);
+    // Try to detect which tab is active
+    const activeTab = bottomBar[0].match(
+      /(?:text-primary|bg-primary|font-bold|font-semibold)[^>]*>([A-Z][a-z]{1,15})</,
+    );
+    if (activeTab) parts.push(`Active tab: ${activeTab[1]}`);
   }
 
-  // Extract buttons/CTAs
+  // Extract buttons/CTAs — these indicate navigation flow
   const buttons = [
     ...body.matchAll(/<button[^>]*>(.*?)<\/button>/gi),
     ...body.matchAll(/<a[^>]*class="[^"]*btn[^"]*"[^>]*>(.*?)<\/a>/gi),
@@ -178,7 +196,7 @@ function summarizeScreenHtml(html: string, maxLength = 600): string {
     .map((m) => m[1].replace(/<[^>]+>/g, "").trim())
     .filter((t) => t.length > 1 && t.length < 40);
   if (buttons.length > 0)
-    parts.push(`Buttons: ${buttons.slice(0, 5).join(", ")}`);
+    parts.push(`Buttons/CTAs: ${buttons.slice(0, 6).join(", ")}`);
 
   // Extract key text content (paragraphs, spans with substantial text)
   const textSnippets = [
@@ -194,7 +212,7 @@ function summarizeScreenHtml(html: string, maxLength = 600): string {
   const icons = [...body.matchAll(/hgi-([\w-]+)/g)]
     .map((m) => m[1])
     .filter((v, i, a) => a.indexOf(v) === i)
-    .slice(0, 8);
+    .slice(0, 10);
   if (icons.length > 0) parts.push(`Icons used: ${icons.join(", ")}`);
 
   // Detect structural patterns
@@ -206,7 +224,14 @@ function summarizeScreenHtml(html: string, maxLength = 600): string {
     patterns.push("horizontal scroll");
   if (/rounded-2xl.*shadow|shadow.*rounded-2xl/i.test(body))
     patterns.push("elevated cards");
+  if (/bg-gradient/i.test(body)) patterns.push("gradients");
   if (patterns.length > 0) parts.push(`Patterns: ${patterns.join(", ")}`);
+
+  // Detect content sections (major div blocks with padding)
+  const sectionCount = (
+    body.match(/(?:p-[456]|px-[456]|py-[456]).*?(?:gap-|space-y-)/gi) || []
+  ).length;
+  if (sectionCount > 0) parts.push(`Content sections: ~${sectionCount}`);
 
   const summary = parts.join("\n    ");
   return summary.length > maxLength
@@ -214,17 +239,60 @@ function summarizeScreenHtml(html: string, maxLength = 600): string {
     : summary;
 }
 
+/**
+ * Build a running map of ALL screens in the app (designed + pending) for the
+ * design model, so it understands the full app structure and can maintain
+ * navigation flow, visual continuity, and cross-screen references.
+ */
 function buildScreenContext(frames: FrameState[], currentId: string): string {
-  const siblings = frames.filter(
+  const designed = frames.filter(
     (f) => f.id !== currentId && f.html && f.html.length > 100,
   );
-  if (siblings.length === 0) return "";
+  const pending = frames.filter(
+    (f) => f.id !== currentId && (!f.html || f.html.length <= 100),
+  );
+  const current = frames.find((f) => f.id === currentId);
 
-  const summaries = siblings
-    .map((f) => `  Screen "${f.label}":\n    ${summarizeScreenHtml(f.html)}`)
-    .join("\n\n");
+  if (designed.length === 0 && pending.length === 0) return "";
 
-  return `\n\nPREVIOUSLY DESIGNED SCREENS — use these as reference for continuity and flow:\n${summaries}\n\nCONSISTENCY & NAVIGATION FLOW REQUIREMENTS:\n- The new screen MUST feel like it belongs to the same app as the screens above\n- Match the EXACT same navigation pattern (same bottom tab bar items, same active/inactive styling)\n- If existing screens have a bottom tab bar, include the SAME tabs with this screen's tab highlighted\n- Maintain the same visual language: card style, spacing scale, typography scale, button style, icon style\n- Ensure navigation flow makes sense: buttons like "View All", "See Details", etc. should lead to screens that exist\n- Use the same header/app bar pattern (back arrows, titles, action icons)\n- Match the same icon family and size (HugeIcons stroke-rounded)\n- Every screen should feel like a natural continuation of the user journey`;
+  let ctx = "\n\n--- APP SCREEN MAP (all screens in this app) ---";
+
+  if (designed.length > 0) {
+    const designedSummaries = designed
+      .map(
+        (f) =>
+          `  Screen "${f.label}" [DESIGNED]:\n    ${summarizeScreenHtml(f.html)}`,
+      )
+      .join("\n\n");
+    ctx += `\n\nALREADY DESIGNED:\n${designedSummaries}`;
+  }
+
+  if (pending.length > 0) {
+    const pendingList = pending
+      .map(
+        (f) =>
+          `  Screen "${f.label}" [PENDING]${f.screenDescription ? `: ${f.screenDescription}` : ""}`,
+      )
+      .join("\n");
+    ctx += `\n\nNOT YET DESIGNED (will be designed after this one):\n${pendingList}`;
+  }
+
+  if (current?.screenDescription) {
+    ctx += `\n\nCURRENT SCREEN INTENT: "${current.label}" — ${current.screenDescription}`;
+  }
+
+  ctx += `
+
+CONTINUITY REQUIREMENTS (NON-NEGOTIABLE):
+- This screen MUST feel like it belongs to the SAME app as the screens above.
+- Match the EXACT same bottom tab bar / navigation pattern — same labels, same order, same icons. Only change which tab is active.
+- Use the SAME header/app bar style (back arrow placement, title style, action icons).
+- Maintain identical visual language: card border-radius, shadow depth, spacing scale, typography scale, button style, icon family (HugeIcons stroke-rounded).
+- Navigation flow: if a designed screen has a button like "View All" or "See Details", and THIS screen is the destination, design it to fulfill that promise.
+- Cross-references: if pending screens exist (listed above), include navigation elements (tabs, buttons, links) that would naturally lead to them.
+- Use the same content density and whitespace rhythm as the already-designed screens.`;
+
+  return ctx;
 }
 
 async function generateThemeWithDesignModel(
@@ -308,7 +376,14 @@ export function createTools(ctx: ToolContext) {
               const id = `${toolCallId}-${i}`;
               const left = (startIndex + i) * FRAME_STEP;
               const top = 0;
-              frames.push({ id, label: screen.name, left, top, html: "" });
+              frames.push({
+                id,
+                label: screen.name,
+                left,
+                top,
+                html: "",
+                screenDescription: screen.description,
+              });
               writer?.write({
                 type: "data-tool-call-end",
                 data: {
@@ -549,16 +624,27 @@ export function createTools(ctx: ToolContext) {
             },
           },
         });
-        // Return a summary to the orchestrator agent (not full HTML) to keep
-        // context lean while giving it enough info to maintain continuity
-        // when crafting descriptions for subsequent screens.
+        // Return a running map of ALL screens to the agent so it can
+        // maintain continuity and flow when designing the next screen.
         const summary = summarizeScreenHtml(frame.html);
+        const allScreensMap = frames
+          .map((f) => {
+            const isDesigned = f.html && f.html.length > 100;
+            const label =
+              f.id === frame.id ? `${f.label} (just designed)` : f.label;
+            if (isDesigned) {
+              return `  - "${label}": ${summarizeScreenHtml(f.html).split("\n").join("; ")}`;
+            }
+            return `  - "${label}" [NOT YET DESIGNED]${f.screenDescription ? `: ${f.screenDescription}` : ""}`;
+          })
+          .join("\n");
         return {
           success: true,
           id: frame.id,
           label: frame.label,
           screenSummary: summary,
-          note: "Screen designed successfully. Use the screenSummary above as context when designing the next screen to maintain navigation flow and visual continuity.",
+          appScreenMap: allScreensMap,
+          note: "IMPORTANT: When calling design_screen for the NEXT screen, your description MUST reference the screens already designed above — mention their exact tab bar items, navigation patterns, and visual style so the next screen feels like part of the same app. The appScreenMap shows all screens; use it to maintain flow continuity.",
         };
       },
     }),
