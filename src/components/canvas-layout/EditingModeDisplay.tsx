@@ -1,7 +1,7 @@
 "use client";
 
 import { type ReactNode, useEffect, useState } from "react";
-import { ArrowUp, X } from "lucide-react";
+import { ArrowUp, ListOrdered, X } from "lucide-react";
 import { ImageIcon, StyleGuideIcon, FrameIcon } from "@/lib/svg-icons";
 import { useCanvasChat, type QueuedPrompt } from "@/hooks/useCanvasChat";
 import {
@@ -12,39 +12,60 @@ import { PricingDialog } from "@/components/PricingDialog";
 import { ChatEngine } from "./ChatEngine";
 import { StyleGuidePanel } from "./StyleGuidePanel";
 
+/** Strip `[Selected …]` prefix so the queue shows the user's prompt, not raw metadata. */
+function queuePreviewText(text: string): string {
+  const t = text.trim();
+  const sep = t.indexOf("]\n\n");
+  if (sep !== -1 && t.startsWith("[")) {
+    const after = t.slice(sep + 3).trim();
+    if (after) return after;
+  }
+  return t;
+}
+
 function QueuedPromptChip({
   prompt,
+  position,
   onForceExecute,
   onRemove,
 }: {
   prompt: QueuedPrompt;
+  position: number;
   onForceExecute: (id: string) => void;
   onRemove: (id: string) => void;
 }) {
+  const preview = queuePreviewText(prompt.text);
   return (
-    <div className="group flex items-center gap-2 rounded-t-xl border border-b-0 border-b-secondary bg-surface-elevated/95 px-3 py-1.5 backdrop-blur-xl transition-all hover:bg-surface-elevated">
-      <div className="flex size-4 shrink-0 items-center justify-center rounded-full bg-amber-500/15">
-        <div className="size-1.5 rounded-full bg-amber-500 animate-pulse" />
+    <div className="group flex w-full items-start gap-2.5 rounded-xl border border-b-secondary bg-input-bg/90 px-3 py-2.5 transition-colors hover:bg-input-bg">
+      <div className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-amber-500/12 text-[12px] font-semibold tabular-nums text-amber-700 dark:text-amber-400">
+        {position}
       </div>
-      <p className="flex-1 truncate text-[13px] text-t-secondary">
-        {prompt.text}
+      <p
+        className="min-w-0 flex-1 line-clamp-3 text-[13px] leading-snug text-t-secondary"
+        title={preview}
+      >
+        {preview}
       </p>
-      <button
-        type="button"
-        onClick={() => onRemove(prompt.id)}
-        className="shrink-0 rounded-md p-1 text-t-tertiary opacity-0 transition-all hover:bg-input-bg hover:text-t-primary group-hover:opacity-100"
-        title="Remove from queue"
-      >
-        <X className="size-3.5" />
-      </button>
-      <button
-        type="button"
-        onClick={() => onForceExecute(prompt.id)}
-        className="shrink-0 rounded-md p-1 text-t-tertiary opacity-0 transition-all hover:bg-input-bg hover:text-t-primary group-hover:opacity-100"
-        title="Stop current and send this now"
-      >
-        <ArrowUp className="size-3.5" />
-      </button>
+      <div className="flex shrink-0 items-center gap-0.5 pt-0.5">
+        <button
+          type="button"
+          onClick={() => onRemove(prompt.id)}
+          className="rounded-lg p-1.5 text-t-tertiary transition-colors hover:bg-input-bg hover:text-t-primary"
+          title="Remove from queue"
+          aria-label="Remove from queue"
+        >
+          <X className="size-3.5" />
+        </button>
+        <button
+          type="button"
+          onClick={() => onForceExecute(prompt.id)}
+          className="rounded-lg p-1.5 text-t-tertiary transition-colors hover:bg-input-bg hover:text-t-primary"
+          title="Stop current and send this now"
+          aria-label="Stop current and send this now"
+        >
+          <ArrowUp className="size-3.5" />
+        </button>
+      </div>
     </div>
   );
 }
@@ -118,29 +139,6 @@ export function EditingModeDisplay() {
     <>
       <ChatEngine />
       <div className="absolute bottom-4 left-1/2 z-20 w-full max-w-[660px] -translate-x-1/2 px-4">
-        {promptQueue.length > 0 && (
-          <div className="flex flex-col gap-0 -mb-3">
-            {promptQueue.map((queuedPrompt, index) => (
-              <div
-                key={queuedPrompt.id}
-                className="relative"
-                style={{
-                  height: 24,
-                  zIndex: promptQueue.length - index,
-                }}
-              >
-                <div className="absolute bottom-0 left-0 right-0">
-                  <QueuedPromptChip
-                    prompt={queuedPrompt}
-                    onForceExecute={forceExecuteQueuedPrompt}
-                    onRemove={removePromptFromQueue}
-                  />
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-
         <div className="relative z-10 rounded-[28px] border border-b-secondary bg-canvas-panel-bg shadow-md backdrop-blur-xl transition-all focus-within:border-b-strong">
           {/* Hidden file input */}
           <input
@@ -151,6 +149,29 @@ export function EditingModeDisplay() {
             className="hidden"
             onChange={handleFileChange}
           />
+
+          {promptQueue.length > 0 && (
+            <div className="border-b border-b-secondary px-5 pt-4 pb-3">
+              <div className="flex max-h-[min(40vh,220px)] flex-col gap-2 overflow-y-auto overscroll-contain [scrollbar-gutter:stable]">
+                <div className="flex shrink-0 items-center gap-1.5 text-[11px] font-medium uppercase tracking-wide text-t-tertiary">
+                  <ListOrdered className="size-3.5 shrink-0" aria-hidden />
+                  <span>Queued prompts</span>
+                  <span className="tabular-nums text-amber-600/90 dark:text-amber-400/90">
+                    ({promptQueue.length})
+                  </span>
+                </div>
+                {promptQueue.map((queuedPrompt, index) => (
+                  <QueuedPromptChip
+                    key={queuedPrompt.id}
+                    prompt={queuedPrompt}
+                    position={index + 1}
+                    onForceExecute={forceExecuteQueuedPrompt}
+                    onRemove={removePromptFromQueue}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
 
           {(attachedFrames.length > 0 ||
             selectedElement ||
@@ -217,11 +238,6 @@ export function EditingModeDisplay() {
               >
                 <ImageIcon className="size-4" />
               </button>
-              {isAgentWorking && promptQueue.length > 0 && (
-                <span className="text-[11px] font-mono text-amber-500">
-                  {promptQueue.length} queued
-                </span>
-              )}
             </div>
 
             <div className="flex items-center gap-2">
