@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { CodeDialog } from "@/components/CodeDialog";
+import { useFigmaExport } from "@/hooks/useFigmaExport";
 
 function DragHandleIcon() {
   return (
@@ -128,6 +129,7 @@ export function FrameToolbar({
   canvasScale = 0.556382,
 }: FrameToolbarProps) {
   const [codeDialogOpen, setCodeDialogOpen] = useState(false);
+  const { exportToFigma, status: figmaStatus } = useFigmaExport();
   const topOffsetPx =
     canvasScale > 0 ? TOOLBAR_GAP_SCREEN_PX / canvasScale : 70;
   return (
@@ -166,8 +168,46 @@ export function FrameToolbar({
         >
           <CodeIcon />
         </button>
-        <button type="button" className={toolbarButtonClass} title="Figma">
-          <FigmaIcon />
+        <button
+          type="button"
+          className={toolbarButtonClass}
+          title={
+            figmaStatus === "loading"
+              ? "Exporting..."
+              : figmaStatus === "copied"
+                ? "Copied! Paste in Figma"
+                : "Copy to Figma"
+          }
+          disabled={figmaStatus === "loading"}
+          onClick={(e) => {
+            e.stopPropagation();
+            exportToFigma(html);
+          }}
+        >
+          {figmaStatus === "loading" ? (
+            <svg
+              className="size-3.5 animate-spin"
+              viewBox="0 0 24 24"
+              fill="none"
+            >
+              <circle
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="currentColor"
+                strokeWidth="2"
+                opacity="0.25"
+              />
+              <path
+                d="M4 12a8 8 0 018-8"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+              />
+            </svg>
+          ) : (
+            <FigmaIcon />
+          )}
         </button>
         <button
           type="button"

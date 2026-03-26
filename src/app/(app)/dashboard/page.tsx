@@ -622,9 +622,9 @@ export default function DashboardPage() {
   const planSummary = useAppSelector((s) => s.user.plan);
   const planLoading = useAppSelector((s) => s.user.planLoading);
   const [inputValue, setInputValue] = useState("");
-  const [activeView, setActiveView] = useState<
-    "home" | "projects" | "trash" | "api-keys"
-  >("home");
+  const [activeView, setActiveView] = useState<"home" | "trash" | "api-keys">(
+    "home",
+  );
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [pricingDialogOpen, setPricingDialogOpen] = useState(false);
   const [pricingDialogReason, setPricingDialogReason] = useState<
@@ -809,30 +809,8 @@ export default function DashboardPage() {
       active: activeView === "home",
     },
     {
-      key: "projects",
-      label: "Projects",
-      icon: (
-        <svg
-          width="16"
-          height="16"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="1.5"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        >
-          <rect x="2" y="3" width="20" height="14" rx="2" ry="2" />
-          <path d="M8 21h8M12 17v4" />
-        </svg>
-      ),
-      action: () => setActiveView("projects"),
-      active: activeView === "projects",
-      count: projects.length || undefined,
-    },
-    {
       key: "trash",
-      label: "Trash",
+      label: "Trash Projects",
       icon: (
         <svg
           width="16"
@@ -1137,22 +1115,24 @@ export default function DashboardPage() {
 
         {/* Main content area */}
         <div className="flex-1 flex flex-col relative overflow-hidden">
-          {/* Dotted canvas bg */}
-          <div
-            className="pointer-events-none absolute inset-0 z-0"
-            style={{
-              backgroundImage:
-                "radial-gradient(circle, var(--canvas-dot) 1px, transparent 1px)",
-              backgroundSize: "20px 20px",
-            }}
-          />
+          {/* Dotted canvas bg — home only */}
+          {activeView === "home" && (
+            <div
+              className="pointer-events-none absolute inset-0 z-0"
+              style={{
+                backgroundImage:
+                  "radial-gradient(circle, var(--canvas-dot) 1px, transparent 1px)",
+                backgroundSize: "20px 20px",
+              }}
+            />
+          )}
 
           {/* Center content */}
           <AnimatePresence mode="wait">
             {activeView === "home" ? (
               <motion.div
                 key="home"
-                className="relative z-10 flex-1 flex flex-col items-center justify-center px-6"
+                className="relative z-10 flex-1 flex flex-col items-center overflow-y-auto px-6 pt-[15vh] pb-10"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0, y: -20 }}
@@ -1498,90 +1478,25 @@ export default function DashboardPage() {
                     ))}
                   </div>
                 </motion.div>
-              </motion.div>
-            ) : activeView === "projects" ? (
-              <motion.div
-                key="projects"
-                className="relative z-10 flex-1 flex flex-col overflow-hidden"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.3 }}
-              >
-                <div className="flex shrink-0 flex-col gap-3 border-b border-b-secondary px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <h2 className="text-[11px] font-mono font-semibold uppercase tracking-wider text-t-primary">
-                      All projects
-                    </h2>
-                    {projects.length > 0 && (
-                      <span className="rounded-md border border-b-secondary bg-surface-sunken px-2 py-0.5 text-[10px] font-mono tabular-nums text-t-tertiary">
-                        {projects.length}
-                      </span>
-                    )}
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => createProject()}
-                    className="inline-flex w-fit items-center justify-center gap-2 rounded-lg bg-btn-primary-bg px-4 py-2 text-[11px] font-mono font-semibold uppercase tracking-wider text-btn-primary-text transition-opacity hover:opacity-90 active:scale-[0.98]"
-                  >
-                    <svg width="12" height="12" viewBox="0 0 14 14" fill="none">
-                      <path
-                        d="M7 1v12M1 7h12"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                      />
-                    </svg>
-                    New project
-                  </button>
-                </div>
 
-                <div className="flex-1 overflow-y-auto">
-                  {loading ? (
-                    <div className="flex items-center justify-center py-24">
-                      <div className="flex items-center gap-2 text-sm text-t-tertiary">
-                        <div className="size-2 rounded-full bg-t-tertiary animate-pulse" />
-                        Loading projects…
-                      </div>
+                {/* Project cards */}
+                {projects.length > 0 && (
+                  <motion.div
+                    className="w-full max-w-[820px] mt-10"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.3, duration: 0.5 }}
+                  >
+                    <div className="flex items-center justify-between mb-4">
+                      <h2 className="text-[11px] font-mono font-semibold uppercase tracking-wider text-t-secondary">
+                        Recent projects
+                      </h2>
+                      <span className="text-[10px] font-mono text-t-tertiary">
+                        {projects.length} project
+                        {projects.length !== 1 ? "s" : ""}
+                      </span>
                     </div>
-                  ) : projects.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center px-6 py-24 text-center">
-                      <div className="mb-4 flex size-14 items-center justify-center rounded-2xl border border-dashed border-b-secondary bg-surface-sunken">
-                        <svg
-                          width="24"
-                          height="24"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="1.5"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          className="text-t-tertiary"
-                        >
-                          <path d="M13 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V9z" />
-                          <polyline points="13 2 13 9 20 9" />
-                        </svg>
-                      </div>
-                      <p className="text-sm font-medium text-t-secondary">
-                        No projects yet
-                      </p>
-                      <p className="mt-1 max-w-sm text-xs text-t-tertiary">
-                        Describe an app on the home screen to generate your
-                        first project.
-                      </p>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setActiveView("home");
-                          setTimeout(() => inputRef.current?.focus(), 100);
-                        }}
-                        className="mt-5 text-[11px] font-mono font-semibold uppercase tracking-wider text-t-secondary underline-offset-4 transition-colors hover:text-t-primary hover:underline"
-                      >
-                        Go to home →
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="grid grid-cols-2 gap-3 p-5 sm:grid-cols-3 sm:gap-4 xl:grid-cols-4 xl:gap-3">
+                    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4">
                       {projects.map((project) => (
                         <article
                           key={project.id}
@@ -1634,8 +1549,8 @@ export default function DashboardPage() {
                         </article>
                       ))}
                     </div>
-                  )}
-                </div>
+                  </motion.div>
+                )}
               </motion.div>
             ) : activeView === "trash" ? (
               /* Trash view */
