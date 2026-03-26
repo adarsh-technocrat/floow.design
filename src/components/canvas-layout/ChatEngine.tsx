@@ -21,6 +21,7 @@ import {
   emitChatStatus,
   emitCreditExhausted,
   addGeneratingFrame,
+  removeGeneratingFrame,
   clearGeneratingFrames,
   registerChatSend,
   unregisterChatSend,
@@ -494,6 +495,13 @@ export function ChatEngine() {
         const step = toolStepsRef.current.find(
           (s) => s.toolCallId === ev.toolCallId,
         );
+        if (
+          input.id &&
+          (step?.toolName === "design_screen" ||
+            step?.toolName === "update_screen")
+        ) {
+          addGeneratingFrame(input.id);
+        }
         if (input.id && step) {
           if (
             step.toolName === "design_screen" ||
@@ -554,6 +562,7 @@ export function ChatEngine() {
             ),
           );
         } else if (data.toolName === "design_screen" && data.frame) {
+          addGeneratingFrame(data.frame.id);
           if (data.frame.html !== undefined) {
             cpEnqueueHtml(data.frame.id, data.frame.html);
           }
@@ -579,6 +588,7 @@ export function ChatEngine() {
           data.toolName === "update_screen" &&
           data.frame?.html !== undefined
         ) {
+          addGeneratingFrame(data.frame.id);
           cpEnqueueHtml(data.frame.id, data.frame.html);
           if (data.frame.id) {
             cursor.design(cursor.MAIN, data.frame.id);
@@ -589,6 +599,13 @@ export function ChatEngine() {
 
       if (ev.type === "data-tool-call-end") {
         cpFlushHtmlNow();
+        if (
+          (data.toolName === "design_screen" ||
+            data.toolName === "update_screen") &&
+          data.frame?.id
+        ) {
+          removeGeneratingFrame(data.frame.id);
+        }
         const endInput: { id?: string; name?: string } = {};
         if (data.frame?.id) endInput.id = data.frame.id;
         if (data.frame?.label) endInput.name = data.frame.label;

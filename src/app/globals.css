@@ -676,18 +676,14 @@ html {
   animation: spin-border 3s linear infinite;
   background: conic-gradient(
     from var(--angle),
-    #ffffff,
-    #f0f8ff,
-    #87ceeb,
-    #6eb5f7,
-    #5da3f0,
-    #87ceeb,
-    #f0f8ff,
-    #ffffff
+    #60a5fa,
+    #3b82f6,
+    #818cf8,
+    #a78bfa,
+    #818cf8,
+    #3b82f6,
+    #60a5fa
   );
-  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-  -webkit-mask-composite: xor;
-  mask-composite: exclude;
 }
 
 /* Blue shimmer text effect for thinking indicator */

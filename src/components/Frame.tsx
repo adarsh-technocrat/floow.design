@@ -61,6 +61,47 @@ function ResizeHandleDot({
   );
 }
 
+function EdgeResizeHandle({
+  edge,
+  onPointerDown,
+}: {
+  edge: "e" | "w" | "n" | "s";
+  onPointerDown: (e: React.PointerEvent, corner: ResizeHandle) => void;
+}) {
+  const isHorizontal = edge === "n" || edge === "s";
+  const cursor = isHorizontal ? "ns-resize" : "ew-resize";
+  const style: React.CSSProperties = isHorizontal
+    ? {
+        left: "10%",
+        width: "80%",
+        height: "8px",
+        ...(edge === "n"
+          ? { top: 0, transform: "translateY(-50%)" }
+          : { bottom: 0, transform: "translateY(50%)" }),
+      }
+    : {
+        top: "10%",
+        height: "80%",
+        width: "8px",
+        ...(edge === "w"
+          ? { left: 0, transform: "translateX(-50%)" }
+          : { right: 0, transform: "translateX(50%)" }),
+      };
+
+  return (
+    <div
+      className="absolute z-50"
+      style={{ cursor, ...style }}
+      data-resize-handle={edge}
+      onPointerDown={(e) => {
+        e.stopPropagation();
+        onPointerDown(e, edge);
+      }}
+      aria-hidden
+    />
+  );
+}
+
 function DragHandleIcon() {
   return (
     <svg
@@ -277,14 +318,22 @@ export const Frame = React.memo(function Frame({
     >
       {isGenerating && (
         <div
-          className="animate-gradient-rotate pointer-events-none absolute z-[1]"
+          className="animate-gradient-rotate pointer-events-none absolute z-[45]"
           style={{
-            inset: "-3px",
+            inset: "-4px",
             borderRadius: "2.2rem",
-            padding: "3px",
+            padding: "4px",
           }}
           aria-hidden
-        />
+        >
+          <div
+            className="size-full"
+            style={{
+              borderRadius: "inherit",
+              background: "var(--canvas-bg, #0a0a0a)",
+            }}
+          />
+        </div>
       )}
       <svg width="0" height="0" style={{ position: "absolute" }} aria-hidden>
         <defs>
@@ -396,6 +445,10 @@ export const Frame = React.memo(function Frame({
             corner="se"
             onPointerDown={handleResizePointerDown}
           />
+          <EdgeResizeHandle edge="w" onPointerDown={handleResizePointerDown} />
+          <EdgeResizeHandle edge="e" onPointerDown={handleResizePointerDown} />
+          <EdgeResizeHandle edge="n" onPointerDown={handleResizePointerDown} />
+          <EdgeResizeHandle edge="s" onPointerDown={handleResizePointerDown} />
           <FrameToolbar
             label={label}
             html={html}

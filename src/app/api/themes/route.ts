@@ -61,7 +61,6 @@ export async function POST(req: NextRequest) {
     variables?: Record<string, string>;
   };
 
-  // Accept either new `variants` format or old `variables` format
   const toStore = variants ?? ensureVariantMap(variables ?? {});
 
   const theme = await prisma.theme.create({
