@@ -23,7 +23,7 @@ function QueuedPromptChip({
   onRemove: (id: string) => void;
 }) {
   return (
-    <div className="group flex items-center gap-2 rounded-t-xl border border-b-0 border-b-secondary bg-surface-elevated/95 px-4 py-2.5 backdrop-blur-xl transition-all hover:bg-surface-elevated">
+    <div className="group flex items-center gap-2 rounded-t-xl border border-b-0 border-b-secondary bg-surface-elevated/95 px-3 py-1.5 backdrop-blur-xl transition-all hover:bg-surface-elevated">
       <div className="flex size-4 shrink-0 items-center justify-center rounded-full bg-amber-500/15">
         <div className="size-1.5 rounded-full bg-amber-500 animate-pulse" />
       </div>

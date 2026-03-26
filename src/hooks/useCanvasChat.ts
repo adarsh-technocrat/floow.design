@@ -55,6 +55,9 @@ export function useCanvasChat() {
   useEffect(() => {
     return subscribeChatStatus((status) => {
       const working = status === "submitted" || status === "streaming";
+      if (working && processingQueueRef.current) {
+        processingQueueRef.current = false;
+      }
       setIsAgentWorking(working);
     });
   }, []);
@@ -90,7 +93,6 @@ export function useCanvasChat() {
       const [nextPrompt, ...remainingPrompts] = currentQueue;
       setTimeout(() => {
         dispatchMessageToChatBridge(nextPrompt.text);
-        processingQueueRef.current = false;
       }, 100);
       return remainingPrompts;
     });
