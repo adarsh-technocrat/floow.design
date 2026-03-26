@@ -4,7 +4,6 @@ import http from "@/lib/http";
 export interface FramePreviewItem {
   id: string;
   label: string;
-  html: string;
 }
 
 export interface ProjectListItem {

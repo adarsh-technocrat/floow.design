@@ -40,7 +40,8 @@ export async function GET(req: NextRequest) {
         updatedAt: true,
         _count: { select: { frames: true } },
         frames: {
-          select: { id: true, label: true, html: true },
+          select: { id: true, label: true },
+          where: { html: { not: "" } },
           orderBy: { left: "asc" },
           take: 3,
         },
@@ -54,10 +55,7 @@ export async function GET(req: NextRequest) {
         screens: p._count.frames,
         createdAt: p.createdAt.toISOString(),
         updatedAt: p.updatedAt.toISOString(),
-        framePreviews: p.frames
-          .filter((f) => f.html && f.html.length > 50)
-          .slice(0, 3)
-          .map((f) => ({ id: f.id, label: f.label, html: f.html })),
+        framePreviews: p.frames.map((f) => ({ id: f.id, label: f.label })),
       })),
     });
   } catch (e) {

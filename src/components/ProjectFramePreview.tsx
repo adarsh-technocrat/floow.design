@@ -11,12 +11,12 @@ export type ProjectFramePreviewProps = {
   className?: string;
 };
 
-function MiniScreen({ html, label }: { html: string; label: string }) {
+function MiniScreen({ frameId, label }: { frameId: string; label: string }) {
   return (
     <div className="relative flex h-full w-full flex-col overflow-hidden rounded-lg border border-border/40 bg-white shadow-sm">
       <iframe
         title={label}
-        srcDoc={html}
+        src={`/api/frames/${frameId}/render`}
         className="h-full w-full border-0 pointer-events-none"
         sandbox=""
         loading="lazy"
@@ -34,8 +34,7 @@ export function ProjectFramePreview({
   dimmed: _dimmed = false,
   className,
 }: ProjectFramePreviewProps) {
-  const previews = framePreviews?.filter((f) => f.html && f.html.length > 50);
-  const hasScreens = previews && previews.length > 0;
+  const hasScreens = framePreviews && framePreviews.length > 0;
 
   if (!hasScreens) {
     return (
@@ -56,7 +55,7 @@ export function ProjectFramePreview({
     );
   }
 
-  const count = previews.length;
+  const count = framePreviews.length;
 
   return (
     <div
@@ -69,7 +68,7 @@ export function ProjectFramePreview({
         backgroundSize: "14px 14px",
       }}
     >
-      {previews.map((frame, i) => (
+      {framePreviews.map((frame, i) => (
         <div
           key={frame.id}
           className="relative h-full overflow-hidden rounded-lg"
@@ -84,7 +83,7 @@ export function ProjectFramePreview({
             zIndex: count >= 3 && i === 1 ? 2 : 1,
           }}
         >
-          <MiniScreen html={frame.html} label={frame.label} />
+          <MiniScreen frameId={frame.id} label={frame.label} />
         </div>
       ))}
     </div>
