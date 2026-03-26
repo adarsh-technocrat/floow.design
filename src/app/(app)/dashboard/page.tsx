@@ -1245,11 +1245,11 @@ export default function DashboardPage() {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.15, duration: 0.6 }}
                 >
-                  <div className="relative">
-                    {/* Stack layers behind the input */}
-                    <div className="absolute inset-x-2 -bottom-2 h-full rounded-2xl border border-b-secondary/40 bg-surface-sunken/60" />
-                    <div className="absolute inset-x-1 -bottom-1 h-full rounded-2xl border border-b-secondary/60 bg-surface-elevated/40" />
-                    <div className="relative rounded-2xl border border-b-secondary bg-surface-elevated backdrop-blur-xl transition-all focus-within:border-b-secondary shadow-sm">
+                  <div className="relative pb-3">
+                    {/* Stacked card layers */}
+                    <div className="absolute inset-x-4 bottom-0 top-3 rounded-2xl border border-b-secondary/30 bg-surface-sunken/50 shadow-sm" />
+                    <div className="absolute inset-x-2 bottom-1.5 top-1.5 rounded-2xl border border-b-secondary/50 bg-surface-elevated/60 shadow-sm" />
+                    <div className="relative rounded-2xl border border-b-secondary bg-surface-elevated backdrop-blur-xl shadow-lg transition-all focus-within:border-b-strong">
                       <input
                         ref={fileInputRef}
                         type="file"
