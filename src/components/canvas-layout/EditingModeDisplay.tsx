@@ -12,7 +12,6 @@ import { PricingDialog } from "@/components/PricingDialog";
 import { ChatEngine } from "./ChatEngine";
 import { StyleGuidePanel } from "./StyleGuidePanel";
 
-/** Strip `[Selected …]` prefix so the queue shows the user's prompt, not raw metadata. */
 function queuePreviewText(text: string): string {
   const t = text.trim();
   const sep = t.indexOf("]\n\n");
