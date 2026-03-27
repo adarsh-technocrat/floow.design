@@ -57,8 +57,32 @@ async function getTemplates() {
 export default async function TemplatesPage() {
   const templates = await getTemplates();
 
+  const templatesJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "CollectionPage",
+    name: "Mobile App Templates – floow.design",
+    description:
+      "Browse beautiful, ready-to-use mobile app design templates. Customize instantly with AI.",
+    url: "https://www.floow.design/templates",
+    mainEntity: {
+      "@type": "ItemList",
+      itemListElement: templates.map((t, i) => ({
+        "@type": "ListItem",
+        position: i + 1,
+        url: t.slug
+          ? `https://www.floow.design/templates/${t.slug}`
+          : "https://www.floow.design/templates",
+        name: t.name,
+      })),
+    },
+  };
+
   return (
     <div className="relative w-full bg-surface text-t-primary">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(templatesJsonLd) }}
+      />
       <div className="relative mx-auto max-w-6xl border-x border-b-secondary">
         <Header />
 

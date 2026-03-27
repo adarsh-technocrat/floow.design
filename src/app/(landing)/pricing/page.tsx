@@ -211,8 +211,40 @@ export default function PricingPage() {
     return "border border-b-secondary text-t-primary hover:bg-input-bg";
   };
 
+  const pricingJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    name: "floow.design Pricing",
+    description:
+      "Simple, transparent pricing for floow.design. Start building for free.",
+    url: "https://www.floow.design/pricing",
+    mainEntity: {
+      "@type": "SoftwareApplication",
+      name: "floow.design",
+      applicationCategory: "DesignApplication",
+      operatingSystem: "Web",
+      offers: plans.map((plan) => ({
+        "@type": "Offer",
+        name: `${plan.name} Plan`,
+        description: plan.description,
+        price: plan.monthly.price.toString(),
+        priceCurrency: "USD",
+        priceSpecification: {
+          "@type": "UnitPriceSpecification",
+          price: plan.monthly.price.toString(),
+          priceCurrency: "USD",
+          unitText: "MONTH",
+        },
+      })),
+    },
+  };
+
   return (
     <div className="w-full bg-surface text-t-primary">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(pricingJsonLd) }}
+      />
       <div className="relative mx-auto max-w-6xl border-x border-b-secondary">
         <Header />
 

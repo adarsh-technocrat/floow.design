@@ -73,8 +73,29 @@ export default async function TemplateDetailPage({ params }: PageProps) {
   const tag = template.templateTag || "Template";
   const screenCount = template.frames.length;
 
+  const templateJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "CreativeWork",
+    name: template.name,
+    description:
+      template.templateDesc ||
+      `${template.name} mobile app template with ${screenCount} screens.`,
+    url: `https://www.floow.design/templates/${slug}`,
+    creator: { "@type": "Organization", name: "floow.design" },
+    isAccessibleForFree: true,
+    provider: {
+      "@type": "Organization",
+      name: "floow.design",
+      url: "https://www.floow.design",
+    },
+  };
+
   return (
     <div className="relative w-full bg-surface text-t-primary">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(templateJsonLd) }}
+      />
       <div className="relative mx-auto max-w-6xl border-x border-b-secondary">
         <Header />
 

@@ -1,5 +1,10 @@
 import type { Metadata, Viewport } from "next";
-import { DM_Sans, Geist_Mono, Space_Grotesk } from "next/font/google";
+import {
+  DM_Sans,
+  Geist_Mono,
+  Space_Grotesk,
+  Silkscreen,
+} from "next/font/google";
 import Script from "next/script";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ThemeProvider } from "@/components/ThemeProvider";
@@ -20,6 +25,12 @@ const spaceGrotesk = Space_Grotesk({
   variable: "--font-logo",
   subsets: ["latin"],
   weight: ["700"],
+});
+
+const silkscreen = Silkscreen({
+  variable: "--font-pixel",
+  subsets: ["latin"],
+  weight: ["400", "700"],
 });
 
 const siteUrl = "https://www.floow.design";
@@ -131,6 +142,21 @@ export default function RootLayout({
                     "query-input": "required name=search_term_string",
                   },
                 },
+                {
+                  "@type": "SoftwareApplication",
+                  name: "floow.design",
+                  url: siteUrl,
+                  applicationCategory: "DesignApplication",
+                  operatingSystem: "Web",
+                  description:
+                    "Design mobile apps with AI in seconds. Generate pixel-perfect iOS & Android screens and export to Figma.",
+                  offers: {
+                    "@type": "Offer",
+                    price: "0",
+                    priceCurrency: "USD",
+                    description: "Free tier with daily credits",
+                  },
+                },
               ],
             }),
           }}
@@ -143,7 +169,7 @@ export default function RootLayout({
         />
       </head>
       <body
-        className={`${dmSans.variable} ${geistMono.variable} ${spaceGrotesk.variable} font-sans antialiased`}
+        className={`${dmSans.variable} ${geistMono.variable} ${spaceGrotesk.variable} ${silkscreen.variable} font-sans antialiased`}
       >
         <ThemeProvider>
           <AuthProvider>{children}</AuthProvider>

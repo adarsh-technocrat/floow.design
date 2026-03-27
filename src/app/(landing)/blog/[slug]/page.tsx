@@ -67,20 +67,54 @@ export default async function BlogPostPage({ params }: PageProps) {
 
   const jsonLd = {
     "@context": "https://schema.org",
-    "@type": "BlogPosting",
-    headline: fm.title,
-    description: fm.description,
-    datePublished: fm.date,
-    ...(fm.coverImage && { image: fm.coverImage }),
-    author: {
-      "@type": "Person",
-      name: fm.author,
-      ...(fm.authorRole && { jobTitle: fm.authorRole }),
-    },
-    publisher: { "@type": "Organization", name: "floow.design" },
-    wordCount: post.wordCount,
-    keywords: fm.tags.join(", "),
-    mainEntityOfPage: { "@type": "WebPage", "@id": `/blog/${slug}` },
+    "@graph": [
+      {
+        "@type": "BlogPosting",
+        headline: fm.title,
+        description: fm.description,
+        datePublished: fm.date,
+        ...(fm.coverImage && { image: fm.coverImage }),
+        author: {
+          "@type": "Person",
+          name: fm.author,
+          ...(fm.authorRole && { jobTitle: fm.authorRole }),
+        },
+        publisher: {
+          "@type": "Organization",
+          name: "floow.design",
+          url: "https://www.floow.design",
+        },
+        wordCount: post.wordCount,
+        keywords: fm.tags.join(", "),
+        mainEntityOfPage: {
+          "@type": "WebPage",
+          "@id": `https://www.floow.design/blog/${slug}`,
+        },
+      },
+      {
+        "@type": "BreadcrumbList",
+        itemListElement: [
+          {
+            "@type": "ListItem",
+            position: 1,
+            name: "Home",
+            item: "https://www.floow.design",
+          },
+          {
+            "@type": "ListItem",
+            position: 2,
+            name: "Blog",
+            item: "https://www.floow.design/blog",
+          },
+          {
+            "@type": "ListItem",
+            position: 3,
+            name: fm.title,
+            item: `https://www.floow.design/blog/${slug}`,
+          },
+        ],
+      },
+    ],
   };
 
   return (

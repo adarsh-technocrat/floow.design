@@ -26,8 +26,31 @@ export const dynamic = "force-dynamic";
 export default async function BlogPage() {
   const posts = await getAllPosts();
 
+  const blogJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "CollectionPage",
+    name: "Blog – floow.design",
+    description:
+      "Updates, tutorials, and insights on designing mobile apps with AI",
+    url: "https://www.floow.design/blog",
+    publisher: { "@type": "Organization", name: "floow.design" },
+    mainEntity: {
+      "@type": "ItemList",
+      itemListElement: posts.map((post, i) => ({
+        "@type": "ListItem",
+        position: i + 1,
+        url: `https://www.floow.design/blog/${post.slug}`,
+        name: post.frontmatter.title,
+      })),
+    },
+  };
+
   return (
     <div className="relative w-full bg-surface text-t-primary">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(blogJsonLd) }}
+      />
       <div className="relative mx-auto max-w-6xl border-x border-b-secondary">
         <Header />
 

@@ -125,8 +125,30 @@ export default async function FeaturesPage() {
     features = DUMMY_FEATURES;
   }
 
+  const featuresJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "CollectionPage",
+    name: "Features — AI Mobile App Design Tool | floow.design",
+    description:
+      "Explore floow.design features: AI app design, screen generation, Figma export, iOS & Android support, multi-screen flows, and custom themes.",
+    url: "https://www.floow.design/features",
+    mainEntity: {
+      "@type": "ItemList",
+      itemListElement: features.map((f, i) => ({
+        "@type": "ListItem",
+        position: i + 1,
+        url: `https://www.floow.design/features/${f.slug}`,
+        name: f.title,
+      })),
+    },
+  };
+
   return (
     <div className="relative w-full bg-surface text-t-primary">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(featuresJsonLd) }}
+      />
       <div className="relative mx-auto max-w-6xl border-x border-b-secondary">
         <Header />
 
