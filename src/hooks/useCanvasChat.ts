@@ -22,7 +22,10 @@ export interface AttachedFrame {
 
 export interface QueuedPrompt {
   id: string;
+  /** Full message sent to the agent (may include screen/element prefixes). */
   text: string;
+  /** What the user sees in the queue — their typed prompt only. */
+  displayLabel?: string;
   createdAt: number;
 }
 
@@ -34,6 +37,9 @@ export function useCanvasChat() {
   const [inputValue, setInputValue] = useState("");
   const [isAgentWorking, setIsAgentWorking] = useState(false);
   const [promptQueue, setPromptQueue] = useState<QueuedPrompt[]>([]);
+  const promptQueueRef = useRef<QueuedPrompt[]>([]);
+  promptQueueRef.current = promptQueue;
+
   const [attachedFrames, setAttachedFrames] = useState<AttachedFrame[]>([]);
   const [selectedElement, setSelectedElement] =
     useState<SelectedElementContext | null>(null);
@@ -131,27 +137,19 @@ export function useCanvasChat() {
   );
 
   const processNextPromptFromQueue = useCallback(() => {
-    let promptToSend: QueuedPrompt | null = null;
-
-    setPromptQueue((currentQueue) => {
-      if (currentQueue.length === 0) {
-        return currentQueue;
-      }
-      const [nextPrompt, ...remainingPrompts] = currentQueue;
-      promptToSend = nextPrompt;
-      return remainingPrompts;
-    });
-
-    // Side effects must be outside the state updater to avoid
-    // double-execution under React StrictMode.
-    if (promptToSend) {
-      processingQueueRef.current = true;
-      setTimeout(() => {
-        dispatchMessageToChatBridge((promptToSend as QueuedPrompt).text);
-      }, 100);
-    } else {
+    const q = promptQueueRef.current;
+    if (q.length === 0) {
       processingQueueRef.current = false;
+      return;
     }
+    const nextPrompt = q[0];
+    const remaining = q.slice(1);
+    promptQueueRef.current = remaining;
+    setPromptQueue(remaining);
+    processingQueueRef.current = true;
+    setTimeout(() => {
+      dispatchMessageToChatBridge(nextPrompt.text);
+    }, 100);
   }, [dispatchMessageToChatBridge]);
 
   const submitPromptOrAddToQueue = useCallback(() => {
@@ -182,9 +180,13 @@ export function useCanvasChat() {
     }
 
     if (isAgentWorking) {
+      const displayLabel =
+        trimmedText ||
+        (attachedImages.length > 0 ? "Attached image" : undefined);
       const queuedPrompt: QueuedPrompt = {
         id: `q-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
         text: messageText,
+        displayLabel,
         createdAt: Date.now(),
       };
       setPromptQueue((prev) => [...prev, queuedPrompt]);
