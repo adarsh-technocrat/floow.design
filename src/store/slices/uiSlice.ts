@@ -1,6 +1,6 @@
 import { createSlice } from "@reduxjs/toolkit";
 
-export type CanvasToolMode = "select" | "hand";
+export type CanvasToolMode = "select" | "hand" | "note";
 
 export interface AgentLogEntry {
   id: string;

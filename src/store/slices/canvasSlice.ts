@@ -29,6 +29,38 @@ export interface FrameState {
   variantName?: string;
 }
 
+export type NoteColor =
+  | "yellow"
+  | "blue"
+  | "green"
+  | "pink"
+  | "purple"
+  | "orange";
+
+export interface NoteState {
+  id: string;
+  text: string;
+  left: number;
+  top: number;
+  width: number;
+  height: number;
+  color: NoteColor;
+  fontSize: number;
+}
+
+export const NOTE_COLORS: Record<NoteColor, { bg: string; text: string; border: string }> = {
+  yellow: { bg: "#FEF9C3", text: "#713F12", border: "#FDE047" },
+  blue: { bg: "#DBEAFE", text: "#1E3A5F", border: "#93C5FD" },
+  green: { bg: "#DCFCE7", text: "#14532D", border: "#86EFAC" },
+  pink: { bg: "#FCE7F3", text: "#831843", border: "#F9A8D4" },
+  purple: { bg: "#EDE9FE", text: "#3B0764", border: "#C4B5FD" },
+  orange: { bg: "#FFEDD5", text: "#7C2D12", border: "#FDBA74" },
+};
+
+export const DEFAULT_NOTE_WIDTH = 228;
+export const DEFAULT_NOTE_HEIGHT = 228;
+export const MIN_NOTE_SIZE = 100;
+
 export interface StoredTheme {
   id: string;
   name: string;
@@ -40,7 +72,9 @@ export type ThemeMode = "light" | "dark";
 interface CanvasState {
   transform: CanvasTransform;
   frames: FrameState[];
+  notes: NoteState[];
   selectedFrameIds: string[];
+  selectedNoteId: string | null;
   /** Resolved flat variables for the active theme + active variant */
   theme: ThemeVariables;
   themes: StoredTheme[];
@@ -50,12 +84,14 @@ interface CanvasState {
 
 const initialState: CanvasState = {
   selectedFrameIds: [],
+  selectedNoteId: null,
   transform: {
     x: 255.24,
     y: 410.117,
     scale: 0.556382,
   },
   frames: [],
+  notes: [],
   theme: {},
   themes: [],
   activeThemeId: null,
@@ -373,6 +409,48 @@ const canvasSlice = createSlice({
       }
     },
 
+    /* ---- Note reducers ---- */
+
+    addNote: (
+      state,
+      action: {
+        payload: { left: number; top: number; color?: NoteColor };
+      },
+    ) => {
+      const id = `note-${Date.now()}`;
+      state.notes.push({
+        id,
+        text: "",
+        left: action.payload.left,
+        top: action.payload.top,
+        width: DEFAULT_NOTE_WIDTH,
+        height: DEFAULT_NOTE_HEIGHT,
+        color: action.payload.color ?? "yellow",
+        fontSize: 16,
+      });
+      state.selectedNoteId = id;
+      state.selectedFrameIds = [];
+    },
+    updateNote: (
+      state,
+      action: { payload: { id: string; changes: Partial<NoteState> } },
+    ) => {
+      const note = state.notes.find((n) => n.id === action.payload.id);
+      if (note) Object.assign(note, action.payload.changes);
+    },
+    removeNote: (state, action: { payload: string }) => {
+      state.notes = state.notes.filter((n) => n.id !== action.payload);
+      if (state.selectedNoteId === action.payload) {
+        state.selectedNoteId = null;
+      }
+    },
+    setSelectedNoteId: (state, action: { payload: string | null }) => {
+      state.selectedNoteId = action.payload;
+      if (action.payload) {
+        state.selectedFrameIds = [];
+      }
+    },
+
     reorderFrames: (state, action: { payload: string[] }) => {
       const order = action.payload;
       state.frames.sort((a, b) => order.indexOf(a.id) - order.indexOf(b.id));
@@ -411,7 +489,9 @@ const canvasSlice = createSlice({
     },
     resetCanvas: (state) => {
       state.frames = [];
+      state.notes = [];
       state.selectedFrameIds = [];
+      state.selectedNoteId = null;
       state.theme = {};
       state.themes = [];
       state.activeThemeId = null;
@@ -453,6 +533,10 @@ export const {
   setThemeVariantVariable,
   addThemeVariant,
   removeThemeVariant,
+  addNote,
+  updateNote,
+  removeNote,
+  setSelectedNoteId,
 } = canvasSlice.actions;
 
 export default canvasSlice.reducer;

@@ -5,15 +5,26 @@ import { toast } from "sonner";
 import { SelectionToast } from "@/components/custom-toast/selection-toast";
 import { Frame } from "@/components/Frame";
 import { FramePreview } from "@/components/FramePreview";
+import { StickyNote } from "@/components/StickyNote";
 import { AgentCursors } from "@/components/AgentCursors";
 import { AgentShutterOverlays } from "@/components/AgentShutterOverlay";
 import { useCanvas } from "@/hooks/useCanvas";
 import { useCanvasInteraction } from "@/hooks/useCanvasInteraction";
-import { useAppSelector } from "@/store/hooks";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import {
+  addNote,
+  updateNote,
+  removeNote,
+  setSelectedNoteId,
+  type NoteColor,
+} from "@/store/slices/canvasSlice";
+import { setCanvasToolMode } from "@/store/slices/uiSlice";
+import { convertClientPointToContentPoint } from "@/lib/canvas-utils";
 import http from "@/lib/http";
 
 export function Canvas() {
   const containerRef = useRef<HTMLDivElement>(null);
+  const dispatch = useAppDispatch();
   const {
     transform,
     frames,
@@ -29,6 +40,9 @@ export function Canvas() {
   } = useCanvas();
 
   const projectId = useAppSelector((s) => s.project.projectId) ?? "";
+  const notes = useAppSelector((s) => s.canvas.notes);
+  const selectedNoteId = useAppSelector((s) => s.canvas.selectedNoteId);
+  const canvasToolMode = useAppSelector((s) => s.ui.canvasToolMode);
 
   const persistFramePosition = useCallback(
     (
@@ -91,7 +105,109 @@ export function Canvas() {
     [updateFrameProperties, persistFramePosition],
   );
 
-  const canvasToolMode = useAppSelector((s) => s.ui.canvasToolMode);
+  // Note handlers
+  const handleNoteSelect = useCallback(
+    (noteId: string) => {
+      dispatch(setSelectedNoteId(noteId));
+      setSelectedFrameIds([]);
+    },
+    [dispatch, setSelectedFrameIds],
+  );
+
+  const handleNoteTextChange = useCallback(
+    (noteId: string, text: string) => {
+      dispatch(updateNote({ id: noteId, changes: { text } }));
+    },
+    [dispatch],
+  );
+
+  const handleNotePositionChange = useCallback(
+    (noteId: string, newLeft: number, newTop: number) => {
+      dispatch(updateNote({ id: noteId, changes: { left: newLeft, top: newTop } }));
+    },
+    [dispatch],
+  );
+
+  const handleNoteSizeChange = useCallback(
+    (
+      noteId: string,
+      changes: { left?: number; top?: number; width?: number; height?: number },
+    ) => {
+      dispatch(updateNote({ id: noteId, changes }));
+    },
+    [dispatch],
+  );
+
+  const handleNoteColorChange = useCallback(
+    (noteId: string, color: NoteColor) => {
+      dispatch(updateNote({ id: noteId, changes: { color } }));
+    },
+    [dispatch],
+  );
+
+  const handleNoteFontSizeChange = useCallback(
+    (noteId: string, fontSize: number) => {
+      dispatch(updateNote({ id: noteId, changes: { fontSize } }));
+    },
+    [dispatch],
+  );
+
+  const handleNoteDelete = useCallback(
+    (noteId: string) => {
+      dispatch(removeNote(noteId));
+    },
+    [dispatch],
+  );
+
+  const handleNoteDuplicate = useCallback(
+    (noteId: string) => {
+      const note = notes.find((n) => n.id === noteId);
+      if (!note) return;
+      dispatch(
+        addNote({ left: note.left + 40, top: note.top + 40, color: note.color }),
+      );
+    },
+    [dispatch, notes],
+  );
+
+  // Handle canvas click to create note in note tool mode
+  const handleCanvasClickForNote = useCallback(
+    (e: React.MouseEvent) => {
+      if (canvasToolMode !== "note") return;
+      // Don't create note when clicking on existing nodes
+      if ((e.target as Element).closest?.("[data-frame]") || (e.target as Element).closest?.("[data-note]")) return;
+
+      const el = containerRef.current;
+      if (!el) return;
+      const rect = el.getBoundingClientRect();
+      const content = convertClientPointToContentPoint(
+        e.clientX,
+        e.clientY,
+        rect,
+        transform.x,
+        transform.y,
+        transform.scale,
+      );
+      dispatch(addNote({ left: content.x - 114, top: content.y - 114 }));
+      // Switch back to select mode after placing note
+      dispatch(setCanvasToolMode("select"));
+    },
+    [canvasToolMode, dispatch, transform],
+  );
+
+  // Deselect note when clicking canvas background
+  const handleCanvasPointerDownForDeselect = useCallback(
+    (e: React.PointerEvent) => {
+      if (
+        !(e.target as Element).closest?.("[data-note]") &&
+        selectedNoteId
+      ) {
+        dispatch(setSelectedNoteId(null));
+      }
+    },
+    [selectedNoteId, dispatch],
+  );
+
   const {
     isPanning,
     isMarquee,
@@ -234,13 +350,19 @@ export function Canvas() {
             ? "crosshair"
             : spaceHeld
               ? "grab"
-              : "default",
+              : canvasToolMode === "note"
+                ? "crosshair"
+                : "default",
         touchAction: "none",
       }}
-      onPointerDown={handlePointerDown}
+      onPointerDown={(e) => {
+        handleCanvasPointerDownForDeselect(e);
+        handlePointerDown(e);
+      }}
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
       onPointerLeave={handlePointerUp}
+      onClick={handleCanvasClickForNote}
       tabIndex={0}
       role="application"
       aria-label="Canvas"
@@ -318,6 +440,30 @@ export function Canvas() {
           </Frame>
         ))}
         {/* eslint-enable react-hooks/refs */}
+        {notes.map((note) => (
+          <StickyNote
+            key={note.id}
+            id={note.id}
+            text={note.text}
+            left={note.left}
+            top={note.top}
+            width={note.width}
+            height={note.height}
+            color={note.color}
+            fontSize={note.fontSize}
+            selected={selectedNoteId === note.id}
+            canvasScale={scale}
+            spaceHeld={spaceHeld}
+            onSelect={handleNoteSelect}
+            onTextChange={handleNoteTextChange}
+            onPositionChange={handleNotePositionChange}
+            onSizeChange={handleNoteSizeChange}
+            onColorChange={handleNoteColorChange}
+            onFontSizeChange={handleNoteFontSizeChange}
+            onDelete={handleNoteDelete}
+            onDuplicate={handleNoteDuplicate}
+          />
+        ))}
         <AgentShutterOverlays />
         <AgentCursors />
       </div>

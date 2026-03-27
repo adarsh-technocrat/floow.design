@@ -8,7 +8,8 @@ import {
   FRAME_HEIGHT,
 } from "@/lib/canvas-utils";
 import type { CanvasTransform } from "@/store/slices/canvasSlice";
-import type { CanvasToolMode } from "@/store/slices/uiSlice";
+import { setCanvasToolMode, type CanvasToolMode } from "@/store/slices/uiSlice";
+import { useAppDispatch } from "@/store/hooks";
 
 const ZOOM_SETTLE_MS = 250;
 
@@ -45,6 +46,7 @@ export function useCanvasInteraction({
   zoomCanvasAtCursorPosition,
   canvasToolMode = "select",
 }: UseCanvasInteractionProps) {
+  const dispatch = useAppDispatch();
   const { x, y, scale } = transform;
   const panStart = useRef<{
     x: number;
@@ -140,6 +142,14 @@ export function useCanvasInteraction({
         e.preventDefault();
         setSpaceHeld(true);
       }
+      if (isEditableElement(e.target)) return;
+      if (e.key === "n" || e.key === "N") {
+        dispatch(setCanvasToolMode("note"));
+      } else if (e.key === "v" || e.key === "V") {
+        dispatch(setCanvasToolMode("select"));
+      } else if (e.key === "h" || e.key === "H") {
+        dispatch(setCanvasToolMode("hand"));
+      }
     };
     const onKeyUp = (e: KeyboardEvent) => {
       if (e.code === "Space") {
@@ -153,7 +163,7 @@ export function useCanvasInteraction({
       window.removeEventListener("keydown", onKeyDown);
       window.removeEventListener("keyup", onKeyUp);
     };
-  }, []);
+  }, [dispatch]);
 
   const effectiveSpaceHeld = spaceHeld || canvasToolMode === "hand";
 
@@ -161,7 +171,8 @@ export function useCanvasInteraction({
     (e: React.PointerEvent) => {
       if (e.button !== 0) return;
       if (
-        (e.target as Element).closest?.("[data-frame]") &&
+        ((e.target as Element).closest?.("[data-frame]") ||
+         (e.target as Element).closest?.("[data-note]")) &&
         !effectiveSpaceHeld
       )
         return;
