@@ -9,7 +9,7 @@ import { ThemeToggleCompact } from "@/components/ThemeToggle";
 import { Avatar } from "@/components/ui/Avatar";
 
 const navLinks = [
-  { label: "Features", href: "/#features" },
+  { label: "Features", href: "/features" },
   { label: "Templates", href: "/templates" },
   { label: "Pricing", href: "/pricing" },
   { label: "Blog", href: "/blog" },
@@ -22,6 +22,8 @@ function isNavLinkActive(
   hash: string,
 ): boolean {
   if (href === "/pricing") return pathname === "/pricing";
+  if (href === "/features")
+    return pathname === "/features" || pathname.startsWith("/features/");
   if (href === "/blog")
     return pathname === "/blog" || pathname.startsWith("/blog/");
   if (href.startsWith("/#")) {

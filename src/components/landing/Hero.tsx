@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { Avatar } from "@/components/ui/Avatar";
 import { useAuth } from "@/contexts/AuthContext";
+import { useImageAttachments } from "@/hooks/useImageAttachments";
+import { ImageIcon } from "@/lib/svg-icons";
 import http from "@/lib/http";
 
 const cursors = [
@@ -22,13 +24,38 @@ export function Hero() {
   const router = useRouter();
   const { user } = useAuth();
 
+  const {
+    attachedImages,
+    hasUploadingImages,
+    fileInputRef,
+    openFilePicker,
+    handleFileChange,
+    handlePaste,
+    removeImage,
+    clearImages,
+    getUploadedUrls,
+  } = useImageAttachments();
+
+  const handleAttachClick = () => {
+    if (!user) {
+      const params = new URLSearchParams({ redirect: "/" });
+      const t = promptText.trim();
+      if (t) params.set("prompt", t);
+      router.push(`/signin?${params.toString()}`);
+      return;
+    }
+    openFilePicker();
+  };
+
   const handleGenerate = async () => {
     const text = promptText.trim();
-    if (!text || creating) return;
+    const uploadedUrls = getUploadedUrls();
+    if (hasUploadingImages || creating) return;
+    if (!text && uploadedUrls.length === 0) return;
 
     if (!user) {
       const params = new URLSearchParams({
-        prompt: text,
+        prompt: text || "Attached image",
         redirect: "/",
       });
       router.push(`/signin?${params.toString()}`);
@@ -37,11 +64,19 @@ export function Hero() {
 
     setCreating(true);
     try {
+      if (uploadedUrls.length > 0) {
+        sessionStorage.setItem(
+          "pending_prompt_images",
+          JSON.stringify(uploadedUrls),
+        );
+      }
+      clearImages();
       const { data } = await http.post<{ id?: string }>("/api/projects", {
-        name: text,
+        name: text || "Attached image",
       });
       if (data.id) {
-        router.push(`/project/${data.id}?prompt=${encodeURIComponent(text)}`);
+        const q = text || (uploadedUrls.length > 0 ? "Attached image" : "");
+        router.push(`/project/${data.id}?prompt=${encodeURIComponent(q)}`);
       }
     } catch {
       setCreating(false);
@@ -170,9 +205,91 @@ export function Hero() {
           transition={{ delay: 0.35, duration: 0.7 }}
         >
           <div className="flex w-full flex-col rounded-2xl bg-surface-elevated p-4 sm:p-5 shadow-prompt-card transition-shadow duration-200 focus-within:ring-2 focus-within:ring-zinc-400/35 dark:focus-within:ring-white/15">
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              multiple
+              className="hidden"
+              onChange={handleFileChange}
+            />
+
+            {attachedImages.length > 0 && (
+              <div className="flex gap-2 pb-3 overflow-x-auto -mt-1">
+                {attachedImages.map((img) => (
+                  <div key={img.id} className="relative shrink-0 group">
+                    <img
+                      src={img.dataUrl}
+                      alt={img.name}
+                      className={`size-16 rounded-lg object-cover border border-b-secondary transition-opacity ${
+                        img.uploading
+                          ? "opacity-50"
+                          : img.error
+                            ? "opacity-40"
+                            : ""
+                      }`}
+                    />
+                    {img.uploading && (
+                      <div className="absolute inset-0 flex items-center justify-center rounded-lg">
+                        <svg
+                          width="20"
+                          height="20"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          className="animate-spin text-t-secondary"
+                        >
+                          <circle
+                            cx="12"
+                            cy="12"
+                            r="9"
+                            stroke="currentColor"
+                            strokeOpacity="0.25"
+                            strokeWidth="2.5"
+                          />
+                          <path
+                            d="M12 3a9 9 0 0 1 9 9"
+                            stroke="currentColor"
+                            strokeWidth="2.5"
+                            strokeLinecap="round"
+                          />
+                        </svg>
+                      </div>
+                    )}
+                    {img.error && !img.uploading && (
+                      <div className="absolute inset-0 flex items-center justify-center rounded-lg">
+                        <span className="text-[10px] font-medium text-red-500 bg-surface-elevated/80 rounded px-1">
+                          Failed
+                        </span>
+                      </div>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => removeImage(img.id)}
+                      className="absolute -top-1.5 -right-1.5 flex size-5 items-center justify-center rounded-full bg-surface-elevated border border-b-secondary text-t-tertiary shadow-sm transition-colors hover:text-t-primary"
+                      aria-label={`Remove ${img.name}`}
+                    >
+                      <svg
+                        width="10"
+                        height="10"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2.5"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <path d="M18 6L6 18M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+
             <textarea
               value={promptText}
               onChange={(e) => setPromptText(e.target.value)}
+              onPaste={user ? handlePaste : undefined}
               placeholder="Describe your app idea... e.g. A fitness tracker with dark theme, weekly progress charts, and bottom nav"
               className="w-full bg-transparent text-t-primary placeholder-t-tertiary resize-none focus:outline-none text-[14px] sm:text-[15px] leading-relaxed min-h-[100px] sm:min-h-[140px]"
               rows={4}
@@ -181,24 +298,21 @@ export function Hero() {
               <div className="flex items-center gap-2">
                 <button
                   type="button"
-                  className="flex items-center justify-center rounded-lg p-2 text-t-tertiary hover:text-t-secondary hover:bg-input-bg transition-colors"
-                  aria-label="Attach file"
-                  title="Attach"
+                  onClick={handleAttachClick}
+                  className="inline-flex size-7 items-center justify-center rounded-md text-t-tertiary hover:text-t-secondary hover:bg-surface-sunken dark:hover:bg-white/[0.06] transition-colors"
+                  aria-label={user ? "Attach image" : "Sign in to attach image"}
+                  title={user ? "Attach image" : "Sign in to attach image"}
                 >
-                  <svg
-                    aria-hidden="true"
-                    width="16"
-                    height="16"
-                    viewBox="0 0 256 256"
-                    fill="currentColor"
-                  >
-                    <path d="M224,128a8,8,0,0,1-8,8H136v80a8,8,0,0,1-16,0V136H40a8,8,0,0,1,0-16h80V40a8,8,0,0,1,16,0v80h80A8,8,0,0,1,224,128Z" />
-                  </svg>
+                  <ImageIcon className="size-[15px]" />
                 </button>
               </div>
               <button
                 onClick={handleGenerate}
-                disabled={creating || !promptText.trim()}
+                disabled={
+                  creating ||
+                  hasUploadingImages ||
+                  (!promptText.trim() && getUploadedUrls().length === 0)
+                }
                 className="inline-flex h-9 items-center gap-2 px-5 rounded-lg bg-btn-primary-bg text-sm font-semibold text-btn-primary-text hover:opacity-90 transition-colors disabled:opacity-50"
               >
                 {creating ? (

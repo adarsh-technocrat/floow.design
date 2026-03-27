@@ -23,7 +23,11 @@ import { toast } from "sonner";
 const btnClass =
   "inline-flex items-center justify-center gap-1.5 rounded-md px-2.5 py-1.5 text-[11px] font-mono font-medium uppercase tracking-wider text-t-secondary transition-colors hover:bg-input-bg hover:text-t-primary disabled:pointer-events-none disabled:opacity-40";
 
-export function CanvasTopRight() {
+type CanvasTopRightProps = {
+  compact?: boolean;
+};
+
+export function CanvasTopRight({ compact = false }: CanvasTopRightProps) {
   const router = useRouter();
   const params = useParams();
   const projectId = (params?.id ?? params?.projectId) as string | undefined;
@@ -39,7 +43,10 @@ export function CanvasTopRight() {
   useEffect(() => {
     if (!profileOpen) return;
     const handler = (e: MouseEvent) => {
-      if (profileRef.current && !profileRef.current.contains(e.target as Node)) {
+      if (
+        profileRef.current &&
+        !profileRef.current.contains(e.target as Node)
+      ) {
         setProfileOpen(false);
       }
     };
@@ -61,7 +68,9 @@ export function CanvasTopRight() {
     if (!projectId) return;
     const url = `${window.location.origin}/project/${projectId}`;
     navigator.clipboard.writeText(url);
-    toast.success("Project link copied to clipboard", { position: "top-center" });
+    toast.success("Project link copied to clipboard", {
+      position: "top-center",
+    });
   };
 
   // Upgrade — go to pricing
@@ -70,32 +79,68 @@ export function CanvasTopRight() {
   };
 
   return (
-    <div className="absolute right-0 top-0 z-10 flex h-12 items-center gap-1 px-4">
-      <button type="button" className={btnClass} title="Preview" onClick={handlePreview}>
+    <div
+      className={`absolute right-0 top-0 z-20 flex items-center gap-1 ${
+        compact ? "h-9 px-2" : "h-12 px-4"
+      }`}
+    >
+      <button
+        type="button"
+        className={
+          compact
+            ? "inline-flex size-7 items-center justify-center rounded-md text-t-secondary transition-colors hover:bg-input-bg hover:text-t-primary disabled:pointer-events-none disabled:opacity-40"
+            : btnClass
+        }
+        title="Preview"
+        onClick={handlePreview}
+      >
         <Eye className="size-3.5" />
-        <span>Preview</span>
+        {!compact && <span>Preview</span>}
       </button>
-
-      <button type="button" className={btnClass} title="Share" onClick={handleShare}>
-        <Share2 className="size-3.5" />
-        <span>Share</span>
-      </button>
-
-      <div className="mx-1 h-4 w-px bg-b-primary" />
 
       <button
         type="button"
-        className="inline-flex items-center gap-1.5 rounded-md border border-b-secondary px-3 py-1.5 text-[11px] font-mono font-semibold uppercase tracking-wider text-t-primary hover:bg-input-bg transition-colors"
-        title="Upgrade"
-        onClick={handleUpgrade}
+        className={
+          compact
+            ? "inline-flex size-7 items-center justify-center rounded-md text-t-secondary transition-colors hover:bg-input-bg hover:text-t-primary disabled:pointer-events-none disabled:opacity-40"
+            : btnClass
+        }
+        title="Share"
+        onClick={handleShare}
       >
-        <Crown className="size-3.5" />
-        <span>Upgrade</span>
+        <Share2 className="size-3.5" />
+        {!compact && <span>Share</span>}
       </button>
 
       <div className="mx-1 h-4 w-px bg-b-primary" />
 
-      <ThemeToggleCompact />
+      {compact ? (
+        <button
+          type="button"
+          className="inline-flex h-7 items-center gap-1 rounded-md border border-b-secondary px-2.5 text-[10px] font-mono font-semibold uppercase tracking-wider text-t-primary transition-colors hover:bg-input-bg"
+          title="Buy Credits"
+          onClick={handleUpgrade}
+        >
+          <Crown className="size-3.5" />
+          <span>Buy Credits</span>
+        </button>
+      ) : (
+        <button
+          type="button"
+          className="inline-flex items-center gap-1.5 rounded-md border border-b-secondary px-3 py-1.5 text-[11px] font-mono font-semibold uppercase tracking-wider text-t-primary hover:bg-input-bg transition-colors"
+          title="Upgrade"
+          onClick={handleUpgrade}
+        >
+          <Crown className="size-3.5" />
+          <span>Upgrade</span>
+        </button>
+      )}
+
+      <div className="mx-1 h-4 w-px bg-b-primary" />
+
+      <div className={compact ? "scale-[0.95]" : ""}>
+        <ThemeToggleCompact />
+      </div>
 
       {/* Profile button + dropdown */}
       <div className="relative" ref={profileRef}>
@@ -106,7 +151,12 @@ export function CanvasTopRight() {
           aria-label="User profile"
         >
           {user?.photoURL ? (
-            <Avatar src={user.photoURL} email={user.email} name={user.displayName} size={32} />
+            <Avatar
+              src={user.photoURL}
+              email={user.email}
+              name={user.displayName}
+              size={32}
+            />
           ) : (
             <UserIcon className="size-4" />
           )}
@@ -139,28 +189,40 @@ export function CanvasTopRight() {
             {/* Menu items */}
             <div className="py-1">
               <button
-                onClick={() => { setProfileOpen(false); router.push("/dashboard"); }}
+                onClick={() => {
+                  setProfileOpen(false);
+                  router.push("/dashboard");
+                }}
                 className="flex w-full items-center gap-2.5 px-4 py-2.5 text-[13px] text-t-secondary transition-colors hover:bg-input-bg hover:text-t-primary"
               >
                 <LayoutDashboard className="size-4" />
                 Dashboard
               </button>
               <button
-                onClick={() => { setProfileOpen(false); router.push("/team"); }}
+                onClick={() => {
+                  setProfileOpen(false);
+                  router.push("/team");
+                }}
                 className="flex w-full items-center gap-2.5 px-4 py-2.5 text-[13px] text-t-secondary transition-colors hover:bg-input-bg hover:text-t-primary"
               >
                 <Users className="size-4" />
                 Team
               </button>
               <button
-                onClick={() => { setProfileOpen(false); router.push("/billing"); }}
+                onClick={() => {
+                  setProfileOpen(false);
+                  router.push("/billing");
+                }}
                 className="flex w-full items-center gap-2.5 px-4 py-2.5 text-[13px] text-t-secondary transition-colors hover:bg-input-bg hover:text-t-primary"
               >
                 <CreditCard className="size-4" />
                 Billing
               </button>
               <button
-                onClick={() => { setProfileOpen(false); router.push("/account"); }}
+                onClick={() => {
+                  setProfileOpen(false);
+                  router.push("/account");
+                }}
                 className="flex w-full items-center gap-2.5 px-4 py-2.5 text-[13px] text-t-secondary transition-colors hover:bg-input-bg hover:text-t-primary"
               >
                 <Settings className="size-4" />

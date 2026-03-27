@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 
 export function StartNow() {
@@ -13,20 +14,16 @@ export function StartNow() {
         <span aria-hidden className="h-px min-w-8 flex-1 bg-b-secondary" />
       </div>
 
-      <div className="relative mx-5 border border-b-secondary">
-        {/* Line grid — matches Features section */}
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-0 opacity-[0.55] dark:opacity-[0.7]"
-          style={{
-            backgroundImage: `
-              linear-gradient(to right, var(--border-secondary) 1px, transparent 1px),
-              linear-gradient(to bottom, var(--border-secondary) 1px, transparent 1px)
-            `,
-            backgroundSize: "52px 52px",
-          }}
+      <div className="relative mx-5 flex min-h-[min(88vw,520px)] items-center overflow-hidden border border-b-secondary bg-surface sm:min-h-[420px] md:min-h-[460px]">
+        <Image
+          src="/landing/get-started-bg.png"
+          alt=""
+          fill
+          className="pointer-events-none object-contain object-bottom-right"
+          sizes="(max-width: 1280px) calc(100vw - 2.5rem), 1200px"
         />
-        <div className="relative z-1 px-4 py-14 sm:px-5 sm:py-20 md:py-28">
+
+        <div className="relative z-10 w-full px-4 py-14 sm:px-5 sm:py-20 md:py-28">
           <div className="mx-auto max-w-xl text-center">
             <h2
               className="text-2xl sm:text-3xl md:text-[44px] font-semibold tracking-tight leading-[1.1] text-t-primary"
@@ -36,7 +33,14 @@ export function StartNow() {
             >
               Ready to design your
               <br />
-              <span className="text-t-secondary">next mobile app?</span>
+              <span
+                className="text-t-secondary font-normal"
+                style={{
+                  fontFamily: "var(--font-pixel), 'Silkscreen', monospace",
+                }}
+              >
+                next mobile app?
+              </span>
             </h2>
 
             <p className="mt-5 text-sm md:text-base text-t-secondary max-w-sm mx-auto leading-relaxed">
@@ -53,7 +57,7 @@ export function StartNow() {
               </Link>
               <Link
                 href="/pricing"
-                className="inline-flex h-10 items-center px-6 rounded border border-b-secondary text-[11px] font-semibold uppercase tracking-wider text-t-secondary hover:text-t-primary transition-colors no-underline font-mono"
+                className="inline-flex h-10 items-center px-6 rounded border border-b-strong bg-surface-elevated text-[11px] font-semibold uppercase tracking-wider text-t-primary shadow-sm transition-colors hover:bg-surface-sunken dark:border-white/25 dark:shadow-[0_1px_2px_rgba(0,0,0,0.45)] dark:hover:bg-white/6 no-underline font-mono"
               >
                 View pricing
               </Link>
