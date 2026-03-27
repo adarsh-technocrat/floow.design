@@ -12,6 +12,7 @@ export { FramePreview } from "./FramePreview";
 export { FrameToolbar } from "./FrameToolbar";
 export { NoteToolbar } from "./NoteToolbar";
 export { PricingDialog } from "./PricingDialog";
+export { ProjectCardShimmer } from "./ProjectCardShimmer";
 export { ProjectFramePreview } from "./ProjectFramePreview";
 export { ProjectLoader } from "./ProjectLoader";
 export { SeatPicker } from "./SeatPicker";

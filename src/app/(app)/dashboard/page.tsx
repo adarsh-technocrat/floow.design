@@ -23,6 +23,7 @@ import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { ProjectFramePreview } from "@/components/ProjectFramePreview";
 import http from "@/lib/http";
 import { useImageAttachments } from "@/hooks/useImageAttachments";
+import { ProjectCardShimmer } from "@/components/ProjectCardShimmer";
 
 interface _Project {
   id: string;
@@ -1530,6 +1531,16 @@ export default function DashboardPage() {
                     ))}
                   </div>
                 </motion.div>
+
+                {loading && projects.length === 0 && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.3, duration: 0.5 }}
+                  >
+                    <ProjectCardShimmer count={6} />
+                  </motion.div>
+                )}
 
                 {projects.length > 0 && (
                   <motion.div
