@@ -1,0 +1,12 @@
+export { FAQ } from "./FAQ";
+export { FeaturesGrid } from "./FeaturesGrid";
+export { Footer } from "./Footer";
+export { Header } from "./Header";
+export { Hero } from "./Hero";
+export { Logo } from "./Logo";
+export { ProductDemo } from "./ProductDemo";
+export { PromptCTA } from "./PromptCTA";
+export { StartNow } from "./StartNow";
+export { Testimonials } from "./Testimonials";
+export { TemplatesCarousel } from "./TemplatesCarousel";
+export { BlogPromptCTA } from "./BlogPromptCTA";

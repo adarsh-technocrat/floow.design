@@ -1,0 +1,21 @@
+// Core canvas components
+export { AgentCursors } from "./AgentCursors";
+export { AgentShutterOverlays } from "./AgentShutterOverlay";
+export { AuthGuard } from "./AuthGuard";
+export { Canvas } from "./Canvas";
+export { CellProgressLoader } from "./CellProgressLoader";
+export { CodeDialog } from "./CodeDialog";
+export { ConfirmDialog } from "./ConfirmDialog";
+export type { ConfirmDialogProps, ConfirmDialogVariant } from "./ConfirmDialog";
+export { Frame } from "./Frame";
+export { FramePreview } from "./FramePreview";
+export { FrameToolbar } from "./FrameToolbar";
+export { NoteToolbar } from "./NoteToolbar";
+export { PricingDialog } from "./PricingDialog";
+export { ProjectFramePreview } from "./ProjectFramePreview";
+export { ProjectLoader } from "./ProjectLoader";
+export { SeatPicker } from "./SeatPicker";
+export { StickyNote } from "./StickyNote";
+export type { StickyNoteProps } from "./StickyNote";
+export { ThemeProvider } from "./ThemeProvider";
+export { ThemeToggle, ThemeToggleCompact } from "./ThemeToggle";
