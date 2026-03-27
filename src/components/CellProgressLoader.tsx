@@ -18,18 +18,18 @@ export function CellProgressLoader() {
   return (
     <div className="flex flex-col items-center gap-5">
       <span
-        className="text-lg font-bold tracking-tight text-t-primary"
+        className="text-2xl font-bold tracking-tight text-t-primary"
         style={{
           fontFamily: "var(--font-logo), 'Space Grotesk', sans-serif",
         }}
       >
         floow<span className="text-t-secondary">.design</span>
       </span>
-      <div className="flex items-center gap-1">
+      <div className="flex items-center gap-1.5">
         {Array.from({ length: CELL_COUNT }).map((_, i) => (
           <div
             key={i}
-            className="h-2.5 w-5 rounded-[3px] transition-colors duration-150"
+            className="h-3.5 w-7 rounded transition-colors duration-150"
             style={{
               backgroundColor:
                 i < filledCount
