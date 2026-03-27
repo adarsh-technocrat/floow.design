@@ -1556,9 +1556,9 @@ export default function DashboardPage() {
                           <div className="relative aspect-[16/9] w-full min-h-0 border-b border-b-secondary/80 bg-surface-sunken">
                             {duplicatingId === project.id && (
                               <div className="absolute inset-0 z-20 flex items-center justify-center bg-surface-sunken/80 backdrop-blur-sm">
-                                <div className="flex items-center gap-2 rounded-lg bg-surface-elevated px-3 py-2 shadow-md border border-b-secondary">
-                                  <div className="size-4 animate-spin rounded-full border-2 border-t-primary border-r-transparent border-b-t-tertiary/30 border-l-transparent" />
-                                  <span className="text-xs font-medium text-t-secondary">
+                                <div className="flex flex-col items-center gap-3">
+                                  <div className="size-8 animate-spin rounded-full border-[3px] border-t-primary border-r-transparent border-b-t-tertiary/30 border-l-transparent" />
+                                  <span className="text-sm font-medium text-t-secondary">
                                     Duplicating...
                                   </span>
                                 </div>
