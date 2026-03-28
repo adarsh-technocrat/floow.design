@@ -3,7 +3,6 @@ import { Webhook } from "svix";
 import { resend } from "@/lib/email/client";
 
 const WEBHOOK_SECRET = process.env.RESEND_WEBHOOK_SECRET;
-const AUDIENCE_ID = process.env.RESEND_AUDIENCE_ID;
 
 interface ResendWebhookPayload {
   type: string;
@@ -24,7 +23,7 @@ function getRecipientEmail(data: ResendWebhookPayload["data"]): string | null {
 }
 
 export async function POST(req: NextRequest) {
-  if (!WEBHOOK_SECRET || !AUDIENCE_ID) {
+  if (!WEBHOOK_SECRET) {
     return NextResponse.json(
       { error: "Webhook not configured" },
       { status: 500 },
@@ -62,28 +61,18 @@ export async function POST(req: NextRequest) {
   try {
     switch (payload.type) {
       case "email.delivered": {
-        // Add to audience on successful delivery
+        // Add contact on successful delivery
         await resend.contacts.create({
-          audienceId: AUDIENCE_ID,
           email,
           unsubscribed: false,
         });
         break;
       }
 
-      case "email.bounced": {
-        // Remove bounced contacts from audience
-        await resend.contacts.remove({
-          audienceId: AUDIENCE_ID,
-          email,
-        });
-        break;
-      }
-
+      case "email.bounced":
       case "email.complained": {
-        // Unsubscribe contacts who marked as spam
+        // Unsubscribe bounced or spam-reported contacts
         await resend.contacts.update({
-          audienceId: AUDIENCE_ID,
           id: email,
           unsubscribed: true,
         });
@@ -91,7 +80,7 @@ export async function POST(req: NextRequest) {
       }
     }
   } catch {
-    // Silent fail — audience sync is non-critical
+    // Silent fail — contact sync is non-critical
   }
 
   return NextResponse.json({ ok: true });
