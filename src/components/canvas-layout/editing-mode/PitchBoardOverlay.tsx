@@ -308,10 +308,12 @@ export function PitchBoardOverlay({
       ? `${window.location.origin}/pitch/${projectId}`
       : "";
 
+  const viewOnlyUrl = pitchUrl ? `${pitchUrl}?view=1` : "";
+
   const copyPitchLink = () => {
-    if (!pitchUrl) return;
-    void navigator.clipboard.writeText(pitchUrl).then(() => {
-      toast.success("Pitch link copied");
+    if (!viewOnlyUrl) return;
+    void navigator.clipboard.writeText(viewOnlyUrl).then(() => {
+      toast.success("View-only link copied");
     });
   };
 

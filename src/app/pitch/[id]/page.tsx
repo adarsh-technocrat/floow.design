@@ -1,9 +1,25 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useParams } from "next/navigation";
+import {
+  Suspense,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
+import { useParams, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { ChevronDown, Copy, Eye, EyeOff, Tv } from "lucide-react";
+import {
+  ChevronDown,
+  Copy,
+  Eye,
+  EyeOff,
+  MessageCircle,
+  Send,
+  Tv,
+} from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 import { toast, Toaster } from "sonner";
 import {
   extractBodyContent,
@@ -122,6 +138,121 @@ function ScreenPreview({
   );
 }
 
+interface PitchComment {
+  id: string;
+  slotIndex: number;
+  author: string;
+  body: string;
+  createdAt: string;
+}
+
+function CommentSection({
+  projectId,
+  slotIndex,
+  comments,
+  onCommentAdded,
+}: {
+  projectId: string;
+  slotIndex: number;
+  comments: PitchComment[];
+  onCommentAdded: (c: PitchComment) => void;
+}) {
+  const { user } = useAuth();
+  const [body, setBody] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const slotComments = comments.filter((c) => c.slotIndex === slotIndex);
+
+  const handleSubmit = async () => {
+    if (!body.trim() || !user || submitting) return;
+    setSubmitting(true);
+    try {
+      const res = await fetch(`/api/pitch/${projectId}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          slotIndex,
+          author: user.displayName || user.email || "Anonymous",
+          body: body.trim(),
+        }),
+      });
+      if (!res.ok) throw new Error("Failed");
+      const data = await res.json();
+      onCommentAdded(data.comment);
+      setBody("");
+    } catch {
+      toast.error("Failed to post comment");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <div className="flex flex-col gap-3">
+      <p className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.1em] text-zinc-400 dark:text-zinc-500">
+        <MessageCircle className="size-3.5" />
+        Feedback ({slotComments.length})
+      </p>
+
+      {slotComments.map((c) => (
+        <div
+          key={c.id}
+          className="rounded-lg border border-zinc-100 bg-zinc-50/80 px-3 py-2.5 dark:border-zinc-800 dark:bg-zinc-900/50"
+        >
+          <div className="flex items-center gap-2">
+            <span className="text-[12px] font-semibold text-zinc-700 dark:text-zinc-200">
+              {c.author}
+            </span>
+            <span className="text-[10px] text-zinc-400 dark:text-zinc-500">
+              {new Date(c.createdAt).toLocaleDateString("en-US", {
+                month: "short",
+                day: "numeric",
+                hour: "numeric",
+                minute: "2-digit",
+              })}
+            </span>
+          </div>
+          <p className="mt-1 text-[13px] leading-relaxed text-zinc-600 dark:text-zinc-300">
+            {c.body}
+          </p>
+        </div>
+      ))}
+
+      {user ? (
+        <div className="flex gap-2">
+          <textarea
+            value={body}
+            onChange={(e) => setBody(e.target.value)}
+            placeholder="Leave feedback…"
+            rows={2}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+                e.preventDefault();
+                void handleSubmit();
+              }
+            }}
+            className="flex-1 resize-none rounded-lg border border-zinc-200 bg-white px-3 py-2 text-[13px] text-zinc-800 placeholder:text-zinc-400 outline-none focus:border-zinc-300 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:placeholder:text-zinc-500"
+          />
+          <button
+            type="button"
+            disabled={!body.trim() || submitting}
+            onClick={() => void handleSubmit()}
+            className="flex shrink-0 items-center justify-center rounded-lg bg-zinc-900 px-3 text-white transition-opacity hover:opacity-90 disabled:opacity-40 dark:bg-white dark:text-zinc-900"
+          >
+            <Send className="size-4" />
+          </button>
+        </div>
+      ) : (
+        <Link
+          href="/signin"
+          className="text-[12px] text-zinc-500 underline hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"
+        >
+          Sign in to leave feedback
+        </Link>
+      )}
+    </div>
+  );
+}
+
 function ConceptColumn({
   index,
   slot,
@@ -129,6 +260,10 @@ function ConceptColumn({
   frames,
   onUpdate,
   onToggleHidden,
+  viewOnly,
+  projectId,
+  comments,
+  onCommentAdded,
 }: {
   index: number;
   slot: SlotState;
@@ -136,6 +271,10 @@ function ConceptColumn({
   frames: PitchFrame[];
   onUpdate: (index: number, changes: Partial<SlotState>) => void;
   onToggleHidden: (index: number) => void;
+  viewOnly: boolean;
+  projectId: string;
+  comments: PitchComment[];
+  onCommentAdded: (c: PitchComment) => void;
 }) {
   const label = `Concept ${index + 1}`;
   const theme = slot.themeId
@@ -200,89 +339,122 @@ function ConceptColumn({
         </div>
       </div>
 
-      <div className="flex overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-[0_1px_2px_rgba(0,0,0,0.04)] dark:border-zinc-700 dark:bg-zinc-900">
-        <div className="flex min-w-0 flex-1 flex-col sm:flex-row">
-          <div className="relative min-w-0 flex-1 border-b border-zinc-100 sm:border-b-0 sm:border-r dark:border-zinc-800">
-            <span className="pointer-events-none absolute left-3 top-1/2 z-[1] hidden -translate-y-1/2 text-[11px] font-medium text-zinc-400 sm:block">
+      {viewOnly ? (
+        <>
+          <div className="rounded-xl border border-zinc-200 bg-white px-4 py-3 dark:border-zinc-700 dark:bg-zinc-900">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-zinc-400 dark:text-zinc-500">
               {label}
-            </span>
-            <select
-              disabled={themes.length === 0}
-              value={slot.themeId ?? ""}
-              onChange={(e) =>
-                onUpdate(index, { themeId: e.target.value || null })
-              }
-              className="h-11 w-full cursor-pointer appearance-none bg-transparent py-2 pl-3 pr-9 text-[13px] font-medium text-zinc-800 outline-none disabled:cursor-not-allowed disabled:opacity-45 dark:text-zinc-100 sm:pl-22"
-              aria-label={`${label} theme`}
-            >
-              <option value="">
-                {themes.length > 0 ? "Select theme…" : "No themes"}
-              </option>
-              {themes.map((t) => (
-                <option key={t.id} value={t.id}>
-                  {t.name}
-                </option>
-              ))}
-            </select>
-            <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 size-4 -translate-y-1/2 text-zinc-400" />
-          </div>
-          <div className="relative min-w-28 shrink-0">
-            <select
-              disabled={themes.length === 0 || !theme}
-              value={
-                variantNames.includes(slot.variantName)
-                  ? slot.variantName
-                  : (variantNames[0] ?? "light")
-              }
-              onChange={(e) => onUpdate(index, { variantName: e.target.value })}
-              className="h-11 w-full cursor-pointer appearance-none bg-transparent py-2 pl-3 pr-9 text-[12px] font-medium text-zinc-600 outline-none disabled:cursor-not-allowed disabled:opacity-45 dark:text-zinc-300"
-              aria-label={`${label} variant`}
-            >
-              {variantNames.length === 0 ? (
-                <option value="">—</option>
-              ) : (
-                variantNames.map((v) => (
-                  <option key={v} value={v}>
-                    {v}
-                  </option>
-                ))
+              {theme && (
+                <span className="ml-2 normal-case tracking-normal font-medium text-zinc-600 dark:text-zinc-300">
+                  — {theme.name}
+                  {variant !== "light" ? ` (${variant})` : ""}
+                </span>
               )}
-            </select>
-            <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 size-4 -translate-y-1/2 text-zinc-400" />
+            </p>
+            {slot.description && (
+              <p className="mt-2 text-[13px] leading-relaxed text-zinc-700 dark:text-zinc-200">
+                {slot.description}
+              </p>
+            )}
           </div>
-        </div>
-        <button
-          type="button"
-          onClick={() => onToggleHidden(index)}
-          className="flex w-11 shrink-0 items-center justify-center border-l border-zinc-200 text-zinc-500 transition-colors hover:bg-zinc-50 hover:text-zinc-800 dark:border-zinc-700 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
-          title={slot.hidden ? "Show concept" : "Hide concept"}
-        >
-          {slot.hidden ? (
-            <EyeOff className="size-[18px]" strokeWidth={1.75} />
-          ) : (
-            <Eye className="size-[18px]" strokeWidth={1.75} />
-          )}
-        </button>
-      </div>
-
-      <textarea
-        value={slot.description}
-        onChange={(e) => onUpdate(index, { description: e.target.value })}
-        placeholder="Add a description…"
-        rows={3}
-        className="w-full resize-y rounded-xl border border-zinc-200 bg-zinc-50/80 px-3.5 py-3 text-[13px] leading-relaxed text-zinc-800 placeholder:text-zinc-400 outline-none transition-shadow focus:border-zinc-300 focus:shadow-[0_0_0_3px_rgba(0,0,0,0.04)] dark:border-zinc-700 dark:bg-zinc-900/50 dark:text-zinc-100 dark:placeholder:text-zinc-500 dark:focus:border-zinc-600"
-      />
+          <CommentSection
+            projectId={projectId}
+            slotIndex={index}
+            comments={comments}
+            onCommentAdded={onCommentAdded}
+          />
+        </>
+      ) : (
+        <>
+          <div className="flex overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-[0_1px_2px_rgba(0,0,0,0.04)] dark:border-zinc-700 dark:bg-zinc-900">
+            <div className="flex min-w-0 flex-1 flex-col sm:flex-row">
+              <div className="relative min-w-0 flex-1 border-b border-zinc-100 sm:border-b-0 sm:border-r dark:border-zinc-800">
+                <span className="pointer-events-none absolute left-3 top-1/2 z-[1] hidden -translate-y-1/2 text-[11px] font-medium text-zinc-400 sm:block">
+                  {label}
+                </span>
+                <select
+                  disabled={themes.length === 0}
+                  value={slot.themeId ?? ""}
+                  onChange={(e) =>
+                    onUpdate(index, { themeId: e.target.value || null })
+                  }
+                  className="h-11 w-full cursor-pointer appearance-none bg-transparent py-2 pl-3 pr-9 text-[13px] font-medium text-zinc-800 outline-none disabled:cursor-not-allowed disabled:opacity-45 dark:text-zinc-100 sm:pl-22"
+                  aria-label={`${label} theme`}
+                >
+                  <option value="">
+                    {themes.length > 0 ? "Select theme…" : "No themes"}
+                  </option>
+                  {themes.map((t) => (
+                    <option key={t.id} value={t.id}>
+                      {t.name}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 size-4 -translate-y-1/2 text-zinc-400" />
+              </div>
+              <div className="relative min-w-28 shrink-0">
+                <select
+                  disabled={themes.length === 0 || !theme}
+                  value={
+                    variantNames.includes(slot.variantName)
+                      ? slot.variantName
+                      : (variantNames[0] ?? "light")
+                  }
+                  onChange={(e) =>
+                    onUpdate(index, { variantName: e.target.value })
+                  }
+                  className="h-11 w-full cursor-pointer appearance-none bg-transparent py-2 pl-3 pr-9 text-[12px] font-medium text-zinc-600 outline-none disabled:cursor-not-allowed disabled:opacity-45 dark:text-zinc-300"
+                  aria-label={`${label} variant`}
+                >
+                  {variantNames.length === 0 ? (
+                    <option value="">—</option>
+                  ) : (
+                    variantNames.map((v) => (
+                      <option key={v} value={v}>
+                        {v}
+                      </option>
+                    ))
+                  )}
+                </select>
+                <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 size-4 -translate-y-1/2 text-zinc-400" />
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => onToggleHidden(index)}
+              className="flex w-11 shrink-0 items-center justify-center border-l border-zinc-200 text-zinc-500 transition-colors hover:bg-zinc-50 hover:text-zinc-800 dark:border-zinc-700 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
+              title={slot.hidden ? "Show concept" : "Hide concept"}
+            >
+              {slot.hidden ? (
+                <EyeOff className="size-[18px]" strokeWidth={1.75} />
+              ) : (
+                <Eye className="size-[18px]" strokeWidth={1.75} />
+              )}
+            </button>
+          </div>
+          <textarea
+            value={slot.description}
+            onChange={(e) => onUpdate(index, { description: e.target.value })}
+            placeholder="Add a description…"
+            rows={3}
+            className="w-full resize-y rounded-xl border border-zinc-200 bg-zinc-50/80 px-3.5 py-3 text-[13px] leading-relaxed text-zinc-800 placeholder:text-zinc-400 outline-none transition-shadow focus:border-zinc-300 focus:shadow-[0_0_0_3px_rgba(0,0,0,0.04)] dark:border-zinc-700 dark:bg-zinc-900/50 dark:text-zinc-100 dark:placeholder:text-zinc-500 dark:focus:border-zinc-600"
+          />
+        </>
+      )}
     </div>
   );
 }
 
-export default function PitchPage() {
+function PitchPageInner() {
   const params = useParams();
+  const searchParams = useSearchParams();
   const projectId = params?.id as string;
+  const viewOnly = searchParams.get("view") === "1";
 
   const [projectName, setProjectName] = useState<string | null>(null);
   const [frames, setFrames] = useState<PitchFrame[]>([]);
   const [themes, setThemes] = useState<PitchTheme[]>([]);
+  const [comments, setComments] = useState<PitchComment[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [slots, setSlots] = useState<SlotState[]>(
@@ -313,6 +485,7 @@ export default function PitchPage() {
         if (Array.isArray(data.slots) && data.slots.length === SLOT_COUNT) {
           setSlots(data.slots);
         }
+        setComments(data.comments ?? []);
         initialLoadDone.current = true;
       })
       .catch((e) => {
@@ -361,11 +534,16 @@ export default function PitchPage() {
     });
   };
 
+  const handleCommentAdded = (c: PitchComment) => {
+    setComments((prev) => [...prev, c]);
+  };
+
   const copyLink = () => {
-    const url = typeof window !== "undefined" ? window.location.href : "";
-    if (!url) return;
+    if (typeof window === "undefined") return;
+    const base = `${window.location.origin}/pitch/${projectId}`;
+    const url = `${base}?view=1`;
     void navigator.clipboard.writeText(url).then(() => {
-      toast.success("Link copied");
+      toast.success("View-only link copied");
     });
   };
 
@@ -452,8 +630,9 @@ export default function PitchPage() {
             </h1>
           </div>
           <p className="max-w-[280px] text-[13px] leading-relaxed text-zinc-500 lg:pt-7 dark:text-zinc-400">
-            Choose three distinct theme directions and compare them side by side
-            before committing.
+            {viewOnly
+              ? "Review the design concepts below and leave your feedback."
+              : "Choose three distinct theme directions and compare them side by side before committing."}
           </p>
         </div>
 
@@ -475,10 +654,22 @@ export default function PitchPage() {
               frames={frames}
               onUpdate={updateSlot}
               onToggleHidden={toggleHidden}
+              viewOnly={viewOnly}
+              projectId={projectId}
+              comments={comments}
+              onCommentAdded={handleCommentAdded}
             />
           ))}
         </div>
       </div>
     </div>
+  );
+}
+
+export default function PitchPage() {
+  return (
+    <Suspense>
+      <PitchPageInner />
+    </Suspense>
   );
 }
