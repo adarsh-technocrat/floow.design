@@ -18,6 +18,9 @@ import { createTools, type FrameState } from "@/lib/agent/tools";
 import { buildImageContext } from "@/lib/agent/image-gen";
 import { runPlanningPipeline } from "@/lib/agent/planner";
 import { getAuthenticatedUserId } from "@/lib/auth";
+import { prisma, ensureProject, ensureUser } from "@/lib/db";
+import { normalizeIncomingMessages } from "@/lib/chat-session";
+import { Prisma } from "@prisma/client";
 
 export const runtime = "nodejs";
 
@@ -340,6 +343,43 @@ export async function POST(req: Request) {
           }),
         );
         writer.merge(filteredStream);
+
+        // Persist conversation to DB after streaming completes
+        if (projectId) {
+          Promise.resolve(result.text)
+            .then(async (assistantText) => {
+              const assistantMsg = {
+                id: messageId,
+                role: "assistant" as const,
+                content: assistantText,
+                parts: [{ type: "text" as const, text: assistantText }],
+              };
+              const allMessages = [...rawMessages, assistantMsg];
+              const normalized = normalizeIncomingMessages(allMessages);
+              const messagesJson = JSON.parse(
+                JSON.stringify(normalized),
+              ) as Prisma.InputJsonValue;
+
+              await ensureUser(userId);
+              await ensureProject(projectId);
+
+              await prisma.chatSession.upsert({
+                where: {
+                  projectId_userId: { projectId, userId },
+                },
+                create: {
+                  projectId,
+                  userId,
+                  messages: messagesJson,
+                  isActive: true,
+                },
+                update: {
+                  messages: messagesJson,
+                },
+              });
+            })
+            .catch(() => {});
+        }
       },
     });
 
