@@ -157,6 +157,8 @@ export default async function BlogPostPage({ params }: PageProps) {
             <img
               src={fm.coverImage}
               alt={fm.title}
+              width={1200}
+              height={630}
               className="w-full h-[240px] sm:h-[320px] md:h-[420px] object-cover"
             />
           </div>

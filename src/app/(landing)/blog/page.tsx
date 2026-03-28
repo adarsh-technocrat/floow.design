@@ -140,6 +140,8 @@ export default async function BlogPage() {
                       <img
                         src={post.frontmatter.coverImage}
                         alt={post.frontmatter.title}
+                        width={640}
+                        height={400}
                         className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
                         loading="lazy"
                       />

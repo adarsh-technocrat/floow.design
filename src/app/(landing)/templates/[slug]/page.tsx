@@ -75,19 +75,46 @@ export default async function TemplateDetailPage({ params }: PageProps) {
 
   const templateJsonLd = {
     "@context": "https://schema.org",
-    "@type": "CreativeWork",
-    name: template.name,
-    description:
-      template.templateDesc ||
-      `${template.name} mobile app template with ${screenCount} screens.`,
-    url: `https://www.floow.design/templates/${slug}`,
-    creator: { "@type": "Organization", name: "floow.design" },
-    isAccessibleForFree: true,
-    provider: {
-      "@type": "Organization",
-      name: "floow.design",
-      url: "https://www.floow.design",
-    },
+    "@graph": [
+      {
+        "@type": "CreativeWork",
+        name: template.name,
+        description:
+          template.templateDesc ||
+          `${template.name} mobile app template with ${screenCount} screens.`,
+        url: `https://www.floow.design/templates/${slug}`,
+        creator: { "@type": "Organization", name: "floow.design" },
+        isAccessibleForFree: true,
+        provider: {
+          "@type": "Organization",
+          name: "floow.design",
+          url: "https://www.floow.design",
+        },
+      },
+      {
+        "@type": "BreadcrumbList",
+        itemListElement: [
+          {
+            "@type": "ListItem",
+            position: 1,
+            name: "Home",
+            item: "https://www.floow.design",
+          },
+          {
+            "@type": "ListItem",
+            position: 2,
+            name: "Templates",
+            item: "https://www.floow.design/templates",
+          },
+          {
+            "@type": "ListItem",
+            position: 3,
+            name: template.name,
+            item: `https://www.floow.design/templates/${slug}`,
+          },
+        ],
+      },
+    ],
   };
 
   return (

@@ -197,7 +197,10 @@ function SignInPageContent() {
     if (pendingTemplate) {
       sessionStorage.removeItem("pending_template");
       try {
-        const { data } = await http.post<{ id?: string }>("/api/templates/use", { templateId: pendingTemplate });
+        const { data } = await http.post<{ id?: string }>(
+          "/api/templates/use",
+          { templateId: pendingTemplate },
+        );
         if (data.id) {
           router.push(`/project/${data.id}`);
           return;
@@ -208,9 +211,13 @@ function SignInPageContent() {
     }
     if (pendingPrompt) {
       try {
-        const { data } = await http.post<{ id?: string }>("/api/projects", { name: pendingPrompt });
+        const { data } = await http.post<{ id?: string }>("/api/projects", {
+          name: pendingPrompt,
+        });
         if (data.id) {
-          router.push(`/project/${data.id}?prompt=${encodeURIComponent(pendingPrompt)}`);
+          router.push(
+            `/project/${data.id}?prompt=${encodeURIComponent(pendingPrompt)}`,
+          );
           return;
         }
       } catch {}
@@ -401,14 +408,14 @@ function SignInPageContent() {
           <p className="mt-8 text-center text-[11px] leading-relaxed text-t-tertiary">
             By continuing, you agree to our{" "}
             <a
-              href="#"
+              href="/terms"
               className="text-t-secondary hover:text-t-secondary no-underline"
             >
               Terms of Service
             </a>{" "}
             and{" "}
             <a
-              href="#"
+              href="/privacy"
               className="text-t-secondary hover:text-t-secondary no-underline"
             >
               Privacy Policy
