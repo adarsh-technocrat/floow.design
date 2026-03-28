@@ -1,0 +1,294 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum AuthProvider {
+  GOOGLE
+  GITHUB
+  APPLE
+  EMAIL
+}
+
+enum PlanType {
+  FREE
+  LITE
+  STARTER
+  PRO
+  TEAM
+}
+
+enum TeamRole {
+  OWNER
+  ADMIN
+  MEMBER
+}
+
+enum InviteStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+  EXPIRED
+}
+
+model User {
+  id                   String        @id
+  email                String?       @unique
+  displayName          String?
+  photoURL             String?
+  phoneNumber          String?
+  provider             AuthProvider?
+  stripeCustomerId     String?       @unique
+  stripeSubscriptionId String?
+  plan                 PlanType      @default(FREE)
+  billingInterval      String?
+  seats                Int           @default(1)
+  credits              Int           @default(0)
+  creditsResetAt       DateTime?
+  chatSessions         ChatSession[]
+  creditLogs           CreditLog[]
+  apiKeys              ApiKey[]
+  themes               Theme[]
+  ownedTeams           Team[]        @relation("TeamOwner")
+  teamMembers          TeamMember[]
+  sentInvites          TeamInvite[]  @relation("SentInvites")
+  createdAt            DateTime      @default(now())
+  updatedAt            DateTime      @updatedAt
+
+  @@index([stripeSubscriptionId])
+}
+
+model CreditLog {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  action    String
+  amount    Int
+  balance   Int
+  projectId String?
+  meta      String?
+  createdAt DateTime @default(now())
+
+  @@index([userId, createdAt(sort: Desc)])
+  @@index([userId, amount, createdAt])
+}
+
+model Team {
+  id                   String          @id @default(cuid())
+  name                 String
+  ownerId              String
+  owner                User            @relation("TeamOwner", fields: [ownerId], references: [id])
+  credits              Int             @default(0)
+  creditsResetAt       DateTime?
+  stripeSubscriptionId String?
+  billingInterval      String?
+  seats                Int             @default(1)
+  members              TeamMember[]
+  projects             Project[]
+  invites              TeamInvite[]
+  creditLogs           TeamCreditLog[]
+  createdAt            DateTime        @default(now())
+  updatedAt            DateTime        @updatedAt
+
+  @@index([ownerId])
+}
+
+model TeamMember {
+  id        String   @id @default(cuid())
+  teamId    String
+  team      Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role      TeamRole @default(MEMBER)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([teamId, userId])
+  @@index([userId])
+  @@index([teamId])
+}
+
+model TeamInvite {
+  id        String       @id @default(cuid())
+  teamId    String
+  team      Team         @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  email     String
+  role      TeamRole     @default(MEMBER)
+  status    InviteStatus @default(PENDING)
+  invitedBy String
+  inviter   User         @relation("SentInvites", fields: [invitedBy], references: [id])
+  token     String       @unique @default(cuid())
+  expiresAt DateTime
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  @@index([teamId])
+  @@index([email, status])
+  @@index([token])
+}
+
+model TeamCreditLog {
+  id        String   @id @default(cuid())
+  teamId    String
+  team      Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  userId    String
+  action    String
+  amount    Int
+  balance   Int
+  projectId String?
+  meta      String?
+  createdAt DateTime @default(now())
+
+  @@index([teamId, createdAt(sort: Desc)])
+}
+
+model Project {
+  id           String        @id @default(cuid())
+  name         String        @default("Untitled Project")
+  thumbnail    String?       @db.Text
+  isTemplate   Boolean       @default(false)
+  templateTag  String?
+  templateSlug String?       @unique
+  templateDesc String?       @db.Text
+  trashedAt    DateTime?
+  ownerId      String?
+  teamId       String?
+  team         Team?         @relation(fields: [teamId], references: [id])
+  chatSessions ChatSession[]
+  frames       Frame[]
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  @@index([trashedAt, isTemplate])
+  @@index([updatedAt])
+  @@index([isTemplate])
+  @@index([ownerId])
+  @@index([teamId])
+}
+
+model ChatSession {
+  id        String   @id @default(cuid())
+  projectId String
+  userId    String
+  project   Project  @relation(fields: [projectId], references: [id])
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages  Json     @default("[]")
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([projectId, userId])
+  @@index([projectId])
+  @@index([userId])
+}
+
+model Frame {
+  id          String   @id
+  projectId   String   @default("default")
+  project     Project  @relation(fields: [projectId], references: [id])
+  themeId     String?
+  theme       Theme?   @relation(fields: [themeId], references: [id])
+  variantName String   @default("light")
+  label       String   @default("Screen")
+  left        Int      @default(0)
+  top         Int      @default(0)
+  html        String   @db.Text
+  updatedAt   DateTime @updatedAt
+
+  @@index([projectId])
+  @@index([projectId, updatedAt])
+  @@index([themeId])
+}
+
+model Theme {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name      String   @default("Untitled Theme")
+  variables Json     @default("{}")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  frames    Frame[]
+
+  @@index([userId])
+}
+
+model ApiKey {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name      String
+  key       String    @unique
+  lastUsed  DateTime?
+  revoked   Boolean   @default(false)
+  createdAt DateTime  @default(now())
+  revokedAt DateTime?
+
+  @@index([userId])
+}
+
+model BlogPost {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  title       String
+  description String   @db.Text
+  content     String   @db.Text
+  tldr        String?  @db.Text
+  coverImage  String?
+  category    String
+  tags        String[]
+  author      String
+  authorRole  String?
+  published   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([published, createdAt(sort: Desc)])
+}
+
+model Feature {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  title       String
+  headline    String   @db.Text
+  description String   @db.Text
+  content     String   @db.Text
+  icon        String?
+  videoUrl    String?
+  imageUrl    String?
+  benefits    String[]
+  keywords    String[]
+  order       Int      @default(0)
+  published   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([published, order])
+}
+
+model Comparison {
+  id                 String   @id @default(cuid())
+  slug               String   @unique
+  competitorName     String
+  competitorLogo     String?
+  competitorUrl      String?
+  title              String
+  description        String   @db.Text
+  content            String   @db.Text
+  floowFeatures      String[]
+  competitorFeatures String[]
+  floowPros          String[]
+  competitorPros     String[]
+  verdict            String   @db.Text
+  keywords           String[]
+  published          Boolean  @default(false)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  @@index([published, competitorName])
+}
