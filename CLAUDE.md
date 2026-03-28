@@ -141,3 +141,4 @@ Hosted on Vercel. Pushes to `main` trigger automatic deployment. No `vercel.json
 - **Teams** share credits and projects; invites are token-based with expiry
 - **Frames** store raw HTML as text — rendered in iframes on the canvas
 - **Blog images** go to Vercel Blob, not `public/` — use blob URLs in `coverImage`
+- **Sitemap lastmod** — When adding, removing, or modifying any public URL (new pages, blog posts, route changes, SEO updates), update the corresponding `lastmod` date in `src/app/sitemap.xml/route.ts` and the relevant sub-sitemap (`src/app/sitemap/pages/route.ts`, `src/app/sitemap/blog/route.ts`, or `src/app/sitemap/templates/route.ts`)
