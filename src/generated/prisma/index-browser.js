@@ -326,6 +326,19 @@ exports.Prisma.PitchCommentScalarFieldEnum = {
   createdAt: "createdAt",
 };
 
+exports.Prisma.NoteScalarFieldEnum = {
+  id: "id",
+  projectId: "projectId",
+  text: "text",
+  left: "left",
+  top: "top",
+  width: "width",
+  height: "height",
+  color: "color",
+  fontSize: "fontSize",
+  updatedAt: "updatedAt",
+};
+
 exports.Prisma.SortOrder = {
   asc: "asc",
   desc: "desc",
@@ -395,6 +408,7 @@ exports.Prisma.ModelName = {
   Comparison: "Comparison",
   PitchConcept: "PitchConcept",
   PitchComment: "PitchComment",
+  Note: "Note",
 };
 
 /**

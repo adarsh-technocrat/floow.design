@@ -1,5 +1,11 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import { loadFrames, loadThemes, resetCanvas, type StoredTheme } from "./canvasSlice";
+import {
+  loadFrames,
+  loadNotes,
+  loadThemes,
+  resetCanvas,
+  type StoredTheme,
+} from "./canvasSlice";
 import http from "@/lib/http";
 
 export interface ProjectState {
@@ -19,7 +25,8 @@ const initialState: ProjectState = {
 export const fetchProject = createAsyncThunk(
   "project/fetch",
   async ({ projectId }: { projectId: string }, { dispatch, getState }) => {
-    const currentId = (getState() as { project: ProjectState }).project.projectId;
+    const currentId = (getState() as { project: ProjectState }).project
+      .projectId;
     if (currentId !== projectId) {
       dispatch(resetCanvas());
     }
@@ -27,11 +34,13 @@ export const fetchProject = createAsyncThunk(
     const { data: res } = await http.get(`/api/project?${q.toString()}`);
     const name = typeof res?.name === "string" ? res.name : "Untitled Project";
     const frames = Array.isArray(res?.frames) ? res.frames : [];
+    const notes = Array.isArray(res?.notes) ? res.notes : [];
     const messages = Array.isArray(res?.messages) ? res.messages : [];
     const themes = Array.isArray(res?.themes)
       ? (res.themes as StoredTheme[])
       : [];
     dispatch(loadFrames(frames));
+    dispatch(loadNotes(notes));
     dispatch(loadThemes(themes));
     return { projectId, name, messages };
   },

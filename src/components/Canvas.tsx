@@ -105,6 +105,33 @@ export function Canvas() {
     [updateFrameProperties, persistFramePosition],
   );
 
+  const persistNote = useCallback(
+    (noteId: string, changes?: Partial<Record<string, string | number>>) => {
+      if (!projectId) return;
+      const note = notes.find((n) => n.id === noteId);
+      const data = {
+        noteId,
+        projectId,
+        text: note?.text ?? "",
+        left: note?.left ?? 0,
+        top: note?.top ?? 0,
+        width: note?.width ?? 228,
+        height: note?.height ?? 228,
+        color: note?.color ?? "yellow",
+        fontSize: note?.fontSize ?? 16,
+        ...changes,
+      };
+      http.post("/api/notes", data).catch(() => {});
+    },
+    [notes, projectId],
+  );
+
+  const deleteNoteFromDb = useCallback((noteId: string) => {
+    http
+      .delete(`/api/notes?noteId=${encodeURIComponent(noteId)}`)
+      .catch(() => {});
+  }, []);
+
   // Note handlers
   const handleNoteSelect = useCallback(
     (noteId: string) => {
@@ -117,15 +144,19 @@ export function Canvas() {
   const handleNoteTextChange = useCallback(
     (noteId: string, text: string) => {
       dispatch(updateNote({ id: noteId, changes: { text } }));
+      persistNote(noteId, { text });
     },
-    [dispatch],
+    [dispatch, persistNote],
   );
 
   const handleNotePositionChange = useCallback(
     (noteId: string, newLeft: number, newTop: number) => {
-      dispatch(updateNote({ id: noteId, changes: { left: newLeft, top: newTop } }));
+      dispatch(
+        updateNote({ id: noteId, changes: { left: newLeft, top: newTop } }),
+      );
+      persistNote(noteId, { left: newLeft, top: newTop });
     },
-    [dispatch],
+    [dispatch, persistNote],
   );
 
   const handleNoteSizeChange = useCallback(
@@ -134,40 +165,51 @@ export function Canvas() {
       changes: { left?: number; top?: number; width?: number; height?: number },
     ) => {
       dispatch(updateNote({ id: noteId, changes }));
+      persistNote(noteId, changes);
     },
-    [dispatch],
+    [dispatch, persistNote],
   );
 
   const handleNoteColorChange = useCallback(
     (noteId: string, color: NoteColor) => {
       dispatch(updateNote({ id: noteId, changes: { color } }));
+      persistNote(noteId, { color });
     },
-    [dispatch],
+    [dispatch, persistNote],
   );
 
   const handleNoteFontSizeChange = useCallback(
     (noteId: string, fontSize: number) => {
       dispatch(updateNote({ id: noteId, changes: { fontSize } }));
+      persistNote(noteId, { fontSize });
     },
-    [dispatch],
+    [dispatch, persistNote],
   );
 
   const handleNoteDelete = useCallback(
     (noteId: string) => {
       dispatch(removeNote(noteId));
+      deleteNoteFromDb(noteId);
     },
-    [dispatch],
+    [dispatch, deleteNoteFromDb],
   );
 
   const handleNoteDuplicate = useCallback(
     (noteId: string) => {
       const note = notes.find((n) => n.id === noteId);
       if (!note) return;
+      const newId = `note-${Date.now()}`;
       dispatch(
-        addNote({ left: note.left + 40, top: note.top + 40, color: note.color }),
+        addNote({
+          id: newId,
+          left: note.left + 40,
+          top: note.top + 40,
+          color: note.color,
+        }),
       );
+      persistNote(newId);
     },
-    [dispatch, notes],
+    [dispatch, notes, persistNote],
   );
 
   // Handle canvas click to create note in note tool mode
@@ -175,7 +217,11 @@ export function Canvas() {
     (e: React.MouseEvent) => {
       if (canvasToolMode !== "note") return;
       // Don't create note when clicking on existing nodes
-      if ((e.target as Element).closest?.("[data-frame]") || (e.target as Element).closest?.("[data-note]")) return;
+      if (
+        (e.target as Element).closest?.("[data-frame]") ||
+        (e.target as Element).closest?.("[data-note]")
+      )
+        return;
 
       const el = containerRef.current;
       if (!el) return;
@@ -188,20 +234,21 @@ export function Canvas() {
         transform.y,
         transform.scale,
       );
-      dispatch(addNote({ left: content.x - 114, top: content.y - 114 }));
+      const newId = `note-${Date.now()}`;
+      dispatch(
+        addNote({ id: newId, left: content.x - 114, top: content.y - 114 }),
+      );
+      persistNote(newId);
       // Switch back to select mode after placing note
       dispatch(setCanvasToolMode("select"));
     },
-    [canvasToolMode, dispatch, transform],
+    [canvasToolMode, dispatch, transform, persistNote],
   );
 
   // Deselect note when clicking canvas background
   const handleCanvasPointerDownForDeselect = useCallback(
     (e: React.PointerEvent) => {
-      if (
-        !(e.target as Element).closest?.("[data-note]") &&
-        selectedNoteId
-      ) {
+      if (!(e.target as Element).closest?.("[data-note]") && selectedNoteId) {
         dispatch(setSelectedNoteId(null));
       }
     },

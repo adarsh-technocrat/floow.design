@@ -440,10 +440,10 @@ const canvasSlice = createSlice({
     addNote: (
       state,
       action: {
-        payload: { left: number; top: number; color?: NoteColor };
+        payload: { id?: string; left: number; top: number; color?: NoteColor };
       },
     ) => {
-      const id = `note-${Date.now()}`;
+      const id = action.payload.id || `note-${Date.now()}`;
       state.notes.push({
         id,
         text: "",
@@ -475,6 +475,33 @@ const canvasSlice = createSlice({
       if (action.payload) {
         state.selectedFrameIds = [];
       }
+    },
+
+    loadNotes: (
+      state,
+      action: {
+        payload: Array<{
+          id: string;
+          text?: string;
+          left?: number;
+          top?: number;
+          width?: number;
+          height?: number;
+          color?: string;
+          fontSize?: number;
+        }>;
+      },
+    ) => {
+      state.notes = action.payload.map((n) => ({
+        id: n.id,
+        text: n.text ?? "",
+        left: n.left ?? 0,
+        top: n.top ?? 0,
+        width: n.width ?? DEFAULT_NOTE_WIDTH,
+        height: n.height ?? DEFAULT_NOTE_HEIGHT,
+        color: (n.color as NoteColor) ?? "yellow",
+        fontSize: n.fontSize ?? 16,
+      }));
     },
 
     reorderFrames: (state, action: { payload: string[] }) => {
@@ -602,6 +629,7 @@ export const {
   updateNote,
   removeNote,
   setSelectedNoteId,
+  loadNotes,
   setPitchPreviewFrameId,
   updatePitchSlot,
   togglePitchSlotHidden,

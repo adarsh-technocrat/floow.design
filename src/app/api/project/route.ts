@@ -63,6 +63,18 @@ export async function GET(req: NextRequest) {
               theme: { select: { id: true, name: true, variables: true } },
             },
           },
+          notes: {
+            select: {
+              id: true,
+              text: true,
+              left: true,
+              top: true,
+              width: true,
+              height: true,
+              color: true,
+              fontSize: true,
+            },
+          },
         },
       }),
       prisma.chatSession.findUnique({
@@ -80,6 +92,7 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({
         name: "Untitled Project",
         frames: [],
+        notes: [],
         messages: [],
       });
     }
@@ -125,6 +138,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({
       name: project.name,
       frames,
+      notes: project.notes ?? [],
       messages,
       themes: Object.values(allThemes),
     });
