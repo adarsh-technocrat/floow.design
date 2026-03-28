@@ -7,6 +7,14 @@
   ::backdrop {
     border-color: var(--border-primary);
   }
+
+  button,
+  [role="button"],
+  a,
+  summary,
+  [type="submit"] {
+    cursor: pointer;
+  }
 }
 
 :root {
