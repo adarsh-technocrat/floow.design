@@ -48,7 +48,10 @@ export interface NoteState {
   fontSize: number;
 }
 
-export const NOTE_COLORS: Record<NoteColor, { bg: string; text: string; border: string }> = {
+export const NOTE_COLORS: Record<
+  NoteColor,
+  { bg: string; text: string; border: string }
+> = {
   yellow: { bg: "#FEF9C3", text: "#713F12", border: "#FDE047" },
   blue: { bg: "#DBEAFE", text: "#1E3A5F", border: "#93C5FD" },
   green: { bg: "#DCFCE7", text: "#14532D", border: "#86EFAC" },
@@ -69,6 +72,24 @@ export interface StoredTheme {
 
 export type ThemeMode = "light" | "dark";
 
+export const PITCH_CONCEPT_SLOT_COUNT = 3;
+
+export interface PitchSlotState {
+  themeId: string | null;
+  variantName: string;
+  description: string;
+  hidden: boolean;
+}
+
+function createEmptyPitchSlots(): PitchSlotState[] {
+  return Array.from({ length: PITCH_CONCEPT_SLOT_COUNT }, () => ({
+    themeId: null,
+    variantName: "light",
+    description: "",
+    hidden: false,
+  }));
+}
+
 interface CanvasState {
   transform: CanvasTransform;
   frames: FrameState[];
@@ -80,6 +101,9 @@ interface CanvasState {
   themes: StoredTheme[];
   activeThemeId: string | null;
   activeThemeMode: ThemeMode;
+  /** Frame used as the shared screen when comparing themes on the pitch board */
+  pitchPreviewFrameId: string | null;
+  pitchSlots: PitchSlotState[];
 }
 
 const initialState: CanvasState = {
@@ -96,6 +120,8 @@ const initialState: CanvasState = {
   themes: [],
   activeThemeId: null,
   activeThemeMode: "dark",
+  pitchPreviewFrameId: null,
+  pitchSlots: createEmptyPitchSlots(),
 };
 
 /** Helper: get the active StoredTheme from state */
@@ -496,6 +522,45 @@ const canvasSlice = createSlice({
       state.themes = [];
       state.activeThemeId = null;
       state.activeThemeMode = "dark";
+      state.pitchPreviewFrameId = null;
+      state.pitchSlots = createEmptyPitchSlots();
+    },
+
+    setPitchPreviewFrameId: (state, action: { payload: string | null }) => {
+      state.pitchPreviewFrameId = action.payload;
+    },
+
+    updatePitchSlot: (
+      state,
+      action: {
+        payload: {
+          index: number;
+          changes: Partial<Omit<PitchSlotState, never>>;
+        };
+      },
+    ) => {
+      const { index, changes } = action.payload;
+      if (index < 0 || index >= state.pitchSlots.length) return;
+      const slot = state.pitchSlots[index];
+      if (!slot) return;
+      Object.assign(slot, changes);
+      if (changes.themeId !== undefined && changes.themeId !== null) {
+        const theme = state.themes.find((t) => t.id === changes.themeId);
+        if (theme) {
+          const names = Object.keys(theme.variants);
+          if (names.length > 0 && !names.includes(slot.variantName)) {
+            slot.variantName = names.includes("light")
+              ? "light"
+              : (names[0] ?? "light");
+          }
+        }
+      }
+    },
+
+    togglePitchSlotHidden: (state, action: { payload: number }) => {
+      const index = action.payload;
+      const slot = state.pitchSlots[index];
+      if (slot) slot.hidden = !slot.hidden;
     },
     toggleFrameInSelection: (state, action: { payload: string }) => {
       const id = action.payload;
@@ -537,6 +602,9 @@ export const {
   updateNote,
   removeNote,
   setSelectedNoteId,
+  setPitchPreviewFrameId,
+  updatePitchSlot,
+  togglePitchSlotHidden,
 } = canvasSlice.actions;
 
 export default canvasSlice.reducer;

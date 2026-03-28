@@ -14,6 +14,8 @@ interface UIState {
   canvasToolMode: CanvasToolMode;
   agentLog: AgentLogEntry[];
   agentLogVisible: boolean;
+  /** Full-screen pitch board (theme comparison) on project canvas */
+  pitchBoardOpen: boolean;
 }
 
 const initialState: UIState = {
@@ -21,6 +23,7 @@ const initialState: UIState = {
   canvasToolMode: "select",
   agentLog: [],
   agentLogVisible: true,
+  pitchBoardOpen: false,
 };
 
 const uiSlice = createSlice({
@@ -36,7 +39,10 @@ const uiSlice = createSlice({
     setCanvasToolMode: (state, action: { payload: CanvasToolMode }) => {
       state.canvasToolMode = action.payload;
     },
-    pushAgentLog: (state, action: { payload: Omit<AgentLogEntry, "id" | "timestamp"> }) => {
+    pushAgentLog: (
+      state,
+      action: { payload: Omit<AgentLogEntry, "id" | "timestamp"> },
+    ) => {
       state.agentLog.push({
         ...action.payload,
         id: `log-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
@@ -52,6 +58,9 @@ const uiSlice = createSlice({
     setAgentLogVisible: (state, action: { payload: boolean }) => {
       state.agentLogVisible = action.payload;
     },
+    setPitchBoardOpen: (state, action: { payload: boolean }) => {
+      state.pitchBoardOpen = action.payload;
+    },
   },
 });
 
@@ -63,5 +72,6 @@ export const {
   clearAgentLog,
   toggleAgentLogVisible,
   setAgentLogVisible,
+  setPitchBoardOpen,
 } = uiSlice.actions;
 export default uiSlice.reducer;

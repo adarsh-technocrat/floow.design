@@ -12,6 +12,7 @@ import {
   Users,
   Settings,
   LayoutDashboard,
+  Tv,
 } from "lucide-react";
 import { ThemeToggleCompact } from "@/components/ThemeToggle";
 import { Avatar } from "@/components/ui/Avatar";
@@ -29,6 +30,7 @@ type CanvasTopRightProps = {
 
 export function CanvasTopRight({ compact = false }: CanvasTopRightProps) {
   const router = useRouter();
+
   const params = useParams();
   const projectId = (params?.id ?? params?.projectId) as string | undefined;
   const { user, signOut } = useAuth();
@@ -78,6 +80,13 @@ export function CanvasTopRight({ compact = false }: CanvasTopRightProps) {
     router.push("/pricing");
   };
 
+  const handlePitchConcept = () => {
+    const id = (params?.id ?? params?.projectId) as string | undefined;
+    if (id) {
+      window.open(`/pitch/${id}`, "_blank");
+    }
+  };
+
   return (
     <div
       className={`absolute right-0 top-0 z-20 flex items-center gap-1 ${
@@ -113,6 +122,28 @@ export function CanvasTopRight({ compact = false }: CanvasTopRightProps) {
       </button>
 
       <div className="mx-1 h-4 w-px bg-b-primary" />
+
+      {compact ? (
+        <button
+          type="button"
+          className="inline-flex h-7 items-center gap-1 rounded-md border border-b-secondary px-2.5 text-[10px] font-mono font-semibold uppercase tracking-wider text-t-primary transition-colors hover:bg-input-bg"
+          title="Pitch concept"
+          onClick={handlePitchConcept}
+        >
+          <Tv className="size-3.5" strokeWidth={2} />
+          <span>Pitch</span>
+        </button>
+      ) : (
+        <button
+          type="button"
+          className="inline-flex items-center gap-1.5 rounded-md border border-b-secondary px-3 py-1.5 text-[11px] font-mono font-semibold uppercase tracking-wider text-t-primary transition-colors hover:bg-input-bg"
+          title="Compare theme concepts on one screen"
+          onClick={handlePitchConcept}
+        >
+          <Tv className="size-3.5" strokeWidth={2} />
+          <span>Pitch concept</span>
+        </button>
+      )}
 
       {compact ? (
         <button
