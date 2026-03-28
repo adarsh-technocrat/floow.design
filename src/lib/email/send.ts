@@ -5,6 +5,7 @@ import {
   planUpgradeEmail,
   creditsExhaustedEmail,
   teamMemberJoinedEmail,
+  magicLinkEmail,
 } from "./template";
 
 async function sendEmail(to: string, subject: string, html: string) {
@@ -47,7 +48,11 @@ export async function sendCreditsExhaustedEmail(
   planName: string,
   resetDate: string | null,
 ) {
-  const { subject, html } = creditsExhaustedEmail(userName, planName, resetDate);
+  const { subject, html } = creditsExhaustedEmail(
+    userName,
+    planName,
+    resetDate,
+  );
   await sendEmail(email, subject, html);
 }
 
@@ -57,6 +62,15 @@ export async function sendTeamMemberJoinedEmail(
   memberName: string,
   teamName: string,
 ) {
-  const { subject, html } = teamMemberJoinedEmail(ownerName, memberName, teamName);
+  const { subject, html } = teamMemberJoinedEmail(
+    ownerName,
+    memberName,
+    teamName,
+  );
   await sendEmail(ownerEmail, subject, html);
+}
+
+export async function sendMagicLinkEmail(email: string, signInUrl: string) {
+  const { subject, html } = magicLinkEmail(signInUrl);
+  await sendEmail(email, subject, html);
 }

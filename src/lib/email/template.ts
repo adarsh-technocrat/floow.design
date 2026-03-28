@@ -46,7 +46,10 @@ function baseLayout(content: string, preheader: string): string {
 </html>`;
 }
 
-export function welcomeEmail(userName: string): { subject: string; html: string } {
+export function welcomeEmail(userName: string): {
+  subject: string;
+  html: string;
+} {
   const firstName = userName?.split(" ")[0] || "there";
   return {
     subject: "Welcome to floow.design",
@@ -135,6 +138,22 @@ export function teamMemberJoinedEmail(
       <a href="https://floow.design/team" class="btn">Manage team</a>
       <p class="quiet">Short and sweet — that's the last you'll hear about this.</p>`,
       `${memberName} joined ${teamName}`,
+    ),
+  };
+}
+
+export function magicLinkEmail(signInUrl: string): {
+  subject: string;
+  html: string;
+} {
+  return {
+    subject: "Sign in to floow.design",
+    html: baseLayout(
+      `<h1>Your sign-in link</h1>
+      <p>Click the button below to sign in to floow.design. This link expires in 10 minutes.</p>
+      <a href="${signInUrl}" class="btn">Sign in to floow.design</a>
+      <p class="quiet">If you didn't request this, you can safely ignore this email.</p>`,
+      "Your floow.design sign-in link",
     ),
   };
 }

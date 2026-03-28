@@ -193,6 +193,7 @@ function SignInPageContent() {
   const { user, loading, signInWithGoogle } = useAuth();
   const [email, setEmail] = useState("");
   const [magicLinkSent, setMagicLinkSent] = useState(false);
+  const [sendingMagicLink, setSendingMagicLink] = useState(false);
   const [authError, setAuthError] = useState("");
   const [signingIn, setSigningIn] = useState(false);
 
@@ -240,6 +241,51 @@ function SignInPageContent() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, loading]);
+
+  // Handle email link callback when user clicks the magic link
+  useEffect(() => {
+    import("@/lib/firebase/auth").then(
+      ({ isSignInWithEmailLink, completeEmailLinkSignIn }) => {
+        if (!isSignInWithEmailLink(window.location.href)) return;
+
+        const storedEmail = window.localStorage.getItem("magicLinkEmail");
+        if (!storedEmail) {
+          setAuthError("Please enter your email to confirm sign-in.");
+          return;
+        }
+
+        setSigningIn(true);
+        completeEmailLinkSignIn(storedEmail, window.location.href)
+          .then(() => {
+            window.localStorage.removeItem("magicLinkEmail");
+            navigateAfterAuth();
+          })
+          .catch((err: Error) => {
+            setAuthError(err.message || "Email sign-in failed");
+          })
+          .finally(() => setSigningIn(false));
+      },
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const handleMagicLink = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email || sendingMagicLink) return;
+    setAuthError("");
+    setSendingMagicLink(true);
+    try {
+      await http.post("/api/auth/magic-link", { email });
+      window.localStorage.setItem("magicLinkEmail", email);
+      setMagicLinkSent(true);
+    } catch (err) {
+      setAuthError(
+        err instanceof Error ? err.message : "Failed to send magic link",
+      );
+    } finally {
+      setSendingMagicLink(false);
+    }
+  };
 
   const handleGoogleSignIn = async () => {
     setAuthError("");
@@ -337,13 +383,7 @@ function SignInPageContent() {
           </div>
 
           {!magicLinkSent ? (
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                if (email) setMagicLinkSent(true);
-              }}
-              className="flex flex-col gap-4"
-            >
+            <form onSubmit={handleMagicLink} className="flex flex-col gap-4">
               <div>
                 <label
                   htmlFor="email"
@@ -363,33 +403,38 @@ function SignInPageContent() {
               </div>
               <button
                 type="submit"
-                className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-btn-primary-bg text-sm font-semibold text-btn-primary-text transition-colors hover:opacity-90"
+                disabled={sendingMagicLink}
+                className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-btn-primary-bg text-sm font-semibold text-btn-primary-text transition-colors hover:opacity-90 disabled:opacity-50"
               >
-                <svg
-                  aria-hidden="true"
-                  width="16"
-                  height="16"
-                  viewBox="0 0 16 16"
-                  fill="none"
-                >
-                  <path
-                    d="M2 4l6 4.5L14 4"
-                    stroke="currentColor"
-                    strokeWidth="1.5"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                  <rect
-                    x="1.5"
-                    y="3"
-                    width="13"
-                    height="10"
-                    rx="2"
-                    stroke="currentColor"
-                    strokeWidth="1.5"
-                  />
-                </svg>
-                Send Magic Link
+                {sendingMagicLink ? (
+                  <div className="size-4 rounded-full border-2 border-btn-primary-text border-t-transparent animate-spin" />
+                ) : (
+                  <svg
+                    aria-hidden="true"
+                    width="16"
+                    height="16"
+                    viewBox="0 0 16 16"
+                    fill="none"
+                  >
+                    <path
+                      d="M2 4l6 4.5L14 4"
+                      stroke="currentColor"
+                      strokeWidth="1.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                    <rect
+                      x="1.5"
+                      y="3"
+                      width="13"
+                      height="10"
+                      rx="2"
+                      stroke="currentColor"
+                      strokeWidth="1.5"
+                    />
+                  </svg>
+                )}
+                {sendingMagicLink ? "Sending..." : "Send Magic Link"}
               </button>
             </form>
           ) : (

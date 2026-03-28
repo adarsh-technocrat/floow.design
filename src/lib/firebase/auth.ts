@@ -3,6 +3,8 @@ import {
   signInWithPopup,
   signOut as firebaseSignOut,
   onAuthStateChanged,
+  isSignInWithEmailLink as firebaseIsSignInWithEmailLink,
+  signInWithEmailLink as firebaseSignInWithEmailLink,
   type User,
   type Unsubscribe,
 } from "firebase/auth";
@@ -38,6 +40,22 @@ export function onAuthChange(
     return () => {};
   }
   return onAuthStateChanged(auth, callback);
+}
+
+export function isSignInWithEmailLink(url: string): boolean {
+  const auth = getFirebaseAuth();
+  if (!auth) return false;
+  return firebaseIsSignInWithEmailLink(auth, url);
+}
+
+export async function completeEmailLinkSignIn(
+  email: string,
+  url: string,
+): Promise<User> {
+  const auth = getFirebaseAuth();
+  if (!auth) throw new Error("Firebase not configured");
+  const result = await firebaseSignInWithEmailLink(auth, email, url);
+  return result.user;
 }
 
 export type { User };
