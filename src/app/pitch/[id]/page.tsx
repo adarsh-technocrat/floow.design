@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { ChevronDown, Copy, Eye, EyeOff, Tv } from "lucide-react";
@@ -294,6 +294,9 @@ export default function PitchPage() {
     })),
   );
 
+  const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const initialLoadDone = useRef(false);
+
   useEffect(() => {
     if (!projectId) return;
     let cancelled = false;
@@ -307,6 +310,10 @@ export default function PitchPage() {
         setProjectName(data.name ?? "Untitled Project");
         setFrames(data.frames ?? []);
         setThemes(data.themes ?? []);
+        if (Array.isArray(data.slots) && data.slots.length === SLOT_COUNT) {
+          setSlots(data.slots);
+        }
+        initialLoadDone.current = true;
       })
       .catch((e) => {
         if (!cancelled) setError(e.message);
@@ -319,16 +326,39 @@ export default function PitchPage() {
     };
   }, [projectId]);
 
+  const persistSlots = useCallback(
+    (updated: SlotState[]) => {
+      if (!projectId || !initialLoadDone.current) return;
+      if (saveTimer.current) clearTimeout(saveTimer.current);
+      saveTimer.current = setTimeout(() => {
+        void fetch(`/api/pitch/${projectId}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ slots: updated }),
+        });
+      }, 800);
+    },
+    [projectId],
+  );
+
   const updateSlot = (index: number, changes: Partial<SlotState>) => {
-    setSlots((prev) =>
-      prev.map((s, i) => (i === index ? { ...s, ...changes } : s)),
-    );
+    setSlots((prev) => {
+      const updated = prev.map((s, i) =>
+        i === index ? { ...s, ...changes } : s,
+      );
+      persistSlots(updated);
+      return updated;
+    });
   };
 
   const toggleHidden = (index: number) => {
-    setSlots((prev) =>
-      prev.map((s, i) => (i === index ? { ...s, hidden: !s.hidden } : s)),
-    );
+    setSlots((prev) => {
+      const updated = prev.map((s, i) =>
+        i === index ? { ...s, hidden: !s.hidden } : s,
+      );
+      persistSlots(updated);
+      return updated;
+    });
   };
 
   const copyLink = () => {

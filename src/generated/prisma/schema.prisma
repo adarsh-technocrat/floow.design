@@ -148,21 +148,23 @@ model TeamCreditLog {
 }
 
 model Project {
-  id           String        @id @default(cuid())
-  name         String        @default("Untitled Project")
-  thumbnail    String?       @db.Text
-  isTemplate   Boolean       @default(false)
-  templateTag  String?
-  templateSlug String?       @unique
-  templateDesc String?       @db.Text
-  trashedAt    DateTime?
-  ownerId      String?
-  teamId       String?
-  team         Team?         @relation(fields: [teamId], references: [id])
-  chatSessions ChatSession[]
-  frames       Frame[]
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
+  id            String         @id @default(cuid())
+  name          String         @default("Untitled Project")
+  thumbnail     String?        @db.Text
+  isTemplate    Boolean        @default(false)
+  templateTag   String?
+  templateSlug  String?        @unique
+  templateDesc  String?        @db.Text
+  trashedAt     DateTime?
+  ownerId       String?
+  teamId        String?
+  team          Team?          @relation(fields: [teamId], references: [id])
+  chatSessions  ChatSession[]
+  frames        Frame[]
+  pitchConcepts PitchConcept[]
+  pitchComments PitchComment[]
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
 
   @@index([trashedAt, isTemplate])
   @@index([updatedAt])
@@ -291,4 +293,32 @@ model Comparison {
   updatedAt          DateTime @updatedAt
 
   @@index([published, competitorName])
+}
+
+model PitchConcept {
+  id          String   @id @default(cuid())
+  projectId   String
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  slotIndex   Int
+  themeId     String?
+  variantName String   @default("light")
+  description String   @default("") @db.Text
+  hidden      Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([projectId, slotIndex])
+  @@index([projectId])
+}
+
+model PitchComment {
+  id        String   @id @default(cuid())
+  projectId String
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  slotIndex Int
+  author    String
+  body      String   @db.Text
+  createdAt DateTime @default(now())
+
+  @@index([projectId, slotIndex])
 }

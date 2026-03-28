@@ -305,6 +305,27 @@ exports.Prisma.ComparisonScalarFieldEnum = {
   updatedAt: "updatedAt",
 };
 
+exports.Prisma.PitchConceptScalarFieldEnum = {
+  id: "id",
+  projectId: "projectId",
+  slotIndex: "slotIndex",
+  themeId: "themeId",
+  variantName: "variantName",
+  description: "description",
+  hidden: "hidden",
+  createdAt: "createdAt",
+  updatedAt: "updatedAt",
+};
+
+exports.Prisma.PitchCommentScalarFieldEnum = {
+  id: "id",
+  projectId: "projectId",
+  slotIndex: "slotIndex",
+  author: "author",
+  body: "body",
+  createdAt: "createdAt",
+};
+
 exports.Prisma.SortOrder = {
   asc: "asc",
   desc: "desc",
@@ -372,6 +393,8 @@ exports.Prisma.ModelName = {
   BlogPost: "BlogPost",
   Feature: "Feature",
   Comparison: "Comparison",
+  PitchConcept: "PitchConcept",
+  PitchComment: "PitchComment",
 };
 
 /**

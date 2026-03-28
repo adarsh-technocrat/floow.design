@@ -82,6 +82,18 @@ export type Feature = $Result.DefaultSelection<Prisma.$FeaturePayload>;
  *
  */
 export type Comparison = $Result.DefaultSelection<Prisma.$ComparisonPayload>;
+/**
+ * Model PitchConcept
+ *
+ */
+export type PitchConcept =
+  $Result.DefaultSelection<Prisma.$PitchConceptPayload>;
+/**
+ * Model PitchComment
+ *
+ */
+export type PitchComment =
+  $Result.DefaultSelection<Prisma.$PitchCommentPayload>;
 
 /**
  * Enums
@@ -438,6 +450,26 @@ export class PrismaClient<
    * ```
    */
   get comparison(): Prisma.ComparisonDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.pitchConcept`: Exposes CRUD operations for the **PitchConcept** model.
+   * Example usage:
+   * ```ts
+   * // Fetch zero or more PitchConcepts
+   * const pitchConcepts = await prisma.pitchConcept.findMany()
+   * ```
+   */
+  get pitchConcept(): Prisma.PitchConceptDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.pitchComment`: Exposes CRUD operations for the **PitchComment** model.
+   * Example usage:
+   * ```ts
+   * // Fetch zero or more PitchComments
+   * const pitchComments = await prisma.pitchComment.findMany()
+   * ```
+   */
+  get pitchComment(): Prisma.PitchCommentDelegate<ExtArgs, ClientOptions>;
 }
 
 export namespace Prisma {
@@ -911,6 +943,8 @@ export namespace Prisma {
     BlogPost: "BlogPost";
     Feature: "Feature";
     Comparison: "Comparison";
+    PitchConcept: "PitchConcept";
+    PitchComment: "PitchComment";
   };
 
   export type ModelName = (typeof ModelName)[keyof typeof ModelName];
@@ -951,7 +985,9 @@ export namespace Prisma {
         | "apiKey"
         | "blogPost"
         | "feature"
-        | "comparison";
+        | "comparison"
+        | "pitchConcept"
+        | "pitchComment";
       txIsolationLevel: Prisma.TransactionIsolationLevel;
     };
     model: {
@@ -2001,6 +2037,158 @@ export namespace Prisma {
           };
         };
       };
+      PitchConcept: {
+        payload: Prisma.$PitchConceptPayload<ExtArgs>;
+        fields: Prisma.PitchConceptFieldRefs;
+        operations: {
+          findUnique: {
+            args: Prisma.PitchConceptFindUniqueArgs<ExtArgs>;
+            result: $Utils.PayloadToResult<Prisma.$PitchConceptPayload> | null;
+          };
+          findUniqueOrThrow: {
+            args: Prisma.PitchConceptFindUniqueOrThrowArgs<ExtArgs>;
+            result: $Utils.PayloadToResult<Prisma.$PitchConceptPayload>;
+          };
+          findFirst: {
+            args: Prisma.PitchConceptFindFirstArgs<ExtArgs>;
+            result: $Utils.PayloadToResult<Prisma.$PitchConceptPayload> | null;
+          };
+          findFirstOrThrow: {
+            args: Prisma.PitchConceptFindFirstOrThrowArgs<ExtArgs>;
+            result: $Utils.PayloadToResult<Prisma.$PitchConceptPayload>;
+          };
+          findMany: {
+            args: Prisma.PitchConceptFindManyArgs<ExtArgs>;
+            result: $Utils.PayloadToResult<Prisma.$PitchConceptPayload>[];
+          };
+          create: {
+            args: Prisma.PitchConceptCreateArgs<ExtArgs>;
+            result: $Utils.PayloadToResult<Prisma.$PitchConceptPayload>;
+          };
+          createMany: {
+            args: Prisma.PitchConceptCreateManyArgs<ExtArgs>;
+            result: BatchPayload;
+          };
+          createManyAndReturn: {
+            args: Prisma.PitchConceptCreateManyAndReturnArgs<ExtArgs>;
+            result: $Utils.PayloadToResult<Prisma.$PitchConceptPayload>[];
+          };
+          delete: {
+            args: Prisma.PitchConceptDeleteArgs<ExtArgs>;
+            result: $Utils.PayloadToResult<Prisma.$PitchConceptPayload>;
+          };
+          update: {
+            args: Prisma.PitchConceptUpdateArgs<ExtArgs>;
+            result: $Utils.PayloadToResult<Prisma.$PitchConceptPayload>;
+          };
+          deleteMany: {
+            args: Prisma.PitchConceptDeleteManyArgs<ExtArgs>;
+            result: BatchPayload;
+          };
+          updateMany: {
+            args: Prisma.PitchConceptUpdateManyArgs<ExtArgs>;
+            result: BatchPayload;
+          };
+          updateManyAndReturn: {
+            args: Prisma.PitchConceptUpdateManyAndReturnArgs<ExtArgs>;
+            result: $Utils.PayloadToResult<Prisma.$PitchConceptPayload>[];
+          };
+          upsert: {
+            args: Prisma.PitchConceptUpsertArgs<ExtArgs>;
+            result: $Utils.PayloadToResult<Prisma.$PitchConceptPayload>;
+          };
+          aggregate: {
+            args: Prisma.PitchConceptAggregateArgs<ExtArgs>;
+            result: $Utils.Optional<AggregatePitchConcept>;
+          };
+          groupBy: {
+            args: Prisma.PitchConceptGroupByArgs<ExtArgs>;
+            result: $Utils.Optional<PitchConceptGroupByOutputType>[];
+          };
+          count: {
+            args: Prisma.PitchConceptCountArgs<ExtArgs>;
+            result:
+              | $Utils.Optional<PitchConceptCountAggregateOutputType>
+              | number;
+          };
+        };
+      };
+      PitchComment: {
+        payload: Prisma.$PitchCommentPayload<ExtArgs>;
+        fields: Prisma.PitchCommentFieldRefs;
+        operations: {
+          findUnique: {
+            args: Prisma.PitchCommentFindUniqueArgs<ExtArgs>;
+            result: $Utils.PayloadToResult<Prisma.$PitchCommentPayload> | null;
+          };
+          findUniqueOrThrow: {
+            args: Prisma.PitchCommentFindUniqueOrThrowArgs<ExtArgs>;
+            result: $Utils.PayloadToResult<Prisma.$PitchCommentPayload>;
+          };
+          findFirst: {
+            args: Prisma.PitchCommentFindFirstArgs<ExtArgs>;
+            result: $Utils.PayloadToResult<Prisma.$PitchCommentPayload> | null;
+          };
+          findFirstOrThrow: {
+            args: Prisma.PitchCommentFindFirstOrThrowArgs<ExtArgs>;
+            result: $Utils.PayloadToResult<Prisma.$PitchCommentPayload>;
+          };
+          findMany: {
+            args: Prisma.PitchCommentFindManyArgs<ExtArgs>;
+            result: $Utils.PayloadToResult<Prisma.$PitchCommentPayload>[];
+          };
+          create: {
+            args: Prisma.PitchCommentCreateArgs<ExtArgs>;
+            result: $Utils.PayloadToResult<Prisma.$PitchCommentPayload>;
+          };
+          createMany: {
+            args: Prisma.PitchCommentCreateManyArgs<ExtArgs>;
+            result: BatchPayload;
+          };
+          createManyAndReturn: {
+            args: Prisma.PitchCommentCreateManyAndReturnArgs<ExtArgs>;
+            result: $Utils.PayloadToResult<Prisma.$PitchCommentPayload>[];
+          };
+          delete: {
+            args: Prisma.PitchCommentDeleteArgs<ExtArgs>;
+            result: $Utils.PayloadToResult<Prisma.$PitchCommentPayload>;
+          };
+          update: {
+            args: Prisma.PitchCommentUpdateArgs<ExtArgs>;
+            result: $Utils.PayloadToResult<Prisma.$PitchCommentPayload>;
+          };
+          deleteMany: {
+            args: Prisma.PitchCommentDeleteManyArgs<ExtArgs>;
+            result: BatchPayload;
+          };
+          updateMany: {
+            args: Prisma.PitchCommentUpdateManyArgs<ExtArgs>;
+            result: BatchPayload;
+          };
+          updateManyAndReturn: {
+            args: Prisma.PitchCommentUpdateManyAndReturnArgs<ExtArgs>;
+            result: $Utils.PayloadToResult<Prisma.$PitchCommentPayload>[];
+          };
+          upsert: {
+            args: Prisma.PitchCommentUpsertArgs<ExtArgs>;
+            result: $Utils.PayloadToResult<Prisma.$PitchCommentPayload>;
+          };
+          aggregate: {
+            args: Prisma.PitchCommentAggregateArgs<ExtArgs>;
+            result: $Utils.Optional<AggregatePitchComment>;
+          };
+          groupBy: {
+            args: Prisma.PitchCommentGroupByArgs<ExtArgs>;
+            result: $Utils.Optional<PitchCommentGroupByOutputType>[];
+          };
+          count: {
+            args: Prisma.PitchCommentCountArgs<ExtArgs>;
+            result:
+              | $Utils.Optional<PitchCommentCountAggregateOutputType>
+              | number;
+          };
+        };
+      };
     };
   } & {
     other: {
@@ -2115,6 +2303,8 @@ export namespace Prisma {
     blogPost?: BlogPostOmit;
     feature?: FeatureOmit;
     comparison?: ComparisonOmit;
+    pitchConcept?: PitchConceptOmit;
+    pitchComment?: PitchCommentOmit;
   };
 
   /* Types for Logging */
@@ -2370,6 +2560,8 @@ export namespace Prisma {
   export type ProjectCountOutputType = {
     chatSessions: number;
     frames: number;
+    pitchConcepts: number;
+    pitchComments: number;
   };
 
   export type ProjectCountOutputTypeSelect<
@@ -2377,6 +2569,8 @@ export namespace Prisma {
   > = {
     chatSessions?: boolean | ProjectCountOutputTypeCountChatSessionsArgs;
     frames?: boolean | ProjectCountOutputTypeCountFramesArgs;
+    pitchConcepts?: boolean | ProjectCountOutputTypeCountPitchConceptsArgs;
+    pitchComments?: boolean | ProjectCountOutputTypeCountPitchCommentsArgs;
   };
 
   // Custom InputTypes
@@ -2408,6 +2602,24 @@ export namespace Prisma {
     ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs,
   > = {
     where?: FrameWhereInput;
+  };
+
+  /**
+   * ProjectCountOutputType without action
+   */
+  export type ProjectCountOutputTypeCountPitchConceptsArgs<
+    ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs,
+  > = {
+    where?: PitchConceptWhereInput;
+  };
+
+  /**
+   * ProjectCountOutputType without action
+   */
+  export type ProjectCountOutputTypeCountPitchCommentsArgs<
+    ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs,
+  > = {
+    where?: PitchCommentWhereInput;
   };
 
   /**
@@ -11536,6 +11748,8 @@ export namespace Prisma {
       team?: boolean | Project$teamArgs<ExtArgs>;
       chatSessions?: boolean | Project$chatSessionsArgs<ExtArgs>;
       frames?: boolean | Project$framesArgs<ExtArgs>;
+      pitchConcepts?: boolean | Project$pitchConceptsArgs<ExtArgs>;
+      pitchComments?: boolean | Project$pitchCommentsArgs<ExtArgs>;
       _count?: boolean | ProjectCountOutputTypeDefaultArgs<ExtArgs>;
     },
     ExtArgs["result"]["project"]
@@ -11621,6 +11835,8 @@ export namespace Prisma {
     team?: boolean | Project$teamArgs<ExtArgs>;
     chatSessions?: boolean | Project$chatSessionsArgs<ExtArgs>;
     frames?: boolean | Project$framesArgs<ExtArgs>;
+    pitchConcepts?: boolean | Project$pitchConceptsArgs<ExtArgs>;
+    pitchComments?: boolean | Project$pitchCommentsArgs<ExtArgs>;
     _count?: boolean | ProjectCountOutputTypeDefaultArgs<ExtArgs>;
   };
   export type ProjectIncludeCreateManyAndReturn<
@@ -11642,6 +11858,8 @@ export namespace Prisma {
       team: Prisma.$TeamPayload<ExtArgs> | null;
       chatSessions: Prisma.$ChatSessionPayload<ExtArgs>[];
       frames: Prisma.$FramePayload<ExtArgs>[];
+      pitchConcepts: Prisma.$PitchConceptPayload<ExtArgs>[];
+      pitchComments: Prisma.$PitchCommentPayload<ExtArgs>[];
     };
     scalars: $Extensions.GetPayloadResult<
       {
@@ -12238,6 +12456,28 @@ export namespace Prisma {
         >
       | Null
     >;
+    pitchConcepts<T extends Project$pitchConceptsArgs<ExtArgs> = {}>(
+      args?: Subset<T, Project$pitchConceptsArgs<ExtArgs>>,
+    ): Prisma.PrismaPromise<
+      | $Result.GetResult<
+          Prisma.$PitchConceptPayload<ExtArgs>,
+          T,
+          "findMany",
+          GlobalOmitOptions
+        >
+      | Null
+    >;
+    pitchComments<T extends Project$pitchCommentsArgs<ExtArgs> = {}>(
+      args?: Subset<T, Project$pitchCommentsArgs<ExtArgs>>,
+    ): Prisma.PrismaPromise<
+      | $Result.GetResult<
+          Prisma.$PitchCommentPayload<ExtArgs>,
+          T,
+          "findMany",
+          GlobalOmitOptions
+        >
+      | Null
+    >;
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -12791,6 +13031,62 @@ export namespace Prisma {
     take?: number;
     skip?: number;
     distinct?: FrameScalarFieldEnum | FrameScalarFieldEnum[];
+  };
+
+  /**
+   * Project.pitchConcepts
+   */
+  export type Project$pitchConceptsArgs<
+    ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs,
+  > = {
+    /**
+     * Select specific fields to fetch from the PitchConcept
+     */
+    select?: PitchConceptSelect<ExtArgs> | null;
+    /**
+     * Omit specific fields from the PitchConcept
+     */
+    omit?: PitchConceptOmit<ExtArgs> | null;
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PitchConceptInclude<ExtArgs> | null;
+    where?: PitchConceptWhereInput;
+    orderBy?:
+      | PitchConceptOrderByWithRelationInput
+      | PitchConceptOrderByWithRelationInput[];
+    cursor?: PitchConceptWhereUniqueInput;
+    take?: number;
+    skip?: number;
+    distinct?: PitchConceptScalarFieldEnum | PitchConceptScalarFieldEnum[];
+  };
+
+  /**
+   * Project.pitchComments
+   */
+  export type Project$pitchCommentsArgs<
+    ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs,
+  > = {
+    /**
+     * Select specific fields to fetch from the PitchComment
+     */
+    select?: PitchCommentSelect<ExtArgs> | null;
+    /**
+     * Omit specific fields from the PitchComment
+     */
+    omit?: PitchCommentOmit<ExtArgs> | null;
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PitchCommentInclude<ExtArgs> | null;
+    where?: PitchCommentWhereInput;
+    orderBy?:
+      | PitchCommentOrderByWithRelationInput
+      | PitchCommentOrderByWithRelationInput[];
+    cursor?: PitchCommentWhereUniqueInput;
+    take?: number;
+    skip?: number;
+    distinct?: PitchCommentScalarFieldEnum | PitchCommentScalarFieldEnum[];
   };
 
   /**
@@ -22406,6 +22702,2773 @@ export namespace Prisma {
   };
 
   /**
+   * Model PitchConcept
+   */
+
+  export type AggregatePitchConcept = {
+    _count: PitchConceptCountAggregateOutputType | null;
+    _avg: PitchConceptAvgAggregateOutputType | null;
+    _sum: PitchConceptSumAggregateOutputType | null;
+    _min: PitchConceptMinAggregateOutputType | null;
+    _max: PitchConceptMaxAggregateOutputType | null;
+  };
+
+  export type PitchConceptAvgAggregateOutputType = {
+    slotIndex: number | null;
+  };
+
+  export type PitchConceptSumAggregateOutputType = {
+    slotIndex: number | null;
+  };
+
+  export type PitchConceptMinAggregateOutputType = {
+    id: string | null;
+    projectId: string | null;
+    slotIndex: number | null;
+    themeId: string | null;
+    variantName: string | null;
+    description: string | null;
+    hidden: boolean | null;
+    createdAt: Date | null;
+    updatedAt: Date | null;
+  };
+
+  export type PitchConceptMaxAggregateOutputType = {
+    id: string | null;
+    projectId: string | null;
+    slotIndex: number | null;
+    themeId: string | null;
+    variantName: string | null;
+    description: string | null;
+    hidden: boolean | null;
+    createdAt: Date | null;
+    updatedAt: Date | null;
+  };
+
+  export type PitchConceptCountAggregateOutputType = {
+    id: number;
+    projectId: number;
+    slotIndex: number;
+    themeId: number;
+    variantName: number;
+    description: number;
+    hidden: number;
+    createdAt: number;
+    updatedAt: number;
+    _all: number;
+  };
+
+  export type PitchConceptAvgAggregateInputType = {
+    slotIndex?: true;
+  };
+
+  export type PitchConceptSumAggregateInputType = {
+    slotIndex?: true;
+  };
+
+  export type PitchConceptMinAggregateInputType = {
+    id?: true;
+    projectId?: true;
+    slotIndex?: true;
+    themeId?: true;
+    variantName?: true;
+    description?: true;
+    hidden?: true;
+    createdAt?: true;
+    updatedAt?: true;
+  };
+
+  export type PitchConceptMaxAggregateInputType = {
+    id?: true;
+    projectId?: true;
+    slotIndex?: true;
+    themeId?: true;
+    variantName?: true;
+    description?: true;
+    hidden?: true;
+    createdAt?: true;
+    updatedAt?: true;
+  };
+
+  export type PitchConceptCountAggregateInputType = {
+    id?: true;
+    projectId?: true;
+    slotIndex?: true;
+    themeId?: true;
+    variantName?: true;
+    description?: true;
+    hidden?: true;
+    createdAt?: true;
+    updatedAt?: true;
+    _all?: true;
+  };
+
+  export type PitchConceptAggregateArgs<
+    ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs,
+  > = {
+    /**
+     * Filter which PitchConcept to aggregate.
+     */
+    where?: PitchConceptWhereInput;
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     *
+     * Determine the order of PitchConcepts to fetch.
+     */
+    orderBy?:
+      | PitchConceptOrderByWithRelationInput
+      | PitchConceptOrderByWithRelationInput[];
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     *
+     * Sets the start position
+     */
+    cursor?: PitchConceptWhereUniqueInput;
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     *
+     * Take `±n` PitchConcepts from the position of the cursor.
+     */
+    take?: number;
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     *
+     * Skip the first `n` PitchConcepts.
+     */
+    skip?: number;
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     *
+     * Count returned PitchConcepts
+     **/
+    _count?: true | PitchConceptCountAggregateInputType;
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     *
+     * Select which fields to average
+     **/
+    _avg?: PitchConceptAvgAggregateInputType;
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     *
+     * Select which fields to sum
+     **/
+    _sum?: PitchConceptSumAggregateInputType;
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     *
+     * Select which fields to find the minimum value
+     **/
+    _min?: PitchConceptMinAggregateInputType;
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     *
+     * Select which fields to find the maximum value
+     **/
+    _max?: PitchConceptMaxAggregateInputType;
+  };
+
+  export type GetPitchConceptAggregateType<
+    T extends PitchConceptAggregateArgs,
+  > = {
+    [P in keyof T & keyof AggregatePitchConcept]: P extends "_count" | "count"
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregatePitchConcept[P]>
+      : GetScalarType<T[P], AggregatePitchConcept[P]>;
+  };
+
+  export type PitchConceptGroupByArgs<
+    ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs,
+  > = {
+    where?: PitchConceptWhereInput;
+    orderBy?:
+      | PitchConceptOrderByWithAggregationInput
+      | PitchConceptOrderByWithAggregationInput[];
+    by: PitchConceptScalarFieldEnum[] | PitchConceptScalarFieldEnum;
+    having?: PitchConceptScalarWhereWithAggregatesInput;
+    take?: number;
+    skip?: number;
+    _count?: PitchConceptCountAggregateInputType | true;
+    _avg?: PitchConceptAvgAggregateInputType;
+    _sum?: PitchConceptSumAggregateInputType;
+    _min?: PitchConceptMinAggregateInputType;
+    _max?: PitchConceptMaxAggregateInputType;
+  };
+
+  export type PitchConceptGroupByOutputType = {
+    id: string;
+    projectId: string;
+    slotIndex: number;
+    themeId: string | null;
+    variantName: string;
+    description: string;
+    hidden: boolean;
+    createdAt: Date;
+    updatedAt: Date;
+    _count: PitchConceptCountAggregateOutputType | null;
+    _avg: PitchConceptAvgAggregateOutputType | null;
+    _sum: PitchConceptSumAggregateOutputType | null;
+    _min: PitchConceptMinAggregateOutputType | null;
+    _max: PitchConceptMaxAggregateOutputType | null;
+  };
+
+  type GetPitchConceptGroupByPayload<T extends PitchConceptGroupByArgs> =
+    Prisma.PrismaPromise<
+      Array<
+        PickEnumerable<PitchConceptGroupByOutputType, T["by"]> & {
+          [P in keyof T &
+            keyof PitchConceptGroupByOutputType]: P extends "_count"
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], PitchConceptGroupByOutputType[P]>
+            : GetScalarType<T[P], PitchConceptGroupByOutputType[P]>;
+        }
+      >
+    >;
+
+  export type PitchConceptSelect<
+    ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs,
+  > = $Extensions.GetSelect<
+    {
+      id?: boolean;
+      projectId?: boolean;
+      slotIndex?: boolean;
+      themeId?: boolean;
+      variantName?: boolean;
+      description?: boolean;
+      hidden?: boolean;
+      createdAt?: boolean;
+      updatedAt?: boolean;
+      project?: boolean | ProjectDefaultArgs<ExtArgs>;
+    },
+    ExtArgs["result"]["pitchConcept"]
+  >;
+
+  export type PitchConceptSelectCreateManyAndReturn<
+    ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs,
+  > = $Extensions.GetSelect<
+    {
+      id?: boolean;
+      projectId?: boolean;
+      slotIndex?: boolean;
+      themeId?: boolean;
+      variantName?: boolean;
+      description?: boolean;
+      hidden?: boolean;
+      createdAt?: boolean;
+      updatedAt?: boolean;
+      project?: boolean | ProjectDefaultArgs<ExtArgs>;
+    },
+    ExtArgs["result"]["pitchConcept"]
+  >;
+
+  export type PitchConceptSelectUpdateManyAndReturn<
+    ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs,
+  > = $Extensions.GetSelect<
+    {
+      id?: boolean;
+      projectId?: boolean;
+      slotIndex?: boolean;
+      themeId?: boolean;
+      variantName?: boolean;
+      description?: boolean;
+      hidden?: boolean;
+      createdAt?: boolean;
+      updatedAt?: boolean;
+      project?: boolean | ProjectDefaultArgs<ExtArgs>;
+    },
+    ExtArgs["result"]["pitchConcept"]
+  >;
+
+  export type PitchConceptSelectScalar = {
+    id?: boolean;
+    projectId?: boolean;
+    slotIndex?: boolean;
+    themeId?: boolean;
+    variantName?: boolean;
+    description?: boolean;
+    hidden?: boolean;
+    createdAt?: boolean;
+    updatedAt?: boolean;
+  };
+
+  export type PitchConceptOmit<
+    ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs,
+  > = $Extensions.GetOmit<
+    | "id"
+    | "projectId"
+    | "slotIndex"
+    | "themeId"
+    | "variantName"
+    | "description"
+    | "hidden"
+    | "createdAt"
+    | "updatedAt",
+    ExtArgs["result"]["pitchConcept"]
+  >;
+  export type PitchConceptInclude<
+    ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs,
+  > = {
+    project?: boolean | ProjectDefaultArgs<ExtArgs>;
+  };
+  export type PitchConceptIncludeCreateManyAndReturn<
+    ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs,
+  > = {
+    project?: boolean | ProjectDefaultArgs<ExtArgs>;
+  };
+  export type PitchConceptIncludeUpdateManyAndReturn<
+    ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs,
+  > = {
+    project?: boolean | ProjectDefaultArgs<ExtArgs>;
+  };
+
+  export type $PitchConceptPayload<
+    ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs,
+  > = {
+    name: "PitchConcept";
+    objects: {
+      project: Prisma.$ProjectPayload<ExtArgs>;
+    };
+    scalars: $Extensions.GetPayloadResult<
+      {
+        id: string;
+        projectId: string;
+        slotIndex: number;
+        themeId: string | null;
+        variantName: string;
+        description: string;
+        hidden: boolean;
+        createdAt: Date;
+        updatedAt: Date;
+      },
+      ExtArgs["result"]["pitchConcept"]
+    >;
+    composites: {};
+  };
+
+  type PitchConceptGetPayload<
+    S extends boolean | null | undefined | PitchConceptDefaultArgs,
+  > = $Result.GetResult<Prisma.$PitchConceptPayload, S>;
+
+  type PitchConceptCountArgs<
+    ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs,
+  > = Omit<
+    PitchConceptFindManyArgs,
+    "select" | "include" | "distinct" | "omit"
+  > & {
+    select?: PitchConceptCountAggregateInputType | true;
+  };
+
+  export interface PitchConceptDelegate<
+    ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs,
+    GlobalOmitOptions = {},
+  > {
+    [K: symbol]: {
+      types: Prisma.TypeMap<ExtArgs>["model"]["PitchConcept"];
+      meta: { name: "PitchConcept" };
+    };
+    /**
+     * Find zero or one PitchConcept that matches the filter.
+     * @param {PitchConceptFindUniqueArgs} args - Arguments to find a PitchConcept
+     * @example
+     * // Get one PitchConcept
+     * const pitchConcept = await prisma.pitchConcept.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends PitchConceptFindUniqueArgs>(
+      args: SelectSubset<T, PitchConceptFindUniqueArgs<ExtArgs>>,
+    ): Prisma__PitchConceptClient<
+      $Result.GetResult<
+        Prisma.$PitchConceptPayload<ExtArgs>,
+        T,
+        "findUnique",
+        GlobalOmitOptions
+      > | null,
+      null,
+      ExtArgs,
+      GlobalOmitOptions
+    >;
+
+    /**
+     * Find one PitchConcept that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {PitchConceptFindUniqueOrThrowArgs} args - Arguments to find a PitchConcept
+     * @example
+     * // Get one PitchConcept
+     * const pitchConcept = await prisma.pitchConcept.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends PitchConceptFindUniqueOrThrowArgs>(
+      args: SelectSubset<T, PitchConceptFindUniqueOrThrowArgs<ExtArgs>>,
+    ): Prisma__PitchConceptClient<
+      $Result.GetResult<
+        Prisma.$PitchConceptPayload<ExtArgs>,
+        T,
+        "findUniqueOrThrow",
+        GlobalOmitOptions
+      >,
+      never,
+      ExtArgs,
+      GlobalOmitOptions
+    >;
+
+    /**
+     * Find the first PitchConcept that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PitchConceptFindFirstArgs} args - Arguments to find a PitchConcept
+     * @example
+     * // Get one PitchConcept
+     * const pitchConcept = await prisma.pitchConcept.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends PitchConceptFindFirstArgs>(
+      args?: SelectSubset<T, PitchConceptFindFirstArgs<ExtArgs>>,
+    ): Prisma__PitchConceptClient<
+      $Result.GetResult<
+        Prisma.$PitchConceptPayload<ExtArgs>,
+        T,
+        "findFirst",
+        GlobalOmitOptions
+      > | null,
+      null,
+      ExtArgs,
+      GlobalOmitOptions
+    >;
+
+    /**
+     * Find the first PitchConcept that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PitchConceptFindFirstOrThrowArgs} args - Arguments to find a PitchConcept
+     * @example
+     * // Get one PitchConcept
+     * const pitchConcept = await prisma.pitchConcept.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends PitchConceptFindFirstOrThrowArgs>(
+      args?: SelectSubset<T, PitchConceptFindFirstOrThrowArgs<ExtArgs>>,
+    ): Prisma__PitchConceptClient<
+      $Result.GetResult<
+        Prisma.$PitchConceptPayload<ExtArgs>,
+        T,
+        "findFirstOrThrow",
+        GlobalOmitOptions
+      >,
+      never,
+      ExtArgs,
+      GlobalOmitOptions
+    >;
+
+    /**
+     * Find zero or more PitchConcepts that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PitchConceptFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all PitchConcepts
+     * const pitchConcepts = await prisma.pitchConcept.findMany()
+     *
+     * // Get first 10 PitchConcepts
+     * const pitchConcepts = await prisma.pitchConcept.findMany({ take: 10 })
+     *
+     * // Only select the `id`
+     * const pitchConceptWithIdOnly = await prisma.pitchConcept.findMany({ select: { id: true } })
+     *
+     */
+    findMany<T extends PitchConceptFindManyArgs>(
+      args?: SelectSubset<T, PitchConceptFindManyArgs<ExtArgs>>,
+    ): Prisma.PrismaPromise<
+      $Result.GetResult<
+        Prisma.$PitchConceptPayload<ExtArgs>,
+        T,
+        "findMany",
+        GlobalOmitOptions
+      >
+    >;
+
+    /**
+     * Create a PitchConcept.
+     * @param {PitchConceptCreateArgs} args - Arguments to create a PitchConcept.
+     * @example
+     * // Create one PitchConcept
+     * const PitchConcept = await prisma.pitchConcept.create({
+     *   data: {
+     *     // ... data to create a PitchConcept
+     *   }
+     * })
+     *
+     */
+    create<T extends PitchConceptCreateArgs>(
+      args: SelectSubset<T, PitchConceptCreateArgs<ExtArgs>>,
+    ): Prisma__PitchConceptClient<
+      $Result.GetResult<
+        Prisma.$PitchConceptPayload<ExtArgs>,
+        T,
+        "create",
+        GlobalOmitOptions
+      >,
+      never,
+      ExtArgs,
+      GlobalOmitOptions
+    >;
+
+    /**
+     * Create many PitchConcepts.
+     * @param {PitchConceptCreateManyArgs} args - Arguments to create many PitchConcepts.
+     * @example
+     * // Create many PitchConcepts
+     * const pitchConcept = await prisma.pitchConcept.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *
+     */
+    createMany<T extends PitchConceptCreateManyArgs>(
+      args?: SelectSubset<T, PitchConceptCreateManyArgs<ExtArgs>>,
+    ): Prisma.PrismaPromise<BatchPayload>;
+
+    /**
+     * Create many PitchConcepts and returns the data saved in the database.
+     * @param {PitchConceptCreateManyAndReturnArgs} args - Arguments to create many PitchConcepts.
+     * @example
+     * // Create many PitchConcepts
+     * const pitchConcept = await prisma.pitchConcept.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *
+     * // Create many PitchConcepts and only return the `id`
+     * const pitchConceptWithIdOnly = await prisma.pitchConcept.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     *
+     */
+    createManyAndReturn<T extends PitchConceptCreateManyAndReturnArgs>(
+      args?: SelectSubset<T, PitchConceptCreateManyAndReturnArgs<ExtArgs>>,
+    ): Prisma.PrismaPromise<
+      $Result.GetResult<
+        Prisma.$PitchConceptPayload<ExtArgs>,
+        T,
+        "createManyAndReturn",
+        GlobalOmitOptions
+      >
+    >;
+
+    /**
+     * Delete a PitchConcept.
+     * @param {PitchConceptDeleteArgs} args - Arguments to delete one PitchConcept.
+     * @example
+     * // Delete one PitchConcept
+     * const PitchConcept = await prisma.pitchConcept.delete({
+     *   where: {
+     *     // ... filter to delete one PitchConcept
+     *   }
+     * })
+     *
+     */
+    delete<T extends PitchConceptDeleteArgs>(
+      args: SelectSubset<T, PitchConceptDeleteArgs<ExtArgs>>,
+    ): Prisma__PitchConceptClient<
+      $Result.GetResult<
+        Prisma.$PitchConceptPayload<ExtArgs>,
+        T,
+        "delete",
+        GlobalOmitOptions
+      >,
+      never,
+      ExtArgs,
+      GlobalOmitOptions
+    >;
+
+    /**
+     * Update one PitchConcept.
+     * @param {PitchConceptUpdateArgs} args - Arguments to update one PitchConcept.
+     * @example
+     * // Update one PitchConcept
+     * const pitchConcept = await prisma.pitchConcept.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     *
+     */
+    update<T extends PitchConceptUpdateArgs>(
+      args: SelectSubset<T, PitchConceptUpdateArgs<ExtArgs>>,
+    ): Prisma__PitchConceptClient<
+      $Result.GetResult<
+        Prisma.$PitchConceptPayload<ExtArgs>,
+        T,
+        "update",
+        GlobalOmitOptions
+      >,
+      never,
+      ExtArgs,
+      GlobalOmitOptions
+    >;
+
+    /**
+     * Delete zero or more PitchConcepts.
+     * @param {PitchConceptDeleteManyArgs} args - Arguments to filter PitchConcepts to delete.
+     * @example
+     * // Delete a few PitchConcepts
+     * const { count } = await prisma.pitchConcept.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     *
+     */
+    deleteMany<T extends PitchConceptDeleteManyArgs>(
+      args?: SelectSubset<T, PitchConceptDeleteManyArgs<ExtArgs>>,
+    ): Prisma.PrismaPromise<BatchPayload>;
+
+    /**
+     * Update zero or more PitchConcepts.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PitchConceptUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many PitchConcepts
+     * const pitchConcept = await prisma.pitchConcept.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     *
+     */
+    updateMany<T extends PitchConceptUpdateManyArgs>(
+      args: SelectSubset<T, PitchConceptUpdateManyArgs<ExtArgs>>,
+    ): Prisma.PrismaPromise<BatchPayload>;
+
+    /**
+     * Update zero or more PitchConcepts and returns the data updated in the database.
+     * @param {PitchConceptUpdateManyAndReturnArgs} args - Arguments to update many PitchConcepts.
+     * @example
+     * // Update many PitchConcepts
+     * const pitchConcept = await prisma.pitchConcept.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *
+     * // Update zero or more PitchConcepts and only return the `id`
+     * const pitchConceptWithIdOnly = await prisma.pitchConcept.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     *
+     */
+    updateManyAndReturn<T extends PitchConceptUpdateManyAndReturnArgs>(
+      args: SelectSubset<T, PitchConceptUpdateManyAndReturnArgs<ExtArgs>>,
+    ): Prisma.PrismaPromise<
+      $Result.GetResult<
+        Prisma.$PitchConceptPayload<ExtArgs>,
+        T,
+        "updateManyAndReturn",
+        GlobalOmitOptions
+      >
+    >;
+
+    /**
+     * Create or update one PitchConcept.
+     * @param {PitchConceptUpsertArgs} args - Arguments to update or create a PitchConcept.
+     * @example
+     * // Update or create a PitchConcept
+     * const pitchConcept = await prisma.pitchConcept.upsert({
+     *   create: {
+     *     // ... data to create a PitchConcept
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the PitchConcept we want to update
+     *   }
+     * })
+     */
+    upsert<T extends PitchConceptUpsertArgs>(
+      args: SelectSubset<T, PitchConceptUpsertArgs<ExtArgs>>,
+    ): Prisma__PitchConceptClient<
+      $Result.GetResult<
+        Prisma.$PitchConceptPayload<ExtArgs>,
+        T,
+        "upsert",
+        GlobalOmitOptions
+      >,
+      never,
+      ExtArgs,
+      GlobalOmitOptions
+    >;
+
+    /**
+     * Count the number of PitchConcepts.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PitchConceptCountArgs} args - Arguments to filter PitchConcepts to count.
+     * @example
+     * // Count the number of PitchConcepts
+     * const count = await prisma.pitchConcept.count({
+     *   where: {
+     *     // ... the filter for the PitchConcepts we want to count
+     *   }
+     * })
+     **/
+    count<T extends PitchConceptCountArgs>(
+      args?: Subset<T, PitchConceptCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<"select", any>
+        ? T["select"] extends true
+          ? number
+          : GetScalarType<T["select"], PitchConceptCountAggregateOutputType>
+        : number
+    >;
+
+    /**
+     * Allows you to perform aggregations operations on a PitchConcept.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PitchConceptAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+     **/
+    aggregate<T extends PitchConceptAggregateArgs>(
+      args: Subset<T, PitchConceptAggregateArgs>,
+    ): Prisma.PrismaPromise<GetPitchConceptAggregateType<T>>;
+
+    /**
+     * Group by PitchConcept.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PitchConceptGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     *
+     **/
+    groupBy<
+      T extends PitchConceptGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<"skip", Keys<T>>,
+        Extends<"take", Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: PitchConceptGroupByArgs["orderBy"] }
+        : { orderBy?: PitchConceptGroupByArgs["orderBy"] },
+      OrderFields extends ExcludeUnderscoreKeys<
+        Keys<MaybeTupleToUnion<T["orderBy"]>>
+      >,
+      ByFields extends MaybeTupleToUnion<T["by"]>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T["having"]>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T["by"] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+        ? `Error: "by" must not be empty.`
+        : HavingValid extends False
+          ? {
+              [P in HavingFields]: P extends ByFields
+                ? never
+                : P extends string
+                  ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+                  : [
+                      Error,
+                      "Field ",
+                      P,
+                      ` in "having" needs to be provided in "by"`,
+                    ];
+            }[HavingFields]
+          : "take" extends Keys<T>
+            ? "orderBy" extends Keys<T>
+              ? ByValid extends True
+                ? {}
+                : {
+                    [P in OrderFields]: P extends ByFields
+                      ? never
+                      : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`;
+                  }[OrderFields]
+              : 'Error: If you provide "take", you also need to provide "orderBy"'
+            : "skip" extends Keys<T>
+              ? "orderBy" extends Keys<T>
+                ? ByValid extends True
+                  ? {}
+                  : {
+                      [P in OrderFields]: P extends ByFields
+                        ? never
+                        : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`;
+                    }[OrderFields]
+                : 'Error: If you provide "skip", you also need to provide "orderBy"'
+              : ByValid extends True
+                ? {}
+                : {
+                    [P in OrderFields]: P extends ByFields
+                      ? never
+                      : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`;
+                  }[OrderFields],
+    >(
+      args: SubsetIntersection<T, PitchConceptGroupByArgs, OrderByArg> &
+        InputErrors,
+    ): {} extends InputErrors
+      ? GetPitchConceptGroupByPayload<T>
+      : Prisma.PrismaPromise<InputErrors>;
+    /**
+     * Fields of the PitchConcept model
+     */
+    readonly fields: PitchConceptFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for PitchConcept.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__PitchConceptClient<
+    T,
+    Null = never,
+    ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs,
+    GlobalOmitOptions = {},
+  > extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise";
+    project<T extends ProjectDefaultArgs<ExtArgs> = {}>(
+      args?: Subset<T, ProjectDefaultArgs<ExtArgs>>,
+    ): Prisma__ProjectClient<
+      | $Result.GetResult<
+          Prisma.$ProjectPayload<ExtArgs>,
+          T,
+          "findUniqueOrThrow",
+          GlobalOmitOptions
+        >
+      | Null,
+      Null,
+      ExtArgs,
+      GlobalOmitOptions
+    >;
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(
+      onfulfilled?:
+        | ((value: T) => TResult1 | PromiseLike<TResult1>)
+        | undefined
+        | null,
+      onrejected?:
+        | ((reason: any) => TResult2 | PromiseLike<TResult2>)
+        | undefined
+        | null,
+    ): $Utils.JsPromise<TResult1 | TResult2>;
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(
+      onrejected?:
+        | ((reason: any) => TResult | PromiseLike<TResult>)
+        | undefined
+        | null,
+    ): $Utils.JsPromise<T | TResult>;
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>;
+  }
+
+  /**
+   * Fields of the PitchConcept model
+   */
+  interface PitchConceptFieldRefs {
+    readonly id: FieldRef<"PitchConcept", "String">;
+    readonly projectId: FieldRef<"PitchConcept", "String">;
+    readonly slotIndex: FieldRef<"PitchConcept", "Int">;
+    readonly themeId: FieldRef<"PitchConcept", "String">;
+    readonly variantName: FieldRef<"PitchConcept", "String">;
+    readonly description: FieldRef<"PitchConcept", "String">;
+    readonly hidden: FieldRef<"PitchConcept", "Boolean">;
+    readonly createdAt: FieldRef<"PitchConcept", "DateTime">;
+    readonly updatedAt: FieldRef<"PitchConcept", "DateTime">;
+  }
+
+  // Custom InputTypes
+  /**
+   * PitchConcept findUnique
+   */
+  export type PitchConceptFindUniqueArgs<
+    ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs,
+  > = {
+    /**
+     * Select specific fields to fetch from the PitchConcept
+     */
+    select?: PitchConceptSelect<ExtArgs> | null;
+    /**
+     * Omit specific fields from the PitchConcept
+     */
+    omit?: PitchConceptOmit<ExtArgs> | null;
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PitchConceptInclude<ExtArgs> | null;
+    /**
+     * Filter, which PitchConcept to fetch.
+     */
+    where: PitchConceptWhereUniqueInput;
+  };
+
+  /**
+   * PitchConcept findUniqueOrThrow
+   */
+  export type PitchConceptFindUniqueOrThrowArgs<
+    ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs,
+  > = {
+    /**
+     * Select specific fields to fetch from the PitchConcept
+     */
+    select?: PitchConceptSelect<ExtArgs> | null;
+    /**
+     * Omit specific fields from the PitchConcept
+     */
+    omit?: PitchConceptOmit<ExtArgs> | null;
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PitchConceptInclude<ExtArgs> | null;
+    /**
+     * Filter, which PitchConcept to fetch.
+     */
+    where: PitchConceptWhereUniqueInput;
+  };
+
+  /**
+   * PitchConcept findFirst
+   */
+  export type PitchConceptFindFirstArgs<
+    ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs,
+  > = {
+    /**
+     * Select specific fields to fetch from the PitchConcept
+     */
+    select?: PitchConceptSelect<ExtArgs> | null;
+    /**
+     * Omit specific fields from the PitchConcept
+     */
+    omit?: PitchConceptOmit<ExtArgs> | null;
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PitchConceptInclude<ExtArgs> | null;
+    /**
+     * Filter, which PitchConcept to fetch.
+     */
+    where?: PitchConceptWhereInput;
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     *
+     * Determine the order of PitchConcepts to fetch.
+     */
+    orderBy?:
+      | PitchConceptOrderByWithRelationInput
+      | PitchConceptOrderByWithRelationInput[];
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     *
+     * Sets the position for searching for PitchConcepts.
+     */
+    cursor?: PitchConceptWhereUniqueInput;
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     *
+     * Take `±n` PitchConcepts from the position of the cursor.
+     */
+    take?: number;
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     *
+     * Skip the first `n` PitchConcepts.
+     */
+    skip?: number;
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     *
+     * Filter by unique combinations of PitchConcepts.
+     */
+    distinct?: PitchConceptScalarFieldEnum | PitchConceptScalarFieldEnum[];
+  };
+
+  /**
+   * PitchConcept findFirstOrThrow
+   */
+  export type PitchConceptFindFirstOrThrowArgs<
+    ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs,
+  > = {
+    /**
+     * Select specific fields to fetch from the PitchConcept
+     */
+    select?: PitchConceptSelect<ExtArgs> | null;
+    /**
+     * Omit specific fields from the PitchConcept
+     */
+    omit?: PitchConceptOmit<ExtArgs> | null;
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PitchConceptInclude<ExtArgs> | null;
+    /**
+     * Filter, which PitchConcept to fetch.
+     */
+    where?: PitchConceptWhereInput;
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     *
+     * Determine the order of PitchConcepts to fetch.
+     */
+    orderBy?:
+      | PitchConceptOrderByWithRelationInput
+      | PitchConceptOrderByWithRelationInput[];
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     *
+     * Sets the position for searching for PitchConcepts.
+     */
+    cursor?: PitchConceptWhereUniqueInput;
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     *
+     * Take `±n` PitchConcepts from the position of the cursor.
+     */
+    take?: number;
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     *
+     * Skip the first `n` PitchConcepts.
+     */
+    skip?: number;
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     *
+     * Filter by unique combinations of PitchConcepts.
+     */
+    distinct?: PitchConceptScalarFieldEnum | PitchConceptScalarFieldEnum[];
+  };
+
+  /**
+   * PitchConcept findMany
+   */
+  export type PitchConceptFindManyArgs<
+    ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs,
+  > = {
+    /**
+     * Select specific fields to fetch from the PitchConcept
+     */
+    select?: PitchConceptSelect<ExtArgs> | null;
+    /**
+     * Omit specific fields from the PitchConcept
+     */
+    omit?: PitchConceptOmit<ExtArgs> | null;
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PitchConceptInclude<ExtArgs> | null;
+    /**
+     * Filter, which PitchConcepts to fetch.
+     */
+    where?: PitchConceptWhereInput;
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     *
+     * Determine the order of PitchConcepts to fetch.
+     */
+    orderBy?:
+      | PitchConceptOrderByWithRelationInput
+      | PitchConceptOrderByWithRelationInput[];
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     *
+     * Sets the position for listing PitchConcepts.
+     */
+    cursor?: PitchConceptWhereUniqueInput;
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     *
+     * Take `±n` PitchConcepts from the position of the cursor.
+     */
+    take?: number;
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     *
+     * Skip the first `n` PitchConcepts.
+     */
+    skip?: number;
+    distinct?: PitchConceptScalarFieldEnum | PitchConceptScalarFieldEnum[];
+  };
+
+  /**
+   * PitchConcept create
+   */
+  export type PitchConceptCreateArgs<
+    ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs,
+  > = {
+    /**
+     * Select specific fields to fetch from the PitchConcept
+     */
+    select?: PitchConceptSelect<ExtArgs> | null;
+    /**
+     * Omit specific fields from the PitchConcept
+     */
+    omit?: PitchConceptOmit<ExtArgs> | null;
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PitchConceptInclude<ExtArgs> | null;
+    /**
+     * The data needed to create a PitchConcept.
+     */
+    data: XOR<PitchConceptCreateInput, PitchConceptUncheckedCreateInput>;
+  };
+
+  /**
+   * PitchConcept createMany
+   */
+  export type PitchConceptCreateManyArgs<
+    ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs,
+  > = {
+    /**
+     * The data used to create many PitchConcepts.
+     */
+    data: PitchConceptCreateManyInput | PitchConceptCreateManyInput[];
+    skipDuplicates?: boolean;
+  };
+
+  /**
+   * PitchConcept createManyAndReturn
+   */
+  export type PitchConceptCreateManyAndReturnArgs<
+    ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs,
+  > = {
+    /**
+     * Select specific fields to fetch from the PitchConcept
+     */
+    select?: PitchConceptSelectCreateManyAndReturn<ExtArgs> | null;
+    /**
+     * Omit specific fields from the PitchConcept
+     */
+    omit?: PitchConceptOmit<ExtArgs> | null;
+    /**
+     * The data used to create many PitchConcepts.
+     */
+    data: PitchConceptCreateManyInput | PitchConceptCreateManyInput[];
+    skipDuplicates?: boolean;
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PitchConceptIncludeCreateManyAndReturn<ExtArgs> | null;
+  };
+
+  /**
+   * PitchConcept update
+   */
+  export type PitchConceptUpdateArgs<
+    ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs,
+  > = {
+    /**
+     * Select specific fields to fetch from the PitchConcept
+     */
+    select?: PitchConceptSelect<ExtArgs> | null;
+    /**
+     * Omit specific fields from the PitchConcept
+     */
+    omit?: PitchConceptOmit<ExtArgs> | null;
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PitchConceptInclude<ExtArgs> | null;
+    /**
+     * The data needed to update a PitchConcept.
+     */
+    data: XOR<PitchConceptUpdateInput, PitchConceptUncheckedUpdateInput>;
+    /**
+     * Choose, which PitchConcept to update.
+     */
+    where: PitchConceptWhereUniqueInput;
+  };
+
+  /**
+   * PitchConcept updateMany
+   */
+  export type PitchConceptUpdateManyArgs<
+    ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs,
+  > = {
+    /**
+     * The data used to update PitchConcepts.
+     */
+    data: XOR<
+      PitchConceptUpdateManyMutationInput,
+      PitchConceptUncheckedUpdateManyInput
+    >;
+    /**
+     * Filter which PitchConcepts to update
+     */
+    where?: PitchConceptWhereInput;
+    /**
+     * Limit how many PitchConcepts to update.
+     */
+    limit?: number;
+  };
+
+  /**
+   * PitchConcept updateManyAndReturn
+   */
+  export type PitchConceptUpdateManyAndReturnArgs<
+    ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs,
+  > = {
+    /**
+     * Select specific fields to fetch from the PitchConcept
+     */
+    select?: PitchConceptSelectUpdateManyAndReturn<ExtArgs> | null;
+    /**
+     * Omit specific fields from the PitchConcept
+     */
+    omit?: PitchConceptOmit<ExtArgs> | null;
+    /**
+     * The data used to update PitchConcepts.
+     */
+    data: XOR<
+      PitchConceptUpdateManyMutationInput,
+      PitchConceptUncheckedUpdateManyInput
+    >;
+    /**
+     * Filter which PitchConcepts to update
+     */
+    where?: PitchConceptWhereInput;
+    /**
+     * Limit how many PitchConcepts to update.
+     */
+    limit?: number;
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PitchConceptIncludeUpdateManyAndReturn<ExtArgs> | null;
+  };
+
+  /**
+   * PitchConcept upsert
+   */
+  export type PitchConceptUpsertArgs<
+    ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs,
+  > = {
+    /**
+     * Select specific fields to fetch from the PitchConcept
+     */
+    select?: PitchConceptSelect<ExtArgs> | null;
+    /**
+     * Omit specific fields from the PitchConcept
+     */
+    omit?: PitchConceptOmit<ExtArgs> | null;
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PitchConceptInclude<ExtArgs> | null;
+    /**
+     * The filter to search for the PitchConcept to update in case it exists.
+     */
+    where: PitchConceptWhereUniqueInput;
+    /**
+     * In case the PitchConcept found by the `where` argument doesn't exist, create a new PitchConcept with this data.
+     */
+    create: XOR<PitchConceptCreateInput, PitchConceptUncheckedCreateInput>;
+    /**
+     * In case the PitchConcept was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<PitchConceptUpdateInput, PitchConceptUncheckedUpdateInput>;
+  };
+
+  /**
+   * PitchConcept delete
+   */
+  export type PitchConceptDeleteArgs<
+    ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs,
+  > = {
+    /**
+     * Select specific fields to fetch from the PitchConcept
+     */
+    select?: PitchConceptSelect<ExtArgs> | null;
+    /**
+     * Omit specific fields from the PitchConcept
+     */
+    omit?: PitchConceptOmit<ExtArgs> | null;
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PitchConceptInclude<ExtArgs> | null;
+    /**
+     * Filter which PitchConcept to delete.
+     */
+    where: PitchConceptWhereUniqueInput;
+  };
+
+  /**
+   * PitchConcept deleteMany
+   */
+  export type PitchConceptDeleteManyArgs<
+    ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs,
+  > = {
+    /**
+     * Filter which PitchConcepts to delete
+     */
+    where?: PitchConceptWhereInput;
+    /**
+     * Limit how many PitchConcepts to delete.
+     */
+    limit?: number;
+  };
+
+  /**
+   * PitchConcept without action
+   */
+  export type PitchConceptDefaultArgs<
+    ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs,
+  > = {
+    /**
+     * Select specific fields to fetch from the PitchConcept
+     */
+    select?: PitchConceptSelect<ExtArgs> | null;
+    /**
+     * Omit specific fields from the PitchConcept
+     */
+    omit?: PitchConceptOmit<ExtArgs> | null;
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PitchConceptInclude<ExtArgs> | null;
+  };
+
+  /**
+   * Model PitchComment
+   */
+
+  export type AggregatePitchComment = {
+    _count: PitchCommentCountAggregateOutputType | null;
+    _avg: PitchCommentAvgAggregateOutputType | null;
+    _sum: PitchCommentSumAggregateOutputType | null;
+    _min: PitchCommentMinAggregateOutputType | null;
+    _max: PitchCommentMaxAggregateOutputType | null;
+  };
+
+  export type PitchCommentAvgAggregateOutputType = {
+    slotIndex: number | null;
+  };
+
+  export type PitchCommentSumAggregateOutputType = {
+    slotIndex: number | null;
+  };
+
+  export type PitchCommentMinAggregateOutputType = {
+    id: string | null;
+    projectId: string | null;
+    slotIndex: number | null;
+    author: string | null;
+    body: string | null;
+    createdAt: Date | null;
+  };
+
+  export type PitchCommentMaxAggregateOutputType = {
+    id: string | null;
+    projectId: string | null;
+    slotIndex: number | null;
+    author: string | null;
+    body: string | null;
+    createdAt: Date | null;
+  };
+
+  export type PitchCommentCountAggregateOutputType = {
+    id: number;
+    projectId: number;
+    slotIndex: number;
+    author: number;
+    body: number;
+    createdAt: number;
+    _all: number;
+  };
+
+  export type PitchCommentAvgAggregateInputType = {
+    slotIndex?: true;
+  };
+
+  export type PitchCommentSumAggregateInputType = {
+    slotIndex?: true;
+  };
+
+  export type PitchCommentMinAggregateInputType = {
+    id?: true;
+    projectId?: true;
+    slotIndex?: true;
+    author?: true;
+    body?: true;
+    createdAt?: true;
+  };
+
+  export type PitchCommentMaxAggregateInputType = {
+    id?: true;
+    projectId?: true;
+    slotIndex?: true;
+    author?: true;
+    body?: true;
+    createdAt?: true;
+  };
+
+  export type PitchCommentCountAggregateInputType = {
+    id?: true;
+    projectId?: true;
+    slotIndex?: true;
+    author?: true;
+    body?: true;
+    createdAt?: true;
+    _all?: true;
+  };
+
+  export type PitchCommentAggregateArgs<
+    ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs,
+  > = {
+    /**
+     * Filter which PitchComment to aggregate.
+     */
+    where?: PitchCommentWhereInput;
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     *
+     * Determine the order of PitchComments to fetch.
+     */
+    orderBy?:
+      | PitchCommentOrderByWithRelationInput
+      | PitchCommentOrderByWithRelationInput[];
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     *
+     * Sets the start position
+     */
+    cursor?: PitchCommentWhereUniqueInput;
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     *
+     * Take `±n` PitchComments from the position of the cursor.
+     */
+    take?: number;
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     *
+     * Skip the first `n` PitchComments.
+     */
+    skip?: number;
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     *
+     * Count returned PitchComments
+     **/
+    _count?: true | PitchCommentCountAggregateInputType;
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     *
+     * Select which fields to average
+     **/
+    _avg?: PitchCommentAvgAggregateInputType;
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     *
+     * Select which fields to sum
+     **/
+    _sum?: PitchCommentSumAggregateInputType;
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     *
+     * Select which fields to find the minimum value
+     **/
+    _min?: PitchCommentMinAggregateInputType;
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     *
+     * Select which fields to find the maximum value
+     **/
+    _max?: PitchCommentMaxAggregateInputType;
+  };
+
+  export type GetPitchCommentAggregateType<
+    T extends PitchCommentAggregateArgs,
+  > = {
+    [P in keyof T & keyof AggregatePitchComment]: P extends "_count" | "count"
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregatePitchComment[P]>
+      : GetScalarType<T[P], AggregatePitchComment[P]>;
+  };
+
+  export type PitchCommentGroupByArgs<
+    ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs,
+  > = {
+    where?: PitchCommentWhereInput;
+    orderBy?:
+      | PitchCommentOrderByWithAggregationInput
+      | PitchCommentOrderByWithAggregationInput[];
+    by: PitchCommentScalarFieldEnum[] | PitchCommentScalarFieldEnum;
+    having?: PitchCommentScalarWhereWithAggregatesInput;
+    take?: number;
+    skip?: number;
+    _count?: PitchCommentCountAggregateInputType | true;
+    _avg?: PitchCommentAvgAggregateInputType;
+    _sum?: PitchCommentSumAggregateInputType;
+    _min?: PitchCommentMinAggregateInputType;
+    _max?: PitchCommentMaxAggregateInputType;
+  };
+
+  export type PitchCommentGroupByOutputType = {
+    id: string;
+    projectId: string;
+    slotIndex: number;
+    author: string;
+    body: string;
+    createdAt: Date;
+    _count: PitchCommentCountAggregateOutputType | null;
+    _avg: PitchCommentAvgAggregateOutputType | null;
+    _sum: PitchCommentSumAggregateOutputType | null;
+    _min: PitchCommentMinAggregateOutputType | null;
+    _max: PitchCommentMaxAggregateOutputType | null;
+  };
+
+  type GetPitchCommentGroupByPayload<T extends PitchCommentGroupByArgs> =
+    Prisma.PrismaPromise<
+      Array<
+        PickEnumerable<PitchCommentGroupByOutputType, T["by"]> & {
+          [P in keyof T &
+            keyof PitchCommentGroupByOutputType]: P extends "_count"
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], PitchCommentGroupByOutputType[P]>
+            : GetScalarType<T[P], PitchCommentGroupByOutputType[P]>;
+        }
+      >
+    >;
+
+  export type PitchCommentSelect<
+    ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs,
+  > = $Extensions.GetSelect<
+    {
+      id?: boolean;
+      projectId?: boolean;
+      slotIndex?: boolean;
+      author?: boolean;
+      body?: boolean;
+      createdAt?: boolean;
+      project?: boolean | ProjectDefaultArgs<ExtArgs>;
+    },
+    ExtArgs["result"]["pitchComment"]
+  >;
+
+  export type PitchCommentSelectCreateManyAndReturn<
+    ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs,
+  > = $Extensions.GetSelect<
+    {
+      id?: boolean;
+      projectId?: boolean;
+      slotIndex?: boolean;
+      author?: boolean;
+      body?: boolean;
+      createdAt?: boolean;
+      project?: boolean | ProjectDefaultArgs<ExtArgs>;
+    },
+    ExtArgs["result"]["pitchComment"]
+  >;
+
+  export type PitchCommentSelectUpdateManyAndReturn<
+    ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs,
+  > = $Extensions.GetSelect<
+    {
+      id?: boolean;
+      projectId?: boolean;
+      slotIndex?: boolean;
+      author?: boolean;
+      body?: boolean;
+      createdAt?: boolean;
+      project?: boolean | ProjectDefaultArgs<ExtArgs>;
+    },
+    ExtArgs["result"]["pitchComment"]
+  >;
+
+  export type PitchCommentSelectScalar = {
+    id?: boolean;
+    projectId?: boolean;
+    slotIndex?: boolean;
+    author?: boolean;
+    body?: boolean;
+    createdAt?: boolean;
+  };
+
+  export type PitchCommentOmit<
+    ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs,
+  > = $Extensions.GetOmit<
+    "id" | "projectId" | "slotIndex" | "author" | "body" | "createdAt",
+    ExtArgs["result"]["pitchComment"]
+  >;
+  export type PitchCommentInclude<
+    ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs,
+  > = {
+    project?: boolean | ProjectDefaultArgs<ExtArgs>;
+  };
+  export type PitchCommentIncludeCreateManyAndReturn<
+    ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs,
+  > = {
+    project?: boolean | ProjectDefaultArgs<ExtArgs>;
+  };
+  export type PitchCommentIncludeUpdateManyAndReturn<
+    ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs,
+  > = {
+    project?: boolean | ProjectDefaultArgs<ExtArgs>;
+  };
+
+  export type $PitchCommentPayload<
+    ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs,
+  > = {
+    name: "PitchComment";
+    objects: {
+      project: Prisma.$ProjectPayload<ExtArgs>;
+    };
+    scalars: $Extensions.GetPayloadResult<
+      {
+        id: string;
+        projectId: string;
+        slotIndex: number;
+        author: string;
+        body: string;
+        createdAt: Date;
+      },
+      ExtArgs["result"]["pitchComment"]
+    >;
+    composites: {};
+  };
+
+  type PitchCommentGetPayload<
+    S extends boolean | null | undefined | PitchCommentDefaultArgs,
+  > = $Result.GetResult<Prisma.$PitchCommentPayload, S>;
+
+  type PitchCommentCountArgs<
+    ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs,
+  > = Omit<
+    PitchCommentFindManyArgs,
+    "select" | "include" | "distinct" | "omit"
+  > & {
+    select?: PitchCommentCountAggregateInputType | true;
+  };
+
+  export interface PitchCommentDelegate<
+    ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs,
+    GlobalOmitOptions = {},
+  > {
+    [K: symbol]: {
+      types: Prisma.TypeMap<ExtArgs>["model"]["PitchComment"];
+      meta: { name: "PitchComment" };
+    };
+    /**
+     * Find zero or one PitchComment that matches the filter.
+     * @param {PitchCommentFindUniqueArgs} args - Arguments to find a PitchComment
+     * @example
+     * // Get one PitchComment
+     * const pitchComment = await prisma.pitchComment.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends PitchCommentFindUniqueArgs>(
+      args: SelectSubset<T, PitchCommentFindUniqueArgs<ExtArgs>>,
+    ): Prisma__PitchCommentClient<
+      $Result.GetResult<
+        Prisma.$PitchCommentPayload<ExtArgs>,
+        T,
+        "findUnique",
+        GlobalOmitOptions
+      > | null,
+      null,
+      ExtArgs,
+      GlobalOmitOptions
+    >;
+
+    /**
+     * Find one PitchComment that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {PitchCommentFindUniqueOrThrowArgs} args - Arguments to find a PitchComment
+     * @example
+     * // Get one PitchComment
+     * const pitchComment = await prisma.pitchComment.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends PitchCommentFindUniqueOrThrowArgs>(
+      args: SelectSubset<T, PitchCommentFindUniqueOrThrowArgs<ExtArgs>>,
+    ): Prisma__PitchCommentClient<
+      $Result.GetResult<
+        Prisma.$PitchCommentPayload<ExtArgs>,
+        T,
+        "findUniqueOrThrow",
+        GlobalOmitOptions
+      >,
+      never,
+      ExtArgs,
+      GlobalOmitOptions
+    >;
+
+    /**
+     * Find the first PitchComment that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PitchCommentFindFirstArgs} args - Arguments to find a PitchComment
+     * @example
+     * // Get one PitchComment
+     * const pitchComment = await prisma.pitchComment.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends PitchCommentFindFirstArgs>(
+      args?: SelectSubset<T, PitchCommentFindFirstArgs<ExtArgs>>,
+    ): Prisma__PitchCommentClient<
+      $Result.GetResult<
+        Prisma.$PitchCommentPayload<ExtArgs>,
+        T,
+        "findFirst",
+        GlobalOmitOptions
+      > | null,
+      null,
+      ExtArgs,
+      GlobalOmitOptions
+    >;
+
+    /**
+     * Find the first PitchComment that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PitchCommentFindFirstOrThrowArgs} args - Arguments to find a PitchComment
+     * @example
+     * // Get one PitchComment
+     * const pitchComment = await prisma.pitchComment.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends PitchCommentFindFirstOrThrowArgs>(
+      args?: SelectSubset<T, PitchCommentFindFirstOrThrowArgs<ExtArgs>>,
+    ): Prisma__PitchCommentClient<
+      $Result.GetResult<
+        Prisma.$PitchCommentPayload<ExtArgs>,
+        T,
+        "findFirstOrThrow",
+        GlobalOmitOptions
+      >,
+      never,
+      ExtArgs,
+      GlobalOmitOptions
+    >;
+
+    /**
+     * Find zero or more PitchComments that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PitchCommentFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all PitchComments
+     * const pitchComments = await prisma.pitchComment.findMany()
+     *
+     * // Get first 10 PitchComments
+     * const pitchComments = await prisma.pitchComment.findMany({ take: 10 })
+     *
+     * // Only select the `id`
+     * const pitchCommentWithIdOnly = await prisma.pitchComment.findMany({ select: { id: true } })
+     *
+     */
+    findMany<T extends PitchCommentFindManyArgs>(
+      args?: SelectSubset<T, PitchCommentFindManyArgs<ExtArgs>>,
+    ): Prisma.PrismaPromise<
+      $Result.GetResult<
+        Prisma.$PitchCommentPayload<ExtArgs>,
+        T,
+        "findMany",
+        GlobalOmitOptions
+      >
+    >;
+
+    /**
+     * Create a PitchComment.
+     * @param {PitchCommentCreateArgs} args - Arguments to create a PitchComment.
+     * @example
+     * // Create one PitchComment
+     * const PitchComment = await prisma.pitchComment.create({
+     *   data: {
+     *     // ... data to create a PitchComment
+     *   }
+     * })
+     *
+     */
+    create<T extends PitchCommentCreateArgs>(
+      args: SelectSubset<T, PitchCommentCreateArgs<ExtArgs>>,
+    ): Prisma__PitchCommentClient<
+      $Result.GetResult<
+        Prisma.$PitchCommentPayload<ExtArgs>,
+        T,
+        "create",
+        GlobalOmitOptions
+      >,
+      never,
+      ExtArgs,
+      GlobalOmitOptions
+    >;
+
+    /**
+     * Create many PitchComments.
+     * @param {PitchCommentCreateManyArgs} args - Arguments to create many PitchComments.
+     * @example
+     * // Create many PitchComments
+     * const pitchComment = await prisma.pitchComment.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *
+     */
+    createMany<T extends PitchCommentCreateManyArgs>(
+      args?: SelectSubset<T, PitchCommentCreateManyArgs<ExtArgs>>,
+    ): Prisma.PrismaPromise<BatchPayload>;
+
+    /**
+     * Create many PitchComments and returns the data saved in the database.
+     * @param {PitchCommentCreateManyAndReturnArgs} args - Arguments to create many PitchComments.
+     * @example
+     * // Create many PitchComments
+     * const pitchComment = await prisma.pitchComment.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *
+     * // Create many PitchComments and only return the `id`
+     * const pitchCommentWithIdOnly = await prisma.pitchComment.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     *
+     */
+    createManyAndReturn<T extends PitchCommentCreateManyAndReturnArgs>(
+      args?: SelectSubset<T, PitchCommentCreateManyAndReturnArgs<ExtArgs>>,
+    ): Prisma.PrismaPromise<
+      $Result.GetResult<
+        Prisma.$PitchCommentPayload<ExtArgs>,
+        T,
+        "createManyAndReturn",
+        GlobalOmitOptions
+      >
+    >;
+
+    /**
+     * Delete a PitchComment.
+     * @param {PitchCommentDeleteArgs} args - Arguments to delete one PitchComment.
+     * @example
+     * // Delete one PitchComment
+     * const PitchComment = await prisma.pitchComment.delete({
+     *   where: {
+     *     // ... filter to delete one PitchComment
+     *   }
+     * })
+     *
+     */
+    delete<T extends PitchCommentDeleteArgs>(
+      args: SelectSubset<T, PitchCommentDeleteArgs<ExtArgs>>,
+    ): Prisma__PitchCommentClient<
+      $Result.GetResult<
+        Prisma.$PitchCommentPayload<ExtArgs>,
+        T,
+        "delete",
+        GlobalOmitOptions
+      >,
+      never,
+      ExtArgs,
+      GlobalOmitOptions
+    >;
+
+    /**
+     * Update one PitchComment.
+     * @param {PitchCommentUpdateArgs} args - Arguments to update one PitchComment.
+     * @example
+     * // Update one PitchComment
+     * const pitchComment = await prisma.pitchComment.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     *
+     */
+    update<T extends PitchCommentUpdateArgs>(
+      args: SelectSubset<T, PitchCommentUpdateArgs<ExtArgs>>,
+    ): Prisma__PitchCommentClient<
+      $Result.GetResult<
+        Prisma.$PitchCommentPayload<ExtArgs>,
+        T,
+        "update",
+        GlobalOmitOptions
+      >,
+      never,
+      ExtArgs,
+      GlobalOmitOptions
+    >;
+
+    /**
+     * Delete zero or more PitchComments.
+     * @param {PitchCommentDeleteManyArgs} args - Arguments to filter PitchComments to delete.
+     * @example
+     * // Delete a few PitchComments
+     * const { count } = await prisma.pitchComment.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     *
+     */
+    deleteMany<T extends PitchCommentDeleteManyArgs>(
+      args?: SelectSubset<T, PitchCommentDeleteManyArgs<ExtArgs>>,
+    ): Prisma.PrismaPromise<BatchPayload>;
+
+    /**
+     * Update zero or more PitchComments.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PitchCommentUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many PitchComments
+     * const pitchComment = await prisma.pitchComment.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     *
+     */
+    updateMany<T extends PitchCommentUpdateManyArgs>(
+      args: SelectSubset<T, PitchCommentUpdateManyArgs<ExtArgs>>,
+    ): Prisma.PrismaPromise<BatchPayload>;
+
+    /**
+     * Update zero or more PitchComments and returns the data updated in the database.
+     * @param {PitchCommentUpdateManyAndReturnArgs} args - Arguments to update many PitchComments.
+     * @example
+     * // Update many PitchComments
+     * const pitchComment = await prisma.pitchComment.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *
+     * // Update zero or more PitchComments and only return the `id`
+     * const pitchCommentWithIdOnly = await prisma.pitchComment.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     *
+     */
+    updateManyAndReturn<T extends PitchCommentUpdateManyAndReturnArgs>(
+      args: SelectSubset<T, PitchCommentUpdateManyAndReturnArgs<ExtArgs>>,
+    ): Prisma.PrismaPromise<
+      $Result.GetResult<
+        Prisma.$PitchCommentPayload<ExtArgs>,
+        T,
+        "updateManyAndReturn",
+        GlobalOmitOptions
+      >
+    >;
+
+    /**
+     * Create or update one PitchComment.
+     * @param {PitchCommentUpsertArgs} args - Arguments to update or create a PitchComment.
+     * @example
+     * // Update or create a PitchComment
+     * const pitchComment = await prisma.pitchComment.upsert({
+     *   create: {
+     *     // ... data to create a PitchComment
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the PitchComment we want to update
+     *   }
+     * })
+     */
+    upsert<T extends PitchCommentUpsertArgs>(
+      args: SelectSubset<T, PitchCommentUpsertArgs<ExtArgs>>,
+    ): Prisma__PitchCommentClient<
+      $Result.GetResult<
+        Prisma.$PitchCommentPayload<ExtArgs>,
+        T,
+        "upsert",
+        GlobalOmitOptions
+      >,
+      never,
+      ExtArgs,
+      GlobalOmitOptions
+    >;
+
+    /**
+     * Count the number of PitchComments.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PitchCommentCountArgs} args - Arguments to filter PitchComments to count.
+     * @example
+     * // Count the number of PitchComments
+     * const count = await prisma.pitchComment.count({
+     *   where: {
+     *     // ... the filter for the PitchComments we want to count
+     *   }
+     * })
+     **/
+    count<T extends PitchCommentCountArgs>(
+      args?: Subset<T, PitchCommentCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<"select", any>
+        ? T["select"] extends true
+          ? number
+          : GetScalarType<T["select"], PitchCommentCountAggregateOutputType>
+        : number
+    >;
+
+    /**
+     * Allows you to perform aggregations operations on a PitchComment.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PitchCommentAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+     **/
+    aggregate<T extends PitchCommentAggregateArgs>(
+      args: Subset<T, PitchCommentAggregateArgs>,
+    ): Prisma.PrismaPromise<GetPitchCommentAggregateType<T>>;
+
+    /**
+     * Group by PitchComment.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PitchCommentGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     *
+     **/
+    groupBy<
+      T extends PitchCommentGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<"skip", Keys<T>>,
+        Extends<"take", Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: PitchCommentGroupByArgs["orderBy"] }
+        : { orderBy?: PitchCommentGroupByArgs["orderBy"] },
+      OrderFields extends ExcludeUnderscoreKeys<
+        Keys<MaybeTupleToUnion<T["orderBy"]>>
+      >,
+      ByFields extends MaybeTupleToUnion<T["by"]>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T["having"]>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T["by"] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+        ? `Error: "by" must not be empty.`
+        : HavingValid extends False
+          ? {
+              [P in HavingFields]: P extends ByFields
+                ? never
+                : P extends string
+                  ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+                  : [
+                      Error,
+                      "Field ",
+                      P,
+                      ` in "having" needs to be provided in "by"`,
+                    ];
+            }[HavingFields]
+          : "take" extends Keys<T>
+            ? "orderBy" extends Keys<T>
+              ? ByValid extends True
+                ? {}
+                : {
+                    [P in OrderFields]: P extends ByFields
+                      ? never
+                      : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`;
+                  }[OrderFields]
+              : 'Error: If you provide "take", you also need to provide "orderBy"'
+            : "skip" extends Keys<T>
+              ? "orderBy" extends Keys<T>
+                ? ByValid extends True
+                  ? {}
+                  : {
+                      [P in OrderFields]: P extends ByFields
+                        ? never
+                        : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`;
+                    }[OrderFields]
+                : 'Error: If you provide "skip", you also need to provide "orderBy"'
+              : ByValid extends True
+                ? {}
+                : {
+                    [P in OrderFields]: P extends ByFields
+                      ? never
+                      : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`;
+                  }[OrderFields],
+    >(
+      args: SubsetIntersection<T, PitchCommentGroupByArgs, OrderByArg> &
+        InputErrors,
+    ): {} extends InputErrors
+      ? GetPitchCommentGroupByPayload<T>
+      : Prisma.PrismaPromise<InputErrors>;
+    /**
+     * Fields of the PitchComment model
+     */
+    readonly fields: PitchCommentFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for PitchComment.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__PitchCommentClient<
+    T,
+    Null = never,
+    ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs,
+    GlobalOmitOptions = {},
+  > extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise";
+    project<T extends ProjectDefaultArgs<ExtArgs> = {}>(
+      args?: Subset<T, ProjectDefaultArgs<ExtArgs>>,
+    ): Prisma__ProjectClient<
+      | $Result.GetResult<
+          Prisma.$ProjectPayload<ExtArgs>,
+          T,
+          "findUniqueOrThrow",
+          GlobalOmitOptions
+        >
+      | Null,
+      Null,
+      ExtArgs,
+      GlobalOmitOptions
+    >;
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(
+      onfulfilled?:
+        | ((value: T) => TResult1 | PromiseLike<TResult1>)
+        | undefined
+        | null,
+      onrejected?:
+        | ((reason: any) => TResult2 | PromiseLike<TResult2>)
+        | undefined
+        | null,
+    ): $Utils.JsPromise<TResult1 | TResult2>;
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(
+      onrejected?:
+        | ((reason: any) => TResult | PromiseLike<TResult>)
+        | undefined
+        | null,
+    ): $Utils.JsPromise<T | TResult>;
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>;
+  }
+
+  /**
+   * Fields of the PitchComment model
+   */
+  interface PitchCommentFieldRefs {
+    readonly id: FieldRef<"PitchComment", "String">;
+    readonly projectId: FieldRef<"PitchComment", "String">;
+    readonly slotIndex: FieldRef<"PitchComment", "Int">;
+    readonly author: FieldRef<"PitchComment", "String">;
+    readonly body: FieldRef<"PitchComment", "String">;
+    readonly createdAt: FieldRef<"PitchComment", "DateTime">;
+  }
+
+  // Custom InputTypes
+  /**
+   * PitchComment findUnique
+   */
+  export type PitchCommentFindUniqueArgs<
+    ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs,
+  > = {
+    /**
+     * Select specific fields to fetch from the PitchComment
+     */
+    select?: PitchCommentSelect<ExtArgs> | null;
+    /**
+     * Omit specific fields from the PitchComment
+     */
+    omit?: PitchCommentOmit<ExtArgs> | null;
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PitchCommentInclude<ExtArgs> | null;
+    /**
+     * Filter, which PitchComment to fetch.
+     */
+    where: PitchCommentWhereUniqueInput;
+  };
+
+  /**
+   * PitchComment findUniqueOrThrow
+   */
+  export type PitchCommentFindUniqueOrThrowArgs<
+    ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs,
+  > = {
+    /**
+     * Select specific fields to fetch from the PitchComment
+     */
+    select?: PitchCommentSelect<ExtArgs> | null;
+    /**
+     * Omit specific fields from the PitchComment
+     */
+    omit?: PitchCommentOmit<ExtArgs> | null;
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PitchCommentInclude<ExtArgs> | null;
+    /**
+     * Filter, which PitchComment to fetch.
+     */
+    where: PitchCommentWhereUniqueInput;
+  };
+
+  /**
+   * PitchComment findFirst
+   */
+  export type PitchCommentFindFirstArgs<
+    ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs,
+  > = {
+    /**
+     * Select specific fields to fetch from the PitchComment
+     */
+    select?: PitchCommentSelect<ExtArgs> | null;
+    /**
+     * Omit specific fields from the PitchComment
+     */
+    omit?: PitchCommentOmit<ExtArgs> | null;
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PitchCommentInclude<ExtArgs> | null;
+    /**
+     * Filter, which PitchComment to fetch.
+     */
+    where?: PitchCommentWhereInput;
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     *
+     * Determine the order of PitchComments to fetch.
+     */
+    orderBy?:
+      | PitchCommentOrderByWithRelationInput
+      | PitchCommentOrderByWithRelationInput[];
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     *
+     * Sets the position for searching for PitchComments.
+     */
+    cursor?: PitchCommentWhereUniqueInput;
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     *
+     * Take `±n` PitchComments from the position of the cursor.
+     */
+    take?: number;
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     *
+     * Skip the first `n` PitchComments.
+     */
+    skip?: number;
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     *
+     * Filter by unique combinations of PitchComments.
+     */
+    distinct?: PitchCommentScalarFieldEnum | PitchCommentScalarFieldEnum[];
+  };
+
+  /**
+   * PitchComment findFirstOrThrow
+   */
+  export type PitchCommentFindFirstOrThrowArgs<
+    ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs,
+  > = {
+    /**
+     * Select specific fields to fetch from the PitchComment
+     */
+    select?: PitchCommentSelect<ExtArgs> | null;
+    /**
+     * Omit specific fields from the PitchComment
+     */
+    omit?: PitchCommentOmit<ExtArgs> | null;
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PitchCommentInclude<ExtArgs> | null;
+    /**
+     * Filter, which PitchComment to fetch.
+     */
+    where?: PitchCommentWhereInput;
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     *
+     * Determine the order of PitchComments to fetch.
+     */
+    orderBy?:
+      | PitchCommentOrderByWithRelationInput
+      | PitchCommentOrderByWithRelationInput[];
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     *
+     * Sets the position for searching for PitchComments.
+     */
+    cursor?: PitchCommentWhereUniqueInput;
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     *
+     * Take `±n` PitchComments from the position of the cursor.
+     */
+    take?: number;
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     *
+     * Skip the first `n` PitchComments.
+     */
+    skip?: number;
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     *
+     * Filter by unique combinations of PitchComments.
+     */
+    distinct?: PitchCommentScalarFieldEnum | PitchCommentScalarFieldEnum[];
+  };
+
+  /**
+   * PitchComment findMany
+   */
+  export type PitchCommentFindManyArgs<
+    ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs,
+  > = {
+    /**
+     * Select specific fields to fetch from the PitchComment
+     */
+    select?: PitchCommentSelect<ExtArgs> | null;
+    /**
+     * Omit specific fields from the PitchComment
+     */
+    omit?: PitchCommentOmit<ExtArgs> | null;
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PitchCommentInclude<ExtArgs> | null;
+    /**
+     * Filter, which PitchComments to fetch.
+     */
+    where?: PitchCommentWhereInput;
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     *
+     * Determine the order of PitchComments to fetch.
+     */
+    orderBy?:
+      | PitchCommentOrderByWithRelationInput
+      | PitchCommentOrderByWithRelationInput[];
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     *
+     * Sets the position for listing PitchComments.
+     */
+    cursor?: PitchCommentWhereUniqueInput;
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     *
+     * Take `±n` PitchComments from the position of the cursor.
+     */
+    take?: number;
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     *
+     * Skip the first `n` PitchComments.
+     */
+    skip?: number;
+    distinct?: PitchCommentScalarFieldEnum | PitchCommentScalarFieldEnum[];
+  };
+
+  /**
+   * PitchComment create
+   */
+  export type PitchCommentCreateArgs<
+    ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs,
+  > = {
+    /**
+     * Select specific fields to fetch from the PitchComment
+     */
+    select?: PitchCommentSelect<ExtArgs> | null;
+    /**
+     * Omit specific fields from the PitchComment
+     */
+    omit?: PitchCommentOmit<ExtArgs> | null;
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PitchCommentInclude<ExtArgs> | null;
+    /**
+     * The data needed to create a PitchComment.
+     */
+    data: XOR<PitchCommentCreateInput, PitchCommentUncheckedCreateInput>;
+  };
+
+  /**
+   * PitchComment createMany
+   */
+  export type PitchCommentCreateManyArgs<
+    ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs,
+  > = {
+    /**
+     * The data used to create many PitchComments.
+     */
+    data: PitchCommentCreateManyInput | PitchCommentCreateManyInput[];
+    skipDuplicates?: boolean;
+  };
+
+  /**
+   * PitchComment createManyAndReturn
+   */
+  export type PitchCommentCreateManyAndReturnArgs<
+    ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs,
+  > = {
+    /**
+     * Select specific fields to fetch from the PitchComment
+     */
+    select?: PitchCommentSelectCreateManyAndReturn<ExtArgs> | null;
+    /**
+     * Omit specific fields from the PitchComment
+     */
+    omit?: PitchCommentOmit<ExtArgs> | null;
+    /**
+     * The data used to create many PitchComments.
+     */
+    data: PitchCommentCreateManyInput | PitchCommentCreateManyInput[];
+    skipDuplicates?: boolean;
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PitchCommentIncludeCreateManyAndReturn<ExtArgs> | null;
+  };
+
+  /**
+   * PitchComment update
+   */
+  export type PitchCommentUpdateArgs<
+    ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs,
+  > = {
+    /**
+     * Select specific fields to fetch from the PitchComment
+     */
+    select?: PitchCommentSelect<ExtArgs> | null;
+    /**
+     * Omit specific fields from the PitchComment
+     */
+    omit?: PitchCommentOmit<ExtArgs> | null;
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PitchCommentInclude<ExtArgs> | null;
+    /**
+     * The data needed to update a PitchComment.
+     */
+    data: XOR<PitchCommentUpdateInput, PitchCommentUncheckedUpdateInput>;
+    /**
+     * Choose, which PitchComment to update.
+     */
+    where: PitchCommentWhereUniqueInput;
+  };
+
+  /**
+   * PitchComment updateMany
+   */
+  export type PitchCommentUpdateManyArgs<
+    ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs,
+  > = {
+    /**
+     * The data used to update PitchComments.
+     */
+    data: XOR<
+      PitchCommentUpdateManyMutationInput,
+      PitchCommentUncheckedUpdateManyInput
+    >;
+    /**
+     * Filter which PitchComments to update
+     */
+    where?: PitchCommentWhereInput;
+    /**
+     * Limit how many PitchComments to update.
+     */
+    limit?: number;
+  };
+
+  /**
+   * PitchComment updateManyAndReturn
+   */
+  export type PitchCommentUpdateManyAndReturnArgs<
+    ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs,
+  > = {
+    /**
+     * Select specific fields to fetch from the PitchComment
+     */
+    select?: PitchCommentSelectUpdateManyAndReturn<ExtArgs> | null;
+    /**
+     * Omit specific fields from the PitchComment
+     */
+    omit?: PitchCommentOmit<ExtArgs> | null;
+    /**
+     * The data used to update PitchComments.
+     */
+    data: XOR<
+      PitchCommentUpdateManyMutationInput,
+      PitchCommentUncheckedUpdateManyInput
+    >;
+    /**
+     * Filter which PitchComments to update
+     */
+    where?: PitchCommentWhereInput;
+    /**
+     * Limit how many PitchComments to update.
+     */
+    limit?: number;
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PitchCommentIncludeUpdateManyAndReturn<ExtArgs> | null;
+  };
+
+  /**
+   * PitchComment upsert
+   */
+  export type PitchCommentUpsertArgs<
+    ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs,
+  > = {
+    /**
+     * Select specific fields to fetch from the PitchComment
+     */
+    select?: PitchCommentSelect<ExtArgs> | null;
+    /**
+     * Omit specific fields from the PitchComment
+     */
+    omit?: PitchCommentOmit<ExtArgs> | null;
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PitchCommentInclude<ExtArgs> | null;
+    /**
+     * The filter to search for the PitchComment to update in case it exists.
+     */
+    where: PitchCommentWhereUniqueInput;
+    /**
+     * In case the PitchComment found by the `where` argument doesn't exist, create a new PitchComment with this data.
+     */
+    create: XOR<PitchCommentCreateInput, PitchCommentUncheckedCreateInput>;
+    /**
+     * In case the PitchComment was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<PitchCommentUpdateInput, PitchCommentUncheckedUpdateInput>;
+  };
+
+  /**
+   * PitchComment delete
+   */
+  export type PitchCommentDeleteArgs<
+    ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs,
+  > = {
+    /**
+     * Select specific fields to fetch from the PitchComment
+     */
+    select?: PitchCommentSelect<ExtArgs> | null;
+    /**
+     * Omit specific fields from the PitchComment
+     */
+    omit?: PitchCommentOmit<ExtArgs> | null;
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PitchCommentInclude<ExtArgs> | null;
+    /**
+     * Filter which PitchComment to delete.
+     */
+    where: PitchCommentWhereUniqueInput;
+  };
+
+  /**
+   * PitchComment deleteMany
+   */
+  export type PitchCommentDeleteManyArgs<
+    ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs,
+  > = {
+    /**
+     * Filter which PitchComments to delete
+     */
+    where?: PitchCommentWhereInput;
+    /**
+     * Limit how many PitchComments to delete.
+     */
+    limit?: number;
+  };
+
+  /**
+   * PitchComment without action
+   */
+  export type PitchCommentDefaultArgs<
+    ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs,
+  > = {
+    /**
+     * Select specific fields to fetch from the PitchComment
+     */
+    select?: PitchCommentSelect<ExtArgs> | null;
+    /**
+     * Omit specific fields from the PitchComment
+     */
+    omit?: PitchCommentOmit<ExtArgs> | null;
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PitchCommentInclude<ExtArgs> | null;
+  };
+
+  /**
    * Enums
    */
 
@@ -22648,6 +25711,33 @@ export namespace Prisma {
 
   export type ComparisonScalarFieldEnum =
     (typeof ComparisonScalarFieldEnum)[keyof typeof ComparisonScalarFieldEnum];
+
+  export const PitchConceptScalarFieldEnum: {
+    id: "id";
+    projectId: "projectId";
+    slotIndex: "slotIndex";
+    themeId: "themeId";
+    variantName: "variantName";
+    description: "description";
+    hidden: "hidden";
+    createdAt: "createdAt";
+    updatedAt: "updatedAt";
+  };
+
+  export type PitchConceptScalarFieldEnum =
+    (typeof PitchConceptScalarFieldEnum)[keyof typeof PitchConceptScalarFieldEnum];
+
+  export const PitchCommentScalarFieldEnum: {
+    id: "id";
+    projectId: "projectId";
+    slotIndex: "slotIndex";
+    author: "author";
+    body: "body";
+    createdAt: "createdAt";
+  };
+
+  export type PitchCommentScalarFieldEnum =
+    (typeof PitchCommentScalarFieldEnum)[keyof typeof PitchCommentScalarFieldEnum];
 
   export const SortOrder: {
     asc: "asc";
@@ -23455,6 +26545,8 @@ export namespace Prisma {
     team?: XOR<TeamNullableScalarRelationFilter, TeamWhereInput> | null;
     chatSessions?: ChatSessionListRelationFilter;
     frames?: FrameListRelationFilter;
+    pitchConcepts?: PitchConceptListRelationFilter;
+    pitchComments?: PitchCommentListRelationFilter;
   };
 
   export type ProjectOrderByWithRelationInput = {
@@ -23473,6 +26565,8 @@ export namespace Prisma {
     team?: TeamOrderByWithRelationInput;
     chatSessions?: ChatSessionOrderByRelationAggregateInput;
     frames?: FrameOrderByRelationAggregateInput;
+    pitchConcepts?: PitchConceptOrderByRelationAggregateInput;
+    pitchComments?: PitchCommentOrderByRelationAggregateInput;
   };
 
   export type ProjectWhereUniqueInput = Prisma.AtLeast<
@@ -23495,6 +26589,8 @@ export namespace Prisma {
       team?: XOR<TeamNullableScalarRelationFilter, TeamWhereInput> | null;
       chatSessions?: ChatSessionListRelationFilter;
       frames?: FrameListRelationFilter;
+      pitchConcepts?: PitchConceptListRelationFilter;
+      pitchComments?: PitchCommentListRelationFilter;
     },
     "id" | "templateSlug"
   >;
@@ -24207,6 +27303,163 @@ export namespace Prisma {
     updatedAt?: DateTimeWithAggregatesFilter<"Comparison"> | Date | string;
   };
 
+  export type PitchConceptWhereInput = {
+    AND?: PitchConceptWhereInput | PitchConceptWhereInput[];
+    OR?: PitchConceptWhereInput[];
+    NOT?: PitchConceptWhereInput | PitchConceptWhereInput[];
+    id?: StringFilter<"PitchConcept"> | string;
+    projectId?: StringFilter<"PitchConcept"> | string;
+    slotIndex?: IntFilter<"PitchConcept"> | number;
+    themeId?: StringNullableFilter<"PitchConcept"> | string | null;
+    variantName?: StringFilter<"PitchConcept"> | string;
+    description?: StringFilter<"PitchConcept"> | string;
+    hidden?: BoolFilter<"PitchConcept"> | boolean;
+    createdAt?: DateTimeFilter<"PitchConcept"> | Date | string;
+    updatedAt?: DateTimeFilter<"PitchConcept"> | Date | string;
+    project?: XOR<ProjectScalarRelationFilter, ProjectWhereInput>;
+  };
+
+  export type PitchConceptOrderByWithRelationInput = {
+    id?: SortOrder;
+    projectId?: SortOrder;
+    slotIndex?: SortOrder;
+    themeId?: SortOrderInput | SortOrder;
+    variantName?: SortOrder;
+    description?: SortOrder;
+    hidden?: SortOrder;
+    createdAt?: SortOrder;
+    updatedAt?: SortOrder;
+    project?: ProjectOrderByWithRelationInput;
+  };
+
+  export type PitchConceptWhereUniqueInput = Prisma.AtLeast<
+    {
+      id?: string;
+      projectId_slotIndex?: PitchConceptProjectIdSlotIndexCompoundUniqueInput;
+      AND?: PitchConceptWhereInput | PitchConceptWhereInput[];
+      OR?: PitchConceptWhereInput[];
+      NOT?: PitchConceptWhereInput | PitchConceptWhereInput[];
+      projectId?: StringFilter<"PitchConcept"> | string;
+      slotIndex?: IntFilter<"PitchConcept"> | number;
+      themeId?: StringNullableFilter<"PitchConcept"> | string | null;
+      variantName?: StringFilter<"PitchConcept"> | string;
+      description?: StringFilter<"PitchConcept"> | string;
+      hidden?: BoolFilter<"PitchConcept"> | boolean;
+      createdAt?: DateTimeFilter<"PitchConcept"> | Date | string;
+      updatedAt?: DateTimeFilter<"PitchConcept"> | Date | string;
+      project?: XOR<ProjectScalarRelationFilter, ProjectWhereInput>;
+    },
+    "id" | "projectId_slotIndex"
+  >;
+
+  export type PitchConceptOrderByWithAggregationInput = {
+    id?: SortOrder;
+    projectId?: SortOrder;
+    slotIndex?: SortOrder;
+    themeId?: SortOrderInput | SortOrder;
+    variantName?: SortOrder;
+    description?: SortOrder;
+    hidden?: SortOrder;
+    createdAt?: SortOrder;
+    updatedAt?: SortOrder;
+    _count?: PitchConceptCountOrderByAggregateInput;
+    _avg?: PitchConceptAvgOrderByAggregateInput;
+    _max?: PitchConceptMaxOrderByAggregateInput;
+    _min?: PitchConceptMinOrderByAggregateInput;
+    _sum?: PitchConceptSumOrderByAggregateInput;
+  };
+
+  export type PitchConceptScalarWhereWithAggregatesInput = {
+    AND?:
+      | PitchConceptScalarWhereWithAggregatesInput
+      | PitchConceptScalarWhereWithAggregatesInput[];
+    OR?: PitchConceptScalarWhereWithAggregatesInput[];
+    NOT?:
+      | PitchConceptScalarWhereWithAggregatesInput
+      | PitchConceptScalarWhereWithAggregatesInput[];
+    id?: StringWithAggregatesFilter<"PitchConcept"> | string;
+    projectId?: StringWithAggregatesFilter<"PitchConcept"> | string;
+    slotIndex?: IntWithAggregatesFilter<"PitchConcept"> | number;
+    themeId?:
+      | StringNullableWithAggregatesFilter<"PitchConcept">
+      | string
+      | null;
+    variantName?: StringWithAggregatesFilter<"PitchConcept"> | string;
+    description?: StringWithAggregatesFilter<"PitchConcept"> | string;
+    hidden?: BoolWithAggregatesFilter<"PitchConcept"> | boolean;
+    createdAt?: DateTimeWithAggregatesFilter<"PitchConcept"> | Date | string;
+    updatedAt?: DateTimeWithAggregatesFilter<"PitchConcept"> | Date | string;
+  };
+
+  export type PitchCommentWhereInput = {
+    AND?: PitchCommentWhereInput | PitchCommentWhereInput[];
+    OR?: PitchCommentWhereInput[];
+    NOT?: PitchCommentWhereInput | PitchCommentWhereInput[];
+    id?: StringFilter<"PitchComment"> | string;
+    projectId?: StringFilter<"PitchComment"> | string;
+    slotIndex?: IntFilter<"PitchComment"> | number;
+    author?: StringFilter<"PitchComment"> | string;
+    body?: StringFilter<"PitchComment"> | string;
+    createdAt?: DateTimeFilter<"PitchComment"> | Date | string;
+    project?: XOR<ProjectScalarRelationFilter, ProjectWhereInput>;
+  };
+
+  export type PitchCommentOrderByWithRelationInput = {
+    id?: SortOrder;
+    projectId?: SortOrder;
+    slotIndex?: SortOrder;
+    author?: SortOrder;
+    body?: SortOrder;
+    createdAt?: SortOrder;
+    project?: ProjectOrderByWithRelationInput;
+  };
+
+  export type PitchCommentWhereUniqueInput = Prisma.AtLeast<
+    {
+      id?: string;
+      AND?: PitchCommentWhereInput | PitchCommentWhereInput[];
+      OR?: PitchCommentWhereInput[];
+      NOT?: PitchCommentWhereInput | PitchCommentWhereInput[];
+      projectId?: StringFilter<"PitchComment"> | string;
+      slotIndex?: IntFilter<"PitchComment"> | number;
+      author?: StringFilter<"PitchComment"> | string;
+      body?: StringFilter<"PitchComment"> | string;
+      createdAt?: DateTimeFilter<"PitchComment"> | Date | string;
+      project?: XOR<ProjectScalarRelationFilter, ProjectWhereInput>;
+    },
+    "id"
+  >;
+
+  export type PitchCommentOrderByWithAggregationInput = {
+    id?: SortOrder;
+    projectId?: SortOrder;
+    slotIndex?: SortOrder;
+    author?: SortOrder;
+    body?: SortOrder;
+    createdAt?: SortOrder;
+    _count?: PitchCommentCountOrderByAggregateInput;
+    _avg?: PitchCommentAvgOrderByAggregateInput;
+    _max?: PitchCommentMaxOrderByAggregateInput;
+    _min?: PitchCommentMinOrderByAggregateInput;
+    _sum?: PitchCommentSumOrderByAggregateInput;
+  };
+
+  export type PitchCommentScalarWhereWithAggregatesInput = {
+    AND?:
+      | PitchCommentScalarWhereWithAggregatesInput
+      | PitchCommentScalarWhereWithAggregatesInput[];
+    OR?: PitchCommentScalarWhereWithAggregatesInput[];
+    NOT?:
+      | PitchCommentScalarWhereWithAggregatesInput
+      | PitchCommentScalarWhereWithAggregatesInput[];
+    id?: StringWithAggregatesFilter<"PitchComment"> | string;
+    projectId?: StringWithAggregatesFilter<"PitchComment"> | string;
+    slotIndex?: IntWithAggregatesFilter<"PitchComment"> | number;
+    author?: StringWithAggregatesFilter<"PitchComment"> | string;
+    body?: StringWithAggregatesFilter<"PitchComment"> | string;
+    createdAt?: DateTimeWithAggregatesFilter<"PitchComment"> | Date | string;
+  };
+
   export type UserCreateInput = {
     id: string;
     email?: string | null;
@@ -24859,6 +28112,8 @@ export namespace Prisma {
     team?: TeamCreateNestedOneWithoutProjectsInput;
     chatSessions?: ChatSessionCreateNestedManyWithoutProjectInput;
     frames?: FrameCreateNestedManyWithoutProjectInput;
+    pitchConcepts?: PitchConceptCreateNestedManyWithoutProjectInput;
+    pitchComments?: PitchCommentCreateNestedManyWithoutProjectInput;
   };
 
   export type ProjectUncheckedCreateInput = {
@@ -24876,6 +28131,8 @@ export namespace Prisma {
     updatedAt?: Date | string;
     chatSessions?: ChatSessionUncheckedCreateNestedManyWithoutProjectInput;
     frames?: FrameUncheckedCreateNestedManyWithoutProjectInput;
+    pitchConcepts?: PitchConceptUncheckedCreateNestedManyWithoutProjectInput;
+    pitchComments?: PitchCommentUncheckedCreateNestedManyWithoutProjectInput;
   };
 
   export type ProjectUpdateInput = {
@@ -24897,6 +28154,8 @@ export namespace Prisma {
     team?: TeamUpdateOneWithoutProjectsNestedInput;
     chatSessions?: ChatSessionUpdateManyWithoutProjectNestedInput;
     frames?: FrameUpdateManyWithoutProjectNestedInput;
+    pitchConcepts?: PitchConceptUpdateManyWithoutProjectNestedInput;
+    pitchComments?: PitchCommentUpdateManyWithoutProjectNestedInput;
   };
 
   export type ProjectUncheckedUpdateInput = {
@@ -24918,6 +28177,8 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string;
     chatSessions?: ChatSessionUncheckedUpdateManyWithoutProjectNestedInput;
     frames?: FrameUncheckedUpdateManyWithoutProjectNestedInput;
+    pitchConcepts?: PitchConceptUncheckedUpdateManyWithoutProjectNestedInput;
+    pitchComments?: PitchCommentUncheckedUpdateManyWithoutProjectNestedInput;
   };
 
   export type ProjectCreateManyInput = {
@@ -25681,6 +28942,151 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string;
   };
 
+  export type PitchConceptCreateInput = {
+    id?: string;
+    slotIndex: number;
+    themeId?: string | null;
+    variantName?: string;
+    description?: string;
+    hidden?: boolean;
+    createdAt?: Date | string;
+    updatedAt?: Date | string;
+    project: ProjectCreateNestedOneWithoutPitchConceptsInput;
+  };
+
+  export type PitchConceptUncheckedCreateInput = {
+    id?: string;
+    projectId: string;
+    slotIndex: number;
+    themeId?: string | null;
+    variantName?: string;
+    description?: string;
+    hidden?: boolean;
+    createdAt?: Date | string;
+    updatedAt?: Date | string;
+  };
+
+  export type PitchConceptUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string;
+    slotIndex?: IntFieldUpdateOperationsInput | number;
+    themeId?: NullableStringFieldUpdateOperationsInput | string | null;
+    variantName?: StringFieldUpdateOperationsInput | string;
+    description?: StringFieldUpdateOperationsInput | string;
+    hidden?: BoolFieldUpdateOperationsInput | boolean;
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string;
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string;
+    project?: ProjectUpdateOneRequiredWithoutPitchConceptsNestedInput;
+  };
+
+  export type PitchConceptUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string;
+    projectId?: StringFieldUpdateOperationsInput | string;
+    slotIndex?: IntFieldUpdateOperationsInput | number;
+    themeId?: NullableStringFieldUpdateOperationsInput | string | null;
+    variantName?: StringFieldUpdateOperationsInput | string;
+    description?: StringFieldUpdateOperationsInput | string;
+    hidden?: BoolFieldUpdateOperationsInput | boolean;
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string;
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string;
+  };
+
+  export type PitchConceptCreateManyInput = {
+    id?: string;
+    projectId: string;
+    slotIndex: number;
+    themeId?: string | null;
+    variantName?: string;
+    description?: string;
+    hidden?: boolean;
+    createdAt?: Date | string;
+    updatedAt?: Date | string;
+  };
+
+  export type PitchConceptUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string;
+    slotIndex?: IntFieldUpdateOperationsInput | number;
+    themeId?: NullableStringFieldUpdateOperationsInput | string | null;
+    variantName?: StringFieldUpdateOperationsInput | string;
+    description?: StringFieldUpdateOperationsInput | string;
+    hidden?: BoolFieldUpdateOperationsInput | boolean;
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string;
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string;
+  };
+
+  export type PitchConceptUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string;
+    projectId?: StringFieldUpdateOperationsInput | string;
+    slotIndex?: IntFieldUpdateOperationsInput | number;
+    themeId?: NullableStringFieldUpdateOperationsInput | string | null;
+    variantName?: StringFieldUpdateOperationsInput | string;
+    description?: StringFieldUpdateOperationsInput | string;
+    hidden?: BoolFieldUpdateOperationsInput | boolean;
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string;
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string;
+  };
+
+  export type PitchCommentCreateInput = {
+    id?: string;
+    slotIndex: number;
+    author: string;
+    body: string;
+    createdAt?: Date | string;
+    project: ProjectCreateNestedOneWithoutPitchCommentsInput;
+  };
+
+  export type PitchCommentUncheckedCreateInput = {
+    id?: string;
+    projectId: string;
+    slotIndex: number;
+    author: string;
+    body: string;
+    createdAt?: Date | string;
+  };
+
+  export type PitchCommentUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string;
+    slotIndex?: IntFieldUpdateOperationsInput | number;
+    author?: StringFieldUpdateOperationsInput | string;
+    body?: StringFieldUpdateOperationsInput | string;
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string;
+    project?: ProjectUpdateOneRequiredWithoutPitchCommentsNestedInput;
+  };
+
+  export type PitchCommentUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string;
+    projectId?: StringFieldUpdateOperationsInput | string;
+    slotIndex?: IntFieldUpdateOperationsInput | number;
+    author?: StringFieldUpdateOperationsInput | string;
+    body?: StringFieldUpdateOperationsInput | string;
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string;
+  };
+
+  export type PitchCommentCreateManyInput = {
+    id?: string;
+    projectId: string;
+    slotIndex: number;
+    author: string;
+    body: string;
+    createdAt?: Date | string;
+  };
+
+  export type PitchCommentUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string;
+    slotIndex?: IntFieldUpdateOperationsInput | number;
+    author?: StringFieldUpdateOperationsInput | string;
+    body?: StringFieldUpdateOperationsInput | string;
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string;
+  };
+
+  export type PitchCommentUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string;
+    projectId?: StringFieldUpdateOperationsInput | string;
+    slotIndex?: IntFieldUpdateOperationsInput | number;
+    author?: StringFieldUpdateOperationsInput | string;
+    body?: StringFieldUpdateOperationsInput | string;
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string;
+  };
+
   export type StringFilter<$PrismaModel = never> = {
     equals?: string | StringFieldRefInput<$PrismaModel>;
     in?: string[] | ListStringFieldRefInput<$PrismaModel>;
@@ -26333,7 +29739,27 @@ export namespace Prisma {
     none?: FrameWhereInput;
   };
 
+  export type PitchConceptListRelationFilter = {
+    every?: PitchConceptWhereInput;
+    some?: PitchConceptWhereInput;
+    none?: PitchConceptWhereInput;
+  };
+
+  export type PitchCommentListRelationFilter = {
+    every?: PitchCommentWhereInput;
+    some?: PitchCommentWhereInput;
+    none?: PitchCommentWhereInput;
+  };
+
   export type FrameOrderByRelationAggregateInput = {
+    _count?: SortOrder;
+  };
+
+  export type PitchConceptOrderByRelationAggregateInput = {
+    _count?: SortOrder;
+  };
+
+  export type PitchCommentOrderByRelationAggregateInput = {
     _count?: SortOrder;
   };
 
@@ -26772,6 +30198,90 @@ export namespace Prisma {
     published?: SortOrder;
     createdAt?: SortOrder;
     updatedAt?: SortOrder;
+  };
+
+  export type PitchConceptProjectIdSlotIndexCompoundUniqueInput = {
+    projectId: string;
+    slotIndex: number;
+  };
+
+  export type PitchConceptCountOrderByAggregateInput = {
+    id?: SortOrder;
+    projectId?: SortOrder;
+    slotIndex?: SortOrder;
+    themeId?: SortOrder;
+    variantName?: SortOrder;
+    description?: SortOrder;
+    hidden?: SortOrder;
+    createdAt?: SortOrder;
+    updatedAt?: SortOrder;
+  };
+
+  export type PitchConceptAvgOrderByAggregateInput = {
+    slotIndex?: SortOrder;
+  };
+
+  export type PitchConceptMaxOrderByAggregateInput = {
+    id?: SortOrder;
+    projectId?: SortOrder;
+    slotIndex?: SortOrder;
+    themeId?: SortOrder;
+    variantName?: SortOrder;
+    description?: SortOrder;
+    hidden?: SortOrder;
+    createdAt?: SortOrder;
+    updatedAt?: SortOrder;
+  };
+
+  export type PitchConceptMinOrderByAggregateInput = {
+    id?: SortOrder;
+    projectId?: SortOrder;
+    slotIndex?: SortOrder;
+    themeId?: SortOrder;
+    variantName?: SortOrder;
+    description?: SortOrder;
+    hidden?: SortOrder;
+    createdAt?: SortOrder;
+    updatedAt?: SortOrder;
+  };
+
+  export type PitchConceptSumOrderByAggregateInput = {
+    slotIndex?: SortOrder;
+  };
+
+  export type PitchCommentCountOrderByAggregateInput = {
+    id?: SortOrder;
+    projectId?: SortOrder;
+    slotIndex?: SortOrder;
+    author?: SortOrder;
+    body?: SortOrder;
+    createdAt?: SortOrder;
+  };
+
+  export type PitchCommentAvgOrderByAggregateInput = {
+    slotIndex?: SortOrder;
+  };
+
+  export type PitchCommentMaxOrderByAggregateInput = {
+    id?: SortOrder;
+    projectId?: SortOrder;
+    slotIndex?: SortOrder;
+    author?: SortOrder;
+    body?: SortOrder;
+    createdAt?: SortOrder;
+  };
+
+  export type PitchCommentMinOrderByAggregateInput = {
+    id?: SortOrder;
+    projectId?: SortOrder;
+    slotIndex?: SortOrder;
+    author?: SortOrder;
+    body?: SortOrder;
+    createdAt?: SortOrder;
+  };
+
+  export type PitchCommentSumOrderByAggregateInput = {
+    slotIndex?: SortOrder;
   };
 
   export type ChatSessionCreateNestedManyWithoutUserInput = {
@@ -27953,6 +31463,36 @@ export namespace Prisma {
     connect?: FrameWhereUniqueInput | FrameWhereUniqueInput[];
   };
 
+  export type PitchConceptCreateNestedManyWithoutProjectInput = {
+    create?:
+      | XOR<
+          PitchConceptCreateWithoutProjectInput,
+          PitchConceptUncheckedCreateWithoutProjectInput
+        >
+      | PitchConceptCreateWithoutProjectInput[]
+      | PitchConceptUncheckedCreateWithoutProjectInput[];
+    connectOrCreate?:
+      | PitchConceptCreateOrConnectWithoutProjectInput
+      | PitchConceptCreateOrConnectWithoutProjectInput[];
+    createMany?: PitchConceptCreateManyProjectInputEnvelope;
+    connect?: PitchConceptWhereUniqueInput | PitchConceptWhereUniqueInput[];
+  };
+
+  export type PitchCommentCreateNestedManyWithoutProjectInput = {
+    create?:
+      | XOR<
+          PitchCommentCreateWithoutProjectInput,
+          PitchCommentUncheckedCreateWithoutProjectInput
+        >
+      | PitchCommentCreateWithoutProjectInput[]
+      | PitchCommentUncheckedCreateWithoutProjectInput[];
+    connectOrCreate?:
+      | PitchCommentCreateOrConnectWithoutProjectInput
+      | PitchCommentCreateOrConnectWithoutProjectInput[];
+    createMany?: PitchCommentCreateManyProjectInputEnvelope;
+    connect?: PitchCommentWhereUniqueInput | PitchCommentWhereUniqueInput[];
+  };
+
   export type ChatSessionUncheckedCreateNestedManyWithoutProjectInput = {
     create?:
       | XOR<
@@ -27981,6 +31521,36 @@ export namespace Prisma {
       | FrameCreateOrConnectWithoutProjectInput[];
     createMany?: FrameCreateManyProjectInputEnvelope;
     connect?: FrameWhereUniqueInput | FrameWhereUniqueInput[];
+  };
+
+  export type PitchConceptUncheckedCreateNestedManyWithoutProjectInput = {
+    create?:
+      | XOR<
+          PitchConceptCreateWithoutProjectInput,
+          PitchConceptUncheckedCreateWithoutProjectInput
+        >
+      | PitchConceptCreateWithoutProjectInput[]
+      | PitchConceptUncheckedCreateWithoutProjectInput[];
+    connectOrCreate?:
+      | PitchConceptCreateOrConnectWithoutProjectInput
+      | PitchConceptCreateOrConnectWithoutProjectInput[];
+    createMany?: PitchConceptCreateManyProjectInputEnvelope;
+    connect?: PitchConceptWhereUniqueInput | PitchConceptWhereUniqueInput[];
+  };
+
+  export type PitchCommentUncheckedCreateNestedManyWithoutProjectInput = {
+    create?:
+      | XOR<
+          PitchCommentCreateWithoutProjectInput,
+          PitchCommentUncheckedCreateWithoutProjectInput
+        >
+      | PitchCommentCreateWithoutProjectInput[]
+      | PitchCommentUncheckedCreateWithoutProjectInput[];
+    connectOrCreate?:
+      | PitchCommentCreateOrConnectWithoutProjectInput
+      | PitchCommentCreateOrConnectWithoutProjectInput[];
+    createMany?: PitchCommentCreateManyProjectInputEnvelope;
+    connect?: PitchCommentWhereUniqueInput | PitchCommentWhereUniqueInput[];
   };
 
   export type BoolFieldUpdateOperationsInput = {
@@ -28062,6 +31632,62 @@ export namespace Prisma {
     deleteMany?: FrameScalarWhereInput | FrameScalarWhereInput[];
   };
 
+  export type PitchConceptUpdateManyWithoutProjectNestedInput = {
+    create?:
+      | XOR<
+          PitchConceptCreateWithoutProjectInput,
+          PitchConceptUncheckedCreateWithoutProjectInput
+        >
+      | PitchConceptCreateWithoutProjectInput[]
+      | PitchConceptUncheckedCreateWithoutProjectInput[];
+    connectOrCreate?:
+      | PitchConceptCreateOrConnectWithoutProjectInput
+      | PitchConceptCreateOrConnectWithoutProjectInput[];
+    upsert?:
+      | PitchConceptUpsertWithWhereUniqueWithoutProjectInput
+      | PitchConceptUpsertWithWhereUniqueWithoutProjectInput[];
+    createMany?: PitchConceptCreateManyProjectInputEnvelope;
+    set?: PitchConceptWhereUniqueInput | PitchConceptWhereUniqueInput[];
+    disconnect?: PitchConceptWhereUniqueInput | PitchConceptWhereUniqueInput[];
+    delete?: PitchConceptWhereUniqueInput | PitchConceptWhereUniqueInput[];
+    connect?: PitchConceptWhereUniqueInput | PitchConceptWhereUniqueInput[];
+    update?:
+      | PitchConceptUpdateWithWhereUniqueWithoutProjectInput
+      | PitchConceptUpdateWithWhereUniqueWithoutProjectInput[];
+    updateMany?:
+      | PitchConceptUpdateManyWithWhereWithoutProjectInput
+      | PitchConceptUpdateManyWithWhereWithoutProjectInput[];
+    deleteMany?: PitchConceptScalarWhereInput | PitchConceptScalarWhereInput[];
+  };
+
+  export type PitchCommentUpdateManyWithoutProjectNestedInput = {
+    create?:
+      | XOR<
+          PitchCommentCreateWithoutProjectInput,
+          PitchCommentUncheckedCreateWithoutProjectInput
+        >
+      | PitchCommentCreateWithoutProjectInput[]
+      | PitchCommentUncheckedCreateWithoutProjectInput[];
+    connectOrCreate?:
+      | PitchCommentCreateOrConnectWithoutProjectInput
+      | PitchCommentCreateOrConnectWithoutProjectInput[];
+    upsert?:
+      | PitchCommentUpsertWithWhereUniqueWithoutProjectInput
+      | PitchCommentUpsertWithWhereUniqueWithoutProjectInput[];
+    createMany?: PitchCommentCreateManyProjectInputEnvelope;
+    set?: PitchCommentWhereUniqueInput | PitchCommentWhereUniqueInput[];
+    disconnect?: PitchCommentWhereUniqueInput | PitchCommentWhereUniqueInput[];
+    delete?: PitchCommentWhereUniqueInput | PitchCommentWhereUniqueInput[];
+    connect?: PitchCommentWhereUniqueInput | PitchCommentWhereUniqueInput[];
+    update?:
+      | PitchCommentUpdateWithWhereUniqueWithoutProjectInput
+      | PitchCommentUpdateWithWhereUniqueWithoutProjectInput[];
+    updateMany?:
+      | PitchCommentUpdateManyWithWhereWithoutProjectInput
+      | PitchCommentUpdateManyWithWhereWithoutProjectInput[];
+    deleteMany?: PitchCommentScalarWhereInput | PitchCommentScalarWhereInput[];
+  };
+
   export type ChatSessionUncheckedUpdateManyWithoutProjectNestedInput = {
     create?:
       | XOR<
@@ -28116,6 +31742,62 @@ export namespace Prisma {
       | FrameUpdateManyWithWhereWithoutProjectInput
       | FrameUpdateManyWithWhereWithoutProjectInput[];
     deleteMany?: FrameScalarWhereInput | FrameScalarWhereInput[];
+  };
+
+  export type PitchConceptUncheckedUpdateManyWithoutProjectNestedInput = {
+    create?:
+      | XOR<
+          PitchConceptCreateWithoutProjectInput,
+          PitchConceptUncheckedCreateWithoutProjectInput
+        >
+      | PitchConceptCreateWithoutProjectInput[]
+      | PitchConceptUncheckedCreateWithoutProjectInput[];
+    connectOrCreate?:
+      | PitchConceptCreateOrConnectWithoutProjectInput
+      | PitchConceptCreateOrConnectWithoutProjectInput[];
+    upsert?:
+      | PitchConceptUpsertWithWhereUniqueWithoutProjectInput
+      | PitchConceptUpsertWithWhereUniqueWithoutProjectInput[];
+    createMany?: PitchConceptCreateManyProjectInputEnvelope;
+    set?: PitchConceptWhereUniqueInput | PitchConceptWhereUniqueInput[];
+    disconnect?: PitchConceptWhereUniqueInput | PitchConceptWhereUniqueInput[];
+    delete?: PitchConceptWhereUniqueInput | PitchConceptWhereUniqueInput[];
+    connect?: PitchConceptWhereUniqueInput | PitchConceptWhereUniqueInput[];
+    update?:
+      | PitchConceptUpdateWithWhereUniqueWithoutProjectInput
+      | PitchConceptUpdateWithWhereUniqueWithoutProjectInput[];
+    updateMany?:
+      | PitchConceptUpdateManyWithWhereWithoutProjectInput
+      | PitchConceptUpdateManyWithWhereWithoutProjectInput[];
+    deleteMany?: PitchConceptScalarWhereInput | PitchConceptScalarWhereInput[];
+  };
+
+  export type PitchCommentUncheckedUpdateManyWithoutProjectNestedInput = {
+    create?:
+      | XOR<
+          PitchCommentCreateWithoutProjectInput,
+          PitchCommentUncheckedCreateWithoutProjectInput
+        >
+      | PitchCommentCreateWithoutProjectInput[]
+      | PitchCommentUncheckedCreateWithoutProjectInput[];
+    connectOrCreate?:
+      | PitchCommentCreateOrConnectWithoutProjectInput
+      | PitchCommentCreateOrConnectWithoutProjectInput[];
+    upsert?:
+      | PitchCommentUpsertWithWhereUniqueWithoutProjectInput
+      | PitchCommentUpsertWithWhereUniqueWithoutProjectInput[];
+    createMany?: PitchCommentCreateManyProjectInputEnvelope;
+    set?: PitchCommentWhereUniqueInput | PitchCommentWhereUniqueInput[];
+    disconnect?: PitchCommentWhereUniqueInput | PitchCommentWhereUniqueInput[];
+    delete?: PitchCommentWhereUniqueInput | PitchCommentWhereUniqueInput[];
+    connect?: PitchCommentWhereUniqueInput | PitchCommentWhereUniqueInput[];
+    update?:
+      | PitchCommentUpdateWithWhereUniqueWithoutProjectInput
+      | PitchCommentUpdateWithWhereUniqueWithoutProjectInput[];
+    updateMany?:
+      | PitchCommentUpdateManyWithWhereWithoutProjectInput
+      | PitchCommentUpdateManyWithWhereWithoutProjectInput[];
+    deleteMany?: PitchCommentScalarWhereInput | PitchCommentScalarWhereInput[];
   };
 
   export type ProjectCreateNestedOneWithoutChatSessionsInput = {
@@ -28420,6 +32102,58 @@ export namespace Prisma {
   export type ComparisonUpdatekeywordsInput = {
     set?: string[];
     push?: string | string[];
+  };
+
+  export type ProjectCreateNestedOneWithoutPitchConceptsInput = {
+    create?: XOR<
+      ProjectCreateWithoutPitchConceptsInput,
+      ProjectUncheckedCreateWithoutPitchConceptsInput
+    >;
+    connectOrCreate?: ProjectCreateOrConnectWithoutPitchConceptsInput;
+    connect?: ProjectWhereUniqueInput;
+  };
+
+  export type ProjectUpdateOneRequiredWithoutPitchConceptsNestedInput = {
+    create?: XOR<
+      ProjectCreateWithoutPitchConceptsInput,
+      ProjectUncheckedCreateWithoutPitchConceptsInput
+    >;
+    connectOrCreate?: ProjectCreateOrConnectWithoutPitchConceptsInput;
+    upsert?: ProjectUpsertWithoutPitchConceptsInput;
+    connect?: ProjectWhereUniqueInput;
+    update?: XOR<
+      XOR<
+        ProjectUpdateToOneWithWhereWithoutPitchConceptsInput,
+        ProjectUpdateWithoutPitchConceptsInput
+      >,
+      ProjectUncheckedUpdateWithoutPitchConceptsInput
+    >;
+  };
+
+  export type ProjectCreateNestedOneWithoutPitchCommentsInput = {
+    create?: XOR<
+      ProjectCreateWithoutPitchCommentsInput,
+      ProjectUncheckedCreateWithoutPitchCommentsInput
+    >;
+    connectOrCreate?: ProjectCreateOrConnectWithoutPitchCommentsInput;
+    connect?: ProjectWhereUniqueInput;
+  };
+
+  export type ProjectUpdateOneRequiredWithoutPitchCommentsNestedInput = {
+    create?: XOR<
+      ProjectCreateWithoutPitchCommentsInput,
+      ProjectUncheckedCreateWithoutPitchCommentsInput
+    >;
+    connectOrCreate?: ProjectCreateOrConnectWithoutPitchCommentsInput;
+    upsert?: ProjectUpsertWithoutPitchCommentsInput;
+    connect?: ProjectWhereUniqueInput;
+    update?: XOR<
+      XOR<
+        ProjectUpdateToOneWithWhereWithoutPitchCommentsInput,
+        ProjectUpdateWithoutPitchCommentsInput
+      >,
+      ProjectUncheckedUpdateWithoutPitchCommentsInput
+    >;
   };
 
   export type NestedStringFilter<$PrismaModel = never> = {
@@ -29526,6 +33260,8 @@ export namespace Prisma {
     updatedAt?: Date | string;
     chatSessions?: ChatSessionCreateNestedManyWithoutProjectInput;
     frames?: FrameCreateNestedManyWithoutProjectInput;
+    pitchConcepts?: PitchConceptCreateNestedManyWithoutProjectInput;
+    pitchComments?: PitchCommentCreateNestedManyWithoutProjectInput;
   };
 
   export type ProjectUncheckedCreateWithoutTeamInput = {
@@ -29542,6 +33278,8 @@ export namespace Prisma {
     updatedAt?: Date | string;
     chatSessions?: ChatSessionUncheckedCreateNestedManyWithoutProjectInput;
     frames?: FrameUncheckedCreateNestedManyWithoutProjectInput;
+    pitchConcepts?: PitchConceptUncheckedCreateNestedManyWithoutProjectInput;
+    pitchComments?: PitchCommentUncheckedCreateNestedManyWithoutProjectInput;
   };
 
   export type ProjectCreateOrConnectWithoutTeamInput = {
@@ -30576,6 +34314,74 @@ export namespace Prisma {
     skipDuplicates?: boolean;
   };
 
+  export type PitchConceptCreateWithoutProjectInput = {
+    id?: string;
+    slotIndex: number;
+    themeId?: string | null;
+    variantName?: string;
+    description?: string;
+    hidden?: boolean;
+    createdAt?: Date | string;
+    updatedAt?: Date | string;
+  };
+
+  export type PitchConceptUncheckedCreateWithoutProjectInput = {
+    id?: string;
+    slotIndex: number;
+    themeId?: string | null;
+    variantName?: string;
+    description?: string;
+    hidden?: boolean;
+    createdAt?: Date | string;
+    updatedAt?: Date | string;
+  };
+
+  export type PitchConceptCreateOrConnectWithoutProjectInput = {
+    where: PitchConceptWhereUniqueInput;
+    create: XOR<
+      PitchConceptCreateWithoutProjectInput,
+      PitchConceptUncheckedCreateWithoutProjectInput
+    >;
+  };
+
+  export type PitchConceptCreateManyProjectInputEnvelope = {
+    data:
+      | PitchConceptCreateManyProjectInput
+      | PitchConceptCreateManyProjectInput[];
+    skipDuplicates?: boolean;
+  };
+
+  export type PitchCommentCreateWithoutProjectInput = {
+    id?: string;
+    slotIndex: number;
+    author: string;
+    body: string;
+    createdAt?: Date | string;
+  };
+
+  export type PitchCommentUncheckedCreateWithoutProjectInput = {
+    id?: string;
+    slotIndex: number;
+    author: string;
+    body: string;
+    createdAt?: Date | string;
+  };
+
+  export type PitchCommentCreateOrConnectWithoutProjectInput = {
+    where: PitchCommentWhereUniqueInput;
+    create: XOR<
+      PitchCommentCreateWithoutProjectInput,
+      PitchCommentUncheckedCreateWithoutProjectInput
+    >;
+  };
+
+  export type PitchCommentCreateManyProjectInputEnvelope = {
+    data:
+      | PitchCommentCreateManyProjectInput
+      | PitchCommentCreateManyProjectInput[];
+    skipDuplicates?: boolean;
+  };
+
   export type TeamUpsertWithoutProjectsInput = {
     update: XOR<
       TeamUpdateWithoutProjectsInput,
@@ -30713,6 +34519,89 @@ export namespace Prisma {
     updatedAt?: DateTimeFilter<"Frame"> | Date | string;
   };
 
+  export type PitchConceptUpsertWithWhereUniqueWithoutProjectInput = {
+    where: PitchConceptWhereUniqueInput;
+    update: XOR<
+      PitchConceptUpdateWithoutProjectInput,
+      PitchConceptUncheckedUpdateWithoutProjectInput
+    >;
+    create: XOR<
+      PitchConceptCreateWithoutProjectInput,
+      PitchConceptUncheckedCreateWithoutProjectInput
+    >;
+  };
+
+  export type PitchConceptUpdateWithWhereUniqueWithoutProjectInput = {
+    where: PitchConceptWhereUniqueInput;
+    data: XOR<
+      PitchConceptUpdateWithoutProjectInput,
+      PitchConceptUncheckedUpdateWithoutProjectInput
+    >;
+  };
+
+  export type PitchConceptUpdateManyWithWhereWithoutProjectInput = {
+    where: PitchConceptScalarWhereInput;
+    data: XOR<
+      PitchConceptUpdateManyMutationInput,
+      PitchConceptUncheckedUpdateManyWithoutProjectInput
+    >;
+  };
+
+  export type PitchConceptScalarWhereInput = {
+    AND?: PitchConceptScalarWhereInput | PitchConceptScalarWhereInput[];
+    OR?: PitchConceptScalarWhereInput[];
+    NOT?: PitchConceptScalarWhereInput | PitchConceptScalarWhereInput[];
+    id?: StringFilter<"PitchConcept"> | string;
+    projectId?: StringFilter<"PitchConcept"> | string;
+    slotIndex?: IntFilter<"PitchConcept"> | number;
+    themeId?: StringNullableFilter<"PitchConcept"> | string | null;
+    variantName?: StringFilter<"PitchConcept"> | string;
+    description?: StringFilter<"PitchConcept"> | string;
+    hidden?: BoolFilter<"PitchConcept"> | boolean;
+    createdAt?: DateTimeFilter<"PitchConcept"> | Date | string;
+    updatedAt?: DateTimeFilter<"PitchConcept"> | Date | string;
+  };
+
+  export type PitchCommentUpsertWithWhereUniqueWithoutProjectInput = {
+    where: PitchCommentWhereUniqueInput;
+    update: XOR<
+      PitchCommentUpdateWithoutProjectInput,
+      PitchCommentUncheckedUpdateWithoutProjectInput
+    >;
+    create: XOR<
+      PitchCommentCreateWithoutProjectInput,
+      PitchCommentUncheckedCreateWithoutProjectInput
+    >;
+  };
+
+  export type PitchCommentUpdateWithWhereUniqueWithoutProjectInput = {
+    where: PitchCommentWhereUniqueInput;
+    data: XOR<
+      PitchCommentUpdateWithoutProjectInput,
+      PitchCommentUncheckedUpdateWithoutProjectInput
+    >;
+  };
+
+  export type PitchCommentUpdateManyWithWhereWithoutProjectInput = {
+    where: PitchCommentScalarWhereInput;
+    data: XOR<
+      PitchCommentUpdateManyMutationInput,
+      PitchCommentUncheckedUpdateManyWithoutProjectInput
+    >;
+  };
+
+  export type PitchCommentScalarWhereInput = {
+    AND?: PitchCommentScalarWhereInput | PitchCommentScalarWhereInput[];
+    OR?: PitchCommentScalarWhereInput[];
+    NOT?: PitchCommentScalarWhereInput | PitchCommentScalarWhereInput[];
+    id?: StringFilter<"PitchComment"> | string;
+    projectId?: StringFilter<"PitchComment"> | string;
+    slotIndex?: IntFilter<"PitchComment"> | number;
+    author?: StringFilter<"PitchComment"> | string;
+    body?: StringFilter<"PitchComment"> | string;
+    createdAt?: DateTimeFilter<"PitchComment"> | Date | string;
+  };
+
   export type ProjectCreateWithoutChatSessionsInput = {
     id?: string;
     name?: string;
@@ -30727,6 +34616,8 @@ export namespace Prisma {
     updatedAt?: Date | string;
     team?: TeamCreateNestedOneWithoutProjectsInput;
     frames?: FrameCreateNestedManyWithoutProjectInput;
+    pitchConcepts?: PitchConceptCreateNestedManyWithoutProjectInput;
+    pitchComments?: PitchCommentCreateNestedManyWithoutProjectInput;
   };
 
   export type ProjectUncheckedCreateWithoutChatSessionsInput = {
@@ -30743,6 +34634,8 @@ export namespace Prisma {
     createdAt?: Date | string;
     updatedAt?: Date | string;
     frames?: FrameUncheckedCreateNestedManyWithoutProjectInput;
+    pitchConcepts?: PitchConceptUncheckedCreateNestedManyWithoutProjectInput;
+    pitchComments?: PitchCommentUncheckedCreateNestedManyWithoutProjectInput;
   };
 
   export type ProjectCreateOrConnectWithoutChatSessionsInput = {
@@ -30847,6 +34740,8 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string;
     team?: TeamUpdateOneWithoutProjectsNestedInput;
     frames?: FrameUpdateManyWithoutProjectNestedInput;
+    pitchConcepts?: PitchConceptUpdateManyWithoutProjectNestedInput;
+    pitchComments?: PitchCommentUpdateManyWithoutProjectNestedInput;
   };
 
   export type ProjectUncheckedUpdateWithoutChatSessionsInput = {
@@ -30867,6 +34762,8 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string;
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string;
     frames?: FrameUncheckedUpdateManyWithoutProjectNestedInput;
+    pitchConcepts?: PitchConceptUncheckedUpdateManyWithoutProjectNestedInput;
+    pitchComments?: PitchCommentUncheckedUpdateManyWithoutProjectNestedInput;
   };
 
   export type UserUpsertWithoutChatSessionsInput = {
@@ -30971,6 +34868,8 @@ export namespace Prisma {
     updatedAt?: Date | string;
     team?: TeamCreateNestedOneWithoutProjectsInput;
     chatSessions?: ChatSessionCreateNestedManyWithoutProjectInput;
+    pitchConcepts?: PitchConceptCreateNestedManyWithoutProjectInput;
+    pitchComments?: PitchCommentCreateNestedManyWithoutProjectInput;
   };
 
   export type ProjectUncheckedCreateWithoutFramesInput = {
@@ -30987,6 +34886,8 @@ export namespace Prisma {
     createdAt?: Date | string;
     updatedAt?: Date | string;
     chatSessions?: ChatSessionUncheckedCreateNestedManyWithoutProjectInput;
+    pitchConcepts?: PitchConceptUncheckedCreateNestedManyWithoutProjectInput;
+    pitchComments?: PitchCommentUncheckedCreateNestedManyWithoutProjectInput;
   };
 
   export type ProjectCreateOrConnectWithoutFramesInput = {
@@ -31061,6 +34962,8 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string;
     team?: TeamUpdateOneWithoutProjectsNestedInput;
     chatSessions?: ChatSessionUpdateManyWithoutProjectNestedInput;
+    pitchConcepts?: PitchConceptUpdateManyWithoutProjectNestedInput;
+    pitchComments?: PitchCommentUpdateManyWithoutProjectNestedInput;
   };
 
   export type ProjectUncheckedUpdateWithoutFramesInput = {
@@ -31081,6 +34984,8 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string;
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string;
     chatSessions?: ChatSessionUncheckedUpdateManyWithoutProjectNestedInput;
+    pitchConcepts?: PitchConceptUncheckedUpdateManyWithoutProjectNestedInput;
+    pitchComments?: PitchCommentUncheckedUpdateManyWithoutProjectNestedInput;
   };
 
   export type ThemeUpsertWithoutFramesInput = {
@@ -31470,6 +35375,222 @@ export namespace Prisma {
     ownedTeams?: TeamUncheckedUpdateManyWithoutOwnerNestedInput;
     teamMembers?: TeamMemberUncheckedUpdateManyWithoutUserNestedInput;
     sentInvites?: TeamInviteUncheckedUpdateManyWithoutInviterNestedInput;
+  };
+
+  export type ProjectCreateWithoutPitchConceptsInput = {
+    id?: string;
+    name?: string;
+    thumbnail?: string | null;
+    isTemplate?: boolean;
+    templateTag?: string | null;
+    templateSlug?: string | null;
+    templateDesc?: string | null;
+    trashedAt?: Date | string | null;
+    ownerId?: string | null;
+    createdAt?: Date | string;
+    updatedAt?: Date | string;
+    team?: TeamCreateNestedOneWithoutProjectsInput;
+    chatSessions?: ChatSessionCreateNestedManyWithoutProjectInput;
+    frames?: FrameCreateNestedManyWithoutProjectInput;
+    pitchComments?: PitchCommentCreateNestedManyWithoutProjectInput;
+  };
+
+  export type ProjectUncheckedCreateWithoutPitchConceptsInput = {
+    id?: string;
+    name?: string;
+    thumbnail?: string | null;
+    isTemplate?: boolean;
+    templateTag?: string | null;
+    templateSlug?: string | null;
+    templateDesc?: string | null;
+    trashedAt?: Date | string | null;
+    ownerId?: string | null;
+    teamId?: string | null;
+    createdAt?: Date | string;
+    updatedAt?: Date | string;
+    chatSessions?: ChatSessionUncheckedCreateNestedManyWithoutProjectInput;
+    frames?: FrameUncheckedCreateNestedManyWithoutProjectInput;
+    pitchComments?: PitchCommentUncheckedCreateNestedManyWithoutProjectInput;
+  };
+
+  export type ProjectCreateOrConnectWithoutPitchConceptsInput = {
+    where: ProjectWhereUniqueInput;
+    create: XOR<
+      ProjectCreateWithoutPitchConceptsInput,
+      ProjectUncheckedCreateWithoutPitchConceptsInput
+    >;
+  };
+
+  export type ProjectUpsertWithoutPitchConceptsInput = {
+    update: XOR<
+      ProjectUpdateWithoutPitchConceptsInput,
+      ProjectUncheckedUpdateWithoutPitchConceptsInput
+    >;
+    create: XOR<
+      ProjectCreateWithoutPitchConceptsInput,
+      ProjectUncheckedCreateWithoutPitchConceptsInput
+    >;
+    where?: ProjectWhereInput;
+  };
+
+  export type ProjectUpdateToOneWithWhereWithoutPitchConceptsInput = {
+    where?: ProjectWhereInput;
+    data: XOR<
+      ProjectUpdateWithoutPitchConceptsInput,
+      ProjectUncheckedUpdateWithoutPitchConceptsInput
+    >;
+  };
+
+  export type ProjectUpdateWithoutPitchConceptsInput = {
+    id?: StringFieldUpdateOperationsInput | string;
+    name?: StringFieldUpdateOperationsInput | string;
+    thumbnail?: NullableStringFieldUpdateOperationsInput | string | null;
+    isTemplate?: BoolFieldUpdateOperationsInput | boolean;
+    templateTag?: NullableStringFieldUpdateOperationsInput | string | null;
+    templateSlug?: NullableStringFieldUpdateOperationsInput | string | null;
+    templateDesc?: NullableStringFieldUpdateOperationsInput | string | null;
+    trashedAt?:
+      | NullableDateTimeFieldUpdateOperationsInput
+      | Date
+      | string
+      | null;
+    ownerId?: NullableStringFieldUpdateOperationsInput | string | null;
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string;
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string;
+    team?: TeamUpdateOneWithoutProjectsNestedInput;
+    chatSessions?: ChatSessionUpdateManyWithoutProjectNestedInput;
+    frames?: FrameUpdateManyWithoutProjectNestedInput;
+    pitchComments?: PitchCommentUpdateManyWithoutProjectNestedInput;
+  };
+
+  export type ProjectUncheckedUpdateWithoutPitchConceptsInput = {
+    id?: StringFieldUpdateOperationsInput | string;
+    name?: StringFieldUpdateOperationsInput | string;
+    thumbnail?: NullableStringFieldUpdateOperationsInput | string | null;
+    isTemplate?: BoolFieldUpdateOperationsInput | boolean;
+    templateTag?: NullableStringFieldUpdateOperationsInput | string | null;
+    templateSlug?: NullableStringFieldUpdateOperationsInput | string | null;
+    templateDesc?: NullableStringFieldUpdateOperationsInput | string | null;
+    trashedAt?:
+      | NullableDateTimeFieldUpdateOperationsInput
+      | Date
+      | string
+      | null;
+    ownerId?: NullableStringFieldUpdateOperationsInput | string | null;
+    teamId?: NullableStringFieldUpdateOperationsInput | string | null;
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string;
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string;
+    chatSessions?: ChatSessionUncheckedUpdateManyWithoutProjectNestedInput;
+    frames?: FrameUncheckedUpdateManyWithoutProjectNestedInput;
+    pitchComments?: PitchCommentUncheckedUpdateManyWithoutProjectNestedInput;
+  };
+
+  export type ProjectCreateWithoutPitchCommentsInput = {
+    id?: string;
+    name?: string;
+    thumbnail?: string | null;
+    isTemplate?: boolean;
+    templateTag?: string | null;
+    templateSlug?: string | null;
+    templateDesc?: string | null;
+    trashedAt?: Date | string | null;
+    ownerId?: string | null;
+    createdAt?: Date | string;
+    updatedAt?: Date | string;
+    team?: TeamCreateNestedOneWithoutProjectsInput;
+    chatSessions?: ChatSessionCreateNestedManyWithoutProjectInput;
+    frames?: FrameCreateNestedManyWithoutProjectInput;
+    pitchConcepts?: PitchConceptCreateNestedManyWithoutProjectInput;
+  };
+
+  export type ProjectUncheckedCreateWithoutPitchCommentsInput = {
+    id?: string;
+    name?: string;
+    thumbnail?: string | null;
+    isTemplate?: boolean;
+    templateTag?: string | null;
+    templateSlug?: string | null;
+    templateDesc?: string | null;
+    trashedAt?: Date | string | null;
+    ownerId?: string | null;
+    teamId?: string | null;
+    createdAt?: Date | string;
+    updatedAt?: Date | string;
+    chatSessions?: ChatSessionUncheckedCreateNestedManyWithoutProjectInput;
+    frames?: FrameUncheckedCreateNestedManyWithoutProjectInput;
+    pitchConcepts?: PitchConceptUncheckedCreateNestedManyWithoutProjectInput;
+  };
+
+  export type ProjectCreateOrConnectWithoutPitchCommentsInput = {
+    where: ProjectWhereUniqueInput;
+    create: XOR<
+      ProjectCreateWithoutPitchCommentsInput,
+      ProjectUncheckedCreateWithoutPitchCommentsInput
+    >;
+  };
+
+  export type ProjectUpsertWithoutPitchCommentsInput = {
+    update: XOR<
+      ProjectUpdateWithoutPitchCommentsInput,
+      ProjectUncheckedUpdateWithoutPitchCommentsInput
+    >;
+    create: XOR<
+      ProjectCreateWithoutPitchCommentsInput,
+      ProjectUncheckedCreateWithoutPitchCommentsInput
+    >;
+    where?: ProjectWhereInput;
+  };
+
+  export type ProjectUpdateToOneWithWhereWithoutPitchCommentsInput = {
+    where?: ProjectWhereInput;
+    data: XOR<
+      ProjectUpdateWithoutPitchCommentsInput,
+      ProjectUncheckedUpdateWithoutPitchCommentsInput
+    >;
+  };
+
+  export type ProjectUpdateWithoutPitchCommentsInput = {
+    id?: StringFieldUpdateOperationsInput | string;
+    name?: StringFieldUpdateOperationsInput | string;
+    thumbnail?: NullableStringFieldUpdateOperationsInput | string | null;
+    isTemplate?: BoolFieldUpdateOperationsInput | boolean;
+    templateTag?: NullableStringFieldUpdateOperationsInput | string | null;
+    templateSlug?: NullableStringFieldUpdateOperationsInput | string | null;
+    templateDesc?: NullableStringFieldUpdateOperationsInput | string | null;
+    trashedAt?:
+      | NullableDateTimeFieldUpdateOperationsInput
+      | Date
+      | string
+      | null;
+    ownerId?: NullableStringFieldUpdateOperationsInput | string | null;
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string;
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string;
+    team?: TeamUpdateOneWithoutProjectsNestedInput;
+    chatSessions?: ChatSessionUpdateManyWithoutProjectNestedInput;
+    frames?: FrameUpdateManyWithoutProjectNestedInput;
+    pitchConcepts?: PitchConceptUpdateManyWithoutProjectNestedInput;
+  };
+
+  export type ProjectUncheckedUpdateWithoutPitchCommentsInput = {
+    id?: StringFieldUpdateOperationsInput | string;
+    name?: StringFieldUpdateOperationsInput | string;
+    thumbnail?: NullableStringFieldUpdateOperationsInput | string | null;
+    isTemplate?: BoolFieldUpdateOperationsInput | boolean;
+    templateTag?: NullableStringFieldUpdateOperationsInput | string | null;
+    templateSlug?: NullableStringFieldUpdateOperationsInput | string | null;
+    templateDesc?: NullableStringFieldUpdateOperationsInput | string | null;
+    trashedAt?:
+      | NullableDateTimeFieldUpdateOperationsInput
+      | Date
+      | string
+      | null;
+    ownerId?: NullableStringFieldUpdateOperationsInput | string | null;
+    teamId?: NullableStringFieldUpdateOperationsInput | string | null;
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string;
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string;
+    chatSessions?: ChatSessionUncheckedUpdateManyWithoutProjectNestedInput;
+    frames?: FrameUncheckedUpdateManyWithoutProjectNestedInput;
+    pitchConcepts?: PitchConceptUncheckedUpdateManyWithoutProjectNestedInput;
   };
 
   export type ChatSessionCreateManyUserInput = {
@@ -31890,6 +36011,8 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string;
     chatSessions?: ChatSessionUpdateManyWithoutProjectNestedInput;
     frames?: FrameUpdateManyWithoutProjectNestedInput;
+    pitchConcepts?: PitchConceptUpdateManyWithoutProjectNestedInput;
+    pitchComments?: PitchCommentUpdateManyWithoutProjectNestedInput;
   };
 
   export type ProjectUncheckedUpdateWithoutTeamInput = {
@@ -31910,6 +36033,8 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string;
     chatSessions?: ChatSessionUncheckedUpdateManyWithoutProjectNestedInput;
     frames?: FrameUncheckedUpdateManyWithoutProjectNestedInput;
+    pitchConcepts?: PitchConceptUncheckedUpdateManyWithoutProjectNestedInput;
+    pitchComments?: PitchCommentUncheckedUpdateManyWithoutProjectNestedInput;
   };
 
   export type ProjectUncheckedUpdateManyWithoutTeamInput = {
@@ -32019,6 +36144,25 @@ export namespace Prisma {
     updatedAt?: Date | string;
   };
 
+  export type PitchConceptCreateManyProjectInput = {
+    id?: string;
+    slotIndex: number;
+    themeId?: string | null;
+    variantName?: string;
+    description?: string;
+    hidden?: boolean;
+    createdAt?: Date | string;
+    updatedAt?: Date | string;
+  };
+
+  export type PitchCommentCreateManyProjectInput = {
+    id?: string;
+    slotIndex: number;
+    author: string;
+    body: string;
+    createdAt?: Date | string;
+  };
+
   export type ChatSessionUpdateWithoutProjectInput = {
     id?: StringFieldUpdateOperationsInput | string;
     messages?: JsonNullValueInput | InputJsonValue;
@@ -32077,6 +36221,63 @@ export namespace Prisma {
     top?: IntFieldUpdateOperationsInput | number;
     html?: StringFieldUpdateOperationsInput | string;
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string;
+  };
+
+  export type PitchConceptUpdateWithoutProjectInput = {
+    id?: StringFieldUpdateOperationsInput | string;
+    slotIndex?: IntFieldUpdateOperationsInput | number;
+    themeId?: NullableStringFieldUpdateOperationsInput | string | null;
+    variantName?: StringFieldUpdateOperationsInput | string;
+    description?: StringFieldUpdateOperationsInput | string;
+    hidden?: BoolFieldUpdateOperationsInput | boolean;
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string;
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string;
+  };
+
+  export type PitchConceptUncheckedUpdateWithoutProjectInput = {
+    id?: StringFieldUpdateOperationsInput | string;
+    slotIndex?: IntFieldUpdateOperationsInput | number;
+    themeId?: NullableStringFieldUpdateOperationsInput | string | null;
+    variantName?: StringFieldUpdateOperationsInput | string;
+    description?: StringFieldUpdateOperationsInput | string;
+    hidden?: BoolFieldUpdateOperationsInput | boolean;
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string;
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string;
+  };
+
+  export type PitchConceptUncheckedUpdateManyWithoutProjectInput = {
+    id?: StringFieldUpdateOperationsInput | string;
+    slotIndex?: IntFieldUpdateOperationsInput | number;
+    themeId?: NullableStringFieldUpdateOperationsInput | string | null;
+    variantName?: StringFieldUpdateOperationsInput | string;
+    description?: StringFieldUpdateOperationsInput | string;
+    hidden?: BoolFieldUpdateOperationsInput | boolean;
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string;
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string;
+  };
+
+  export type PitchCommentUpdateWithoutProjectInput = {
+    id?: StringFieldUpdateOperationsInput | string;
+    slotIndex?: IntFieldUpdateOperationsInput | number;
+    author?: StringFieldUpdateOperationsInput | string;
+    body?: StringFieldUpdateOperationsInput | string;
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string;
+  };
+
+  export type PitchCommentUncheckedUpdateWithoutProjectInput = {
+    id?: StringFieldUpdateOperationsInput | string;
+    slotIndex?: IntFieldUpdateOperationsInput | number;
+    author?: StringFieldUpdateOperationsInput | string;
+    body?: StringFieldUpdateOperationsInput | string;
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string;
+  };
+
+  export type PitchCommentUncheckedUpdateManyWithoutProjectInput = {
+    id?: StringFieldUpdateOperationsInput | string;
+    slotIndex?: IntFieldUpdateOperationsInput | number;
+    author?: StringFieldUpdateOperationsInput | string;
+    body?: StringFieldUpdateOperationsInput | string;
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string;
   };
 
   export type FrameCreateManyThemeInput = {
