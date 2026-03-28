@@ -46,11 +46,13 @@ export async function GET(
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
 
-    const userThemes = await prisma.theme.findMany({
-      where: { userId: project.ownerId },
-      orderBy: { updatedAt: "desc" },
-      select: { id: true, name: true, variables: true },
-    });
+    const userThemes = project.ownerId
+      ? await prisma.theme.findMany({
+          where: { userId: project.ownerId },
+          orderBy: { updatedAt: "desc" },
+          select: { id: true, name: true, variables: true },
+        })
+      : [];
 
     const themes = userThemes.map((t) => ({
       id: t.id,
