@@ -68,6 +68,7 @@ export async function generateMetadata({
 function FeatureCheck({ has }: { has: boolean }) {
   return has ? (
     <svg
+      aria-hidden="true"
       width="16"
       height="16"
       viewBox="0 0 24 24"
@@ -81,6 +82,7 @@ function FeatureCheck({ has }: { has: boolean }) {
     </svg>
   ) : (
     <svg
+      aria-hidden="true"
       width="16"
       height="16"
       viewBox="0 0 24 24"
@@ -277,6 +279,7 @@ export default async function ComparisonPage({ params }: PageProps) {
               {comp.floowPros.map((pro) => (
                 <div key={pro} className="flex items-start gap-2.5">
                   <svg
+                    aria-hidden="true"
                     width="16"
                     height="16"
                     viewBox="0 0 24 24"
@@ -307,6 +310,7 @@ export default async function ComparisonPage({ params }: PageProps) {
               {comp.competitorPros.map((pro) => (
                 <div key={pro} className="flex items-start gap-2.5">
                   <svg
+                    aria-hidden="true"
                     width="16"
                     height="16"
                     viewBox="0 0 24 24"
@@ -329,6 +333,7 @@ export default async function ComparisonPage({ params }: PageProps) {
           <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6 md:px-16">
             <div className="flex items-center gap-2 mb-4">
               <svg
+                aria-hidden="true"
                 width="18"
                 height="18"
                 viewBox="0 0 24 24"

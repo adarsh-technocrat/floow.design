@@ -92,6 +92,7 @@ function CanvasPanel() {
         <div className="rounded-xl border border-b-secondary bg-surface-elevated/90 backdrop-blur-xl px-3.5 py-2.5 shadow-landing-input">
           <div className="flex items-center gap-2">
             <svg
+              aria-hidden="true"
               width="14"
               height="14"
               viewBox="0 0 24 24"
@@ -110,6 +111,7 @@ function CanvasPanel() {
               </span>
               <div className="size-5 rounded bg-input-bg flex items-center justify-center">
                 <svg
+                  aria-hidden="true"
                   width="10"
                   height="10"
                   viewBox="0 0 24 24"
@@ -154,7 +156,13 @@ function CanvasPanel() {
               ease: "easeInOut",
             }}
           >
-            <svg width="16" height="20" viewBox="0 0 16 20" fill="none">
+            <svg
+              aria-hidden="true"
+              width="16"
+              height="20"
+              viewBox="0 0 16 20"
+              fill="none"
+            >
               <path
                 d="M1 1L1 15.5L5.5 11.5L9.5 19L12.5 17.5L8.5 10L14 9L1 1Z"
                 fill={cursor.color}
@@ -293,7 +301,13 @@ function SignInPageContent() {
               {signingIn ? (
                 <div className="size-4 rounded-full border-2 border-t-tertiary border-t-transparent animate-spin" />
               ) : (
-                <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                <svg
+                  aria-hidden="true"
+                  width="18"
+                  height="18"
+                  viewBox="0 0 18 18"
+                  fill="none"
+                >
                   <path
                     d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844a4.14 4.14 0 01-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z"
                     fill="#4285F4"
@@ -351,7 +365,13 @@ function SignInPageContent() {
                 type="submit"
                 className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-btn-primary-bg text-sm font-semibold text-btn-primary-text transition-colors hover:opacity-90"
               >
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                <svg
+                  aria-hidden="true"
+                  width="16"
+                  height="16"
+                  viewBox="0 0 16 16"
+                  fill="none"
+                >
                   <path
                     d="M2 4l6 4.5L14 4"
                     stroke="currentColor"
@@ -375,7 +395,13 @@ function SignInPageContent() {
           ) : (
             <div className="flex flex-col items-center rounded-2xl border border-b-secondary bg-input-bg px-6 py-10 text-center">
               <div className="flex h-14 w-14 items-center justify-center rounded-full bg-input-bg">
-                <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+                <svg
+                  aria-hidden="true"
+                  width="28"
+                  height="28"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                >
                   <path
                     d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
                     stroke="currentColor"

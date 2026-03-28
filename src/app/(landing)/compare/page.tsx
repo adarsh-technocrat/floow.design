@@ -33,8 +33,35 @@ export default async function ComparePage() {
     comparisons = DUMMY_COMPARISONS;
   }
 
+  const compareJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "CollectionPage",
+    name: "floow.design vs Competitors",
+    description:
+      "Honest comparisons of floow.design against Figma, Uizard, Visily, and FlutterFlow for AI-powered mobile app design.",
+    url: "https://www.floow.design/compare",
+    publisher: {
+      "@type": "Organization",
+      name: "floow.design",
+      url: "https://www.floow.design",
+    },
+    mainEntity: {
+      "@type": "ItemList",
+      itemListElement: comparisons.map((comp, i) => ({
+        "@type": "ListItem",
+        position: i + 1,
+        url: `https://www.floow.design/compare/${comp.slug}`,
+        name: comp.title,
+      })),
+    },
+  };
+
   return (
     <div className="relative w-full bg-surface text-t-primary">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(compareJsonLd) }}
+      />
       <div className="relative mx-auto max-w-6xl border-x border-b-secondary">
         <Header />
 
@@ -144,6 +171,7 @@ export default async function ComparePage() {
                   {comp.floowPros.slice(0, 2).map((p) => (
                     <div key={p} className="flex items-start gap-1.5">
                       <svg
+                        aria-hidden="true"
                         width="12"
                         height="12"
                         viewBox="0 0 24 24"
@@ -167,6 +195,7 @@ export default async function ComparePage() {
                   {comp.competitorPros.slice(0, 2).map((p) => (
                     <div key={p} className="flex items-start gap-1.5">
                       <svg
+                        aria-hidden="true"
                         width="12"
                         height="12"
                         viewBox="0 0 24 24"
@@ -191,6 +220,7 @@ export default async function ComparePage() {
                   Read full comparison
                 </span>
                 <svg
+                  aria-hidden="true"
                   width="14"
                   height="14"
                   viewBox="0 0 24 24"

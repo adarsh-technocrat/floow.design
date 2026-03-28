@@ -416,6 +416,7 @@ export default function PricingPage() {
                   {plan.features.map((f) => (
                     <div key={f} className="flex items-center gap-2">
                       <svg
+                        aria-hidden="true"
                         width="14"
                         height="14"
                         viewBox="0 0 16 16"

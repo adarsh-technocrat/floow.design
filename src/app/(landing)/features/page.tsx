@@ -31,12 +31,14 @@ const ICONS: Record<string, React.ReactNode> = {
       strokeWidth="1.5"
       strokeLinecap="round"
       strokeLinejoin="round"
+      aria-hidden="true"
     >
       <path d="M12 3l1.912 5.813a2 2 0 001.275 1.275L21 12l-5.813 1.912a2 2 0 00-1.275 1.275L12 21l-1.912-5.813a2 2 0 00-1.275-1.275L3 12l5.813-1.912a2 2 0 001.275-1.275L12 3z" />
     </svg>
   ),
   layout: (
     <svg
+      aria-hidden="true"
       width="24"
       height="24"
       viewBox="0 0 24 24"
@@ -52,6 +54,7 @@ const ICONS: Record<string, React.ReactNode> = {
   ),
   download: (
     <svg
+      aria-hidden="true"
       width="24"
       height="24"
       viewBox="0 0 24 24"
@@ -66,6 +69,7 @@ const ICONS: Record<string, React.ReactNode> = {
   ),
   smartphone: (
     <svg
+      aria-hidden="true"
       width="24"
       height="24"
       viewBox="0 0 24 24"
@@ -81,6 +85,7 @@ const ICONS: Record<string, React.ReactNode> = {
   ),
   "git-branch": (
     <svg
+      aria-hidden="true"
       width="24"
       height="24"
       viewBox="0 0 24 24"
@@ -98,6 +103,7 @@ const ICONS: Record<string, React.ReactNode> = {
   ),
   palette: (
     <svg
+      aria-hidden="true"
       width="24"
       height="24"
       viewBox="0 0 24 24"
@@ -224,6 +230,7 @@ export default async function FeaturesPage() {
                     ICONS[feature.icon]
                   ) : (
                     <svg
+                      aria-hidden="true"
                       width="24"
                       height="24"
                       viewBox="0 0 24 24"
@@ -259,6 +266,7 @@ export default async function FeaturesPage() {
                 {feature.benefits.slice(0, 3).map((b) => (
                   <div key={b} className="flex items-start gap-2">
                     <svg
+                      aria-hidden="true"
                       width="14"
                       height="14"
                       viewBox="0 0 24 24"
@@ -281,6 +289,7 @@ export default async function FeaturesPage() {
                   Learn more
                 </span>
                 <svg
+                  aria-hidden="true"
                   width="14"
                   height="14"
                   viewBox="0 0 24 24"

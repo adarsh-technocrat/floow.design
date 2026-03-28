@@ -128,16 +128,28 @@ export default async function TemplateDetailPage({ params }: PageProps) {
 
         <div className="border-b border-b-secondary px-4 py-8 sm:px-6 sm:py-12 md:px-12 md:py-16">
           <div className="flex flex-col gap-6 max-w-3xl mx-auto">
-            <div className="flex items-center gap-3 text-xs font-mono text-t-tertiary">
+            <nav
+              aria-label="Breadcrumb"
+              className="flex items-center gap-3 text-xs font-mono text-t-tertiary"
+            >
+              <Link
+                href="/"
+                className="hover:text-t-secondary transition-colors"
+              >
+                Home
+              </Link>
+              <span aria-hidden="true">/</span>
               <Link
                 href="/templates"
                 className="hover:text-t-secondary transition-colors"
               >
                 Templates
               </Link>
-              <span>/</span>
-              <span className="text-t-secondary">{template.name}</span>
-            </div>
+              <span aria-hidden="true">/</span>
+              <span className="text-t-secondary" aria-current="page">
+                {template.name}
+              </span>
+            </nav>
 
             <div className="flex flex-col gap-4">
               <div className="flex items-center gap-3">

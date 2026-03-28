@@ -14,23 +14,27 @@ const dmSans = DM_Sans({
   variable: "--font-dm-sans",
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
+  display: "swap",
 });
 
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
+  display: "swap",
 });
 
 const spaceGrotesk = Space_Grotesk({
   variable: "--font-logo",
   subsets: ["latin"],
   weight: ["700"],
+  display: "swap",
 });
 
 const silkscreen = Silkscreen({
   variable: "--font-pixel",
   subsets: ["latin"],
   weight: ["400", "700"],
+  display: "swap",
 });
 
 const siteUrl = "https://www.floow.design";
@@ -106,6 +110,10 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
+    { media: "(prefers-color-scheme: dark)", color: "#0a0a0a" },
+  ],
 };
 
 export default function RootLayout({
@@ -114,7 +122,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" dir="ltr" suppressHydrationWarning>
       <head>
         <link rel="preconnect" href="https://floow-b2e39.firebaseapp.com" />
         <link rel="preconnect" href="https://apis.google.com" />
