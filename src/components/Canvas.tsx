@@ -424,10 +424,9 @@ export function Canvas() {
       aria-label="Canvas"
     >
       <div
-        className="absolute left-0 top-0 origin-top-left will-change-transform"
+        className="absolute left-0 top-0 origin-top-left"
         style={{
-          transform: `translate3d(${Math.round(x)}px, ${Math.round(y)}px, 0) scale(${scale})`,
-          backfaceVisibility: "hidden" as const,
+          transform: `translate(${Math.round(x)}px, ${Math.round(y)}px) scale(${scale})`,
         }}
       >
         {/* eslint-disable react-hooks/refs -- marquee coordinates from ref during active drag */}

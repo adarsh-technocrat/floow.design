@@ -349,11 +349,9 @@ export const Frame = React.memo(function Frame({
         }}
       >
         <div
-          className="absolute inset-0 overflow-hidden will-change-transform"
+          className="absolute inset-0 overflow-hidden"
           style={{
             backgroundColor: "#0a0a0a",
-            transform: "translateZ(0px)",
-            backfaceVisibility: "hidden",
             clipPath: `url(#frame-phone-clip-${id})`,
           }}
           {...(onWheelForZoom && { "data-frame-zoom": "true" })}
