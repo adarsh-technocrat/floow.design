@@ -439,8 +439,9 @@ export const Frame = React.memo(function Frame({
             <svg
               className="pointer-events-none absolute inset-0 z-30"
               viewBox={`0 0 ${FRAME_WIDTH} ${FRAME_HEIGHT}`}
-              width={width}
-              height={height}
+              preserveAspectRatio="none"
+              width="100%"
+              height="100%"
               aria-hidden
             >
               <path
