@@ -91,12 +91,14 @@ function ScreenPreview({
   rotation,
   translateY,
   zIndex,
+  variantName = "light",
 }: {
   html: string;
   label: string;
   rotation: number;
   translateY: number;
   zIndex: number;
+  variantName?: string;
 }) {
   return (
     <div
@@ -107,7 +109,7 @@ function ScreenPreview({
       }}
     >
       <div
-        className="overflow-hidden rounded-xl border border-zinc-200/40 bg-white shadow-md dark:border-zinc-700/40"
+        className={`overflow-hidden rounded-xl border shadow-md ${variantName.includes("dark") ? "border-zinc-700/40 bg-zinc-900" : "border-zinc-200/40 bg-white"}`}
         style={{
           width: DEVICE_W * PREVIEW_SCALE,
           height: DEVICE_H * PREVIEW_SCALE,
@@ -125,7 +127,7 @@ function ScreenPreview({
               height: DEVICE_H,
               transform: `scale(${PREVIEW_SCALE})`,
               transformOrigin: "top left",
-              colorScheme: "light",
+              colorScheme: variantName.includes("dark") ? "dark" : "light",
             }}
           />
         ) : (
@@ -332,6 +334,7 @@ function ConceptColumn({
                   rotation={rotation}
                   translateY={translateY}
                   zIndex={zIndex}
+                  variantName={variant}
                 />
               );
             })
