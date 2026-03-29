@@ -199,12 +199,14 @@ export const StickyNote = React.memo(function StickyNote({
         let newWidth = r.width;
         let newHeight = r.height;
 
-        if (handle.includes("e")) newWidth = Math.max(MIN_NOTE_SIZE, r.width + dx);
+        if (handle.includes("e"))
+          newWidth = Math.max(MIN_NOTE_SIZE, r.width + dx);
         if (handle.includes("w")) {
           newWidth = Math.max(MIN_NOTE_SIZE, r.width - dx);
           newLeft = r.left + r.width - newWidth;
         }
-        if (handle.includes("s")) newHeight = Math.max(MIN_NOTE_SIZE, r.height + dy);
+        if (handle.includes("s"))
+          newHeight = Math.max(MIN_NOTE_SIZE, r.height + dy);
         if (handle.includes("n")) {
           newHeight = Math.max(MIN_NOTE_SIZE, r.height - dy);
           newTop = r.top + r.height - newHeight;
@@ -221,15 +223,12 @@ export const StickyNote = React.memo(function StickyNote({
     [id, canvasScale, onPositionChange, onSizeChange],
   );
 
-  const handlePointerUp = useCallback(
-    (e: React.PointerEvent) => {
-      dragStartRef.current = null;
-      resizeStartRef.current = null;
-      setIsDragging(false);
-      (e.target as HTMLElement).releasePointerCapture?.(e.pointerId);
-    },
-    [],
-  );
+  const handlePointerUp = useCallback((e: React.PointerEvent) => {
+    dragStartRef.current = null;
+    resizeStartRef.current = null;
+    setIsDragging(false);
+    (e.target as HTMLElement).releasePointerCapture?.(e.pointerId);
+  }, []);
 
   const handleResizePointerDown = useCallback(
     (e: React.PointerEvent, handle: ResizeHandle) => {
@@ -248,14 +247,11 @@ export const StickyNote = React.memo(function StickyNote({
     [left, top, width, height],
   );
 
-  const handleDoubleClick = useCallback(
-    (e: React.MouseEvent) => {
-      e.stopPropagation();
-      setIsEditing(true);
-      setTimeout(() => textareaRef.current?.focus(), 0);
-    },
-    [],
-  );
+  const handleDoubleClick = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+    setIsEditing(true);
+    setTimeout(() => textareaRef.current?.focus(), 0);
+  }, []);
 
   const handleTextBlur = useCallback(() => {
     setIsEditing(false);
@@ -309,12 +305,13 @@ export const StickyNote = React.memo(function StickyNote({
               onChange={(e) => onTextChange(id, e.target.value)}
               onBlur={handleTextBlur}
               onPointerDown={(e) => e.stopPropagation()}
-              className="size-full resize-none bg-transparent outline-none"
+              className="size-full resize-none bg-transparent outline-none p-0 m-0 border-none whitespace-pre-wrap break-words"
               style={{
                 color: colors.text,
                 fontSize: `${fontSize}px`,
                 lineHeight: 1.4,
-                fontFamily: "inherit",
+                fontFamily: "var(--font-dm-sans), 'DM Sans', sans-serif",
+                letterSpacing: "normal",
               }}
               placeholder="Type something..."
             />
@@ -325,6 +322,8 @@ export const StickyNote = React.memo(function StickyNote({
                 color: colors.text,
                 fontSize: `${fontSize}px`,
                 lineHeight: 1.4,
+                fontFamily: "var(--font-dm-sans), 'DM Sans', sans-serif",
+                letterSpacing: "normal",
               }}
             >
               {text || (
@@ -338,10 +337,22 @@ export const StickyNote = React.memo(function StickyNote({
       {/* Selection border + resize handles + toolbar */}
       {selected && (
         <>
-          <ResizeHandleDot corner="nw" onPointerDown={handleResizePointerDown} />
-          <ResizeHandleDot corner="ne" onPointerDown={handleResizePointerDown} />
-          <ResizeHandleDot corner="sw" onPointerDown={handleResizePointerDown} />
-          <ResizeHandleDot corner="se" onPointerDown={handleResizePointerDown} />
+          <ResizeHandleDot
+            corner="nw"
+            onPointerDown={handleResizePointerDown}
+          />
+          <ResizeHandleDot
+            corner="ne"
+            onPointerDown={handleResizePointerDown}
+          />
+          <ResizeHandleDot
+            corner="sw"
+            onPointerDown={handleResizePointerDown}
+          />
+          <ResizeHandleDot
+            corner="se"
+            onPointerDown={handleResizePointerDown}
+          />
           <EdgeResizeHandle edge="n" onPointerDown={handleResizePointerDown} />
           <EdgeResizeHandle edge="s" onPointerDown={handleResizePointerDown} />
           <EdgeResizeHandle edge="e" onPointerDown={handleResizePointerDown} />
