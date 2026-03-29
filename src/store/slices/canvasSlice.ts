@@ -82,10 +82,12 @@ export interface PitchSlotState {
   hidden: boolean;
 }
 
-function createEmptyPitchSlots(): PitchSlotState[] {
+function createEmptyPitchSlots(
+  variantName: ThemeMode = "dark",
+): PitchSlotState[] {
   return Array.from({ length: PITCH_CONCEPT_SLOT_COUNT }, () => ({
     themeId: null,
-    variantName: "light",
+    variantName,
     description: "",
     hidden: false,
   }));
@@ -307,6 +309,12 @@ const canvasSlice = createSlice({
 
     setActiveThemeMode: (state, action: { payload: ThemeMode }) => {
       state.activeThemeMode = action.payload;
+      // Sync pitch slots that haven't been manually assigned a theme
+      for (const slot of state.pitchSlots) {
+        if (!slot.themeId) {
+          slot.variantName = action.payload;
+        }
+      }
       syncResolvedTheme(state);
       rewrapGlobalFrames(state);
     },
