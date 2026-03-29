@@ -336,6 +336,7 @@ exports.Prisma.NoteScalarFieldEnum = {
   height: "height",
   color: "color",
   fontSize: "fontSize",
+  authorName: "authorName",
   updatedAt: "updatedAt",
 };
 

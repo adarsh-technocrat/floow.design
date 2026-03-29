@@ -25649,6 +25649,7 @@ export namespace Prisma {
     height: number | null;
     color: string | null;
     fontSize: number | null;
+    authorName: string | null;
     updatedAt: Date | null;
   };
 
@@ -25662,6 +25663,7 @@ export namespace Prisma {
     height: number | null;
     color: string | null;
     fontSize: number | null;
+    authorName: string | null;
     updatedAt: Date | null;
   };
 
@@ -25675,6 +25677,7 @@ export namespace Prisma {
     height: number;
     color: number;
     fontSize: number;
+    authorName: number;
     updatedAt: number;
     _all: number;
   };
@@ -25705,6 +25708,7 @@ export namespace Prisma {
     height?: true;
     color?: true;
     fontSize?: true;
+    authorName?: true;
     updatedAt?: true;
   };
 
@@ -25718,6 +25722,7 @@ export namespace Prisma {
     height?: true;
     color?: true;
     fontSize?: true;
+    authorName?: true;
     updatedAt?: true;
   };
 
@@ -25731,6 +25736,7 @@ export namespace Prisma {
     height?: true;
     color?: true;
     fontSize?: true;
+    authorName?: true;
     updatedAt?: true;
     _all?: true;
   };
@@ -25834,6 +25840,7 @@ export namespace Prisma {
     height: number;
     color: string;
     fontSize: number;
+    authorName: string | null;
     updatedAt: Date;
     _count: NoteCountAggregateOutputType | null;
     _avg: NoteAvgAggregateOutputType | null;
@@ -25867,6 +25874,7 @@ export namespace Prisma {
       height?: boolean;
       color?: boolean;
       fontSize?: boolean;
+      authorName?: boolean;
       updatedAt?: boolean;
       project?: boolean | ProjectDefaultArgs<ExtArgs>;
     },
@@ -25886,6 +25894,7 @@ export namespace Prisma {
       height?: boolean;
       color?: boolean;
       fontSize?: boolean;
+      authorName?: boolean;
       updatedAt?: boolean;
       project?: boolean | ProjectDefaultArgs<ExtArgs>;
     },
@@ -25905,6 +25914,7 @@ export namespace Prisma {
       height?: boolean;
       color?: boolean;
       fontSize?: boolean;
+      authorName?: boolean;
       updatedAt?: boolean;
       project?: boolean | ProjectDefaultArgs<ExtArgs>;
     },
@@ -25921,6 +25931,7 @@ export namespace Prisma {
     height?: boolean;
     color?: boolean;
     fontSize?: boolean;
+    authorName?: boolean;
     updatedAt?: boolean;
   };
 
@@ -25936,6 +25947,7 @@ export namespace Prisma {
     | "height"
     | "color"
     | "fontSize"
+    | "authorName"
     | "updatedAt",
     ExtArgs["result"]["note"]
   >;
@@ -25973,6 +25985,7 @@ export namespace Prisma {
         height: number;
         color: string;
         fontSize: number;
+        authorName: string | null;
         updatedAt: Date;
       },
       ExtArgs["result"]["note"]
@@ -26582,6 +26595,7 @@ export namespace Prisma {
     readonly height: FieldRef<"Note", "Int">;
     readonly color: FieldRef<"Note", "String">;
     readonly fontSize: FieldRef<"Note", "Int">;
+    readonly authorName: FieldRef<"Note", "String">;
     readonly updatedAt: FieldRef<"Note", "DateTime">;
   }
 
@@ -27306,6 +27320,7 @@ export namespace Prisma {
     height: "height";
     color: "color";
     fontSize: "fontSize";
+    authorName: "authorName";
     updatedAt: "updatedAt";
   };
 
@@ -29049,6 +29064,7 @@ export namespace Prisma {
     height?: IntFilter<"Note"> | number;
     color?: StringFilter<"Note"> | string;
     fontSize?: IntFilter<"Note"> | number;
+    authorName?: StringNullableFilter<"Note"> | string | null;
     updatedAt?: DateTimeFilter<"Note"> | Date | string;
     project?: XOR<ProjectScalarRelationFilter, ProjectWhereInput>;
   };
@@ -29063,6 +29079,7 @@ export namespace Prisma {
     height?: SortOrder;
     color?: SortOrder;
     fontSize?: SortOrder;
+    authorName?: SortOrderInput | SortOrder;
     updatedAt?: SortOrder;
     project?: ProjectOrderByWithRelationInput;
   };
@@ -29081,6 +29098,7 @@ export namespace Prisma {
       height?: IntFilter<"Note"> | number;
       color?: StringFilter<"Note"> | string;
       fontSize?: IntFilter<"Note"> | number;
+      authorName?: StringNullableFilter<"Note"> | string | null;
       updatedAt?: DateTimeFilter<"Note"> | Date | string;
       project?: XOR<ProjectScalarRelationFilter, ProjectWhereInput>;
     },
@@ -29097,6 +29115,7 @@ export namespace Prisma {
     height?: SortOrder;
     color?: SortOrder;
     fontSize?: SortOrder;
+    authorName?: SortOrderInput | SortOrder;
     updatedAt?: SortOrder;
     _count?: NoteCountOrderByAggregateInput;
     _avg?: NoteAvgOrderByAggregateInput;
@@ -29122,6 +29141,7 @@ export namespace Prisma {
     height?: IntWithAggregatesFilter<"Note"> | number;
     color?: StringWithAggregatesFilter<"Note"> | string;
     fontSize?: IntWithAggregatesFilter<"Note"> | number;
+    authorName?: StringNullableWithAggregatesFilter<"Note"> | string | null;
     updatedAt?: DateTimeWithAggregatesFilter<"Note"> | Date | string;
   };
 
@@ -30765,6 +30785,7 @@ export namespace Prisma {
     height?: number;
     color?: string;
     fontSize?: number;
+    authorName?: string | null;
     updatedAt?: Date | string;
     project: ProjectCreateNestedOneWithoutNotesInput;
   };
@@ -30779,6 +30800,7 @@ export namespace Prisma {
     height?: number;
     color?: string;
     fontSize?: number;
+    authorName?: string | null;
     updatedAt?: Date | string;
   };
 
@@ -30791,6 +30813,7 @@ export namespace Prisma {
     height?: IntFieldUpdateOperationsInput | number;
     color?: StringFieldUpdateOperationsInput | string;
     fontSize?: IntFieldUpdateOperationsInput | number;
+    authorName?: NullableStringFieldUpdateOperationsInput | string | null;
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string;
     project?: ProjectUpdateOneRequiredWithoutNotesNestedInput;
   };
@@ -30805,6 +30828,7 @@ export namespace Prisma {
     height?: IntFieldUpdateOperationsInput | number;
     color?: StringFieldUpdateOperationsInput | string;
     fontSize?: IntFieldUpdateOperationsInput | number;
+    authorName?: NullableStringFieldUpdateOperationsInput | string | null;
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string;
   };
 
@@ -30818,6 +30842,7 @@ export namespace Prisma {
     height?: number;
     color?: string;
     fontSize?: number;
+    authorName?: string | null;
     updatedAt?: Date | string;
   };
 
@@ -30830,6 +30855,7 @@ export namespace Prisma {
     height?: IntFieldUpdateOperationsInput | number;
     color?: StringFieldUpdateOperationsInput | string;
     fontSize?: IntFieldUpdateOperationsInput | number;
+    authorName?: NullableStringFieldUpdateOperationsInput | string | null;
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string;
   };
 
@@ -30843,6 +30869,7 @@ export namespace Prisma {
     height?: IntFieldUpdateOperationsInput | number;
     color?: StringFieldUpdateOperationsInput | string;
     fontSize?: IntFieldUpdateOperationsInput | number;
+    authorName?: NullableStringFieldUpdateOperationsInput | string | null;
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string;
   };
 
@@ -32063,6 +32090,7 @@ export namespace Prisma {
     height?: SortOrder;
     color?: SortOrder;
     fontSize?: SortOrder;
+    authorName?: SortOrder;
     updatedAt?: SortOrder;
   };
 
@@ -32084,6 +32112,7 @@ export namespace Prisma {
     height?: SortOrder;
     color?: SortOrder;
     fontSize?: SortOrder;
+    authorName?: SortOrder;
     updatedAt?: SortOrder;
   };
 
@@ -32097,6 +32126,7 @@ export namespace Prisma {
     height?: SortOrder;
     color?: SortOrder;
     fontSize?: SortOrder;
+    authorName?: SortOrder;
     updatedAt?: SortOrder;
   };
 
@@ -36261,6 +36291,7 @@ export namespace Prisma {
     height?: number;
     color?: string;
     fontSize?: number;
+    authorName?: string | null;
     updatedAt?: Date | string;
   };
 
@@ -36273,6 +36304,7 @@ export namespace Prisma {
     height?: number;
     color?: string;
     fontSize?: number;
+    authorName?: string | null;
     updatedAt?: Date | string;
   };
 
@@ -36535,6 +36567,7 @@ export namespace Prisma {
     height?: IntFilter<"Note"> | number;
     color?: StringFilter<"Note"> | string;
     fontSize?: IntFilter<"Note"> | number;
+    authorName?: StringNullableFilter<"Note"> | string | null;
     updatedAt?: DateTimeFilter<"Note"> | Date | string;
   };
 
@@ -38302,6 +38335,7 @@ export namespace Prisma {
     height?: number;
     color?: string;
     fontSize?: number;
+    authorName?: string | null;
     updatedAt?: Date | string;
   };
 
@@ -38393,6 +38427,7 @@ export namespace Prisma {
     height?: IntFieldUpdateOperationsInput | number;
     color?: StringFieldUpdateOperationsInput | string;
     fontSize?: IntFieldUpdateOperationsInput | number;
+    authorName?: NullableStringFieldUpdateOperationsInput | string | null;
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string;
   };
 
@@ -38405,6 +38440,7 @@ export namespace Prisma {
     height?: IntFieldUpdateOperationsInput | number;
     color?: StringFieldUpdateOperationsInput | string;
     fontSize?: IntFieldUpdateOperationsInput | number;
+    authorName?: NullableStringFieldUpdateOperationsInput | string | null;
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string;
   };
 
@@ -38417,6 +38453,7 @@ export namespace Prisma {
     height?: IntFieldUpdateOperationsInput | number;
     color?: StringFieldUpdateOperationsInput | string;
     fontSize?: IntFieldUpdateOperationsInput | number;
+    authorName?: NullableStringFieldUpdateOperationsInput | string | null;
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string;
   };
 

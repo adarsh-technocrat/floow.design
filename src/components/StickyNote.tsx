@@ -17,6 +17,7 @@ export interface StickyNoteProps {
   height: number;
   color: NoteColor;
   fontSize: number;
+  authorName?: string;
   selected: boolean;
   canvasScale: number;
   spaceHeld: boolean;
@@ -115,6 +116,7 @@ export const StickyNote = React.memo(function StickyNote({
   height,
   color,
   fontSize,
+  authorName,
   selected,
   canvasScale,
   spaceHeld,
@@ -297,7 +299,7 @@ export const StickyNote = React.memo(function StickyNote({
         />
 
         {/* Text content */}
-        <div className="absolute inset-0 p-3 overflow-hidden">
+        <div className="absolute inset-0 flex flex-col p-3 overflow-hidden">
           {isEditing ? (
             <textarea
               ref={textareaRef}
@@ -305,7 +307,7 @@ export const StickyNote = React.memo(function StickyNote({
               onChange={(e) => onTextChange(id, e.target.value)}
               onBlur={handleTextBlur}
               onPointerDown={(e) => e.stopPropagation()}
-              className="size-full resize-none bg-transparent outline-none p-0 m-0 border-none whitespace-pre-wrap break-words"
+              className="w-full flex-1 resize-none bg-transparent outline-none p-0 m-0 border-none whitespace-pre-wrap break-words"
               style={{
                 color: colors.text,
                 fontSize: `${fontSize}px`,
@@ -317,7 +319,7 @@ export const StickyNote = React.memo(function StickyNote({
             />
           ) : (
             <div
-              className="size-full overflow-hidden whitespace-pre-wrap break-words"
+              className="w-full flex-1 overflow-hidden whitespace-pre-wrap break-words"
               style={{
                 color: colors.text,
                 fontSize: `${fontSize}px`,
@@ -329,6 +331,19 @@ export const StickyNote = React.memo(function StickyNote({
               {text || (
                 <span style={{ opacity: 0.5 }}>Double-click to edit</span>
               )}
+            </div>
+          )}
+          {authorName && (
+            <div
+              className="mt-auto pt-1 text-right truncate"
+              style={{
+                fontSize: "10px",
+                opacity: 0.55,
+                color: colors.text,
+                fontFamily: "var(--font-dm-sans), 'DM Sans', sans-serif",
+              }}
+            >
+              — {authorName}
             </div>
           )}
         </div>

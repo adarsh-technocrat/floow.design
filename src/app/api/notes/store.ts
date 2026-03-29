@@ -11,6 +11,7 @@ export async function setNote(
     height?: number;
     color?: string;
     fontSize?: number;
+    authorName?: string;
   },
 ) {
   await ensureProject(projectId);
@@ -26,6 +27,7 @@ export async function setNote(
       height: meta.height ?? 228,
       color: meta.color ?? "yellow",
       fontSize: meta.fontSize ?? 16,
+      authorName: meta.authorName,
     },
     update: {
       ...(meta.text !== undefined && { text: meta.text }),
@@ -51,6 +53,7 @@ export async function getNotesByProject(projectId: string) {
       height: true,
       color: true,
       fontSize: true,
+      authorName: true,
     },
   });
 }

@@ -73,6 +73,7 @@ export async function GET(req: NextRequest) {
               height: true,
               color: true,
               fontSize: true,
+              authorName: true,
             },
           },
         },

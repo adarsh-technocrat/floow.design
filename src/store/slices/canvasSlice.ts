@@ -46,6 +46,7 @@ export interface NoteState {
   height: number;
   color: NoteColor;
   fontSize: number;
+  authorName?: string;
 }
 
 export const NOTE_COLORS: Record<
@@ -440,7 +441,13 @@ const canvasSlice = createSlice({
     addNote: (
       state,
       action: {
-        payload: { id?: string; left: number; top: number; color?: NoteColor };
+        payload: {
+          id?: string;
+          left: number;
+          top: number;
+          color?: NoteColor;
+          authorName?: string;
+        };
       },
     ) => {
       const id = action.payload.id || `note-${Date.now()}`;
@@ -453,6 +460,7 @@ const canvasSlice = createSlice({
         height: DEFAULT_NOTE_HEIGHT,
         color: action.payload.color ?? "yellow",
         fontSize: 16,
+        authorName: action.payload.authorName,
       });
       state.selectedNoteId = id;
       state.selectedFrameIds = [];
@@ -489,6 +497,7 @@ const canvasSlice = createSlice({
           height?: number;
           color?: string;
           fontSize?: number;
+          authorName?: string;
         }>;
       },
     ) => {
@@ -501,6 +510,7 @@ const canvasSlice = createSlice({
         height: n.height ?? DEFAULT_NOTE_HEIGHT,
         color: (n.color as NoteColor) ?? "yellow",
         fontSize: n.fontSize ?? 16,
+        authorName: n.authorName,
       }));
     },
 

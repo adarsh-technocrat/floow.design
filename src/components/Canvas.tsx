@@ -19,6 +19,7 @@ import {
   type NoteColor,
 } from "@/store/slices/canvasSlice";
 import { setCanvasToolMode } from "@/store/slices/uiSlice";
+import { useAuth } from "@/contexts/AuthContext";
 import { convertClientPointToContentPoint } from "@/lib/canvas-utils";
 import http from "@/lib/http";
 
@@ -43,6 +44,8 @@ export function Canvas() {
   const notes = useAppSelector((s) => s.canvas.notes);
   const selectedNoteId = useAppSelector((s) => s.canvas.selectedNoteId);
   const canvasToolMode = useAppSelector((s) => s.ui.canvasToolMode);
+  const { user } = useAuth();
+  const authorName = user?.displayName || user?.email?.split("@")[0];
 
   const persistFramePosition = useCallback(
     (
@@ -205,11 +208,12 @@ export function Canvas() {
           left: note.left + 40,
           top: note.top + 40,
           color: note.color,
+          authorName,
         }),
       );
-      persistNote(newId);
+      persistNote(newId, { authorName });
     },
-    [dispatch, notes, persistNote],
+    [dispatch, notes, persistNote, authorName],
   );
 
   // Handle canvas click to create note in note tool mode
@@ -236,9 +240,14 @@ export function Canvas() {
       );
       const newId = `note-${Date.now()}`;
       dispatch(
-        addNote({ id: newId, left: content.x - 114, top: content.y - 114 }),
+        addNote({
+          id: newId,
+          left: content.x - 114,
+          top: content.y - 114,
+          authorName,
+        }),
       );
-      persistNote(newId);
+      persistNote(newId, { authorName });
       // Switch back to select mode after placing note
       dispatch(setCanvasToolMode("select"));
     },
@@ -498,6 +507,7 @@ export function Canvas() {
             height={note.height}
             color={note.color}
             fontSize={note.fontSize}
+            authorName={note.authorName}
             selected={selectedNoteId === note.id}
             canvasScale={scale}
             spaceHeld={spaceHeld}

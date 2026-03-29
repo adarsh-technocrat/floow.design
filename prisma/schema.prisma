@@ -325,17 +325,18 @@ model PitchComment {
 }
 
 model Note {
-  id        String   @id
-  projectId String
-  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  text      String   @default("") @db.Text
-  left      Int      @default(0)
-  top       Int      @default(0)
-  width     Int      @default(228)
-  height    Int      @default(228)
-  color     String   @default("yellow")
-  fontSize  Int      @default(16)
-  updatedAt DateTime @updatedAt
+  id         String   @id
+  projectId  String
+  project    Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  text       String   @default("") @db.Text
+  left       Int      @default(0)
+  top        Int      @default(0)
+  width      Int      @default(228)
+  height     Int      @default(228)
+  color      String   @default("yellow")
+  fontSize   Int      @default(16)
+  authorName String?
+  updatedAt  DateTime @updatedAt
 
   @@index([projectId])
 }
