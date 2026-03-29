@@ -30,27 +30,34 @@ const PHONE_PATH_D =
 function ResizeHandleDot({
   corner,
   onPointerDown,
+  scale = 1,
 }: {
   corner: ResizeHandle;
   onPointerDown: (e: React.PointerEvent, corner: ResizeHandle) => void;
+  scale?: number;
 }) {
   const cursor =
     corner === "nw" || corner === "se" ? "nwse-resize" : "nesw-resize";
-  const position =
+  const size = 12 * scale;
+  const offset = -(size / 2);
+  const posStyle: React.CSSProperties =
     corner === "nw"
-      ? "left-0 top-0 -translate-x-1/2 -translate-y-1/2"
+      ? { left: offset, top: offset }
       : corner === "ne"
-        ? "right-0 top-0 translate-x-1/2 -translate-y-1/2"
+        ? { right: offset, top: offset }
         : corner === "sw"
-          ? "left-0 bottom-0 -translate-x-1/2 translate-y-1/2"
-          : "right-0 bottom-0 translate-x-1/2 translate-y-1/2";
+          ? { left: offset, bottom: offset }
+          : { right: offset, bottom: offset };
 
   return (
     <div
-      className={`absolute z-50 size-3 shrink-0 rounded-[1px] border-2 bg-white shadow-none ${position}`}
+      className="absolute z-50 shrink-0 rounded-[1px] bg-white shadow-none"
       style={{
         cursor,
-        borderColor: "#8B7CFF",
+        width: size,
+        height: size,
+        border: `${2 * scale}px solid #8B7CFF`,
+        ...posStyle,
       }}
       data-resize-handle={corner}
       onPointerDown={(e) => {
@@ -65,17 +72,20 @@ function ResizeHandleDot({
 function EdgeResizeHandle({
   edge,
   onPointerDown,
+  scale = 1,
 }: {
   edge: "e" | "w" | "n" | "s";
   onPointerDown: (e: React.PointerEvent, corner: ResizeHandle) => void;
+  scale?: number;
 }) {
   const isHorizontal = edge === "n" || edge === "s";
   const cursor = isHorizontal ? "ns-resize" : "ew-resize";
+  const hitSize = 8 * scale;
   const style: React.CSSProperties = isHorizontal
     ? {
         left: "10%",
         width: "80%",
-        height: "8px",
+        height: hitSize,
         ...(edge === "n"
           ? { top: 0, transform: "translateY(-50%)" }
           : { bottom: 0, transform: "translateY(50%)" }),
@@ -83,7 +93,7 @@ function EdgeResizeHandle({
     : {
         top: "10%",
         height: "80%",
-        width: "8px",
+        width: hitSize,
         ...(edge === "w"
           ? { left: 0, transform: "translateX(-50%)" }
           : { right: 0, transform: "translateX(50%)" }),
@@ -385,18 +395,23 @@ export const Frame = React.memo(function Frame({
 
       {stableSelected && !stableShowToolbar && !isDragging && (
         <svg
-          className="pointer-events-none absolute -inset-[5px] z-30 size-[calc(100%+10px)]"
+          className="pointer-events-none absolute z-30"
+          style={{
+            inset: `${-5 / canvasScale}px`,
+            width: `calc(100% + ${10 / canvasScale}px)`,
+            height: `calc(100% + ${10 / canvasScale}px)`,
+          }}
           aria-hidden
         >
           <rect
-            x="1.5"
-            y="1.5"
-            width="calc(100% - 3px)"
-            height="calc(100% - 3px)"
+            x={1.5 / canvasScale}
+            y={1.5 / canvasScale}
+            width={`calc(100% - ${3 / canvasScale}px)`}
+            height={`calc(100% - ${3 / canvasScale}px)`}
             fill="none"
             stroke="#8B7CFF"
-            strokeWidth="3"
-            strokeDasharray="10 7"
+            strokeWidth={3 / canvasScale}
+            strokeDasharray={`${10 / canvasScale} ${7 / canvasScale}`}
             rx="0"
           />
         </svg>
@@ -406,42 +421,67 @@ export const Frame = React.memo(function Frame({
         <>
           {!isDragging && (
             <svg
-              className="pointer-events-none absolute -inset-[5px] z-30 size-[calc(100%+10px)]"
+              className="pointer-events-none absolute z-30"
+              style={{
+                inset: `${-5 / canvasScale}px`,
+                width: `calc(100% + ${10 / canvasScale}px)`,
+                height: `calc(100% + ${10 / canvasScale}px)`,
+              }}
               aria-hidden
             >
               <rect
-                x="1.5"
-                y="1.5"
-                width="calc(100% - 3px)"
-                height="calc(100% - 3px)"
+                x={1.5 / canvasScale}
+                y={1.5 / canvasScale}
+                width={`calc(100% - ${3 / canvasScale}px)`}
+                height={`calc(100% - ${3 / canvasScale}px)`}
                 fill="none"
                 stroke="#8B7CFF"
-                strokeWidth="3"
-                strokeDasharray="10 7"
+                strokeWidth={3 / canvasScale}
+                strokeDasharray={`${10 / canvasScale} ${7 / canvasScale}`}
                 rx="0"
               />
             </svg>
           )}
           <ResizeHandleDot
             corner="nw"
+            scale={1 / canvasScale}
             onPointerDown={handleResizePointerDown}
           />
           <ResizeHandleDot
             corner="ne"
+            scale={1 / canvasScale}
             onPointerDown={handleResizePointerDown}
           />
           <ResizeHandleDot
             corner="sw"
+            scale={1 / canvasScale}
             onPointerDown={handleResizePointerDown}
           />
           <ResizeHandleDot
             corner="se"
+            scale={1 / canvasScale}
             onPointerDown={handleResizePointerDown}
           />
-          <EdgeResizeHandle edge="w" onPointerDown={handleResizePointerDown} />
-          <EdgeResizeHandle edge="e" onPointerDown={handleResizePointerDown} />
-          <EdgeResizeHandle edge="n" onPointerDown={handleResizePointerDown} />
-          <EdgeResizeHandle edge="s" onPointerDown={handleResizePointerDown} />
+          <EdgeResizeHandle
+            edge="w"
+            scale={1 / canvasScale}
+            onPointerDown={handleResizePointerDown}
+          />
+          <EdgeResizeHandle
+            edge="e"
+            scale={1 / canvasScale}
+            onPointerDown={handleResizePointerDown}
+          />
+          <EdgeResizeHandle
+            edge="n"
+            scale={1 / canvasScale}
+            onPointerDown={handleResizePointerDown}
+          />
+          <EdgeResizeHandle
+            edge="s"
+            scale={1 / canvasScale}
+            onPointerDown={handleResizePointerDown}
+          />
           <FrameToolbar
             label={label}
             html={html}
@@ -454,8 +494,8 @@ export const Frame = React.memo(function Frame({
       <div
         className="absolute left-0 flex items-center gap-3 truncate whitespace-nowrap text-sm"
         style={{
-          transform: "scale(1.79733)",
-          top: stableShowToolbar ? "-53.9198px" : "-53.9198px",
+          transform: `scale(${1 / canvasScale})`,
+          top: `${-30 / canvasScale}px`,
           transformOrigin: "left top",
           visibility: stableShowToolbar ? "hidden" : "visible",
         }}
