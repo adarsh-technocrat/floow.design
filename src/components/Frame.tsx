@@ -415,24 +415,18 @@ export const Frame = React.memo(function Frame({
 
       {stableSelected && !stableShowToolbar && !isDragging && (
         <svg
-          className="pointer-events-none absolute z-30"
-          style={{
-            inset: `${-5 / canvasScale}px`,
-            width: `calc(100% + ${10 / canvasScale}px)`,
-            height: `calc(100% + ${10 / canvasScale}px)`,
-          }}
+          className="pointer-events-none absolute inset-0 z-30"
+          viewBox={`0 0 ${FRAME_WIDTH} ${FRAME_HEIGHT}`}
+          width={width}
+          height={height}
           aria-hidden
         >
-          <rect
-            x={1.5 / canvasScale}
-            y={1.5 / canvasScale}
-            width={`calc(100% - ${3 / canvasScale}px)`}
-            height={`calc(100% - ${3 / canvasScale}px)`}
+          <path
+            d={PHONE_PATH_D}
             fill="none"
             stroke="#8B7CFF"
             strokeWidth={3 / canvasScale}
             strokeDasharray={`${10 / canvasScale} ${7 / canvasScale}`}
-            rx="0"
           />
         </svg>
       )}
@@ -441,24 +435,18 @@ export const Frame = React.memo(function Frame({
         <>
           {!isDragging && (
             <svg
-              className="pointer-events-none absolute z-30"
-              style={{
-                inset: `${-5 / canvasScale}px`,
-                width: `calc(100% + ${10 / canvasScale}px)`,
-                height: `calc(100% + ${10 / canvasScale}px)`,
-              }}
+              className="pointer-events-none absolute inset-0 z-30"
+              viewBox={`0 0 ${FRAME_WIDTH} ${FRAME_HEIGHT}`}
+              width={width}
+              height={height}
               aria-hidden
             >
-              <rect
-                x={1.5 / canvasScale}
-                y={1.5 / canvasScale}
-                width={`calc(100% - ${3 / canvasScale}px)`}
-                height={`calc(100% - ${3 / canvasScale}px)`}
+              <path
+                d={PHONE_PATH_D}
                 fill="none"
                 stroke="#8B7CFF"
                 strokeWidth={3 / canvasScale}
                 strokeDasharray={`${10 / canvasScale} ${7 / canvasScale}`}
-                rx="0"
               />
             </svg>
           )}
