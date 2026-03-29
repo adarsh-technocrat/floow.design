@@ -415,7 +415,7 @@ export const Frame = React.memo(function Frame({
             stroke="#8B7CFF"
             strokeWidth={2 / canvasScale}
             strokeOpacity={0.4}
-            rx={8 / canvasScale}
+            rx="0"
           />
         </svg>
       )}
