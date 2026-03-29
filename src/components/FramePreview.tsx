@@ -30,7 +30,6 @@ export interface FramePreviewProps {
   label?: string;
   left?: number;
   top?: number;
-  canvasScale?: number;
   allowInteraction?: boolean;
   enableElementInspection?: boolean;
   iframeRef?: React.MutableRefObject<HTMLIFrameElement | null>;
@@ -47,7 +46,6 @@ export const FramePreview = React.forwardRef<
     label,
     left,
     top,
-    canvasScale = 1,
     allowInteraction = false,
     enableElementInspection = false,
     iframeRef: iframeExternalRef,
@@ -198,26 +196,12 @@ export const FramePreview = React.forwardRef<
   }
 
   const iframeClassName = [
-    "border-0 bg-white scrollbar-hide origin-top-left",
+    "size-full border-0 bg-white scrollbar-hide",
     showFadeIn && "frame-fade-in",
     allowInteraction ? "pointer-events-auto" : "pointer-events-none",
   ]
     .filter(Boolean)
     .join(" ");
-
-  // Counter-scale: render iframe at higher resolution, shrink back visually.
-  // Capped at 3x to avoid excessive memory use.
-  const renderScale = Math.min(Math.max(Math.ceil(canvasScale), 1), 3);
-  const iframeStyle =
-    renderScale > 1
-      ? {
-          ...IFRAME_STYLE,
-          width: `${renderScale * 100}%`,
-          height: `${renderScale * 100}%`,
-          transform: `scale(${1 / renderScale})`,
-          transformOrigin: "top left" as const,
-        }
-      : { ...IFRAME_STYLE, width: "100%", height: "100%" };
 
   return (
     <iframe
@@ -226,7 +210,7 @@ export const FramePreview = React.forwardRef<
       data-frame-id={frameId}
       sandbox="allow-scripts allow-same-origin"
       className={iframeClassName}
-      style={iframeStyle}
+      style={IFRAME_STYLE}
       srcDoc=""
       onLoad={handleIframeLoad}
     />
