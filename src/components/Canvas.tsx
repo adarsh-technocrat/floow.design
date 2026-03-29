@@ -487,6 +487,7 @@ export function Canvas() {
               label={frame.label}
               left={frame.left}
               top={frame.top}
+              canvasScale={scale}
               allowInteraction={
                 selectedFrameIds.includes(frame.id) &&
                 selectedFrameIds.length === 1
