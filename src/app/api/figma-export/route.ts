@@ -3,19 +3,22 @@ import { NextRequest, NextResponse } from "next/server";
 const API_URL = "https://api.to.design/html";
 const API_KEY = process.env.CODE_TO_DESIGN_API_KEY;
 
-/** Wrap frame HTML in a full document so code.to.design renders it correctly. */
-function wrapHtml(html: string): string {
-  // If it's already a full document, use as-is
+/** Wrap frame HTML in a full document at the correct dimensions. */
+function wrapHtml(html: string, width?: number, height?: number): string {
   if (html.trimStart().toLowerCase().startsWith("<!doctype")) return html;
+
+  const w = width ?? 430;
+  const h = height ?? 932;
 
   return `<!DOCTYPE html>
 <html lang="en" style="background: transparent;">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=${w}, initial-scale=1.0" />
   <title>Exported Frame</title>
+  <style>html, body { width: ${w}px; height: ${h}px; margin: 0; padding: 0; overflow: hidden; background: transparent; }</style>
 </head>
-<body style="margin: 0; padding: 0; background: transparent;">
+<body>
 ${html}
 </body>
 </html>`;
@@ -30,7 +33,11 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const { html } = (await req.json()) as { html?: string };
+    const { html, width, height } = (await req.json()) as {
+      html?: string;
+      width?: number;
+      height?: number;
+    };
 
     if (!html || typeof html !== "string") {
       return NextResponse.json(
@@ -39,7 +46,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const wrappedHtml = wrapHtml(html);
+    const wrappedHtml = wrapHtml(html, width, height);
 
     const res = await fetch(API_URL, {
       method: "POST",

@@ -496,6 +496,8 @@ export const Frame = React.memo(function Frame({
           <FrameToolbar
             label={label}
             html={html}
+            frameWidth={width}
+            frameHeight={height}
             scale={1 / canvasScale}
             canvasScale={canvasScale}
           />

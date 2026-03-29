@@ -118,6 +118,8 @@ const TOOLBAR_GAP_SCREEN_PX = 48;
 export interface FrameToolbarProps {
   label: string;
   html?: string;
+  frameWidth?: number;
+  frameHeight?: number;
   scale?: number;
   canvasScale?: number;
 }
@@ -125,6 +127,8 @@ export interface FrameToolbarProps {
 export function FrameToolbar({
   label,
   html = "",
+  frameWidth,
+  frameHeight,
   scale = 1.76418,
   canvasScale = 0.556382,
 }: FrameToolbarProps) {
@@ -181,7 +185,7 @@ export function FrameToolbar({
           disabled={figmaStatus === "loading"}
           onClick={(e) => {
             e.stopPropagation();
-            exportToFigma(html);
+            exportToFigma(html, frameWidth, frameHeight);
           }}
         >
           {figmaStatus === "loading" ? (
