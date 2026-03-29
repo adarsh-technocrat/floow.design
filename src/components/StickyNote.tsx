@@ -161,6 +161,13 @@ export const StickyNote = React.memo(function StickyNote({
   const handlePointerDown = useCallback(
     (e: React.PointerEvent) => {
       if (e.button !== 0 || spaceHeld) return;
+      // Don't start drag when clicking toolbar buttons or resize handles
+      const target = e.target as HTMLElement;
+      if (
+        target.closest?.("[data-note-toolbar]") ||
+        target.closest?.("[data-resize-handle]")
+      )
+        return;
       e.stopPropagation();
       onSelect(id);
 

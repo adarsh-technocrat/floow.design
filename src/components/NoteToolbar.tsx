@@ -2,10 +2,7 @@
 
 import React from "react";
 import { Minus, Plus, Trash2, Copy } from "lucide-react";
-import {
-  NOTE_COLORS,
-  type NoteColor,
-} from "@/store/slices/canvasSlice";
+import { NOTE_COLORS, type NoteColor } from "@/store/slices/canvasSlice";
 
 const TOOLBAR_GAP_SCREEN_PX = 48;
 
@@ -65,7 +62,11 @@ function ColorDot({
       onClick={onClick}
       title={noteColor.charAt(0).toUpperCase() + noteColor.slice(1)}
       className="relative inline-flex size-5 shrink-0 items-center justify-center rounded-full transition-all active:scale-90"
-      style={{ backgroundColor: colors.bg, borderColor: colors.border, borderWidth: active ? 2 : 1 }}
+      style={{
+        backgroundColor: colors.bg,
+        borderColor: colors.border,
+        borderWidth: active ? 2 : 1,
+      }}
     >
       {active && (
         <div
@@ -92,6 +93,7 @@ export function NoteToolbar({
 
   return (
     <div
+      data-note-toolbar
       className="pointer-events-auto absolute left-1/2 z-50 flex items-center gap-1.5 rounded-xl border border-b-strong bg-canvas-panel-bg px-2 py-1.5 shadow-lg backdrop-blur-xl"
       style={{
         top: `-${topOffsetPx}px`,
