@@ -2,6 +2,12 @@
 
 import { useCallback, useState } from "react";
 import { toast } from "sonner";
+import {
+  isSafari,
+  checkClipboardPermissions,
+  createDeferredClipboardCopy,
+  copyFigmaHTML,
+} from "@/lib/clipboard";
 
 type Status = "idle" | "loading" | "ready" | "copied" | "error";
 
@@ -14,7 +20,32 @@ export function useFigmaExport() {
       return;
     }
 
+    const isSafariBrowser = isSafari();
+
+    // Safari: create deferred clipboard SYNCHRONOUSLY within the gesture
+    let deferredClipboard: ReturnType<
+      typeof createDeferredClipboardCopy
+    > | null = null;
+    if (isSafariBrowser) {
+      deferredClipboard = createDeferredClipboardCopy();
+    }
+
+    // Non-Safari: check permissions before the API call
+    if (!isSafariBrowser) {
+      const { canProceed, errorMessage } = await checkClipboardPermissions();
+      if (!canProceed) {
+        toast.error(errorMessage || "Clipboard access denied", {
+          position: "top-center",
+        });
+        return;
+      }
+    }
+
     setStatus("loading");
+    const loadingToast = toast.loading(
+      "Exporting to Figma… please don't switch tabs",
+      { position: "top-center" },
+    );
 
     try {
       const res = await fetch("/api/figma-export", {
@@ -31,16 +62,15 @@ export function useFigmaExport() {
       const clipboardData = await res.text();
       setStatus("ready");
 
-      // Copy Figma clipboard data via the copy event
-      const copyHandler = (e: ClipboardEvent) => {
-        e.clipboardData?.setData("text/html", clipboardData);
-        e.preventDefault();
-      };
-
-      document.addEventListener("copy", copyHandler, { once: true });
-      document.execCommand("copy");
+      // Copy to clipboard
+      if (deferredClipboard) {
+        await deferredClipboard.resolve(clipboardData);
+      } else {
+        await copyFigmaHTML(clipboardData);
+      }
 
       setStatus("copied");
+      toast.dismiss(loadingToast);
       toast.success("Copied! Paste into Figma (Cmd+V / Ctrl+V)", {
         position: "top-center",
         duration: 4000,
@@ -48,7 +78,13 @@ export function useFigmaExport() {
 
       setTimeout(() => setStatus("idle"), 3000);
     } catch (err) {
+      if (deferredClipboard) {
+        deferredClipboard.reject(
+          err instanceof Error ? err : new Error("Export failed"),
+        );
+      }
       setStatus("error");
+      toast.dismiss(loadingToast);
       toast.error(
         err instanceof Error ? err.message : "Failed to export to Figma",
         { position: "top-center" },
