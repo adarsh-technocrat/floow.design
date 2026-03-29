@@ -83,7 +83,7 @@ export interface PitchSlotState {
 }
 
 function createEmptyPitchSlots(
-  variantName: ThemeMode = "dark",
+  variantName: ThemeMode = "light",
 ): PitchSlotState[] {
   return Array.from({ length: PITCH_CONCEPT_SLOT_COUNT }, () => ({
     themeId: null,

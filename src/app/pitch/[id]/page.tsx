@@ -8,6 +8,7 @@ import {
   useRef,
   useState,
 } from "react";
+import { useTheme } from "next-themes";
 import { useParams, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import {
@@ -451,8 +452,22 @@ function ConceptColumn({
 function PitchPageInner() {
   const params = useParams();
   const searchParams = useSearchParams();
+  const { setTheme, theme: currentTheme } = useTheme();
   const projectId = params?.id as string;
   const viewOnly = searchParams.get("view") === "1";
+
+  // Force light mode on pitch page, restore on unmount
+  const prevThemeRef = useRef(currentTheme);
+  useEffect(() => {
+    prevThemeRef.current = currentTheme;
+    if (currentTheme !== "light") setTheme("light");
+    return () => {
+      if (prevThemeRef.current && prevThemeRef.current !== "light") {
+        setTheme(prevThemeRef.current);
+      }
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const [projectName, setProjectName] = useState<string | null>(null);
   const [frames, setFrames] = useState<PitchFrame[]>([]);
