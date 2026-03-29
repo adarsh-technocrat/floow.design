@@ -185,7 +185,7 @@ export function FrameToolbar({
           disabled={figmaStatus === "loading"}
           onClick={(e) => {
             e.stopPropagation();
-            exportToFigma(html, frameWidth, frameHeight);
+            exportToFigma(html, frameWidth, frameHeight, label);
           }}
         >
           {figmaStatus === "loading" ? (

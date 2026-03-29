@@ -4,18 +4,24 @@ const API_URL = "https://api.to.design/html";
 const API_KEY = process.env.CODE_TO_DESIGN_API_KEY;
 
 /** Wrap frame HTML in a full document at the correct dimensions. */
-function wrapHtml(html: string, width?: number, height?: number): string {
+function wrapHtml(
+  html: string,
+  width?: number,
+  height?: number,
+  label?: string,
+): string {
   if (html.trimStart().toLowerCase().startsWith("<!doctype")) return html;
 
   const w = width ?? 430;
   const h = height ?? 932;
+  const title = label || "Screen";
 
   return `<!DOCTYPE html>
 <html lang="en" style="background: transparent;">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=${w}, initial-scale=1.0" />
-  <title>Exported Frame</title>
+  <title>${title}</title>
   <style>html, body { width: ${w}px; height: ${h}px; margin: 0; padding: 0; overflow: hidden; background: transparent; }</style>
 </head>
 <body>
@@ -33,10 +39,11 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const { html, width, height } = (await req.json()) as {
+    const { html, width, height, label } = (await req.json()) as {
       html?: string;
       width?: number;
       height?: number;
+      label?: string;
     };
 
     if (!html || typeof html !== "string") {
@@ -46,7 +53,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const wrappedHtml = wrapHtml(html, width, height);
+    const wrappedHtml = wrapHtml(html, width, height, label);
 
     const res = await fetch(API_URL, {
       method: "POST",

@@ -15,7 +15,7 @@ export function useFigmaExport() {
   const [status, setStatus] = useState<Status>("idle");
 
   const exportToFigma = useCallback(
-    async (html: string, width?: number, height?: number) => {
+    async (html: string, width?: number, height?: number, label?: string) => {
       if (!html) {
         toast.error("No HTML to export");
         return;
@@ -52,7 +52,7 @@ export function useFigmaExport() {
         const res = await fetch("/api/figma-export", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ html, width, height }),
+          body: JSON.stringify({ html, width, height, label }),
         });
 
         if (!res.ok) {
