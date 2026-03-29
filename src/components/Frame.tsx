@@ -398,24 +398,18 @@ export const Frame = React.memo(function Frame({
 
       {isHovered && !stableSelected && !isDragging && (
         <svg
-          className="pointer-events-none absolute z-20"
-          style={{
-            inset: `${-3 / canvasScale}px`,
-            width: `calc(100% + ${6 / canvasScale}px)`,
-            height: `calc(100% + ${6 / canvasScale}px)`,
-          }}
+          className="pointer-events-none absolute inset-0 z-20"
+          viewBox={`0 0 ${FRAME_WIDTH} ${FRAME_HEIGHT}`}
+          width={width}
+          height={height}
           aria-hidden
         >
-          <rect
-            x={1 / canvasScale}
-            y={1 / canvasScale}
-            width={`calc(100% - ${2 / canvasScale}px)`}
-            height={`calc(100% - ${2 / canvasScale}px)`}
+          <path
+            d={PHONE_PATH_D}
             fill="none"
             stroke="#8B7CFF"
             strokeWidth={2 / canvasScale}
             strokeOpacity={0.4}
-            rx="0"
           />
         </svg>
       )}
